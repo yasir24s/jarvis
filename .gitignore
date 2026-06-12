@@ -1,0 +1,26 @@
+# Secrets & personal data (never commit)
+audd_key.txt
+*key*.txt
+.jarvis_config.json
+*_config.json
+voiceprint.npy
+knowledge.json
+alarms.json
+logs/
+*.boot.log
+*.boot.err
+
+# Generated / build artifacts
+dist/
+build/
+__pycache__/
+*.pyc
+*.deep.wav
+*.wav
+.DS_Store
+
+# Large downloadable assets (install.sh fetches these)
+voices/
+
+# Built screensaver bundle (the .m source is tracked)
+screensaver/*.saver

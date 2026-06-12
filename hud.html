@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JARVIS</title>
+<style>
+  :root{ --cyan:#5fdcff; --cyan-dim:#1b6e85; --gold:#ffcf6b; }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{width:100%;height:100%;background:transparent;overflow:hidden;
+    font-family:"Helvetica Neue","Avenir Next",sans-serif;-webkit-user-select:none;user-select:none;cursor:default;}
+
+  #hud{position:absolute;left:0;right:0;bottom:14px;display:flex;flex-direction:column;
+    align-items:center;justify-content:flex-end;
+    opacity:0;transform:scale(.8) translateY(8px);
+    transition:opacity .45s ease, transform .45s cubic-bezier(.2,.9,.25,1);}
+  #hud.show{opacity:1;transform:scale(1) translateY(0);}
+
+  .reactor{position:relative;width:190px;height:190px;
+    filter:drop-shadow(0 0 8px rgba(95,220,255,.45));}
+  .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(95,220,255,.22);}
+  .ring.r1{border-width:2px;border-top-color:var(--cyan);border-right-color:transparent;animation:spin 7s linear infinite;}
+  .ring.r2{inset:16px;border-style:dashed;border-color:rgba(95,220,255,.32);animation:spin 13s linear infinite reverse;}
+  .ring.r3{inset:34px;border-width:2px;border-bottom-color:var(--gold);border-left-color:transparent;animation:spin 9s linear infinite;}
+  .ring.r4{inset:50px;border-color:rgba(95,220,255,.16);}
+  .ticks{position:absolute;inset:6px;border-radius:50%;
+    background:repeating-conic-gradient(rgba(95,220,255,0) 0deg 8deg, rgba(95,220,255,.4) 8deg 8.7deg);
+    -webkit-mask:radial-gradient(circle, transparent 76px, #000 77px, #000 86px, transparent 87px);
+    animation:spin 40s linear infinite;}
+  .core{position:absolute;inset:66px;border-radius:50%;
+    background:radial-gradient(circle at 50% 45%, #eaffff 0%, var(--cyan) 38%, var(--cyan-dim) 72%, transparent 100%);
+    box-shadow:0 0 8px var(--cyan),0 0 18px var(--cyan),0 0 32px var(--cyan-dim);animation:breathe 3.4s ease-in-out infinite;}
+  .core::after{content:"";position:absolute;inset:13px;border-radius:50%;
+    background:radial-gradient(circle,#fff 0%,rgba(255,255,255,.4) 45%,transparent 70%);}
+
+  .bars{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);display:flex;gap:2px;align-items:flex-end;height:22px;}
+  .bars i{width:2px;height:4px;background:var(--cyan);border-radius:2px;box-shadow:0 0 5px var(--cyan);transition:height .08s ease;}
+
+  /* Readable-on-any-background text: dark translucent backdrop + glow + outline */
+  .status{margin-top:18px;letter-spacing:.4em;font-size:11px;font-weight:700;color:#eafaff;
+    text-transform:uppercase;padding:5px 14px 5px 18px;border-radius:20px;
+    background:rgba(6,14,22,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border:1px solid rgba(95,220,255,.35);
+    text-shadow:0 0 6px var(--cyan),0 1px 2px #000;}
+  .caption{margin-top:10px;max-width:330px;text-align:center;color:#eafaff;font-size:14px;line-height:1.45;
+    padding:9px 14px;border-radius:14px;opacity:0;min-height:0;
+    background:rgba(6,14,22,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(95,220,255,.25);
+    text-shadow:0 1px 3px #000, 0 0 8px rgba(0,0,0,.6);
+    transition:opacity .25s;}
+  .caption.show{opacity:1;}
+
+  #hud[data-state="thinking"] .core{animation:breathe 1.1s ease-in-out infinite;}
+  #hud[data-state="speaking"] .core{background:radial-gradient(circle at 50% 45%,#fff3da 0%,var(--gold) 40%,#8a6a1f 74%,transparent 100%);
+    box-shadow:0 0 8px var(--gold),0 0 20px var(--gold),0 0 36px rgba(255,207,107,.4);}
+  #hud[data-state="speaking"] .bars i{background:var(--gold);box-shadow:0 0 5px var(--gold);}
+  #hud[data-state="speaking"] .status{border-color:rgba(255,207,107,.5);text-shadow:0 0 6px var(--gold),0 1px 2px #000;}
+
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes breathe{0%,100%{transform:scale(.93);opacity:.9;}50%{transform:scale(1.06);opacity:1;}}
+</style>
+</head>
+<body>
+  <div id="hud" data-state="idle">
+    <div class="reactor">
+      <div class="ring r1"></div><div class="ring r2"></div>
+      <div class="ring r3"></div><div class="ring r4"></div>
+      <div class="ticks"></div><div class="core"></div>
+      <div class="bars" id="bars"></div>
+    </div>
+    <div class="status" id="status">J.A.R.V.I.S</div>
+    <div class="caption" id="caption"></div>
+  </div>
+<script>
+  const hud=document.getElementById('hud'),statusEl=document.getElementById('status'),
+        captionEl=document.getElementById('caption'),barsEl=document.getElementById('bars');
+  const NBARS=22; for(let i=0;i<NBARS;i++)barsEl.appendChild(document.createElement('i'));
+  const bars=[...barsEl.children]; let hideTimer=null,level=0,anim=null;
+  function animateBars(){for(let i=0;i<NBARS;i++){const c=1-Math.abs(i-(NBARS-1)/2)/((NBARS-1)/2);
+      bars[i].style.height=(3+level*20*c*(.5+Math.random())).toFixed(1)+'px';}anim=requestAnimationFrame(animateBars);}
+  function startBars(){if(!anim)animateBars();}
+  function stopBars(){if(anim){cancelAnimationFrame(anim);anim=null;}level=0;bars.forEach(b=>b.style.height='3px');}
+  window.jarvisShow=()=>{clearTimeout(hideTimer);hud.classList.add('show');};
+  window.jarvisHide=()=>{hud.classList.remove('show');stopBars();};
+  window.jarvisState=(s,t)=>{clearTimeout(hideTimer);hud.dataset.state=s;hud.classList.add('show');
+    const L={idle:'J.A.R.V.I.S',listening:'Listening',thinking:'Processing',speaking:'Speaking'};
+    statusEl.textContent=t||L[s]||'J.A.R.V.I.S';
+    if(s==='listening'||s==='speaking'){level=.6;startBars();}
+    else if(s==='thinking'){level=.35;startBars();}else stopBars();
+    if(s==='idle'){hideTimer=setTimeout(()=>window.jarvisHide(),2600);}};
+  window.jarvisLevel=v=>{level=Math.max(0,Math.min(1,v));};
+  window.jarvisCaption=t=>{if(t){captionEl.textContent=t;captionEl.classList.add('show');}else captionEl.classList.remove('show');};
+</script>
+</body>
+</html>

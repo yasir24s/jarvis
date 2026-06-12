@@ -1,0 +1,26 @@
+#!/bin/bash
+# JARVIS control helper.  Usage: ./jarvisctl {start|stop|restart|status|logs|test}
+DIR="$(cd "$(dirname "$0")" && pwd)"
+PLIST="$HOME/Library/LaunchAgents/com.jarvis.assistant.plist"
+APP="$DIR/dist/JARVIS.app"
+LOG="$DIR/logs/jarvis.log"
+
+case "$1" in
+  start)   launchctl load "$PLIST"   && echo "JARVIS started (auto-restarts, runs at login)";;
+  stop)    launchctl unload "$PLIST" && echo "JARVIS stopped";;
+  restart) launchctl unload "$PLIST" 2>/dev/null; sleep 1; launchctl load "$PLIST" && echo "JARVIS restarted";;
+  status)
+      if launchctl list | grep -q com.jarvis.assistant; then
+          PID=$(launchctl list | awk '/com.jarvis.assistant/{print $1}')
+          echo "JARVIS is RUNNING (pid $PID)"
+          tail -1 "$LOG" 2>/dev/null
+      else
+          echo "JARVIS is STOPPED"
+      fi;;
+  logs)    tail -f "$LOG";;
+  test)    # run in foreground in this terminal for debugging
+      launchctl unload "$PLIST" 2>/dev/null
+      echo "Running JARVIS in foreground (Ctrl+C to quit)..."
+      exec "$APP/Contents/MacOS/JARVIS";;
+  *) echo "Usage: $0 {start|stop|restart|status|logs|test}"; exit 1;;
+esac
