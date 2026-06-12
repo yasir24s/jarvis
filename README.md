@@ -61,6 +61,10 @@ git config core.hooksPath .githooks
 Since nothing personal lives in the code, the repo is fine to keep public; make it
 private if you'd rather not publish your exact setup.
 
+See **[SECURITY.md](SECURITY.md)** for the full threat model, the hardening controls
+(prompt-injection containment, command denylist, least-privilege file reads, speaker
+verification), residual risks, and how to report a vulnerability.
+
 ## Notes
 - Apple reserves the lock screen and mic-while-locked for Siri; JARVIS can't override
   that, so it goes quiet once the Mac is truly password-locked (the screen saver still shows).
