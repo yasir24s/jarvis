@@ -48,13 +48,24 @@ This installs Ollama (cask), Python deps, the Piper voice, caches Whisper, build
 | `JARVIS_KEEP_AWAKE` | `1` | Keep listening while locked/idle (uses battery) |
 | `AUDD_API_KEY` | — | Free [AudD](https://audd.io) token for ambient song ID |
 
-## Privacy
+## Privacy & secret-guard
 This repo intentionally **excludes** your voiceprint, spoken-command logs, learned
-knowledge cache, alarms, and any API tokens (see `.gitignore`). Keep the repo
-**private** — it controls your Mac and can read your data.
+knowledge cache, alarms, and any API tokens (see `.gitignore`). A tracked
+**pre-commit hook** also refuses to commit those files or anything that looks like a
+token / private key / hard-coded home path — enable it once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Since nothing personal lives in the code, the repo is fine to keep public; make it
+private if you'd rather not publish your exact setup.
 
 ## Notes
 - Apple reserves the lock screen and mic-while-locked for Siri; JARVIS can't override
   that, so it goes quiet once the Mac is truly password-locked (the screen saver still shows).
 - Voice models, the LLM, and tools all run locally; only optional web lookups and
   ambient song ID use the network.
+
+## License
+[MIT](LICENSE) © 2026 yasir24s

@@ -1,0 +1,34 @@
+#!/bin/bash
+# JARVIS pre-commit guard — blocks secrets & personal data from being committed.
+# Enable in a fresh clone with:   git config core.hooksPath .githooks
+set -u
+fail=0
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+
+# 1) Refuse sensitive filenames (defence-in-depth beyond .gitignore)
+for f in $staged; do
+  case "$f" in
+    audd_key.txt|*key*.txt|*_config.json|.jarvis_config.json|voiceprint.npy|knowledge.json|alarms.json)
+      echo "BLOCK  sensitive file staged: $f"; fail=1 ;;
+    logs/*|voices/*)
+      echo "BLOCK  sensitive path staged: $f"; fail=1 ;;
+  esac
+done
+
+# 2) Scan ADDED lines for secret patterns and hard-coded home paths
+re='(sk-ant-[A-Za-z0-9_-]{6})|(sk-[A-Za-z0-9]{20})|(ghp_[A-Za-z0-9]{20})|(gho_[A-Za-z0-9]{20})|(github_pat_[A-Za-z0-9_]{20})|(AKIA[0-9A-Z]{16})|(-----BEGIN [A-Z ]*PRIVATE KEY-----)|([Aa][Pp][Ii][_-]?[Tt][Oo][Kk][Ee][Nn][ "'"'"':=]+[A-Za-z0-9]{12})|(/Users/[A-Za-z0-9._-]+/)'
+hits=$(git diff --cached -U0 --diff-filter=ACM | grep -E '^\+' | grep -vE '^\+\+\+' | grep -EIn "$re" | head -5)
+if [ -n "$hits" ]; then
+  echo "BLOCK  a staged change looks like a secret or a hard-coded /Users path:"
+  echo "$hits"
+  fail=1
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo ""
+  echo "Commit blocked by the JARVIS secret guard."
+  echo "If this is a genuine false positive, review it, then bypass with:"
+  echo "    git commit --no-verify"
+  exit 1
+fi
+exit 0
