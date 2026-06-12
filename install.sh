@@ -78,6 +78,7 @@ PL2
 
 echo "▶ 8/8  Install always-on LaunchAgent..."
 mkdir -p "$HOME/Library/LaunchAgents" "$JARVIS_DIR/logs"
+chmod -R go-w "$JARVIS_DIR" 2>/dev/null || true   # bundle runs the live source — deny others write
 cat > "$PLIST" <<PL
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
