@@ -8,6 +8,8 @@ knowledge.json
 profile.json
 alarms.json
 logs/
+# Signing material — never commit (keychain password + identity hash)
+.signing/
 *.boot.log
 *.boot.err
 

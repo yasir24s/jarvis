@@ -30,6 +30,17 @@ chown -R "$REAL_USER:staff" "$JARVIS_DIR"
 chmod -R go-w "$JARVIS_DIR"
 as_user() { sudo -u "$REAL_USER" -H bash -l -c "$1"; }
 
+# Sign dist/JARVIS.app with the stable local identity (created once by
+# setup-signing.sh) instead of ad-hoc `codesign -s -`: ad-hoc signatures change
+# on every rebuild, which resets the user's mic/TCC grants each time. Must run
+# in the real user's context — the signing keychain lives in their
+# ~/Library/Keychains and setup-signing.sh writes .signing/config as them.
+sign_app_stable() {
+  as_user "cd '$JARVIS_DIR' && ./setup-signing.sh && source .signing/config && \
+    security unlock-keychain -p \"\$KEYCHAIN_PASSWORD\" \"\$KEYCHAIN\" && \
+    codesign --force --deep --sign \"\$IDENTITY\" --keychain \"\$KEYCHAIN\" dist/JARVIS.app"
+}
+
 # ── Determine chosen model from installer marker files ────────────────────────
 # Each model-selector package installs a tiny .model-Xb marker file.
 # If the user somehow picked multiple, the largest wins.
@@ -254,7 +265,10 @@ echo "▶ 7/8  JARVIS.app..."
 chown -R "$REAL_USER:staff" "$JARVIS_DIR"
 if [ "$OFFLINE" -eq 1 ] && [ -d "$JARVIS_DIR/dist/JARVIS.app" ]; then
   echo "  Using pre-built JARVIS.app."
-  codesign --force --deep --sign - "$JARVIS_DIR/dist/JARVIS.app" 2>/dev/null || true
+  sign_app_stable || {
+    echo "  WARNING: stable signing failed — falling back to ad-hoc (mic permission will reset on rebuilds)."
+    as_user "codesign --force --deep --sign - '$JARVIS_DIR/dist/JARVIS.app'" 2>/dev/null || true
+  }
 else
   as_user "cd '$JARVIS_DIR' && rm -rf build dist && \
     '$PY' setup.py py2app -A 2>&1 | tail -3" || { echo "ERROR: py2app failed."; exit 1; }
@@ -264,7 +278,10 @@ else
   as_user "/usr/libexec/PlistBuddy \
     -c 'Add :LSArchitecturePriority:0 string arm64' \
     '$JARVIS_DIR/dist/JARVIS.app/Contents/Info.plist' 2>/dev/null || true"
-  as_user "codesign --force --deep --sign - '$JARVIS_DIR/dist/JARVIS.app'"
+  sign_app_stable || {
+    echo "  WARNING: stable signing failed — falling back to ad-hoc (mic permission will reset on rebuilds)."
+    as_user "codesign --force --deep --sign - '$JARVIS_DIR/dist/JARVIS.app'"
+  }
   as_user "'$PY' '$JARVIS_DIR/make_icon.py' 2>/dev/null || true"
 fi
 rm -f "/Applications/JARVIS.app"
