@@ -8,7 +8,7 @@ staged=$(git diff --cached --name-only --diff-filter=ACM)
 # 1) Refuse sensitive filenames (defence-in-depth beyond .gitignore)
 for f in $staged; do
   case "$f" in
-    audd_key.txt|*key*.txt|*_config.json|.jarvis_config.json|voiceprint.npy|knowledge.json|alarms.json)
+    audd_key.txt|*key*.txt|*_config.json|.jarvis_config.json|voiceprint.npy|knowledge.json|profile.json|alarms.json)
       echo "BLOCK  sensitive file staged: $f"; fail=1 ;;
     logs/*|voices/*)
       echo "BLOCK  sensitive path staged: $f"; fail=1 ;;
