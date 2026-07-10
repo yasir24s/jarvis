@@ -1,0 +1,337 @@
+#!/bin/bash
+# JARVIS post-installation setup.
+# Runs as root; delegates user-context operations to the logged-in console user.
+set -euo pipefail
+
+JARVIS_DIR="/Library/Application Support/JARVIS"
+LOG_DIR="$JARVIS_DIR/logs"
+INSTALL_LOG="$LOG_DIR/install.log"
+
+mkdir -p "$LOG_DIR"
+exec > >(tee -a "$INSTALL_LOG") 2>&1
+echo "=== JARVIS install $(date) ==="
+
+# Detect embedded offline resources
+JARVIS_INSTALL=""
+[ -d "/Library/JARVIS-install" ] && JARVIS_INSTALL="/Library/JARVIS-install"
+OFFLINE=0; [ -n "$JARVIS_INSTALL" ] && OFFLINE=1
+[ "$OFFLINE" -eq 1 ] && echo "Mode: OFFLINE (bundled resources at $JARVIS_INSTALL)" \
+                      || echo "Mode: ONLINE (will download)"
+
+# ── Logged-in user ────────────────────────────────────────────────────────────
+REAL_USER=$(stat -f%Su /dev/console 2>/dev/null || true)
+[ -z "$REAL_USER" ] || [ "$REAL_USER" = "root" ] && REAL_USER="${SUDO_USER:-}"
+[ -z "$REAL_USER" ] && REAL_USER=$(who | awk '$2 ~ /console/ {print $1}' | head -1 || true)
+[ -z "$REAL_USER" ] && { echo "ERROR: Cannot determine logged-in user."; exit 1; }
+USER_HOME=$(dscl . -read "/Users/$REAL_USER" NFSHomeDirectory 2>/dev/null | awk '{print $2}')
+echo "Installing for user: $REAL_USER ($USER_HOME)"
+
+chown -R "$REAL_USER:staff" "$JARVIS_DIR"
+chmod -R go-w "$JARVIS_DIR"
+as_user() { sudo -u "$REAL_USER" -H bash -l -c "$1"; }
+
+# ── Determine chosen model from installer marker files ────────────────────────
+# Each model-selector package installs a tiny .model-Xb marker file.
+# If the user somehow picked multiple, the largest wins.
+RAM_GB=$(( $(sysctl -n hw.memsize) / 1024 / 1024 / 1024 ))
+echo "Detected RAM: ${RAM_GB} GB"
+
+CHOSEN_MODEL=""
+[ -f "$JARVIS_DIR/.model-72b" ] && CHOSEN_MODEL="qwen2.5:72b"
+[ -z "$CHOSEN_MODEL" ] && [ -f "$JARVIS_DIR/.model-32b" ] && CHOSEN_MODEL="qwen2.5:32b"
+[ -z "$CHOSEN_MODEL" ] && [ -f "$JARVIS_DIR/.model-14b" ] && CHOSEN_MODEL="qwen2.5:14b"
+[ -z "$CHOSEN_MODEL" ] && [ -f "$JARVIS_DIR/.model-7b"  ] && CHOSEN_MODEL="qwen2.5:7b"
+[ -z "$CHOSEN_MODEL" ] && [ -f "$JARVIS_DIR/.model-3b"  ] && CHOSEN_MODEL="qwen2.5:3b"
+rm -f "$JARVIS_DIR"/.model-{3b,7b,14b,32b,72b} 2>/dev/null || true
+
+# Fall back to RAM-appropriate default if no marker found
+if [ -z "$CHOSEN_MODEL" ]; then
+  if   [ "$RAM_GB" -ge 128 ]; then CHOSEN_MODEL="qwen2.5:72b"
+  elif [ "$RAM_GB" -ge  64 ]; then CHOSEN_MODEL="qwen2.5:32b"
+  elif [ "$RAM_GB" -ge  32 ]; then CHOSEN_MODEL="qwen2.5:14b"
+  elif [ "$RAM_GB" -ge  16 ]; then CHOSEN_MODEL="qwen2.5:7b"
+  else                              CHOSEN_MODEL="qwen2.5:3b"
+  fi
+  echo "No model marker found — defaulting to $CHOSEN_MODEL for ${RAM_GB} GB RAM."
+fi
+
+# Validate model fits in available RAM (protect user from accidental OOM)
+MODEL_RAM_REQ=0
+case "$CHOSEN_MODEL" in
+  qwen2.5:72b) MODEL_RAM_REQ=128 ;;
+  qwen2.5:32b) MODEL_RAM_REQ=64  ;;
+  qwen2.5:14b) MODEL_RAM_REQ=32  ;;
+  qwen2.5:7b)  MODEL_RAM_REQ=16  ;;
+  qwen2.5:3b)  MODEL_RAM_REQ=8   ;;
+esac
+if [ "$RAM_GB" -lt "$MODEL_RAM_REQ" ]; then
+  # Step down to the largest model that fits
+  if   [ "$RAM_GB" -ge 64 ]; then CHOSEN_MODEL="qwen2.5:32b"
+  elif [ "$RAM_GB" -ge 32 ]; then CHOSEN_MODEL="qwen2.5:14b"
+  elif [ "$RAM_GB" -ge 16 ]; then CHOSEN_MODEL="qwen2.5:7b"
+  else                            CHOSEN_MODEL="qwen2.5:3b"
+  fi
+  echo "  Note: selected model needs ${MODEL_RAM_REQ} GB RAM; using $CHOSEN_MODEL instead."
+fi
+
+echo "Selected model: $CHOSEN_MODEL"
+
+# ── 0/8  Python (if .install-python marker was laid down) ────────────────────
+if [ -f "$JARVIS_DIR/.install-python" ]; then
+  rm -f "$JARVIS_DIR/.install-python"
+
+  # Check whether a suitable Python is already present
+  PY_EXISTS=0
+  for candidate in \
+    "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3.14" \
+    "/Library/Frameworks/Python.framework/Versions/3.13/bin/python3.13" \
+    "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3.12" \
+    "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11"; do
+    [ -x "$candidate" ] && PY_EXISTS=1 && break
+  done
+
+  if [ "$PY_EXISTS" -eq 1 ]; then
+    echo "▶ 0/8  Python already installed — skipping."
+  elif [ "$OFFLINE" -eq 1 ] && [ -f "$JARVIS_INSTALL/python/python-latest.pkg" ]; then
+    echo "▶ 0/8  Installing Python from bundle..."
+    installer -pkg "$JARVIS_INSTALL/python/python-latest.pkg" -target / && \
+      echo "  Python installed." || echo "  WARNING: Python installer failed."
+  else
+    echo "▶ 0/8  Downloading and installing latest Python..."
+    PYTHON_VER=$(curl -fsSL "https://www.python.org/downloads/" 2>/dev/null | \
+      grep -oE 'Download Python [0-9]+\.[0-9]+\.[0-9]+' | head -1 | awk '{print $3}')
+    [ -z "$PYTHON_VER" ] && PYTHON_VER="3.13.3"
+    PYTHON_URL="https://www.python.org/ftp/python/${PYTHON_VER}/python-${PYTHON_VER}-macos11.pkg"
+    TMP_PY=$(mktemp -d)
+    curl -fsSL "$PYTHON_URL" -o "$TMP_PY/python.pkg" && \
+      installer -pkg "$TMP_PY/python.pkg" -target / && \
+      echo "  Python $PYTHON_VER installed." || echo "  WARNING: Python install failed."
+    rm -rf "$TMP_PY"
+  fi
+fi
+
+# ── 1/8  System deps (portaudio, ffmpeg) ──────────────────────────────────────
+echo "▶ 1/8  System dependencies..."
+if [ "$OFFLINE" -eq 1 ] && [ -f "$JARVIS_INSTALL/lib/libportaudio.2.dylib" ]; then
+  mkdir -p /opt/homebrew/opt/portaudio/lib
+  cp "$JARVIS_INSTALL/lib/libportaudio.2.dylib" /opt/homebrew/opt/portaudio/lib/
+  ln -sf /opt/homebrew/opt/portaudio/lib/libportaudio.2.dylib \
+         /opt/homebrew/lib/libportaudio.2.dylib 2>/dev/null || true
+  echo "  portaudio installed from bundle."
+else
+  BREW=""
+  for b in "/opt/homebrew/bin/brew" "/usr/local/bin/brew"; do
+    [ -x "$b" ] && BREW="$b" && break
+  done
+  if [ -z "$BREW" ]; then
+    echo "  Installing Homebrew..."
+    as_user 'NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"' || true
+    BREW="/opt/homebrew/bin/brew"; [ ! -x "$BREW" ] && BREW="/usr/local/bin/brew"
+  fi
+  [ -x "$BREW" ] && as_user "$BREW install portaudio ffmpeg 2>&1 | tail -3" || true
+fi
+
+if [ "$OFFLINE" -eq 1 ] && [ -d "$JARVIS_INSTALL/bin" ]; then
+  mkdir -p /usr/local/bin
+  for bin in ffmpeg ffprobe; do
+    [ -f "$JARVIS_INSTALL/bin/$bin" ] && \
+      cp "$JARVIS_INSTALL/bin/$bin" "/usr/local/bin/$bin" && \
+      chmod +x "/usr/local/bin/$bin"
+  done
+  echo "  ffmpeg installed from bundle."
+fi
+
+# ── 2/8  Python packages ──────────────────────────────────────────────────────
+echo "▶ 2/8  Python packages..."
+PY=""
+for candidate in \
+  "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3.14" \
+  "/Library/Frameworks/Python.framework/Versions/3.13/bin/python3.13" \
+  "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3.12" \
+  "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11"; do
+  [ -x "$candidate" ] && PY="$candidate" && break
+done
+[ -z "$PY" ] && PY=$(as_user "command -v python3" 2>/dev/null || true)
+[ -z "$PY" ] && { echo "ERROR: Python 3 not found. Install from python.org"; exit 1; }
+echo "  Using Python: $PY"
+
+PKGS="SpeechRecognition pyaudio faster-whisper piper-tts pywebview certifi pillow py2app \
+  pyobjc-framework-AVFoundation pyobjc-framework-Cocoa pyobjc-framework-Quartz pyobjc-framework-Vision"
+
+if [ "$OFFLINE" -eq 1 ] && [ -d "$JARVIS_INSTALL/wheels" ]; then
+  as_user "$PY -m pip install -q --no-index --find-links '$JARVIS_INSTALL/wheels' $PKGS" || \
+    as_user "$PY -m pip install -q --no-index --find-links '$JARVIS_INSTALL/wheels' --upgrade $PKGS"
+else
+  as_user "$PY -m pip install -q --upgrade $PKGS" || echo "  WARNING: some packages failed."
+fi
+as_user "$PY -m pip install -q resemblyzer 2>&1 | tail -1" || echo "  (resemblyzer skipped)"
+
+# ── 3/8  Piper voice model ────────────────────────────────────────────────────
+echo "▶ 3/8  Piper voice model..."
+mkdir -p "$JARVIS_DIR/voices"
+chown "$REAL_USER:staff" "$JARVIS_DIR/voices"
+if [ "$OFFLINE" -eq 1 ] && [ -d "$JARVIS_INSTALL/voices" ]; then
+  cp -n "$JARVIS_INSTALL/voices/"* "$JARVIS_DIR/voices/" 2>/dev/null || true
+  chown -R "$REAL_USER:staff" "$JARVIS_DIR/voices"
+  echo "  Installed from bundle."
+else
+  BASE="https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/alan/medium"
+  as_user "[ -f '$JARVIS_DIR/voices/en_GB-alan-medium.onnx' ] || \
+    curl -fL '$BASE/en_GB-alan-medium.onnx' -o '$JARVIS_DIR/voices/en_GB-alan-medium.onnx'" || true
+  as_user "[ -f '$JARVIS_DIR/voices/en_GB-alan-medium.onnx.json' ] || \
+    curl -fL '$BASE/en_GB-alan-medium.onnx.json' -o '$JARVIS_DIR/voices/en_GB-alan-medium.onnx.json'" || true
+fi
+
+# ── 4/8  Whisper model ────────────────────────────────────────────────────────
+echo "▶ 4/8  Whisper base.en..."
+if [ "$OFFLINE" -eq 1 ] && [ -d "$JARVIS_INSTALL/huggingface-cache" ]; then
+  for cache_dir in "$USER_HOME/.cache/huggingface/hub" "$USER_HOME/Library/Caches/huggingface/hub"; do
+    as_user "mkdir -p '$cache_dir'"
+    as_user "rsync -a --ignore-existing '$JARVIS_INSTALL/huggingface-cache/' '$cache_dir/'"
+    chown -R "$REAL_USER:staff" "$(dirname "$cache_dir")" 2>/dev/null || true
+    echo "  Installed to $cache_dir"
+    break
+  done
+else
+  as_user "$PY -c \
+    \"from faster_whisper import WhisperModel; WhisperModel('base.en', device='cpu', compute_type='int8')\"" || \
+    echo "  Whisper deferred — downloads on first run."
+fi
+
+# ── 5/8  Ollama app ───────────────────────────────────────────────────────────
+echo "▶ 5/8  Ollama app..."
+if [ -d "/Applications/Ollama.app" ]; then
+  echo "  Ollama.app already installed."
+elif [ "$OFFLINE" -eq 1 ] && [ -f "$JARVIS_INSTALL/ollama/Ollama-darwin.zip" ]; then
+  echo "  Installing Ollama from bundle..."
+  TMP_OLLAMA=$(mktemp -d)
+  as_user "unzip -q '$JARVIS_INSTALL/ollama/Ollama-darwin.zip' -d '$TMP_OLLAMA' 2>/dev/null || true"
+  if [ -d "$TMP_OLLAMA/Ollama.app" ]; then
+    cp -aR "$TMP_OLLAMA/Ollama.app" /Applications/
+  else
+    # zip might contain the .app directly or nested
+    find "$TMP_OLLAMA" -name "Ollama.app" -maxdepth 2 -exec cp -aR {} /Applications/ \; 2>/dev/null || true
+  fi
+  rm -rf "$TMP_OLLAMA"
+  [ -d "/Applications/Ollama.app" ] && echo "  Ollama installed." || echo "  WARNING: Ollama install failed."
+else
+  BREW=""
+  for b in "/opt/homebrew/bin/brew" "/usr/local/bin/brew"; do [ -x "$b" ] && BREW="$b" && break; done
+  [ -n "$BREW" ] && as_user "$BREW install --cask ollama 2>&1 | tail -3" || true
+fi
+
+# ── 6/8  Ollama model ─────────────────────────────────────────────────────────
+echo "▶ 6/8  Ollama model ($CHOSEN_MODEL)..."
+OLLAMA_HOME="$USER_HOME/.ollama"
+as_user "mkdir -p '$OLLAMA_HOME/models'"
+
+if [ "$CHOSEN_MODEL" = "qwen2.5:3b" ] && [ "$OFFLINE" -eq 1 ] && [ -d "$JARVIS_INSTALL/ollama-3b" ]; then
+  echo "  Restoring bundled 3B model blobs..."
+  as_user "rsync -a --ignore-existing \
+    '$JARVIS_INSTALL/ollama-3b/blobs/'    '$OLLAMA_HOME/models/blobs/'"
+  as_user "rsync -a --ignore-existing \
+    '$JARVIS_INSTALL/ollama-3b/manifests/' '$OLLAMA_HOME/models/manifests/'"
+  chown -R "$REAL_USER:staff" "$OLLAMA_HOME"
+  echo "  3B model installed (no download)."
+else
+  echo "  Downloading $CHOSEN_MODEL..."
+  as_user "open -a Ollama 2>/dev/null || true"
+  sleep 8
+  OLLAMA_BIN=""
+  for o in "/opt/homebrew/bin/ollama" "/usr/local/bin/ollama"; do
+    [ -x "$o" ] && OLLAMA_BIN="$o" && break
+  done
+  if [ -n "$OLLAMA_BIN" ]; then
+    as_user "$OLLAMA_BIN pull $CHOSEN_MODEL 2>&1 | tail -5" || \
+      echo "  Download failed — run: ollama pull $CHOSEN_MODEL"
+  else
+    echo "  Ollama CLI not found — run: ollama pull $CHOSEN_MODEL after first launch."
+  fi
+fi
+
+# ── 7/8  Build JARVIS.app ─────────────────────────────────────────────────────
+echo "▶ 7/8  JARVIS.app..."
+chown -R "$REAL_USER:staff" "$JARVIS_DIR"
+if [ "$OFFLINE" -eq 1 ] && [ -d "$JARVIS_DIR/dist/JARVIS.app" ]; then
+  echo "  Using pre-built JARVIS.app."
+  codesign --force --deep --sign - "$JARVIS_DIR/dist/JARVIS.app" 2>/dev/null || true
+else
+  as_user "cd '$JARVIS_DIR' && rm -rf build dist && \
+    '$PY' setup.py py2app -A 2>&1 | tail -3" || { echo "ERROR: py2app failed."; exit 1; }
+  as_user "/usr/libexec/PlistBuddy \
+    -c 'Add :LSArchitecturePriority array' \
+    '$JARVIS_DIR/dist/JARVIS.app/Contents/Info.plist' 2>/dev/null || true"
+  as_user "/usr/libexec/PlistBuddy \
+    -c 'Add :LSArchitecturePriority:0 string arm64' \
+    '$JARVIS_DIR/dist/JARVIS.app/Contents/Info.plist' 2>/dev/null || true"
+  as_user "codesign --force --deep --sign - '$JARVIS_DIR/dist/JARVIS.app'"
+  as_user "'$PY' '$JARVIS_DIR/make_icon.py' 2>/dev/null || true"
+fi
+rm -f "/Applications/JARVIS.app"
+ln -sf "$JARVIS_DIR/dist/JARVIS.app" "/Applications/JARVIS.app"
+
+# Screensaver
+(cd "$JARVIS_DIR/screensaver"
+  SAVER="JarvisReactor.saver"; rm -rf "$SAVER"; mkdir -p "$SAVER/Contents/MacOS"
+  clang -fobjc-arc -framework Cocoa -framework ScreenSaver -bundle \
+    -o "$SAVER/Contents/MacOS/JarvisReactor" JarvisReactor.m 2>/dev/null
+  cat > "$SAVER/Contents/Info.plist" <<'PL'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>CFBundleExecutable</key><string>JarvisReactor</string>
+  <key>CFBundleIdentifier</key><string>com.jarvis.screensaver</string>
+  <key>CFBundleName</key><string>JARVIS</string>
+  <key>CFBundlePackageType</key><string>BNDL</string>
+  <key>CFBundleShortVersionString</key><string>1.0</string>
+  <key>NSPrincipalClass</key><string>JarvisReactorView</string>
+</dict></plist>
+PL
+  codesign --force --deep --sign - "$SAVER" 2>/dev/null
+  mkdir -p "$USER_HOME/Library/Screen Savers"
+  rm -rf "$USER_HOME/Library/Screen Savers/JarvisReactor.saver"
+  cp -R "$SAVER" "$USER_HOME/Library/Screen Savers/"
+  chown -R "$REAL_USER:staff" "$USER_HOME/Library/Screen Savers/JarvisReactor.saver"
+) 2>/dev/null || echo "  (screensaver build skipped)"
+
+# ── 8/8  LaunchAgent ──────────────────────────────────────────────────────────
+echo "▶ 8/8  LaunchAgent (model: $CHOSEN_MODEL)..."
+PLIST="$USER_HOME/Library/LaunchAgents/com.jarvis.assistant.plist"
+as_user "mkdir -p '$USER_HOME/Library/LaunchAgents'"
+APP_BINARY="$JARVIS_DIR/dist/JARVIS.app/Contents/MacOS/JARVIS"
+
+cat > "$PLIST" <<PL
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.jarvis.assistant</string>
+  <key>ProgramArguments</key><array>
+    <string>${APP_BINARY}</string>
+  </array>
+  <key>EnvironmentVariables</key><dict>
+    <key>PYTHONUNBUFFERED</key><string>1</string>
+    <key>JARVIS_MODEL</key><string>${CHOSEN_MODEL}</string>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>DYLD_LIBRARY_PATH</key><string>/opt/homebrew/opt/portaudio/lib:/opt/homebrew/lib</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>10</integer>
+  <key>StandardOutPath</key><string>${JARVIS_DIR}/logs/jarvis.boot.log</string>
+  <key>StandardErrorPath</key><string>${JARVIS_DIR}/logs/jarvis.boot.err</string>
+</dict></plist>
+PL
+chown "$REAL_USER:staff" "$PLIST"
+as_user "launchctl unload '$PLIST' 2>/dev/null || true"
+as_user "launchctl load '$PLIST'"
+
+# Cleanup embedded install resources
+[ -d "/Library/JARVIS-install" ] && rm -rf "/Library/JARVIS-install"
+
+echo ""
+echo "✓  JARVIS installed — model: $CHOSEN_MODEL  (${RAM_GB} GB RAM)"
+echo ""
+echo "Grant permissions in System Settings > Privacy & Security:"
+echo "  • Microphone  • Screen Recording  • Full Disk Access  • Automation"
+echo ""
+echo "Say 'Jarvis' to begin."

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {
+    font-family: -apple-system, sans-serif;
+    font-size: 13px;
+    color: #1d1d1f;
+    padding: 20px 24px;
+    margin: 0;
+    line-height: 1.5;
+  }
+  h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; color: #0a84ff; }
+  h2 { font-size: 13px; font-weight: 600; margin: 14px 0 4px; }
+  p  { margin: 0 0 8px; }
+  ul { margin: 0 0 8px; padding-left: 18px; }
+  li { margin-bottom: 3px; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; font-size: 12px; }
+  th { text-align: left; color: #6e6e73; font-weight: 500; padding: 2px 8px 2px 0; border-bottom: 1px solid #e5e5ea; }
+  td { padding: 4px 8px 4px 0; border-bottom: 1px solid #f2f2f7; }
+  td:first-child { font-weight: 500; }
+  .bundled { color: #1a7f37; font-size: 11px; font-weight: 600; }
+  .note {
+    background: #f2f2f7;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #3a3a3c;
+  }
+</style>
+</head>
+<body>
+
+<h1>JARVIS</h1>
+<p><em>Just A Rather Very Intelligent System</em> — a fully local, always-on voice assistant for your Mac.</p>
+
+<h2>AI model selection</h2>
+<p>The installer auto-selects the best AI model for your Mac's RAM.
+Click <strong>Customize</strong> on the Installation Type screen to change it.</p>
+
+<table>
+  <tr><th>Model</th><th>RAM</th><th>Quality</th><th>Size</th></tr>
+  <tr><td>3B</td><td>8 GB+</td><td>Good, fast</td><td><span class="bundled">bundled — no download</span></td></tr>
+  <tr><td>7B</td><td>16 GB+</td><td>Great</td><td>~4.5 GB download</td></tr>
+  <tr><td>14B</td><td>32 GB+</td><td>Excellent</td><td>~9 GB download</td></tr>
+  <tr><td>32B</td><td>64 GB+</td><td>Near GPT-4</td><td>~20 GB download</td></tr>
+  <tr><td>72B</td><td>128 GB+</td><td>Best</td><td>~45 GB download</td></tr>
+</table>
+
+<p>The 3B model is bundled — no internet needed. Larger models download once during installation.</p>
+
+<h2>What gets installed</h2>
+<ul>
+  <li>App bundle → <code>/Library/Application Support/JARVIS/</code> + <code>/Applications/JARVIS.app</code></li>
+  <li>LaunchAgent — starts JARVIS automatically at login</li>
+  <li>Screensaver — arc-reactor animation for lock screen</li>
+  <li>Python (latest stable) — auto-installed if not already present</li>
+  <li>All Python packages, portaudio, ffmpeg, Ollama, and voice models — bundled</li>
+</ul>
+
+</body>
+</html>

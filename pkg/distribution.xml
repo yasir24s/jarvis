@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <title>JARVIS</title>
+    <welcome file="welcome.html" mime-type="text/html"/>
+    <license file="license.html" mime-type="text/html"/>
+
+    <!-- "Customize" button appears — model selection lives there -->
+    <options customize="allow" require-scripts="true" rootVolumeOnly="true"/>
+
+    <volume-check>
+        <allowed-os-versions>
+            <os-version min="11.0"/>
+        </allowed-os-versions>
+    </volume-check>
+
+    <script><![CDATA[
+    function ramGB() {
+        return Math.round(parseInt(system.sysctl('hw.memsize')) / (1024 * 1024 * 1024));
+    }
+
+    /* Python: recommend installing if no python.org framework found */
+    function pythonNeeded() {
+        var vers = ['3.14', '3.13', '3.12', '3.11'];
+        for (var i = 0; i < vers.length; i++) {
+            if (system.files.fileExistsAtPath(
+                '/Library/Frameworks/Python.framework/Versions/' + vers[i])) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
+    /* AI model — auto-select based on RAM */
+    function sel3b()  { return ramGB() < 16 ? 1 : 0; }
+    function sel7b()  { var r = ramGB(); return (r >= 16 && r < 32)  ? 1 : 0; }
+    function sel14b() { var r = ramGB(); return (r >= 32 && r < 64)  ? 1 : 0; }
+    function sel32b() { var r = ramGB(); return (r >= 64 && r < 128) ? 1 : 0; }
+    function sel72b() { return ramGB() >= 128 ? 1 : 0; }
+    ]]></script>
+
+    <choices-outline>
+        <!-- Core is always installed, hidden from the list -->
+        <line choice="core"/>
+        <!-- Python (prerequisite) -->
+        <line choice="python"/>
+        <!-- AI model — one should be selected -->
+        <line choice="model-3b"/>
+        <line choice="model-7b"/>
+        <line choice="model-14b"/>
+        <line choice="model-32b"/>
+        <line choice="model-72b"/>
+    </choices-outline>
+
+    <!-- Core — always installed, not shown to user -->
+    <choice id="core" title="JARVIS" visible="false"
+            selected="true" enabled="false">
+        <pkg-ref id="com.jarvis.core"/>
+    </choice>
+
+    <!-- ── Python ────────────────────────────────────────────────────────── -->
+    <choice id="python"
+        title="Python (latest stable) — required"
+        description="Installs the latest Python from python.org into /Library/Frameworks/Python.framework/. Required to run JARVIS. Automatically skipped if Python 3.11 or newer is already installed."
+        selected="pythonNeeded()">
+        <pkg-ref id="com.jarvis.python"/>
+    </choice>
+
+    <!-- ── AI Model choices ──────────────────────────────────────────────── -->
+    <choice id="model-3b"
+        title="3B — Efficient  ·  8 GB RAM  ·  bundled, no download"
+        description="qwen2.5:3b — Fast, capable everyday assistant. Bundled inside this installer so no internet is needed. Best for MacBooks and Macs with 8 GB RAM."
+        selected="sel3b()">
+        <pkg-ref id="com.jarvis.model.3b"/>
+    </choice>
+
+    <choice id="model-7b"
+        title="7B — Balanced   · 16 GB RAM  ·  ~4.5 GB download"
+        description="qwen2.5:7b — A big step up in reasoning and language quality. Great for most tasks. Recommended for 16 GB RAM Macs."
+        selected="sel7b()">
+        <pkg-ref id="com.jarvis.model.7b"/>
+    </choice>
+
+    <choice id="model-14b"
+        title="14B — High quality  ·  32 GB RAM  ·  ~9 GB download"
+        description="qwen2.5:14b — Excellent reasoning, coding, and conversation quality. Runs well on 32 GB M-series Macs."
+        selected="sel14b()">
+        <pkg-ref id="com.jarvis.model.14b"/>
+    </choice>
+
+    <choice id="model-32b"
+        title="32B — Best quality  ·  64 GB RAM  ·  ~20 GB download"
+        description="qwen2.5:32b — Near GPT-4-class quality, fully private and offline. Requires a Mac with 64 GB unified memory (M2/M3 Max or Ultra)."
+        selected="sel32b()">
+        <pkg-ref id="com.jarvis.model.32b"/>
+    </choice>
+
+    <choice id="model-72b"
+        title="72B — Maximum quality  ·  128 GB RAM  ·  ~45 GB download"
+        description="qwen2.5:72b — State-of-the-art local LLM performance. Requires 128 GB unified memory (Mac Studio / Mac Pro with M2/M3 Ultra)."
+        selected="sel72b()">
+        <pkg-ref id="com.jarvis.model.72b"/>
+    </choice>
+
+    <!-- Python + model packages listed BEFORE core so markers exist when core's postinstall runs -->
+    <!-- installKBytes drives the Size column and Space Required calculation -->
+    <pkg-ref id="com.jarvis.python"    version="1.0" auth="root" installKBytes="153600">JARVIS-python.pkg</pkg-ref>
+    <pkg-ref id="com.jarvis.model.3b"  version="1.0" auth="root" installKBytes="2097152">JARVIS-model-3b.pkg</pkg-ref>
+    <pkg-ref id="com.jarvis.model.7b"  version="1.0" auth="root" installKBytes="4816896">JARVIS-model-7b.pkg</pkg-ref>
+    <pkg-ref id="com.jarvis.model.14b" version="1.0" auth="root" installKBytes="9437184">JARVIS-model-14b.pkg</pkg-ref>
+    <pkg-ref id="com.jarvis.model.32b" version="1.0" auth="root" installKBytes="20971520">JARVIS-model-32b.pkg</pkg-ref>
+    <pkg-ref id="com.jarvis.model.72b" version="1.0" auth="root" installKBytes="47185920">JARVIS-model-72b.pkg</pkg-ref>
+    <pkg-ref id="com.jarvis.core"      version="1.0" auth="root">JARVIS-core.pkg</pkg-ref>
+</installer-gui-script>
