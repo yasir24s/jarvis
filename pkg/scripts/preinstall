@@ -1,0 +1,20 @@
+#!/bin/bash
+# Pre-installation checks for JARVIS.
+set -e
+
+OS_VERSION=$(sw_vers -productVersion)
+MAJOR=$(echo "$OS_VERSION" | cut -d. -f1)
+
+if [ "$MAJOR" -lt 11 ]; then
+  osascript -e 'display dialog "JARVIS requires macOS 11.0 (Big Sur) or later.\n\nFound: '"$OS_VERSION"'" buttons {"OK"} with icon stop' 2>/dev/null || true
+  echo "ERROR: macOS $OS_VERSION is too old. JARVIS requires 11.0+."
+  exit 1
+fi
+
+ARCH=$(uname -m)
+if [ "$ARCH" != "arm64" ]; then
+  echo "WARNING: JARVIS is optimised for Apple Silicon. Running on $ARCH — Ollama GPU acceleration will be unavailable."
+fi
+
+echo "Preflight passed: macOS $OS_VERSION ($ARCH)"
+exit 0
