@@ -13,7 +13,7 @@
 #   SIGN_IDENTITY="Developer ID Installer: Your Name (TEAMID)" ./build_pkg.sh
 set -euo pipefail
 
-VERSION="1.0"
+VERSION="1.1"
 JARVIS_DIR="$(cd "$(dirname "$0")" && pwd)"
 OFFLINE_RESOURCES="$JARVIS_DIR/pkg/offline-resources"
 STAGING="${JARVIS_DIR}/.pkg-staging"
