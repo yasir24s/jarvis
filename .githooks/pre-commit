@@ -10,7 +10,7 @@ for f in $staged; do
   case "$f" in
     audd_key.txt|*key*.txt|*_config.json|.jarvis_config.json|voiceprint.npy|knowledge.json|profile.json|alarms.json)
       echo "BLOCK  sensitive file staged: $f"; fail=1 ;;
-    logs/*|voices/*)
+    logs/*|voices/*|.signing/*)
       echo "BLOCK  sensitive path staged: $f"; fail=1 ;;
   esac
 done

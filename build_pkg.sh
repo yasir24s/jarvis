@@ -43,6 +43,7 @@ rsync -a \
   --exclude='voices' --exclude='logs' \
   --exclude='alarms.json' --exclude='knowledge.json' \
   --exclude='voiceprint.npy' --exclude='audd_key.txt' \
+  --exclude='.signing' \
   --exclude='*.pkg' --exclude='*.dmg' --exclude='pkg' \
   "$JARVIS_DIR/" "$JARVIS_INSTALL/"
 

@@ -47,11 +47,18 @@ echo "▶ 5/8  Cache offline Whisper model..."
 
 echo "▶ 6/8  Build the JARVIS.app bundle (grantable mic identity + GUI session)..."
 cd "$JARVIS_DIR"
+./setup-signing.sh          # idempotent: creates the stable signing identity once
 rm -rf build dist
 "$PY" setup.py py2app -A >/dev/null
 /usr/libexec/PlistBuddy -c "Add :LSArchitecturePriority array" dist/JARVIS.app/Contents/Info.plist 2>/dev/null || true
 /usr/libexec/PlistBuddy -c "Add :LSArchitecturePriority:0 string arm64" dist/JARVIS.app/Contents/Info.plist 2>/dev/null || true
-codesign --force --deep --sign - dist/JARVIS.app
+# Sign with the stable identity from setup-signing.sh — NOT `codesign -s -`:
+# ad-hoc signing yields a new designated requirement every build, which resets
+# the mic/TCC grants on each rebuild. No --options runtime (hardened runtime
+# breaks self-signed identities + Python dylib loading).
+source "$JARVIS_DIR/.signing/config"
+security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+codesign --force --deep --sign "$IDENTITY" --keychain "$KEYCHAIN" dist/JARVIS.app
 "$PY" make_icon.py 2>/dev/null || echo "   (icon step skipped)"
 
 echo "▶ 7/8  Build & install the JARVIS screen saver..."
