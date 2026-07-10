@@ -34,6 +34,14 @@ residual risks an operator should understand.
 3. **Least-privilege file reads.** `read_file` denies sensitive locations (SSH keys,
    keychains, Messages database, tokens, the voiceprint).
 4. **Speaker verification.** With enrollment, only the operator's voice triggers actions.
+   The same voiceprint also gates barge-in (interrupting JARVIS mid-sentence, `JARVIS_BARGE_IN`):
+   it is disabled entirely unless a voiceprint is enrolled, requires ~800ms of continuous
+   VAD-confirmed speech before it will even attempt a speaker match, and fails *closed* on
+   any short/ambiguous clip — the opposite default from normal command gating (which fails
+   open on short clips so a legitimate short command isn't dropped). This asymmetry is
+   deliberate: a false-accept during normal gating just means a short command is heard; a
+   false-accept during barge-in means JARVIS's own leaked TTS audio could be misread as an
+   interruption, so that direction is the one to bias against.
 5. **Injection-safe interpolation.** AppleScript strings are escaped; HUD captions are
    JSON-encoded before injection; URLs are percent-encoded; YouTube IDs are constrained.
 6. **No plaintext network secrets.** Geolocation uses HTTPS; all HTTPS uses the `certifi`
