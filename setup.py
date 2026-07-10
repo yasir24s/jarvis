@@ -18,8 +18,8 @@ OPTIONS = {
         "CFBundleName": "JARVIS",
         "CFBundleDisplayName": "JARVIS",
         "CFBundleIdentifier": "com.jarvis.assistant",
-        "CFBundleShortVersionString": "1.0",
-        "CFBundleVersion": "1.0",
+        "CFBundleShortVersionString": "1.1",
+        "CFBundleVersion": "1.1",
         "LSMinimumSystemVersion": "11.0",
         "NSMicrophoneUsageDescription":
             "JARVIS listens for your voice commands so it can respond and control your Mac.",
