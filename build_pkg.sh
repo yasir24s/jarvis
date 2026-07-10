@@ -44,7 +44,7 @@ rsync -a \
   --exclude='alarms.json' --exclude='knowledge.json' \
   --exclude='voiceprint.npy' --exclude='audd_key.txt' \
   --exclude='.signing' \
-  --exclude='*.pkg' --exclude='*.dmg' --exclude='pkg' \
+  --exclude='*.pkg' --exclude='*.dmg' --exclude='*.zip' --exclude='pkg' \
   "$JARVIS_DIR/" "$JARVIS_INSTALL/"
 
 if [ "$OFFLINE" -eq 1 ]; then
