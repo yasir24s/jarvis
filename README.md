@@ -33,9 +33,34 @@ arc-reactor HUD. Built first for Apple Silicon Macs; it also runs on Windows 10/
   hidden until spoken to. Runs as a background agent (no Dock icon).
 - **Screen saver** — a matching native arc-reactor (`screensaver/`) for the lock/idle screen.
 - **Skills** — open any installed app, control music (library → YouTube fallback),
-  volume, weather, location, timers, **alarms**, **reminders**, calendar, messages,
-  notes, web + Wikipedia lookup, file search/read, screen-awareness (OCR), clipboard,
+  volume, **brightness**, weather, location, timers, **alarms**, **reminders**, calendar
+  (read **and create events**), messages (read **and send iMessages**), **send email**,
+  **contact lookup**, **news headlines**, notes, **dictation** ("type…"), **screenshots**,
+  **lock screen**, **empty trash**, **system diagnostics** (CPU/RAM/disk/battery/uptime),
+  web + Wikipedia lookup, file search/read, screen-awareness (OCR), clipboard,
   song-ID from lyrics, and Shazam-style ambient music ID (via AudD, optional token).
+- **Smart home & automations** — "turn off the lights" runs your matching Apple/HomeKit
+  Shortcut; any shortcut is voice-callable by (fuzzy) name, e.g. "run the encode to MP3
+  shortcut".
+- **Everyday controls** — quit apps ("close Spotify", "close everything"), cancellable
+  timers ("how long left?", "cancel the timer"), **recurring alarms** ("wake me up every
+  day at 7"), "copy that" (last reply → clipboard), "Google X" / "search YouTube for X"
+  in the browser, "what's my IP", AirPods battery, and "goodnight, Jarvis" to sleep the
+  Mac.
+- **Deep system access** — Spotlight-powered file search by *content* ("find my tax PDF",
+  "recent files"), open/reveal files, jump to any **System Settings pane** ("open
+  bluetooth settings", "open microphone privacy"), and flip **hidden macOS options**
+  ("turn on dark mode", "show hidden files", "enable dock autohide", "turn off wifi").
+  All at user level — no sudo; the prompt-injection guard stays active.
+- **Browser awareness** — "summarize this page" reads the article open in Safari/Chrome
+  and gives you the gist aloud.
+- **Optional real vision** — set `JARVIS_VISION_MODEL` to a local Ollama vision model
+  (e.g. `moondream`) and "what do you see" truly describes the screen, not just its text.
+- **Proactive meeting alerts** — opt-in: "Sir, your meeting starts in about five minutes."
+- **Welcome-back greeting** — greets you by time of day when you unlock the Mac after
+  being away (opt-out `JARVIS_GREET_UNLOCK=0`).
+- **Memory across restarts** — the recent conversation reloads on start (`history.json`,
+  never committed).
 
 ## Setup
 
@@ -74,8 +99,17 @@ Microphone**. Optional extras: `winget install Gyan.FFmpeg` (deeper voice pitch)
 | `JARVIS_BARGE_IN` | `1` | Allow interrupting JARVIS mid-sentence; only active once a voice is enrolled. Set `0` to disable. |
 | `JARVIS_BRIEFING_TIME` | — | Opt-in: speak the daily briefing once a day at this time, e.g. `08:00` (24h). Unset = never speaks unless asked. |
 | `JARVIS_LOW_BATTERY` | — | Opt-in: speak a one-time (per-hour cooldown) warning when battery drops to/below this percent, e.g. `20`. Unset = never warns unasked. |
+| `JARVIS_GREET_UNLOCK` | `1` | Greet you by time of day when you unlock the Mac after being away >2 min. Set `0` to disable. |
+| `JARVIS_NEWS_FEED` | BBC RSS | RSS feed URL used for spoken news headlines. |
+| `JARVIS_MEETING_ALERTS` | — | Opt-in: announce calendar events this many minutes before they start, e.g. `5`. Unset = off. |
+| `JARVIS_VISION_MODEL` | — | Opt-in: local Ollama vision model (e.g. `moondream`) for true screen description; unset = OCR-only. Pull it first: `ollama pull moondream`. |
 | `JARVIS_KEEP_AWAKE` | `1` | Keep listening while locked/idle (uses battery) |
 | `AUDD_API_KEY` | — | Free [AudD](https://audd.io) token for ambient song ID |
+
+**macOS permissions the new skills need** (macOS prompts once, on first use — click Allow):
+Messages/Mail/Contacts/Calendar **Automation** for sending texts/email and creating events;
+**Accessibility** for dictation (`type_text`) and brightness (or `brew install brightness`);
+**Screen Recording** for screenshots. Grant them in **System Settings → Privacy & Security**.
 
 ## Privacy & secret-guard
 This repo intentionally **excludes** your voiceprint, spoken-command logs, learned
