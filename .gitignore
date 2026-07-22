@@ -8,6 +8,7 @@ knowledge.json
 profile.json
 alarms.json
 history.json
+corrections.json
 logs/
 # Signing material — never commit (keychain password + identity hash)
 .signing/

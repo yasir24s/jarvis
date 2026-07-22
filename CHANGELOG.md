@@ -1,3 +1,37 @@
+# JARVIS Changelog — 2026-07-22 (music, self-correcting STT, risk-tiered actions)
+
+### Music.app control
+- New tools (both backends, via the same `execute_tool`): `music_now_playing` (name/artist/
+  album), `music_search` (library search, read-only), `music_play` (library→online),
+  `music_control` (play/pause/next/previous + Music player volume). Music-only (Spotify
+  isn't installed; referencing its terminology broke the script). `_MUSIC_RULE` now points
+  the model at these tools.
+
+### Self-correcting transcription
+- `corrections.json` store (gitignored) of `{heard, meant}` pairs. Teach by voice — "I said
+  X not Y" / "correct Y to X"; forget with "forget the correction for Y". `_apply_corrections`
+  runs at the `transcribe()` choke point (+ soft-wake), substituting known mishears and logging
+  each; it never alters a teach command. Explicit-only (no learning from guesses), stdlib
+  difflib, negligible footprint. Caveat: whole-word replace can over-correct a word you also
+  say legitimately — teach distinctive mishears, and everything is logged/forgettable.
+
+### Risk-tiered destructive actions + bounded sudo
+- Actions are classified by context into **instant / voice-confirm / block**. Instant: home
+  deletes (→ Trash, recoverable), in-home writes/moves, ordinary shell. Confirm (spoken, gated
+  by enrolled voice, 25 s): permanent/out-of-home deletes, clobbering moves/overwrites, and
+  destructive shell (`rm`/`kill`/`shutdown`/`chmod`). Block: `rm -rf /`, disk wipes, SIP/TCC
+  teardown, reverse shells, `curl|sh`, root shells, system-path writes.
+- New gated tools: `delete_file` (Trash-first), `move_file`, `write_file`. `_run_command`
+  split into block/confirm tiers via `_shell_risk`; confirmation gate consumed at `handle_one`.
+- **Full read access**: sensitive-path read block removed; search already volume-wide. The
+  prompt-injection guard still blocks untrusted-content-driven read→exfiltrate chains.
+- **Bounded sudo** ("to a certain extent"): a 13-command NOPASSWD allowlist enforced both in
+  JARVIS (`_SUDO_ALLOW`) and the OS (`/etc/sudoers.d/jarvis`, installed manually). All sudo is
+  confirm-gated; `killall`/`shutdown` pinned to exact safe forms; anything off-list refused.
+- System-prompt rule updated: relay the "say confirm" gate instead of assuming success.
+
+---
+
 # JARVIS Changelog — 2026-07-12 (deep system access)
 
 JARVIS now reaches the whole machine: every file (by content, not just name), every
