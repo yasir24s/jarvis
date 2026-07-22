@@ -25,10 +25,12 @@ echo "▶ 2/8  Python packages..."
 "$PY" -m pip install -q --upgrade \
     SpeechRecognition pyaudio faster-whisper piper-tts pywebview certifi pillow py2app \
     pyobjc-framework-AVFoundation pyobjc-framework-Cocoa pyobjc-framework-Quartz \
-    pyobjc-framework-Vision openwakeword
+    pyobjc-framework-Vision pyobjc-framework-EventKit openwakeword claude-agent-sdk
 "$PY" -c "from openwakeword.utils import download_models; download_models(model_names=['hey_jarvis'])"
 echo "   (optional) speaker recognition — this pulls torch and is large:"
 "$PY" -m pip install -q resemblyzer || echo "   resemblyzer skipped (speaker-ID disabled until installed)"
+echo "   (optional) Claude backend — needs the Claude Code CLI + Node and a 'claude login'."
+echo "   Without them JARVIS runs local-only on Ollama; no action required."
 
 echo "▶ 3/8  Start Ollama and pull the local model ($MODEL)..."
 open -a Ollama; sleep 5
@@ -96,7 +98,7 @@ cat > "$PLIST" <<PL
     <string>$JARVIS_DIR/dist/JARVIS.app/Contents/MacOS/JARVIS</string></array>
   <key>EnvironmentVariables</key><dict>
     <key>PYTHONUNBUFFERED</key><string>1</string>
-    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     <key>LANG</key><string>en_US.UTF-8</string>
     <key>LC_ALL</key><string>en_US.UTF-8</string></dict>
   <key>RunAtLoad</key><true/>

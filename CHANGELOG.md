@@ -38,6 +38,72 @@ post-untrusted-content executor lockout remain in force.
 
 ---
 
+# JARVIS Changelog — 2026-07-22 (calendar, transcription, PATH)
+
+### Calendar via EventKit
+- Calendar reads, event creation, and meeting alerts now go through **EventKit** (PyObjC)
+  instead of AppleScript. Calendar's `every event whose start date ≥ …` AppleScript query
+  returns `-600` on modern macOS even when listing calendar names works; EventKit is the
+  reliable, supported path. AppleScript remains an automatic fallback. Adds a one-time
+  Calendars permission prompt (`NSCalendarsFullAccessUsageDescription` in the bundle;
+  re-signed with the stable identity so existing TCC grants survive). New dep:
+  `pyobjc-framework-EventKit`.
+
+### Transcription (speech-to-text)
+- **Local-first by default.** `JARVIS_STT` now defaults to `whisper` (fully on-device) and
+  `JARVIS_WHISPER` to **`small.en`** (measured clearly better than `base.en` on-device,
+  ~600 MB, fits 8 GB). The Google cloud path is now opt-in (`JARVIS_STT=auto`/`google`) and
+  locale-aware (`JARVIS_STT_LANG`, default `en-GB`) — the old default silently sent audio
+  to Google as `en-US`, hurting non-US accents and contradicting the local-first design.
+- **Accuracy tuning:** `beam_size` 1 → 5 (weighs alternatives on short clips) and an
+  `initial_prompt` seeded with "Jarvis" + command vocabulary (stops short clips snapping
+  "jarvis" → "jobs"/"java's"). Configurable via `JARVIS_WHISPER_BEAM` / `JARVIS_WHISPER_PROMPT`.
+  Residual errors on ultra-short phrases remain `small.en`'s floor; Claude's intent
+  recovery masks most of them. (Bigger models / Apple Speech are for the 48 GB machine.)
+
+### System tools PATH fix
+- The LaunchAgent PATH was missing `/usr/sbin`, so `screencapture`, `networksetup`
+  (Wi-Fi toggle), `ioreg` (Bluetooth battery), and `system_profiler` (diagnostics) all
+  silently failed with "No such file or directory". Added `/usr/sbin:/sbin` to the PATH in
+  `install.sh` and the pkg postinstall. This is what made "see my screen" fail earlier —
+  a mis-heard command routed into a tool that was itself broken.
+
+---
+
+# JARVIS Changelog — 2026-07-12 (Claude Agent SDK backend)
+
+JARVIS gains a Claude brain — used when reachable, with the local model as a always-on
+safety net. This is an *addition*, not a swap: there was never any Claude integration
+before (JARVIS was 100% local Ollama), so Ollama becomes the fallback rather than the
+only path.
+
+- **Primary backend: Claude via the Claude Agent SDK**, signed in with your Claude
+  subscription (the SDK inherits the `claude` CLI's OAuth login). **No API key, no
+  pay-as-you-go** — any inherited `ANTHROPIC_API_KEY` is stripped at startup so only the
+  subscription login can be used.
+- **Automatic fallback to local Ollama** (`qwen2.5:3b`) on *any* Claude failure — not
+  signed in, no Agent SDK credit, rate limit, network, timeout, or the SDK/CLI being
+  absent — with a one-line log note naming the reason. JARVIS never crashes or hangs
+  waiting on Claude; a stalled call (default 45s) yields to the local model.
+- **Same tools in both modes.** Every existing JARVIS tool is bridged to an in-process
+  MCP tool that calls the *same* `execute_tool()` — one implementation, two front-ends.
+  Claude's own built-in Bash/file tools are left off (`tools=[]`), and the prompt-
+  injection guard (untrusted-content → block executor/outbound tools) is enforced on the
+  bridge exactly as on the local path (trust classes now defined once, module-level).
+- **Backend indicator (step 7).** A `Backend: …` log line each turn, plus a voice query —
+  "which model are you using?" / "are you using Claude?" — reports which handled the last
+  request.
+- **8GB-aware.** When Claude is the active backend, the ~3GB local model is *not*
+  pre-warmed — it loads lazily only on the first fallback. The Agent SDK spawns the
+  `claude` CLI per request (RAM-friendly) rather than holding a resident process.
+- **Config:** `JARVIS_USE_CLAUDE` (default on; `0` = local-only), `JARVIS_CLAUDE_MODEL`,
+  `JARVIS_CLAUDE_EFFORT` (default `low`), `JARVIS_CLAUDE_MAX_TURNS`, `JARVIS_CLAUDE_TIMEOUT_MS`.
+- **Deps:** `claude-agent-sdk` added to `install.sh` and `bundle_resources.sh`. Runtime
+  also needs the Claude Code CLI + Node (both already present here) and a prior
+  `claude login`; `setup.py` is alias-mode so it needs no change.
+
+---
+
 # JARVIS Changelog — 2026-07-12 (app intelligence)
 
 JARVIS now knows what every installed app IS, not just its name. Each app's Info.plist

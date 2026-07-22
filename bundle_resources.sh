@@ -42,7 +42,7 @@ mkdir -p "$RESOURCES/wheels"
 "$PY" -m pip download -q -d "$RESOURCES/wheels" \
   SpeechRecognition pyaudio faster-whisper piper-tts pywebview certifi pillow py2app \
   pyobjc-framework-AVFoundation pyobjc-framework-Cocoa pyobjc-framework-Quartz \
-  pyobjc-framework-Vision
+  pyobjc-framework-Vision pyobjc-framework-EventKit claude-agent-sdk
 echo "   $(ls "$RESOURCES/wheels" | wc -l | tr -d ' ') wheels downloaded."
 
 # ── 2/8  portaudio dylib ──────────────────────────────────────────────────────

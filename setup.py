@@ -25,6 +25,10 @@ OPTIONS = {
             "JARVIS listens for your voice commands so it can respond and control your Mac.",
         "NSSpeechRecognitionUsageDescription":
             "JARVIS transcribes your spoken commands.",
+        "NSCalendarsFullAccessUsageDescription":
+            "JARVIS reads and adds your calendar events when you ask (via EventKit).",
+        "NSCalendarsUsageDescription":
+            "JARVIS reads and adds your calendar events when you ask.",
     },
 }
 

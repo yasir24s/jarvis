@@ -328,7 +328,7 @@ cat > "$PLIST" <<PL
   <key>EnvironmentVariables</key><dict>
     <key>PYTHONUNBUFFERED</key><string>1</string>
     <key>JARVIS_MODEL</key><string>${CHOSEN_MODEL}</string>
-    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     <key>DYLD_LIBRARY_PATH</key><string>/opt/homebrew/opt/portaudio/lib:/opt/homebrew/lib</string>
   </dict>
   <key>RunAtLoad</key><true/>
