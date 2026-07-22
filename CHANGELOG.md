@@ -38,7 +38,37 @@ post-untrusted-content executor lockout remain in force.
 
 ---
 
-# JARVIS Changelog — 2026-07-22 (calendar, transcription, PATH)
+# JARVIS Changelog — 2026-07-22 (Claude brain, calendar, transcription, system PATH)
+
+Four changes this session, recorded in full so a later session — or the M4 Max migration —
+can pick up cleanly. Code for all four is committed and pushed (commit `1b69d71`); this
+changelog rewrite is a separate edit.
+
+### Claude Agent SDK brain (+ local Ollama fallback)
+JARVIS had NO Claude integration before — it was 100% local Ollama. This *adds* a Claude
+brain as the primary, with the local model as an always-on safety net (so Ollama becomes
+the fallback, not the only path).
+- **Primary: Claude via the Claude Agent SDK**, authenticated by the `claude` CLI's
+  subscription OAuth. **No API key, no pay-as-you-go** — any inherited `ANTHROPIC_API_KEY`
+  is stripped at startup so only the subscription login can be used.
+- **Fallback to local `qwen2.5:3b` on ANY Claude failure** (not signed in, no credit, rate
+  limit, network, timeout, or SDK/CLI absent) — logged with the reason; never crashes or
+  hangs (a stall yields after `JARVIS_CLAUDE_TIMEOUT_MS`, default 45 s). *Verified
+  end-to-end* by forcing a 1 ms timeout: JARVIS caught it, logged it, switched to
+  `local (qwen2.5:3b)`, and answered correctly. (Cosmetic: the reason label is imperfect
+  for some SDK errors, e.g. "error result: success" — behaviour is right, wording is off.)
+- **Same tools in both modes.** Every JARVIS tool is bridged to an in-process MCP tool that
+  calls the *same* `execute_tool()` — one implementation, two front-ends. Claude's built-in
+  Bash/file tools are off (`tools=[]`); the prompt-injection guard (untrusted content →
+  block executor/outbound tools) is enforced on the bridge exactly as on the local path.
+- **Backend indicator:** a `Backend: …` log line per turn, plus a voice query ("which model
+  are you using?").
+- **8 GB-aware:** the ~3 GB local model isn't pre-warmed while Claude is primary — it loads
+  lazily on first fallback; the SDK spawns the `claude` CLI per request (no resident process).
+- **Config:** `JARVIS_USE_CLAUDE` (default on; `0` = local-only), `JARVIS_CLAUDE_MODEL`,
+  `JARVIS_CLAUDE_EFFORT` (default `low`), `JARVIS_CLAUDE_MAX_TURNS`, `JARVIS_CLAUDE_TIMEOUT_MS`.
+- **Deps:** `claude-agent-sdk`; runtime also needs the `claude` CLI + Node + a prior
+  `claude login`. `setup.py` is alias-mode, so no change there.
 
 ### Calendar via EventKit
 - Calendar reads, event creation, and meeting alerts now go through **EventKit** (PyObjC)
@@ -67,40 +97,6 @@ post-untrusted-content executor lockout remain in force.
   silently failed with "No such file or directory". Added `/usr/sbin:/sbin` to the PATH in
   `install.sh` and the pkg postinstall. This is what made "see my screen" fail earlier —
   a mis-heard command routed into a tool that was itself broken.
-
----
-
-# JARVIS Changelog — 2026-07-12 (Claude Agent SDK backend)
-
-JARVIS gains a Claude brain — used when reachable, with the local model as a always-on
-safety net. This is an *addition*, not a swap: there was never any Claude integration
-before (JARVIS was 100% local Ollama), so Ollama becomes the fallback rather than the
-only path.
-
-- **Primary backend: Claude via the Claude Agent SDK**, signed in with your Claude
-  subscription (the SDK inherits the `claude` CLI's OAuth login). **No API key, no
-  pay-as-you-go** — any inherited `ANTHROPIC_API_KEY` is stripped at startup so only the
-  subscription login can be used.
-- **Automatic fallback to local Ollama** (`qwen2.5:3b`) on *any* Claude failure — not
-  signed in, no Agent SDK credit, rate limit, network, timeout, or the SDK/CLI being
-  absent — with a one-line log note naming the reason. JARVIS never crashes or hangs
-  waiting on Claude; a stalled call (default 45s) yields to the local model.
-- **Same tools in both modes.** Every existing JARVIS tool is bridged to an in-process
-  MCP tool that calls the *same* `execute_tool()` — one implementation, two front-ends.
-  Claude's own built-in Bash/file tools are left off (`tools=[]`), and the prompt-
-  injection guard (untrusted-content → block executor/outbound tools) is enforced on the
-  bridge exactly as on the local path (trust classes now defined once, module-level).
-- **Backend indicator (step 7).** A `Backend: …` log line each turn, plus a voice query —
-  "which model are you using?" / "are you using Claude?" — reports which handled the last
-  request.
-- **8GB-aware.** When Claude is the active backend, the ~3GB local model is *not*
-  pre-warmed — it loads lazily only on the first fallback. The Agent SDK spawns the
-  `claude` CLI per request (RAM-friendly) rather than holding a resident process.
-- **Config:** `JARVIS_USE_CLAUDE` (default on; `0` = local-only), `JARVIS_CLAUDE_MODEL`,
-  `JARVIS_CLAUDE_EFFORT` (default `low`), `JARVIS_CLAUDE_MAX_TURNS`, `JARVIS_CLAUDE_TIMEOUT_MS`.
-- **Deps:** `claude-agent-sdk` added to `install.sh` and `bundle_resources.sh`. Runtime
-  also needs the Claude Code CLI + Node (both already present here) and a prior
-  `claude login`; `setup.py` is alias-mode so it needs no change.
 
 ---
 
