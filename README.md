@@ -14,9 +14,14 @@ arc-reactor HUD. Built first for Apple Silicon Macs; it also runs on Windows 10/
   model ("hey jarvis") scans raw mic frames continuously; full speech-to-text only kicks
   in after it fires, instead of transcribing everything you say just to check for the
   wake word. Stays in conversation until you say "thank you, Jarvis."
-- **Local brain** — [Ollama](https://ollama.com) running `qwen2.5:3b` on the Metal GPU
-  (tool-calling). Swap to a bigger model via `JARVIS_MODEL` if you have the RAM — see
-  `JARVIS_MODEL` below for why 3B is the measured default on 8GB.
+- **Brain** — [Claude](https://claude.com) via the **Claude Agent SDK** (signed in with
+  your Claude subscription, no API key) when it's reachable, with automatic fallback to
+  the **local** [Ollama](https://ollama.com) `qwen2.5:3b` on the Metal GPU whenever a
+  Claude request doesn't go through (not signed in, no credit, rate limit, offline, or
+  the SDK/CLI absent). Both paths call the *same* tools. Ask "which model are you using?"
+  to hear which handled the last request. Claude is opt-out via `JARVIS_USE_CLAUDE=0`;
+  swap the local model via `JARVIS_MODEL` — see below for why 3B is the measured default
+  on 8GB.
 - **Streamed replies** — JARVIS starts speaking the first sentence of a reply while the
   rest is still being generated, instead of waiting for the whole answer.
 - **Barge-in** — once your voice is enrolled, you can talk over JARVIS mid-sentence to
@@ -24,7 +29,9 @@ arc-reactor HUD. Built first for Apple Silicon Macs; it also runs on Windows 10/
 - **Memory** — durable facts about *you* (name, preferences, ongoing projects) picked up
   from things you say ("my name is...", "I'm working on...", "remember that...") and
   recalled in later conversations; separate from the background research cache below.
-- **Ears** — Google STT when online, local **Whisper** (faster-whisper) when offline.
+- **Ears** — local **Whisper** (faster-whisper `small.en`, `beam_size=5`, with a JARVIS
+  vocabulary prompt) on-device by default — fully local, no cloud. Optional Google cloud
+  STT (en-GB) via `JARVIS_STT=auto` or `google`.
 - **Voice** — [Piper](https://github.com/rhasspy/piper) neural TTS (British male),
   pitch-tuned; falls back to macOS `say`.
 - **Speaker recognition** — enrol your voice ("Jarvis, learn my voice") and it responds
@@ -103,6 +110,15 @@ Microphone**. Optional extras: `winget install Gyan.FFmpeg` (deeper voice pitch)
 | `JARVIS_NEWS_FEED` | BBC RSS | RSS feed URL used for spoken news headlines. |
 | `JARVIS_MEETING_ALERTS` | — | Opt-in: announce calendar events this many minutes before they start, e.g. `5`. Unset = off. |
 | `JARVIS_VISION_MODEL` | — | Opt-in: local Ollama vision model (e.g. `moondream`) for true screen description; unset = OCR-only. Pull it first: `ollama pull moondream`. |
+| `JARVIS_USE_CLAUDE` | `1` | Use Claude (Agent SDK, subscription auth) as the primary brain when reachable, falling back to local Ollama. Set `0` for local-only. Needs the Claude Code CLI + Node and a prior `claude login`; never uses an API key or pay-as-you-go billing. |
+| `JARVIS_CLAUDE_MODEL` | — | Claude model for the Agent SDK (e.g. `sonnet`, `opus`); unset uses the CLI default. |
+| `JARVIS_CLAUDE_EFFORT` | `low` | Agent SDK effort level (`low`–`max`); `low` keeps spoken replies fast and light on your subscription quota. |
+| `JARVIS_CLAUDE_MAX_TURNS` | `6` | Max agentic tool-use turns per Claude request. |
+| `JARVIS_CLAUDE_TIMEOUT_MS` | `45000` | Per-request Claude timeout; on a stall JARVIS falls back to the local model. |
+| `JARVIS_STT` | `whisper` | Speech-to-text engine: `whisper` (local, on-device), `auto` (Google when online, Whisper fallback), or `google` (cloud only). |
+| `JARVIS_WHISPER` | `small.en` | Local Whisper model size (`tiny.en`/`base.en`/`small.en`/`medium.en`…). `small.en` is the 8 GB sweet spot. |
+| `JARVIS_WHISPER_BEAM` | `5` | Whisper beam width; higher = more accurate on short clips, slightly slower. |
+| `JARVIS_STT_LANG` | `en-GB` | Locale for the optional Google path. |
 | `JARVIS_KEEP_AWAKE` | `1` | Keep listening while locked/idle (uses battery) |
 | `AUDD_API_KEY` | — | Free [AudD](https://audd.io) token for ambient song ID |
 

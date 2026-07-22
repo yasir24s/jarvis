@@ -86,7 +86,16 @@ FALLBACK_VOICE  = "Daniel"
 
 HUD_HTML        = os.path.join(HERE, "hud.html")
 ENABLE_HUD      = os.environ.get("JARVIS_NO_HUD") != "1"
-WHISPER_SIZE    = os.environ.get("JARVIS_WHISPER", "base.en")
+WHISPER_SIZE    = os.environ.get("JARVIS_WHISPER", "small.en")           # measured better than base.en on-device
+STT_ENGINE      = os.environ.get("JARVIS_STT", "whisper").strip().lower() # local-first; "auto"/"google" are opt-in
+STT_LANG        = os.environ.get("JARVIS_STT_LANG", "en-GB")             # locale for the optional Google path
+WHISPER_BEAM    = int(os.environ.get("JARVIS_WHISPER_BEAM", "5") or "5") # >1 = weighs alternatives, more accurate on short clips
+# Bias the decoder toward JARVIS's own vocabulary — stops short, low-context clips
+# snapping "jarvis" → "jobs"/"java's" and helps command words survive.
+WHISPER_PROMPT  = os.environ.get("JARVIS_WHISPER_PROMPT",
+    "A short voice command spoken to JARVIS, a personal assistant. "
+    "Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, "
+    "screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.")
 KB_FILE         = os.path.join(HERE, "knowledge.json")
 HIST_FILE       = os.path.join(HERE, "history.json")
 CHANGELOG_FILE  = os.path.join(HERE, "CHANGELOG.md")
@@ -724,19 +733,26 @@ def whisper_transcribe(recognizer, audio) -> str:
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
         f.write(wav); path = f.name
     try:
-        segments, _ = get_whisper().transcribe(path, language="en", beam_size=1)
+        segments, _ = get_whisper().transcribe(
+            path, language="en", beam_size=WHISPER_BEAM, initial_prompt=WHISPER_PROMPT)
         return " ".join(s.text for s in segments).strip()
     finally:
         try: os.unlink(path)
         except OSError: pass
 
 def transcribe(recognizer, audio, online: bool) -> str:
-    if online:
+    # JARVIS_STT: "whisper" (default) = always local Whisper, fully on-device, no cloud;
+    # "google" = cloud only; "auto" = try Google when online (locale-aware) then fall
+    # back to local Whisper on any failure.
+    if STT_ENGINE != "whisper" and online:
         try:
-            return recognizer.recognize_google(audio)
+            return recognizer.recognize_google(audio, language=STT_LANG)
         except sr.UnknownValueError:
             return ""
         except Exception as e:
+            if STT_ENGINE == "google":
+                log(f"Online STT failed ({e}).")
+                return ""
             log(f"Online STT failed ({e}); using offline Whisper.")
     return whisper_transcribe(recognizer, audio)
 
@@ -1942,14 +1958,128 @@ def _recent_messages(n: int = 5) -> str:
     except Exception:
         return "I couldn't read Messages — please grant Full Disk Access, sir."
 
+def _applescript_errored(out: str) -> bool:
+    """True if osascript output is an error, not a result. Calendar/Mail/Contacts return
+    -600 ('Application isn't running') when the target app is cold; the old code spoke
+    that raw string aloud instead of catching it."""
+    low = (out or "").lower()
+    return ("-600" in out) or ("execution error" in low) or ("isn't running" in low) \
+        or ("not running" in low) or low.startswith("applescript error")
+
+def _ensure_app_running(app: str, wait: float = 2.0):
+    """Launch a scriptable app without bringing it to the front, then give it a moment
+    to become ready to answer queries (avoids the -600 cold-start race)."""
+    _run_applescript(f'tell application "{_as_escape(app)}" to launch')
+    time.sleep(wait)
+
+# ─── Calendar via EventKit (reliable) with AppleScript fallback ───────────────────
+# Calendar's AppleScript event queries (`every event whose start date ≥ …`) are flaky
+# on modern macOS — they return -600 even when listing calendar names works. EventKit
+# is the supported, reliable path. It needs a one-time "access your calendars" grant
+# (the app's Info.plist carries NSCalendarsFullAccessUsageDescription). If EventKit is
+# missing or not authorized, every reader/creator falls back to the AppleScript path.
+_ek_store = None
+def _ek():
+    global _ek_store
+    if _ek_store is None:
+        import EventKit as EK
+        _ek_store = EK.EKEventStore.alloc().init()
+    return _ek_store
+
+def _ek_authorized(timeout: float = 12.0) -> bool:
+    """Ensure full calendar access. Prompts once when undetermined; returns False if the
+    user has denied it (macOS won't let us re-prompt — they'd re-enable it in Settings)."""
+    try:
+        import EventKit as EK
+    except Exception:
+        return False
+    st = EK.EKEventStore.authorizationStatusForEntityType_(EK.EKEntityTypeEvent)
+    if st == 3:            # EKAuthorizationStatusFullAccess
+        return True
+    if st in (1, 2):       # restricted / denied — cannot prompt again
+        return False
+    store = _ek()          # notDetermined (0) / writeOnly (4) → request full access
+    done = threading.Event(); res = {"ok": False}
+    def handler(granted, err):
+        res["ok"] = bool(granted); done.set()
+    try:
+        store.requestFullAccessToEventsWithCompletionHandler_(handler)   # macOS 14+
+    except Exception:
+        try:
+            store.requestAccessToEntityType_completionHandler_(EK.EKEntityTypeEvent, handler)
+        except Exception as e:
+            log(f"EventKit access request failed: {e}")
+            return False
+    done.wait(timeout)
+    return res["ok"] or EK.EKEventStore.authorizationStatusForEntityType_(EK.EKEntityTypeEvent) == 3
+
+def _ek_events(start_dt, end_dt):
+    """[(title, start_epoch, all_day)] in the window, or None if EventKit is
+    unavailable/unauthorized so the caller falls back to AppleScript."""
+    try:
+        import EventKit as EK   # noqa: F401  (import proves availability)
+        from Foundation import NSDate
+        if not _ek_authorized():
+            return None
+        store = _ek()
+        s = NSDate.dateWithTimeIntervalSince1970_(start_dt.timestamp())
+        e = NSDate.dateWithTimeIntervalSince1970_(end_dt.timestamp())
+        pred = store.predicateForEventsWithStartDate_endDate_calendars_(s, e, None)
+        out = []
+        for ev in (store.eventsMatchingPredicate_(pred) or []):
+            sd = ev.startDate()
+            out.append(((ev.title() or "Untitled"),
+                        sd.timeIntervalSince1970() if sd else 0.0,
+                        bool(ev.isAllDay())))
+        out.sort(key=lambda x: x[1])
+        return out
+    except Exception as e:
+        log(f"EventKit read failed: {e}")
+        return None
+
+def _ek_create(title, start_dt, dur_secs):
+    """True/False if EventKit created (or failed to create) the event; None if EventKit
+    is unavailable/unauthorized so the caller can fall back to AppleScript."""
+    try:
+        import EventKit as EK
+        from Foundation import NSDate
+        if not _ek_authorized():
+            return None
+        store = _ek()
+        cal = store.defaultCalendarForNewEvents()
+        if cal is None:
+            return False
+        ev = EK.EKEvent.eventWithEventStore_(store)
+        ev.setTitle_(title)
+        ev.setStartDate_(NSDate.dateWithTimeIntervalSince1970_(start_dt.timestamp()))
+        ev.setEndDate_(NSDate.dateWithTimeIntervalSince1970_(start_dt.timestamp() + dur_secs))
+        ev.setCalendar_(cal)
+        ok, _err = store.saveEvent_span_error_(ev, EK.EKSpanThisEvent, None)
+        return bool(ok)
+    except Exception as e:
+        log(f"EventKit create failed: {e}")
+        return None
+
 def _calendar_today() -> str:
     if IS_WIN:
         return "I can't read a calendar on Windows yet, sir."
+    start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    evs = _ek_events(start, start + timedelta(days=1))
+    if evs is not None:                  # EventKit authorized — the reliable path
+        if not evs:
+            return "You have nothing on your calendar today, sir."
+        parts = []
+        for title, ts, all_day in evs:
+            parts.append(f"{title}, all day" if all_day else
+                         f"{title} at {datetime.fromtimestamp(ts).strftime('%I:%M %p').lstrip('0')}")
+        return "Today's schedule. " + ". ".join(parts) + "."
+    # EventKit unavailable/denied → AppleScript fallback (also handles cold-start -600).
     script = (
         'set output to ""\n'
         'set startD to (current date) - (time of (current date))\n'
         'set endD to startD + (1 * days)\n'
         'tell application "Calendar"\n'
+        '  launch\n'
         '  repeat with c in calendars\n'
         '    repeat with e in (every event of c whose start date ≥ startD and start date < endD)\n'
         '      set output to output & (summary of e) & " at " & (time string of (start date of e)) & ". "\n'
@@ -1957,6 +2087,12 @@ def _calendar_today() -> str:
         '  end repeat\n'
         'end tell\nreturn output')
     out = _run_applescript(script)
+    if _applescript_errored(out):        # Calendar was cold — start it and retry once
+        _ensure_app_running("Calendar")
+        out = _run_applescript(script)
+    if _applescript_errored(out):
+        return ("I couldn't reach Calendar, sir — you may need to grant JARVIS calendar "
+                "access in System Settings, Privacy and Security.")
     if not out or out.strip() in ("", "Done."):
         return "You have nothing on your calendar today, sir."
     return "Today's schedule. " + out
@@ -2095,14 +2231,24 @@ def _create_event(title: str, when_text: str, duration_minutes=60) -> str:
         dur = max(5, int(duration_minutes)) * 60
     except (TypeError, ValueError):
         dur = 3600
+    ok = _ek_create(title, dt, dur)      # EventKit first — reliable
+    if ok is True:
+        return f"Scheduled {title} for {dt.strftime('%A at %I:%M %p').replace(' 0', ' ')}, sir."
+    if ok is False:
+        return "I couldn't create that event, sir — check JARVIS's calendar access in Settings."
+    # ok is None → EventKit unavailable → AppleScript fallback.
     script = (
         'tell application "Calendar"\n'
+        '  launch\n'
         '  set c to first calendar whose writable is true\n'
         f'  tell c to make new event with properties {{summary:"{_as_escape(title)}", '
         f'start date:((current date) + {start}), end date:((current date) + {start + dur})}}\n'
         'end tell')
     out = _run_applescript(script)
-    if "error" in out.lower():
+    if _applescript_errored(out):        # Calendar cold — start it and retry once
+        _ensure_app_running("Calendar")
+        out = _run_applescript(script)
+    if _applescript_errored(out) or "error" in out.lower():
         return "I couldn't create that event, sir — check Calendar automation permission."
     return f"Scheduled {title} for {dt.strftime('%A at %I:%M %p').replace(' 0', ' ')}, sir."
 
@@ -2632,12 +2778,19 @@ MEETING_ALERT_LEAD = int(os.environ.get("JARVIS_MEETING_ALERTS", "0") or "0")  #
 
 def _upcoming_events(within_secs: int):
     """[(seconds_until_start, summary)] for calendar events starting inside the window.
-    Seconds computed inside AppleScript (date minus date) — no locale-dependent parsing."""
+    EventKit first; AppleScript fallback computes seconds inside the script (no locale
+    parsing)."""
+    now = datetime.now()
+    evs = _ek_events(now, now + timedelta(seconds=within_secs))
+    if evs is not None:
+        now_ts = now.timestamp()
+        return [(int(ts - now_ts), title) for title, ts, _all in evs if ts >= now_ts]
     script = (
         'set out to ""\n'
         'set nowD to (current date)\n'
         f'set endD to nowD + {int(within_secs)}\n'
         'tell application "Calendar"\n'
+        '  launch\n'
         '  repeat with c in calendars\n'
         '    repeat with e in (every event of c whose start date ≥ nowD and start date ≤ endD)\n'
         '      set out to out & ((start date of e) - nowD) & "|" & (summary of e) & linefeed\n'
@@ -2645,6 +2798,8 @@ def _upcoming_events(within_secs: int):
         '  end repeat\n'
         'end tell\nreturn out')
     out = _run_applescript(script)
+    if _applescript_errored(out):        # Calendar cold — skip this poll rather than log noise
+        return []
     evs = []
     for line in out.splitlines():
         if "|" in line:
@@ -3283,6 +3438,11 @@ def fast_path(text: str):
         return _get_system_info("time")
     if "battery" in t and ("level" in t or "how much" in t or "status" in t or t == "battery"):
         return _get_system_info("battery")
+    if t in ("which model are you using", "what model are you using", "which backend",
+             "what backend are you using", "are you using claude", "claude or local",
+             "which brain are you using", "what model handled that", "backend status",
+             "are you running on claude", "which model was that"):
+        return _backend_report()
     if t in ("are you there", "you there", "hello", "you online", "are you online", "status"):
         return "At your service, sir."
     if t in ("forget my voice", "reset voice recognition", "respond to everyone",
@@ -3535,6 +3695,13 @@ def _touch_model():
         pass
 
 def warmup():
+    # On 8GB, don't pin the ~3GB local model in memory when Claude is the primary
+    # backend — build the Claude bridge instead and load the local model lazily on the
+    # first fallback. Pre-warm the local model only in local-only mode.
+    if CLAUDE_ENABLED and _load_claude_sdk():
+        _build_claude_server()
+        log("Claude backend ready — deferring local model load (frees RAM on 8GB).")
+        return
     _touch_model()
     log("Model warmed up.")
 
@@ -3589,6 +3756,205 @@ def _consume_chat_stream(stream_iter, hud):
     th.join()
     return msg, [], " ".join(full).strip()
 
+# ─── Claude Agent SDK backend (subscription auth) + local Ollama fallback ─────────
+# JARVIS answers through the Claude Agent SDK when it's reachable, and falls back to
+# the local Ollama model on ANY failure (not signed in, no credit, rate limit,
+# network, or the SDK / `claude` CLI being absent). Subscription only — no API key,
+# no pay-as-you-go: the SDK inherits the `claude` CLI's OAuth login. The SAME tools
+# run in both modes: every JARVIS tool is bridged to an in-process MCP tool that calls
+# the SAME execute_tool(), so there is one tool implementation reached through two
+# front-ends (Ollama function-calling and the Agent SDK).
+import asyncio
+
+CLAUDE_ENABLED    = os.environ.get("JARVIS_USE_CLAUDE", "1") != "0"            # opt-out with 0
+CLAUDE_MODEL      = os.environ.get("JARVIS_CLAUDE_MODEL", "").strip() or None  # None = CLI default
+CLAUDE_EFFORT     = os.environ.get("JARVIS_CLAUDE_EFFORT", "low").strip()      # short spoken replies
+CLAUDE_MAX_TURNS  = int(os.environ.get("JARVIS_CLAUDE_MAX_TURNS", "6") or "6")
+CLAUDE_TIMEOUT_MS = os.environ.get("JARVIS_CLAUDE_TIMEOUT_MS", "45000")        # fail fast → fallback
+
+# Never let an API key reach the SDK subprocess. The user is on a subscription and
+# explicitly does not want pay-as-you-go, so strip any inherited ANTHROPIC_API_KEY —
+# the CLI can then only authenticate with its OAuth (subscription) login. (Blanking it
+# to "" would 401 and force local mode; removing it lets subscription auth work.)
+if os.environ.pop("ANTHROPIC_API_KEY", None) is not None:
+    log("Ignoring ANTHROPIC_API_KEY — Claude uses your subscription login only (no pay-as-you-go).")
+
+# Tool trust classes, shared by BOTH backends so the injection guard is identical:
+# once untrusted content is read in a turn, outward/executing tools are blocked for
+# the rest of that turn.
+UNTRUSTED_TOOLS = {"web_search", "see_screen", "read_clipboard", "read_file", "get_messages",
+                   "get_news", "summarize_page"}
+EXECUTOR_TOOLS  = {"run_command", "run_applescript", "run_powershell",
+                   "send_message", "send_email", "type_text", "run_shortcut"}
+
+# Which backend served the most recent request (ask JARVIS "which model are you using").
+LAST_BACKEND = {"name": "local", "at": 0.0}
+def _set_backend(name):
+    LAST_BACKEND["name"] = name
+    LAST_BACKEND["at"] = time.time()
+    log(f"Backend: {name}")
+
+def _backend_report() -> str:
+    name = LAST_BACKEND["name"]
+    if "claude" in name.lower():
+        return "The last request was handled by Claude, through the Agent SDK, sir."
+    return f"The last request was handled by the local model, sir — {MODEL}."
+
+_claude_sdk = None            # cached module; False once we know it's unavailable
+_claude_server = None         # cached in-process MCP server bridging execute_tool
+_claude_allowed = []          # ["mcp__jarvis__run_command", ...] — pre-approved tool names
+_claude_taint = {"tainted": False}   # per-turn injection-guard state (one command at a time)
+
+def _load_claude_sdk():
+    """Import the Agent SDK lazily. Returns the module, or False if unavailable."""
+    global _claude_sdk
+    if _claude_sdk is not None:
+        return _claude_sdk
+    if not CLAUDE_ENABLED or IS_WIN:
+        _claude_sdk = False
+        return False
+    try:
+        import claude_agent_sdk as sdk
+        _claude_sdk = sdk
+    except Exception as e:
+        log(f"Claude Agent SDK not installed ({e}); local model only.")
+        _claude_sdk = False
+    return _claude_sdk
+
+def _claude_env():
+    """Env for the SDK subprocess: a PATH that finds the `claude` CLI and node under
+    JARVIS's minimal LaunchAgent environment, plus fail-fast timeouts so a stalled
+    Claude call yields to the local model quickly instead of blocking the voice loop."""
+    path = os.environ.get("PATH", "")
+    for d in (os.path.expanduser("~/.local/bin"), "/opt/homebrew/bin", "/usr/local/bin"):
+        if d not in path.split(":"):
+            path = d + ":" + path
+    return {"PATH": path, "API_TIMEOUT_MS": CLAUDE_TIMEOUT_MS, "CLAUDE_CODE_MAX_RETRIES": "1"}
+
+def _build_claude_server():
+    """Bridge every JARVIS tool to an in-process MCP tool that calls the SAME
+    execute_tool() — no parallel implementation, identical logic and effects. The
+    injection guard (UNTRUSTED_TOOLS → block EXECUTOR_TOOLS) is enforced here too."""
+    global _claude_server, _claude_allowed
+    if _claude_server is not None:
+        return _claude_server
+    sdk = _load_claude_sdk()
+    if not sdk:
+        return None
+    bridged = []
+    for t in TOOLS:
+        fn = t["function"]
+        name = fn["name"]
+        schema = fn.get("parameters") or {"type": "object", "properties": {}}
+        def make_handler(tool_name):
+            async def handler(args):
+                if tool_name in EXECUTOR_TOOLS and _claude_taint["tainted"]:
+                    log(f"BLOCKED {tool_name} after untrusted-content ingestion (injection guard)")
+                    return {"content": [{"type": "text", "text":
+                        "Blocked for safety: I won't run scripts, send messages or email, or "
+                        "type keystrokes after reading external content in the same request."}],
+                        "is_error": True}
+                # execute_tool is synchronous; run it off the event loop so a slow tool
+                # (screenshot, web fetch) doesn't stall the SDK's I/O.
+                result = await asyncio.to_thread(execute_tool, tool_name, args or {})
+                if tool_name in UNTRUSTED_TOOLS:
+                    _claude_taint["tainted"] = True
+                return {"content": [{"type": "text", "text": str(result)}]}
+            return handler
+        bridged.append(sdk.tool(name, fn["description"], schema)(make_handler(name)))
+    _claude_server = sdk.create_sdk_mcp_server(name="jarvis", version="1.0.0", tools=bridged)
+    _claude_allowed = [f"mcp__jarvis__{t['function']['name']}" for t in TOOLS]
+    return _claude_server
+
+async def _claude_stream(sdk, sys_prompt, user_text, hud, spoken):
+    """Run one Agent SDK query, speaking reply sentences as they stream in. Appends each
+    spoken sentence to `spoken` so a partial answer can be salvaged if a later turn times
+    out — avoids double-answering via the fallback."""
+    import dataclasses
+    fields = {f.name for f in dataclasses.fields(sdk.ClaudeAgentOptions)}
+    kwargs = {k: v for k, v in {
+        "system_prompt":   sys_prompt,
+        "mcp_servers":     {"jarvis": _claude_server},
+        "allowed_tools":   list(_claude_allowed),
+        "tools":           [],          # remove Claude's built-in Bash/Read/Edit/... — parity + safety
+        "setting_sources": [],          # ignore ~/.claude settings, hooks, permission rules
+        "max_turns":       CLAUDE_MAX_TURNS,
+        "model":           CLAUDE_MODEL,
+        "effort":          CLAUDE_EFFORT or None,
+        "env":             _claude_env(),
+    }.items() if k in fields}           # drop any field this SDK version doesn't know
+    opts = sdk.ClaudeAgentOptions(**kwargs)
+
+    buf = ""
+    def emit(sentences):
+        for s in sentences:
+            spoken.append(s)
+            if hud:
+                hud.state("speaking", "Speaking"); hud.caption(s)
+            speak(s)
+    async for message in sdk.query(prompt=user_text, options=opts):
+        if isinstance(message, sdk.AssistantMessage):
+            for block in message.content:
+                if isinstance(block, sdk.TextBlock) and block.text:
+                    buf += block.text
+                    sentences, buf = pop_sentences(buf)
+                    emit(sentences)
+        elif isinstance(message, sdk.ResultMessage):
+            if getattr(message, "subtype", None) and message.subtype != "success":
+                raise RuntimeError(f"result: {message.subtype}")   # → fall back to local
+            if getattr(message, "result", None) and not spoken and not buf.strip():
+                buf += message.result
+    sentences, buf = pop_sentences(buf, force=True)
+    emit(sentences)
+    return " ".join(spoken).strip()
+
+def _claude_reason(e) -> str:
+    """Turn an SDK failure into a short spoken/logged reason for the fallback note."""
+    s = str(e).lower()
+    if any(k in s for k in ("credit", "billing", "quota", "insufficient", "payment")): return "no Agent SDK credit"
+    if any(k in s for k in ("401", "403", "unauthor", "not signed", "login")):         return "not signed in"
+    if any(k in s for k in ("429", "rate", "overload")):                               return "rate limited"
+    if any(k in s for k in ("timeout", "timed out", "cancel")):                        return "timed out"
+    if any(k in s for k in ("not found", "clinotfound", "enoent")):                    return "Claude Code CLI not found"
+    if any(k in s for k in ("connection", "network", "resolve", "dns", "unreach")):    return "network unreachable"
+    return (str(e).strip() or "unavailable")[:80]
+
+def claude_generate(sys_prompt: str, user_text: str, hud=None):
+    """Answer via the Claude Agent SDK. Returns the reply text on success, or None to
+    fall back to the local model. Never raises. Sets LAST_BACKEND on success."""
+    sdk = _load_claude_sdk()
+    if not sdk or _build_claude_server() is None:
+        return None
+    _claude_taint["tainted"] = False
+    if hud:
+        hud.state("thinking", "Processing")
+    spoken = []
+    timeout = int(CLAUDE_TIMEOUT_MS) / 1000.0 + 15   # CLI request timeout + spawn headroom
+    try:
+        reply = asyncio.run(asyncio.wait_for(
+            _claude_stream(sdk, sys_prompt, user_text, hud, spoken), timeout))
+    except Exception as e:
+        if spoken:   # already spoke part of Claude's answer — don't also answer locally
+            _set_backend("claude (partial)")
+            return " ".join(spoken).strip()
+        log(f"Claude unavailable this turn — using local model: {_claude_reason(e)}")
+        return None
+    if reply:
+        _set_backend("claude" + (f" ({CLAUDE_MODEL})" if CLAUDE_MODEL else ""))
+        return reply
+    log("Claude unavailable this turn — using local model: empty response")
+    return None
+
+def _claude_history_preamble() -> str:
+    """A compact transcript of the last few turns, folded into the system prompt so
+    Claude gets the same conversational context the local path gets from _history."""
+    lines = []
+    for m in _history[-7:-1]:   # recent turns, excluding the just-appended current message
+        c = (m.get("content") or "").strip()
+        if c:
+            lines.append(("User: " if m.get("role") == "user" else "You: ") + c)
+    return ("\n\nRecent conversation:\n" + "\n".join(lines)) if lines else ""
+
 def process_command(text: str, online: bool, hud=None) -> str:
     global _history
     kb_note_topic(text)                         # remember to research this later
@@ -3602,14 +3968,24 @@ def process_command(text: str, online: bool, hud=None) -> str:
             sys_prompt += f" (Previously learned: {fact[:300]})"
     messages = [{"role": "system", "content": sys_prompt}] + _history
 
+    # Primary backend: Claude via the Agent SDK (subscription auth). On ANY failure it
+    # returns None and we fall through to the local Ollama loop below — same tools, same
+    # effects, reached through the MCP bridge. Claude needs the network, so online only.
+    if CLAUDE_ENABLED and online:
+        reply = claude_generate(sys_prompt + _claude_history_preamble(), text, hud)
+        if reply:
+            _history.append({"role": "assistant", "content": reply})
+            _history_save()
+            return reply
+    _set_backend(f"local ({MODEL})")
+
     # Prompt-injection guard: once the model has ingested untrusted external content,
     # forbid shell/AppleScript execution AND outward-facing actions (messaging, email,
     # synthetic keystrokes) for the rest of this request, so a malicious web page /
     # screen / clipboard / file can't steer it into running commands or exfiltrating.
-    UNTRUSTED = {"web_search", "see_screen", "read_clipboard", "read_file", "get_messages",
-                 "get_news", "summarize_page"}
-    EXECUTORS = {"run_command", "run_applescript", "run_powershell",
-                 "send_message", "send_email", "type_text", "run_shortcut"}
+    # Same trust classes the Claude bridge enforces (defined once, module-level).
+    UNTRUSTED = UNTRUSTED_TOOLS
+    EXECUTORS = EXECUTOR_TOOLS
     tainted = False
 
     def say(reply):
