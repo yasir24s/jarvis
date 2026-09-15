@@ -6,6 +6,10 @@ audd_key.txt
 voiceprint.npy
 knowledge.json
 profile.json
+personality.json
+emotions.json
+proactive.json
+research/
 alarms.json
 history.json
 corrections.json
