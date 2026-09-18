@@ -151,7 +151,9 @@ The p95 is the number that decided it: a voice assistant that is usually quick a
 occasionally takes four times as long feels broken in a way that a uniformly slower one
 does not. 7B also pushed the machine into real swap once the audio stack was resident,
 which degrades everything else running. 3B is the default *for this hardware* — on a
-16 GB+ machine the trade likely flips, hence `JARVIS_MODEL`.
+bigger machine the trade flips, so the `.pkg` installer picks a larger model for you
+based on installed RAM (see [Installer model selection](#installer-model-selection)), and
+`JARVIS_MODEL` overrides it at any time.
 
 **Why `small.en` for Whisper.** Same constraint. `medium.en` is noticeably better on long
 dictation but the accuracy gain on 2–5 second spoken commands didn't justify the extra
@@ -167,6 +169,28 @@ the network does isn't an assistant. Hence: same tools behind both, automatic fa
 **Why `low` effort by default.** Spoken replies are short by nature; higher effort mostly
 buys reasoning depth the user never hears, at the cost of latency and subscription quota.
 
+### Installer model selection
+
+The 8 GB tuning above is the *floor*, not a ceiling. The macOS `.pkg` installer reads
+`hw.memsize` and pre-selects the largest local model the machine can actually hold, so a
+better Mac gets a better assistant without touching a config file:
+
+| Installed RAM | Pre-selected model | Size |
+|---|---|---|
+| < 16 GB | `qwen2.5:3b` | bundled in the installer, no download |
+| 16–31 GB | `qwen2.5:7b` | ~4.5 GB download |
+| 32–63 GB | `qwen2.5:14b` | ~9 GB download |
+| 64–127 GB | `qwen2.5:32b` | ~20 GB download |
+| ≥ 128 GB | `qwen2.5:72b` | ~45 GB download |
+
+Every tier is a visible, overridable checkbox in the installer — the RAM check sets the
+*default*, so you can deliberately take a smaller model to save disk or a larger one if
+you know your workload. Two guards keep that from producing a broken install:
+`postinstall` re-checks actual RAM and quietly downgrades if the selection can't fit, and
+falls back to the RAM-appropriate tier if no selection arrives at all. The 3B weights
+ship inside the installer, so the low-memory path — and only that path — needs no network
+at install time.
+
 ## Setup
 
 ### macOS
@@ -174,7 +198,13 @@ buys reasoning depth the user never hears, at the cost of latency and subscripti
 ./install.sh          # installs deps, pulls the model + voice, builds the .app, starts the agent
 ```
 This installs Ollama (cask), Python deps, the Piper voice, caches Whisper, builds the
-`JARVIS.app` bundle (py2app), and installs the always-on LaunchAgent.
+`JARVIS.app` bundle (py2app), and installs the always-on LaunchAgent. It uses
+`qwen2.5:3b` unless `JARVIS_MODEL` says otherwise.
+
+There's also a graphical `.pkg` installer (`./build_pkg.sh`, optionally
+`./build_dmg.sh`) for installing on a machine that isn't this one. Unlike `install.sh`,
+it sizes the local model to the target Mac's RAM — see
+[Installer model selection](#installer-model-selection).
 
 ### Windows
 ```powershell
