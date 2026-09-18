@@ -14,30 +14,34 @@ arc-reactor HUD. Built first for Apple Silicon Macs; it also runs on Windows 10/
   model ("hey jarvis") scans raw mic frames continuously; full speech-to-text only kicks
   in after it fires, instead of transcribing everything you say just to check for the
   wake word. Stays in conversation until you say "thank you, Jarvis."
+- **Ears** — local **Whisper** (faster-whisper `small.en`, `beam_size=5`, with a JARVIS
+  vocabulary prompt) on-device by default — fully local, no cloud. Optional Google cloud
+  STT (en-GB) via `JARVIS_STT=auto` or `google`.
 - **Brain** — [Claude](https://claude.com) via the **Claude Agent SDK** (signed in with
   your Claude subscription, no API key) when it's reachable, with automatic fallback to
   the **local** [Ollama](https://ollama.com) `qwen2.5:3b` on the Metal GPU whenever a
   Claude request doesn't go through (not signed in, no credit, rate limit, offline, or
   the SDK/CLI absent). Both paths call the *same* tools. Ask "which model are you using?"
   to hear which handled the last request. Claude is opt-out via `JARVIS_USE_CLAUDE=0`;
-  swap the local model via `JARVIS_MODEL` — see below for why 3B is the measured default
-  on 8GB.
+  swap the local model via `JARVIS_MODEL` — see
+  [Design decisions](#design-decisions) for why 3B is the measured default on 8 GB.
+- **Voice** — [Piper](https://github.com/rhasspy/piper) neural TTS (British male),
+  pitch-tuned; falls back to macOS `say`.
 - **Streamed replies** — JARVIS starts speaking the first sentence of a reply while the
   rest is still being generated, instead of waiting for the whole answer.
 - **Barge-in** — once your voice is enrolled, you can talk over JARVIS mid-sentence to
   interrupt him (opt-out via `JARVIS_BARGE_IN=0`).
-- **Memory** — durable facts about *you* (name, preferences, ongoing projects) picked up
-  from things you say ("my name is...", "I'm working on...", "remember that...") and
-  recalled in later conversations; separate from the background research cache below.
-- **Ears** — local **Whisper** (faster-whisper `small.en`, `beam_size=5`, with a JARVIS
-  vocabulary prompt) on-device by default — fully local, no cloud. Optional Google cloud
-  STT (en-GB) via `JARVIS_STT=auto` or `google`.
-- **Voice** — [Piper](https://github.com/rhasspy/piper) neural TTS (British male),
-  pitch-tuned; falls back to macOS `say`.
 - **Speaker recognition** — enrol your voice ("Jarvis, learn my voice") and it responds
   only to you, ignoring TV/music/other people. Also gates barge-in (above).
 - **Reactive HUD** — a transparent, click-through arc-reactor overlay (pywebview),
   hidden until spoken to. Runs as a background agent (no Dock icon).
+
+<details>
+<summary><b>Full skill list</b> — memory, apps &amp; media, smart home, deep system access, browser awareness, vision</summary>
+
+- **Memory** — durable facts about *you* (name, preferences, ongoing projects) picked up
+  from things you say ("my name is...", "I'm working on...", "remember that...") and
+  recalled in later conversations; separate from the background research cache below.
 - **Screen saver** — a matching native arc-reactor (`screensaver/`) for the lock/idle screen.
 - **Skills** — open any installed app, control music (library → YouTube fallback),
   volume, **brightness**, weather, location, timers, **alarms**, **reminders**, calendar
@@ -69,6 +73,100 @@ arc-reactor HUD. Built first for Apple Silicon Macs; it also runs on Windows 10/
 - **Memory across restarts** — the recent conversation reloads on start (`history.json`,
   never committed).
 
+</details>
+
+## How it works
+
+```
+mic · always on
+ │
+ ▼  openWakeWord · 80 ms frames — the only model running continuously
+wake word fires
+ │
+ ▼  wake clip vs enrolled voiceprint — rejects "Jarvis" from a TV or another person
+Whisper STT · local, plus learned transcription corrections
+ │
+ ▼  voiceprint checked again, now on the command audio
+dispatch
+ │
+ ├── matched ─────▶ fast_path() · deterministic handler, no model round-trip
+ │
+ └── open-ended ──▶ Claude Agent SDK · subscription auth, tools over MCP
+                      │
+                      └── any failure ──▶ local Ollama · same tools, bounded loop
+ │
+ ▼  (either route)
+Piper TTS · speaks sentence N while N+1 is still being generated
+ │
+ ▼
+arc-reactor HUD · state + captions
+```
+
+A few properties worth calling out, since they're the parts that took the design work:
+
+- **The wake word is the cheap gate.** Continuous STT on an 8 GB machine is not viable
+  alongside everything else, so only 80 ms frames (openWakeWord's expected hop) hit the
+  wake-word model; Whisper is loaded but idle until it fires.
+- **The voiceprint is checked twice.** Once on the wake clip, to reject "Jarvis" from a
+  TV or another person before spending any Whisper time on it, and again on the
+  transcribed command — so a wake word that squeaks through still can't issue actions.
+- **Common commands never reach a model.** `fast_path()` matches things like "open
+  Spotify", "set a timer", "run diagnostics" deterministically and acts immediately —
+  the LLM is the fallback for open-ended language, not the default route. This is most
+  of the perceived responsiveness.
+- **Both brains are behind one tool interface.** Claude (via an MCP bridge) and local
+  Ollama call the *same* tool implementations with the same effects, so a fallback
+  mid-conversation changes latency and quality, not capability. The Ollama path runs a
+  bounded tool loop (5 iterations) so a confused small model can't spin.
+- **Safety is enforced at the choke point, not per tool.** Shell commands are classified
+  into three tiers (`ok` / `confirm` / `block`); destructive actions stash themselves and
+  require a spoken "confirm" *from the enrolled voice*; and once a request has ingested
+  untrusted external content (a web page, the screen, the clipboard, a file), executors
+  and outward-facing tools — messaging, email, synthetic keystrokes — are revoked for the
+  rest of that request, so a malicious page can't steer it into running commands or
+  exfiltrating. Both backends share that gate.
+- **Background loops are opt-in.** Research, daily briefing, meeting alerts, and
+  low-battery warnings each run on their own thread and stay silent unless configured —
+  the assistant doesn't speak unprompted by default.
+
+> **On the single file:** `jarvis.py` is deliberately one module. It ships as a py2app
+> bundle driven by a LaunchAgent, so there's no packaging story to justify a tree, and
+> keeping the tool implementations, their safety gates, and the dispatch table in one
+> place is what makes the "both backends, one tool interface" guarantee checkable by
+> reading rather than by trusting an import graph. It's a trade I'd revisit if this grew
+> a second entry point.
+
+## Design decisions
+
+**Why `qwen2.5:3b` and not 7B.** Benchmarked both on the target machine (M2, 8 GB) under
+*realistic concurrent load* — mic capture, Whisper, and Piper all live, not a quiet
+single-process benchmark:
+
+| | mean latency | p95 latency | swap |
+|---|---|---|---|
+| `qwen2.5:3b` | baseline | baseline | none |
+| `qwen2.5:7b` | ~2.6× higher | ~4× higher | genuine swapping |
+
+The p95 is the number that decided it: a voice assistant that is usually quick and
+occasionally takes four times as long feels broken in a way that a uniformly slower one
+does not. 7B also pushed the machine into real swap once the audio stack was resident,
+which degrades everything else running. 3B is the default *for this hardware* — on a
+16 GB+ machine the trade likely flips, hence `JARVIS_MODEL`.
+
+**Why `small.en` for Whisper.** Same constraint. `medium.en` is noticeably better on long
+dictation but the accuracy gain on 2–5 second spoken commands didn't justify the extra
+resident memory next to the LLM; `base.en` started dropping proper nouns the vocabulary
+prompt was meant to catch.
+
+**Why Claude is primary but not required.** The subscription path gives much better
+instruction-following for open-ended requests, but an assistant that stops working when
+the network does isn't an assistant. Hence: same tools behind both, automatic fallback on
+*any* failure class (not signed in, rate limited, offline, SDK absent), and a spoken
+"which model are you using?" so the current backend is never a mystery.
+
+**Why `low` effort by default.** Spoken replies are short by nature; higher effort mostly
+buys reasoning depth the user never hears, at the cost of latency and subscription quota.
+
 ## Setup
 
 ### macOS
@@ -98,9 +196,9 @@ Microphone**. Optional extras: `winget install Gyan.FFmpeg` (deeper voice pitch)
 ## Configuration (env vars, then `./jarvisctl restart`)
 | Var | Default | Purpose |
 |---|---|---|
-| `JARVIS_MODEL` | `qwen2.5:3b` | Ollama model. Benchmarked `7b` vs `3b` on this exact 8GB M2 under real concurrent load (mic + Whisper + Piper all running): 7B's mean latency was ~2.6x higher, p95 ~4x higher, and it caused genuine swap (3B did not) — 3B stays the default here. Worth re-testing on a 16GB+ machine. |
+| `JARVIS_MODEL` | `qwen2.5:3b` | Ollama model. 3B is the benchmarked default for 8 GB — see [Design decisions](#design-decisions); worth re-testing on a 16 GB+ machine. |
 | `JARVIS_WAKE_THRESHOLD` | `0.5` | Wake-word detection confidence (0-1, lower = more sensitive/more false triggers) |
-| `JARVIS_SPEED` | `0.62` | Piper speech rate (lower = faster) |
+| `JARVIS_SPEED` | `0.62` | Piper speech *length scale* — lower = faster speech (despite the var name; it maps to Piper's `length_scale`) |
 | `JARVIS_PITCH` | `0.92` | Voice pitch (lower = deeper) |
 | `JARVIS_SPK_THRESH` | `0.70` | Speaker-match strictness (also gates barge-in) |
 | `JARVIS_BARGE_IN` | `1` | Allow interrupting JARVIS mid-sentence; only active once a voice is enrolled. Set `0` to disable. |
