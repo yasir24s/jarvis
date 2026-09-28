@@ -1,0 +1,162 @@
+{
+ "schema": 1,
+ "suite": "paths",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "c091821a0c11eedb20d095bca9afc20abc54e646e40751fcb02ba54ff718bfe5",
+  "git_head": "fef66c1",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "LOG_FILE",
+   "input": {
+    "constant": "LOG_FILE"
+   },
+   "expected": {
+    "relative": "logs/jarvis.log"
+   }
+  },
+  {
+   "name": "KB_FILE",
+   "input": {
+    "constant": "KB_FILE"
+   },
+   "expected": {
+    "relative": "knowledge.json"
+   }
+  },
+  {
+   "name": "HIST_FILE",
+   "input": {
+    "constant": "HIST_FILE"
+   },
+   "expected": {
+    "relative": "history.json"
+   }
+  },
+  {
+   "name": "CORR_FILE",
+   "input": {
+    "constant": "CORR_FILE"
+   },
+   "expected": {
+    "relative": "corrections.json"
+   }
+  },
+  {
+   "name": "CHANGELOG_FILE",
+   "input": {
+    "constant": "CHANGELOG_FILE"
+   },
+   "expected": {
+    "relative": "CHANGELOG.md"
+   }
+  },
+  {
+   "name": "PROFILE_FILE",
+   "input": {
+    "constant": "PROFILE_FILE"
+   },
+   "expected": {
+    "relative": "profile.json"
+   }
+  },
+  {
+   "name": "PERSONALITY_FILE",
+   "input": {
+    "constant": "PERSONALITY_FILE"
+   },
+   "expected": {
+    "relative": "personality.json"
+   }
+  },
+  {
+   "name": "EMOTIONS_FILE",
+   "input": {
+    "constant": "EMOTIONS_FILE"
+   },
+   "expected": {
+    "relative": "emotions.json"
+   }
+  },
+  {
+   "name": "PROACTIVE_FILE",
+   "input": {
+    "constant": "PROACTIVE_FILE"
+   },
+   "expected": {
+    "relative": "proactive.json"
+   }
+  },
+  {
+   "name": "ALARMS_FILE",
+   "input": {
+    "constant": "ALARMS_FILE"
+   },
+   "expected": {
+    "relative": "alarms.json"
+   }
+  },
+  {
+   "name": "VOICEPRINT_FILE",
+   "input": {
+    "constant": "VOICEPRINT_FILE"
+   },
+   "expected": {
+    "relative": "voiceprint.npy"
+   }
+  },
+  {
+   "name": "RESEARCH_DIR",
+   "input": {
+    "constant": "RESEARCH_DIR"
+   },
+   "expected": {
+    "relative": "research"
+   }
+  },
+  {
+   "name": "RESEARCH_METRICS",
+   "input": {
+    "constant": "RESEARCH_METRICS"
+   },
+   "expected": {
+    "relative": "research/metrics.jsonl"
+   }
+  },
+  {
+   "name": "RESEARCH_USAGE",
+   "input": {
+    "constant": "RESEARCH_USAGE"
+   },
+   "expected": {
+    "relative": "research/usage.json"
+   }
+  },
+  {
+   "name": "jarvis_notes.txt",
+   "input": {
+    "literal": "jarvis_notes.txt"
+   },
+   "expected": {
+    "relative": "jarvis_notes.txt"
+   }
+  },
+  {
+   "name": "audd_key.txt",
+   "input": {
+    "literal": "audd_key.txt"
+   },
+   "expected": {
+    "relative": "audd_key.txt"
+   }
+  }
+ ]
+}
