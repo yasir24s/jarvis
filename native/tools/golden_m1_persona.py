@@ -156,7 +156,7 @@ def _personality_ops(J):
 _STYLE_TEXTS = [
     # row 1: be/act/sound/talk (a bit|a little)? more|less (like)? …
     "be more sarcastic", "Please act a bit more like a butler, please.",
-    "could you sound a little less formal.", "talk more like Tony Stark would",
+    "could you sound a little less formal.", "talk more like a ship captain would",
     "BE LESS WORDY", "be\tmore\nconcise", "act less like", "be more direct . .",
     "maybe more tea", "being more careful", "be more ok", "talk a bit more",
     "be more ‘fun’", "sound more like a very very very very long winded narrator of epic sagas",
@@ -167,9 +167,9 @@ _STYLE_TEXTS = [
     # row 3: tone up / dial up / turn up the …
     "turn up the charm", "dial up the wit", "Tone up the humour!", "turn up",
     # row 4: stop calling me …
-    "stop calling me sir", "Stop calling me Mr Stark!", "stop calling me x",
+    "stop calling me sir", "Stop calling me Old Chap!", "stop calling me x",
     # row 5: call me … instead|from now on
-    "call me boss instead", "Call me Captain from now on", "Call me Ishmael",
+    "call me boss instead", "Call me Captain from now on", "Call me Maestro",
     "stop calling me sir, call me boss instead",
     # row 6: profanity OFF
     "no swearing please", "Stop swearing!", "watch your language", "MIND YOUR LANGUAGE",
