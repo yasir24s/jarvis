@@ -12,7 +12,7 @@ Line numbers refer to jarvis.py @ 68cd112.
   decision covers the entry, it is shown as `→ D-n`.
 - **Status.** `approved` = approved in the judging ledger (D-3, D-14, D-15, D-18, D-21, and
   X-1, X-2, X-8 via D-11; X-10 in part; DEV-M0-01…03 at M0 judging; D1–D5, DEV-M1-01…04,
-  D1a–D1c, D5a and the four `R8-*` rows at M1 judging). `rejected` = ruled out by the ledger (X-5, D-11).
+  D1a–D1c, D5a and the five `R8-*` rows at M1 judging). `rejected` = ruled out by the ledger (X-5, D-11).
   `resolved — parity since fef66c1` = Python was changed to match (D-12). Everything else is
   `proposed — decide at milestone start`. Where the ledger already rules on a related point,
   the reason column says so under **Ledger:**.
@@ -80,6 +80,7 @@ Line numbers refer to jarvis.py @ 68cd112.
 | R8-load-not-dict | M1 | A `profile.json` or `knowledge.json` that parses to a non-object (a list, `null`, a string) is returned by the load as is; each later profile or KB call raises `AttributeError` or `TypeError` mid-turn | Throws `StateShapeError` at the load; files unchanged, no counter bumps | One failure point instead of one per later call; the turn-level handling is M3/M12's (M01 §8 R8). **Ledger:** X7 accepted, to register | `m1_profile_kb.golden.json` `shape_not_dict`, `shape_null_file`, `kb_shape_not_dict` with `"native": {"divergence": "R8-load-not-dict", "throws_from_step": 0}` (3); Python's steps are checked under `withKnownIssue` in `ProfileKnowledgeTests` | `approved` | M01-core-state-persona.md §8 R8; landed `2e965b8` |
 | R8-nan-sort | M1 | A profile fact whose `updated` is `NaN` is sorted anyway when the profile context is built, and the context is returned | Throws `StateShapeError` when building the context; files unchanged, no counter bumps | Sorting with a NaN key has no defined order, so Python's output depends on the input order. **Ledger:** X7 accepted, to register | `m1_profile_kb.golden.json` `shape_nan_updated` with `"native": {"divergence": "R8-nan-sort", "throws_from_step": 0}` (1); checked as above | `approved` | M01-core-state-persona.md §8 R8; landed `2e965b8` |
 | R8-kb-summary-not-str | M1 | `kb_lookup` on a topic whose `summary` is not a string (for example `5`) returns that value | Throws `StateShapeError`; files unchanged, no counter bumps | A summary is text wherever it is used; a non-string is a wrong-shaped file (M01 §8 R8). **Ledger:** X7 accepted, to register | `m1_profile_kb.golden.json` `kb_lookup_nonstr_summary` with `"native": {"divergence": "R8-kb-summary-not-str", "throws_from_step": 0}` (1); checked as above | `approved` | M01-core-state-persona.md §8 R8; landed `2e965b8` |
+| R8-list-content | M1 | `personality_distill_async` on a history turn whose `content` is a list (for example `["x"]`) formats it with `repr()` and sends the distill request | Skips the distill: no model call, files unchanged | Any non-string `content` is a malformed history; it is reachable only via a hand-edited `history.json` (M01 §8 R8). **Ledger:** X9b accepted, to register | `m1_persona_llm.golden.json` `distill_list_content` with `"native": {"divergence": "R8-list-content", "no_request": true, "files_unchanged": true}` (1); Python's steps are checked under `withKnownIssue` in `PersonaLLMTests` | `approved` | M01-core-state-persona.md §8 R8; landed `9fea3e3` |
 
 The M7 table gives one fixture for all 15 `DEV-M7-*` / `DEV-M14-*` rows (§8.1 heading:
 "fixture §4.2"). For the `DEV-M14-*` rows that marker was carried over as written; the
@@ -87,10 +88,10 @@ loop behaviours may need their own tests at M14.
 
 ## Counts
 
-57 entries: 30 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-8, R3 → D-15, R4 → D-14, DEV-M7-01,
+58 entries: 31 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-8, R3 → D-15, R4 → D-14, DEV-M7-01,
 DEV-M7-02, DEV-M7-05, R9 → D-18, DEV-M0-01, DEV-M0-02, DEV-M0-03, DEV-M1-01, DEV-M1-02, DEV-M1-03,
 DEV-M1-04, D1a, D1b, D1c, D5a, R8-str-float, R8-load-not-dict, R8-nan-sort,
-R8-kb-summary-not-str), 1 `approved (overage kill-switch only)` (X-10), 1 `rejected` (X-5),
+R8-kb-summary-not-str, R8-list-content), 1 `approved (overage kill-switch only)` (X-10), 1 `rejected` (X-5),
 1 `resolved — parity since fef66c1` (R2 → D-12) and 24 `proposed — decide at milestone start`.
 
 ## Not registered: differences mentioned only in the M05 §3.5 tool table

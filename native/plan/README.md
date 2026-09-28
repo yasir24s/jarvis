@@ -132,8 +132,8 @@ judged against the live Python code.
   `.gitignore`.
 - W3, M01b: accepted. Verified: the 8 KB tail-read bug is real (`_research_last_date`
   seeks to size − 8192; the longest row today is 4,110 bytes); the 4 undocumented counters are
-  real. Writes under `research/` (README, `annotations.jsonl`) need the user's explicit OK
-  at execution time; task T8 edits `jarvis.py`.
+  real. Writes under `research/` (README, `annotations.jsonl`) were done with the user's
+  approval on 2026-09-29 (M1b T9); task T8 edits `jarvis.py`.
 - W4, M02–M04: accepted with D-9, D-10, D-11. Verified: the probe transcript shows a
   `"category":"cyber"` refusal on claude-opus-5-5 and the CLI's fallback to
   claude-opus-4-8; `_sensitive_path` is defined at jarvis.py:1249 and never called.
@@ -288,7 +288,8 @@ Privacy:
   corpora and fixtures use neutral stand-ins only (Robin, Morgan, Sam, "the university"),
   and every executor scans its added lines for personal details before its final commit.
 
-**M1 status: in progress.** Merged on `main` as of `97a91ac`:
+**M1 status: COMPLETE (2026-09-29).** Validated on `main` at `77668c0` (validation pass V1).
+Merged on `main`:
 
 - M1: `0731dd0` StateStore, core protocols, state lease on InstanceLock; `d144d12` Py string
   semantics; `f054385` PyRegex; `7c7c47e` PyDifflib; `000b46b` personality; `7b033a4`
@@ -296,13 +297,37 @@ Privacy:
   `StateShapeError`; `54fedad`, `aa258e2` taught corrections; `52775cd` history, app
   context and feedback logic; `2e6a5e8` corrections and history throw `StateShapeError`;
   `2e965b8` profile and knowledge base; `97a91ac` system prompt builder and `CoreState` turn
-  pipeline (M01 T11, X8; the system prompt is byte-identical to Python's).
+  pipeline (M01 T11, X8; the system prompt is byte-identical to Python's); `9fea3e3` persona
+  consolidation and distillation (M01 T12); `77668c0` cross-implementation proof: Python
+  reads Swift-written state, opt-in real-state round-trip (M01 T13).
 - M1b: `ccf01dd` research oracle, counter keys, line count, git probe, clock; `23049d6`
   UsageStore and MetricsLog (D1–D4); `d049fec` D-31; `3a94af0` read-only schema-compat
   check over the real dataset (judged: it round-trips byte-identically); `fdc65e5` snapshot
   builder; `d75fd2b` ResearchLogger façade.
-- Still in flight: only X9b (M01 T12 persona LLM halves, T13 cross-implementation). Then a
-  validation pass (M01 §5 A1–A10, M01b §5 A1–A8) before `main` is pushed.
+- Docs: `7c80fe9` M1 deviations and build notes; `0a2f025` statuses and open decisions; the
+  final deviation (R8-list-content) and this status in the commit that follows them.
+- Tests: `swift test -j 2` runs 153 tests in 38 suites, 0 failures, 162 known issues
+  (6,858 parameterised cases). A clean `swift build -j 2` has 0 warnings.
+- Golden: 23 fixtures, 6,799 cases (5,716 of them in the 19 `m1_*` / `m1b_*` fixtures).
+  `golden.py --check` 23/23 fresh; `golden.py all` is byte-reproducible;
+  `parity_inventory.py --check` 0 missing, 0 stale.
+- Divergences: 120 fixture cases carry a native divergence marker (107 in M1/M1b, 13 in
+  M0), recorded as 162 known issues. Every label maps to an `approved` row in
+  `DEVIATIONS.md` (58 entries, 31 approved). M1/M1b added 19 approved rows: DEV-M1-01…04,
+  R3, D1–D5, D1a–D1c, D5a and the five `R8-*` rows.
+- Acceptance: M01 §5 A1–A10 pass. A1/A2 ran the 12 `m1_*` suites by name (`golden.py` has
+  no `--only`), A3's `check-ignore` needs the glob expanded from `native/`, and A9's pickup
+  runs as `golden.py readback <dir> m1_pickup`. M01b §5 A1–A6 pass: A1 ran the 7 `m1b_*`
+  suites; A3 prints `rows 15 dates 15 first 2026-07-23 last 2026-08-20 violations 0
+  unchanged yes`; A4 prints `roundtrip rows=15/15 usage=identical unchanged=yes`. M01b A7
+  moves to M4 with T10; A8 is N/A (T8 declined). M0 A1–A13, re-run on the M1 tree, pass
+  (A5 with `--exclude-dir=.build`; A11 quits the app with SIGTERM). The real state files
+  and `research/` stayed byte-identical (sha256, size, mtime) through the whole validation.
+  The personal-data and secret scan of `origin/main..main` found 0 hits.
+- Carried forward to M4: D-36 (`ResearchLogger` / `UsageStore` hold the `InstanceLock` state
+  lease before writing the real `research/` root) and D-37 (the snapshot's corrections and
+  history counts come from `CoreState.snapshotInputs()`, as Python counts its in-memory
+  cache, not from the files).
 
 ## Open user decisions
 
