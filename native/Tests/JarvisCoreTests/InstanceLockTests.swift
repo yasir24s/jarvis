@@ -308,21 +308,66 @@ struct InstanceLockTests {
         #expect(try pythonProbeSoon(s.paths.lockFile) == 0, "refusal must not leave the flock held")
     }
 
-    @Test func pyAppBundleExecutableIsRefused() throws {
+    // The py2app-bundle rule is tested on strings only. Never execute anything under a *.app
+    // directory in a test: an unsigned or mismatched bundle executable makes Gatekeeper show
+    // "“JARVIS.app” is damaged" on the user's screen. Real process enumeration is covered by
+    // the spawned-Python tests above, which run nothing from inside a bundle.
+    private static let classifyRoot = "/opt/jarvis-classify-root"         // need not exist
+
+    @Test(arguments: [
+        ("<root>/dist/JARVIS.app/Contents/MacOS/JARVIS", true),
+        ("<root>/dist//JARVIS.app/Contents//MacOS/JARVIS", true),
+        ("<root>//dist/./JARVIS.app/Contents/MacOS/JARVIS", true),
+        ("<root>/native/../dist/JARVIS.app/Contents/MacOS/JARVIS", true),
+        ("<root>/native/dist/JARVIS.app/../../../dist/JARVIS.app/Contents/MacOS/JARVIS", true),
+        ("<root>/../jarvis-classify-root/dist/JARVIS.app/Contents/MacOS/JARVIS", true),
+        ("<root>/native/dist/JARVIS.app/Contents/MacOS/JARVIS", false),   // the native app itself
+        ("<root>/dist/JARVIS.app.bak/Contents/MacOS/JARVIS", false),
+        ("<root>/dist/JARVIS.app/Contents/MacOS/JARVIS.bak", false),
+        ("<root>/dist/JARVIS.app/Contents/MacOS/Python", false),
+        ("<root>/dist/JARVIS.app/Contents/MacOS", false),
+        ("<root>/dist/JARVIS.app/Contents/MacOS/JARVIS/..", false),
+        ("<root>/build/JARVIS.app/Contents/MacOS/JARVIS", false),
+        ("<root>2/dist/JARVIS.app/Contents/MacOS/JARVIS", false),          // sibling root, shared prefix
+        ("/opt/other-jarvis/dist/JARVIS.app/Contents/MacOS/JARVIS", false),
+        ("dist/JARVIS.app/Contents/MacOS/JARVIS", false),                  // relative: never
+        ("", false),
+    ])
+    func pythonBundleExecutableClassification(path: String, expected: Bool) {
+        let resolved = path.replacingOccurrences(of: "<root>", with: Self.classifyRoot)
+        #expect(InstanceLock.isPythonBundleExecutable(path: resolved, repoRoot: URL(fileURLWithPath: Self.classifyRoot))
+                == expected)
+    }
+
+    @Test func pythonBundleExecutableNormalisesTheRepoRootSpelling() {
+        let exe = Self.classifyRoot + "/dist/JARVIS.app/Contents/MacOS/JARVIS"
+        for root in ["/opt/jarvis-classify-root/", "/opt//jarvis-classify-root",
+                     "/opt/x/../jarvis-classify-root", "/opt/./jarvis-classify-root/."] {
+            #expect(InstanceLock.isPythonBundleExecutable(path: exe, repoRoot: URL(fileURLWithPath: root)), "\(root)")
+        }
+    }
+
+    /// proc_pidpath reports resolved paths, so a root reached through a symlink (and the
+    /// temporary directory's /var → /private/var) must match in both spellings. Only a
+    /// directory and a symlink are created; nothing is executed.
+    @Test func pythonBundleExecutableMatchesASymlinkedRootBothWays() throws {
         let s = try Sandbox()
         defer { s.remove() }
-        let macos = s.root.appending(path: "dist/JARVIS.app/Contents/MacOS", directoryHint: .isDirectory)
-        try FileManager.default.createDirectory(at: macos, withIntermediateDirectories: true)
-        let exe = macos.appending(path: "JARVIS")
-        try FileManager.default.copyItem(atPath: "/bin/sleep", toPath: exe.path(percentEncoded: false))
-        let bundle = try Child(exe.path(percentEncoded: false), ["30"])
-        defer { bundle.kill() }
-        var found: [Int32] = []
-        for _ in 0..<100 where found.isEmpty {                           // until exec completes
-            found = InstanceLock.foreignJarvisProcesses(repoRoot: s.root)
-            if found.isEmpty { usleep(10_000) }
-        }
-        #expect(found == [bundle.pid])
+        try FileManager.default.createDirectory(at: s.root.appending(path: "real", directoryHint: .isDirectory),
+                                                withIntermediateDirectories: true)
+        let linkPath = s.root.appending(path: "link", directoryHint: .notDirectory).path(percentEncoded: false)
+        try FileManager.default.createSymbolicLink(atPath: linkPath, withDestinationPath: "real")
+        let link = URL(fileURLWithPath: linkPath)
+        let resolvedSandbox = try #require(realpath(s.root.path(percentEncoded: false), nil))
+        defer { free(resolvedSandbox) }
+        let tail = "/dist/JARVIS.app/Contents/MacOS/JARVIS"
+        let viaRealPath = String(cString: resolvedSandbox) + "/real" + tail
+        let viaLink = linkPath + tail
+        #expect(viaRealPath != viaLink)
+        #expect(InstanceLock.isPythonBundleExecutable(path: viaRealPath, repoRoot: link))
+        #expect(InstanceLock.isPythonBundleExecutable(path: viaLink, repoRoot: link))
+        #expect(!InstanceLock.isPythonBundleExecutable(path: String(cString: resolvedSandbox) + "/link2" + tail,
+                                                       repoRoot: link))
     }
 
     @Test func freshSandboxHasNoForeignProcesses() throws {
