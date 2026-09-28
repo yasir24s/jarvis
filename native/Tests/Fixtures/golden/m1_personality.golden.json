@@ -4071,7 +4071,7 @@
      {
       "op": "maybe_learn",
       "args": {
-       "text": "talk more like Tony Stark would"
+       "text": "talk more like a ship captain would"
       },
       "now": {
        "repr": "1790582400.123456",
@@ -4085,14 +4085,14 @@
      {
       "action": {
        "action": "learn",
-       "note": "The user asked you to be more like Tony Stark would"
+       "note": "The user asked you to be more like a ship captain would"
       },
       "result": {
        "value": null
       },
       "bumps": [],
       "files_after": {
-       "personality.json": "ewogImNvcmUiOiBbCiAgIlN5bnRoZXRpYyB0cmFpdCBhbHBoYTogY2FsbSBhbmQgZXhhY3QuIiwKICAiU3ludGhldGljIHRyYWl0IGJldGEgXHUyMDE0IGRyeSwgbmV2ZXIgY3J1ZWwuIiwKICAiU3ludGhldGljIHRyYWl0IGdhbW1hOiBicmllZiBieSBkZWZhdWx0LiIKIF0sCiAibGVhcm5lZCI6IFsKICB7CiAgICJub3RlIjogIlN5bnRoZXRpYyBzdHlsZSBub3RlIG51bWJlciAwMCBhYm91dCBkZWxpdmVyeSIsCiAgICJhZGRlZCI6IDE3OTA0OTYwMDAuMTIzNDU2CiAgfSwKICB7CiAgICJub3RlIjogIlN5bnRoZXRpYyBzdHlsZSBub3RlIG51bWJlciAwMSBhYm91dCBkZWxpdmVyeSIsCiAgICJhZGRlZCI6IDE3OTA0OTYwMDAuMzczNDU2CiAgfSwKICB7CiAgICJub3RlIjogIlRoZSB1c2VyIGFza2VkIHlvdSB0byBiZSBtb3JlIGxpa2UgVG9ueSBTdGFyayB3b3VsZCIsCiAgICJhZGRlZCI6IDE3OTA1ODI0MDAuMTIzNDU2CiAgfQogXQp9"
+       "personality.json": "ewogImNvcmUiOiBbCiAgIlN5bnRoZXRpYyB0cmFpdCBhbHBoYTogY2FsbSBhbmQgZXhhY3QuIiwKICAiU3ludGhldGljIHRyYWl0IGJldGEgXHUyMDE0IGRyeSwgbmV2ZXIgY3J1ZWwuIiwKICAiU3ludGhldGljIHRyYWl0IGdhbW1hOiBicmllZiBieSBkZWZhdWx0LiIKIF0sCiAibGVhcm5lZCI6IFsKICB7CiAgICJub3RlIjogIlN5bnRoZXRpYyBzdHlsZSBub3RlIG51bWJlciAwMCBhYm91dCBkZWxpdmVyeSIsCiAgICJhZGRlZCI6IDE3OTA0OTYwMDAuMTIzNDU2CiAgfSwKICB7CiAgICJub3RlIjogIlN5bnRoZXRpYyBzdHlsZSBub3RlIG51bWJlciAwMSBhYm91dCBkZWxpdmVyeSIsCiAgICJhZGRlZCI6IDE3OTA0OTYwMDAuMzczNDU2CiAgfSwKICB7CiAgICJub3RlIjogIlRoZSB1c2VyIGFza2VkIHlvdSB0byBiZSBtb3JlIGxpa2UgYSBzaGlwIGNhcHRhaW4gd291bGQiLAogICAiYWRkZWQiOiAxNzkwNTgyNDAwLjEyMzQ1NgogIH0KIF0KfQ=="
       }
      }
     ]
@@ -4966,7 +4966,7 @@
      {
       "op": "maybe_learn",
       "args": {
-       "text": "Stop calling me Mr Stark!"
+       "text": "Stop calling me Old Chap!"
       },
       "now": {
        "repr": "1790582400.123456",
@@ -4980,14 +4980,14 @@
      {
       "action": {
        "action": "learn",
-       "note": "The user asked you to stop calling them Mr Stark"
+       "note": "The user asked you to stop calling them Old Chap"
       },
       "result": {
        "value": null
       },
       "bumps": [],
       "files_after": {
-       "personality.json": "ewogImNvcmUiOiBbCiAgIlN5bnRoZXRpYyB0cmFpdCBhbHBoYTogY2FsbSBhbmQgZXhhY3QuIiwKICAiU3ludGhldGljIHRyYWl0IGJldGEgXHUyMDE0IGRyeSwgbmV2ZXIgY3J1ZWwuIiwKICAiU3ludGhldGljIHRyYWl0IGdhbW1hOiBicmllZiBieSBkZWZhdWx0LiIKIF0sCiAibGVhcm5lZCI6IFsKICB7CiAgICJub3RlIjogIlN5bnRoZXRpYyBzdHlsZSBub3RlIG51bWJlciAwMCBhYm91dCBkZWxpdmVyeSIsCiAgICJhZGRlZCI6IDE3OTA0OTYwMDAuMTIzNDU2CiAgfSwKICB7CiAgICJub3RlIjogIlN5bnRoZXRpYyBzdHlsZSBub3RlIG51bWJlciAwMSBhYm91dCBkZWxpdmVyeSIsCiAgICJhZGRlZCI6IDE3OTA0OTYwMDAuMzczNDU2CiAgfSwKICB7CiAgICJub3RlIjogIlRoZSB1c2VyIGFza2VkIHlvdSB0byBzdG9wIGNhbGxpbmcgdGhlbSBNciBTdGFyayIsCiAgICJhZGRlZCI6IDE3OTA1ODI0MDAuMTIzNDU2CiAgfQogXQp9"
+       "personality.json": "ewogImNvcmUiOiBbCiAgIlN5bnRoZXRpYyB0cmFpdCBhbHBoYTogY2FsbSBhbmQgZXhhY3QuIiwKICAiU3ludGhldGljIHRyYWl0IGJldGEgXHUyMDE0IGRyeSwgbmV2ZXIgY3J1ZWwuIiwKICAiU3ludGhldGljIHRyYWl0IGdhbW1hOiBicmllZiBieSBkZWZhdWx0LiIKIF0sCiAibGVhcm5lZCI6IFsKICB7CiAgICJub3RlIjogIlN5bnRoZXRpYyBzdHlsZSBub3RlIG51bWJlciAwMCBhYm91dCBkZWxpdmVyeSIsCiAgICJhZGRlZCI6IDE3OTA0OTYwMDAuMTIzNDU2CiAgfSwKICB7CiAgICJub3RlIjogIlN5bnRoZXRpYyBzdHlsZSBub3RlIG51bWJlciAwMSBhYm91dCBkZWxpdmVyeSIsCiAgICJhZGRlZCI6IDE3OTA0OTYwMDAuMzczNDU2CiAgfSwKICB7CiAgICJub3RlIjogIlRoZSB1c2VyIGFza2VkIHlvdSB0byBzdG9wIGNhbGxpbmcgdGhlbSBPbGQgQ2hhcCIsCiAgICJhZGRlZCI6IDE3OTA1ODI0MDAuMTIzNDU2CiAgfQogXQp9"
       }
      }
     ]
@@ -5111,7 +5111,7 @@
      {
       "op": "maybe_learn",
       "args": {
-       "text": "Call me Ishmael"
+       "text": "Call me Maestro"
       },
       "now": {
        "repr": "1790582400.123456",
