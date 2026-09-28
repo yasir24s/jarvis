@@ -11,9 +11,10 @@ import Testing
 /// reply / result, corrections.json's bytes, the cache, and the research bumps (none).
 /// The "constants" case compares the regex sources, thresholds and cap with jarvis.py's.
 ///
-/// Registered divergences (`native` blocks in the fixture; hand-edited files only):
-/// - `corr-malformed-pair-raises`: a pair whose heard/meant is not a string makes Python's
-///   _apply_corrections raise; native returns the transcript unchanged.
+/// Where a hand-edited pair's non-string heard/meant makes Python's _apply_corrections raise,
+/// native must throw StateShapeError(.corrections).
+///
+/// Registered divergence (a `native` block in the fixture; hand-edited files only):
 /// - `sub-literal-repl`: a `meant` with a backslash is a re.sub template in Python; native
 ///   substitutes it literally.
 /// Native is asserted positively; only Python's result is the known issue.
@@ -95,6 +96,7 @@ struct M1CorrectionsTests {
             if let at = st.double("at") { clock.set(at) }
             let text = st.string("text") ?? ""
             var result: String?
+            var thrown: StateShapeError?
             switch op {
             case "learn":
                 let (reply, save) = CorrectionsLogic.learn(text, pairs: d.load(), now: clock.now())
@@ -105,7 +107,7 @@ struct M1CorrectionsTests {
                 d.save(save)
                 result = reply
             case "apply":
-                result = CorrectionsLogic.apply(text, pairs: d.load())
+                do { result = try CorrectionsLogic.apply(text, pairs: d.load()) } catch { thrown = error }
             case "external_write":
                 try CorrHistGolden.put(st["file"], at: path)
             case "restart":
@@ -114,14 +116,18 @@ struct M1CorrectionsTests {
                 r.hard.append("step \(k): unknown op \(op)")
             }
             let at = "step \(k) \(op) \(text.debugDescription)"
-            if let native = w.object("native") {
+            if let raised = w.string("raises") {
+                if thrown?.file != .corrections {
+                    r.hard.append("\(at): Python raises \(raised); native returned \(result?.debugDescription ?? "nil") without StateShapeError(.corrections)")
+                }
+            } else if let thrown {
+                r.hard.append("\(at): native threw \(thrown); Python gives \(w["result"] ?? .null)")
+            } else if let native = w.object("native") {
                 r.divergence = CorrHistGolden.merge(r.divergence, native.string("divergence"))
                 if let result, .string(result) != native["result"] {
                     r.hard.append("\(at): native rule wants \(native["result"] ?? .null), got \(result.debugDescription)")
                 }
-                if let raised = w.string("raises") {
-                    r.python.append("\(at): Python raises \(raised); native returns \(result?.debugDescription ?? "nil")")
-                } else if let result, .string(result) != w["result"] {
+                if let result, .string(result) != w["result"] {
                     r.python.append("\(at): Python gives \(w["result"] ?? .null), native \(result.debugDescription)")
                 }
             } else if let result, .string(result) != w["result"] {

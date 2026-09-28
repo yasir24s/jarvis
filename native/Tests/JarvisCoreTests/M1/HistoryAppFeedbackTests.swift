@@ -11,9 +11,8 @@ import Testing
 /// _claude_history_preamble. The "constants" case compares the regex, window, threshold,
 /// exclusions and slice bounds with jarvis.py's.
 ///
-/// Registered divergence (a `native` block in the fixture; hand-edited history.json only):
-/// - `history-nonstring-content`: a loaded turn with truthy non-string content makes
-///   _claude_history_preamble raise AttributeError; native skips that turn.
+/// Where a hand-edited turn's truthy non-string content makes _claude_history_preamble raise,
+/// native must throw StateShapeError(.history). No divergences are registered.
 @Suite("M1 history + app context + feedback golden (jarvis.py _history_* / app_context / track_feedback)")
 struct M1HistoryAppFeedbackTests {
     static let suite = "m1_history_app"
@@ -128,17 +127,14 @@ struct M1HistoryAppFeedbackTests {
             case "pop": log.popTrailingUser()
             case "save": _ = store.save(.history, log.serialized())
             case "preamble":
-                let got = log.claudePreamble()
-                if let native = w.object("native") {
-                    r.divergence = CorrHistGolden.merge(r.divergence, native.string("divergence"))
-                    if .string(got) != native["result"] { r.hard.append("\(at): native rule wants \(native["result"] ?? .null), got \(got.debugDescription)") }
-                    if let raised = w.string("raises") {
-                        r.python.append("\(at): Python raises \(raised); native returns \(got.debugDescription)")
-                    } else if .string(got) != w["result"] {
-                        r.python.append("\(at): Python gives \(w["result"] ?? .null)")
+                let got: String?, thrown: StateShapeError?
+                do { got = try log.claudePreamble(); thrown = nil } catch { got = nil; thrown = error }
+                if let raised = w.string("raises") {
+                    if thrown?.file != .history {
+                        r.hard.append("\(at): Python raises \(raised); native gave \(got?.debugDescription ?? "nil") without StateShapeError(.history)")
                     }
-                } else if .string(got) != w["result"] {
-                    r.hard.append("\(at): preamble \(got.debugDescription), Python \(w["result"] ?? w["raises"] ?? .null)")
+                } else if got.map({ JSONValue.string($0) }) != w["result"] {
+                    r.hard.append("\(at): preamble \(got?.debugDescription ?? "threw \(thrown.map { "\($0)" } ?? "")"), Python \(w["result"] ?? .null)")
                 }
             default: r.hard.append("\(at): unknown op")
             }

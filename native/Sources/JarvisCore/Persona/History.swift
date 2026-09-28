@@ -61,9 +61,9 @@ public struct HistoryLog: Sendable, Equatable {
     /// `_claude_history_preamble`: over `_history[-7:-1]` (the just-appended user turn is
     /// excluded), "User: " / "You: " + the stripped non-empty content, one per line.
     ///
-    /// Divergence `history-nonstring-content` (hand-edited history.json only): a truthy
-    /// non-string content makes Python raise AttributeError; native skips that turn.
-    public func claudePreamble() -> String {
+    /// Throws where a truthy non-string content (hand-edited history.json only) makes Python
+    /// raise AttributeError (M01 §3.7, §8 R8).
+    public func claudePreamble() throws(StateShapeError) -> String {
         let n = turns.count
         let lo = max(0, n - 7), hi = max(0, n - 1)
         var lines: [String] = []
@@ -72,7 +72,8 @@ public struct HistoryLog: Sendable, Equatable {
                 let content: String
                 switch m["content"] {
                 case .string(let s)?: content = Py.strip(s)
-                case let v? where v.pyTruthy: continue                    // Python: AttributeError
+                case let v? where v.pyTruthy:                            // .strip() raises
+                    throw StateShapeError(file: .history, detail: "non-string content: \(PyJSON.dumps(v))")
                 default: content = ""                                     // missing or falsy → ""
                 }
                 if !content.isEmpty {

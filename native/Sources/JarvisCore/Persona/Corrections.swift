@@ -12,7 +12,8 @@ import Foundation
 //   even when the write fails, as Python assigns it before opening the file.
 // `learn` and `apply` take the pairs as an autoclosure and evaluate it only where Python calls
 // _corrections_load, so the cache is loaded at exactly the same moments. None of these paths
-// bumps a research counter.
+// bumps a research counter. `apply` throws StateShapeError where Python raises on a
+// hand-edited pair (M01 §3.7, §8 R8).
 
 public enum CorrectionsLogic {
     // MARK: - Literals (verbatim from jarvis.py; checked by the fixture's "constants" case)
@@ -138,42 +139,37 @@ public enum CorrectionsLogic {
     /// hit finds nothing to replace, as in Python); otherwise a short utterance close enough to
     /// `heard` becomes `meant` outright.
     ///
-    /// Divergences (hand-edited files only; `learn` never writes these shapes):
-    /// - `corr-malformed-pair-raises`: where a non-string heard/meant makes Python raise
-    ///   (TypeError / AttributeError), native returns `text` unchanged;
-    /// - `sub-literal-repl`: a `meant` holding a backslash is substituted literally (Python
-    ///   treats it as a re.sub template).
-    public static func apply(_ text: String, pairs: @autoclosure () -> [JSONObject]) -> String {
+    /// Throws where a hand-edited pair's non-string heard/meant makes Python raise
+    /// (TypeError / AttributeError; `learn` never writes these shapes). Divergence
+    /// `sub-literal-repl`: a `meant` holding a backslash is substituted literally (Python
+    /// treats it as a re.sub template).
+    public static func apply(_ text: String, pairs: @autoclosure () -> [JSONObject]) throws(StateShapeError) -> String {
         if text.isEmpty || isTeachCorrection(text) { return text }
-        return applyOrRaise(text, pairs()) ?? text
-    }
-
-    /// The loop of `_apply_corrections`; nil where Python raises.
-    static func applyOrRaise(_ text: String, _ pairs: [JSONObject]) -> String? {
+        let pairs = pairs()
         if pairs.isEmpty { return text }
         var keyed: [(len: Int, index: Int, pair: JSONObject)] = []
         for (k, p) in pairs.enumerated() {
-            guard let n = pyLen(p["heard"] ?? .string("")) else { return nil }   // len() raises
+            guard let n = pyLen(p["heard"] ?? .string("")) else { throw shape("heard without len()", p) }
             keyed.append((n, k, p))
         }
         keyed.sort { $0.len != $1.len ? $0.len > $1.len : $0.index < $1.index }  // sorted(key=-len)
         var result = text, normed = norm(text)
         for (_, _, p) in keyed {
-            guard let heardValue = p["heard"], let meantValue = p["meant"],       // KeyError
-                  let n = pyLen(heardValue) else { return nil }
+            guard let heardValue = p["heard"], let meantValue = p["meant"],
+                  let n = pyLen(heardValue) else { throw shape("pair without heard/meant", p) }   // KeyError
             if n < minApplyHeardLength { continue }
-            guard case .string(let heard) = heardValue else { return nil }       // re.escape raises
+            guard case .string(let heard) = heardValue else { throw shape("non-string heard", p) }   // re.escape
             let pattern = #"\b"# + PyRegex.escape(heard) + #"\b"#
             guard let hit = try? PyRegex(pattern), let sub = try? PyRegex(pattern, ignoreCase: true) else {
                 continue                                                          // unreachable: escaped
             }
             if hit.search(normed) != nil {
-                guard case .string(let meant) = meantValue else { return nil }   // re.sub(repl) raises
+                guard case .string(let meant) = meantValue else { throw shape("non-string meant", p) }   // re.sub
                 result = sub.sub(result, literal: meant)
                 normed = norm(result)
             } else if Py.split(normed).count <= fuzzyMaxWords,
                       PyDifflib.ratio(normed, heard) >= fuzzyThreshold {
-                guard case .string(let meant) = meantValue else { return nil }   // _corr_norm raises
+                guard case .string(let meant) = meantValue else { throw shape("non-string meant", p) }   // _corr_norm
                 result = meant
                 normed = norm(meant)
             }
@@ -191,6 +187,10 @@ public enum CorrectionsLogic {
         case .object(let o): o.count
         case .null, .bool, .int, .bigInt, .double: nil
         }
+    }
+
+    private static func shape(_ what: String, _ p: JSONObject) -> StateShapeError {
+        StateShapeError(file: .corrections, detail: "\(what): \(PyJSON.dumps(.object(p)))")
     }
 
     private static func compile(_ pattern: String, ignoreCase: Bool = false) -> PyRegex {

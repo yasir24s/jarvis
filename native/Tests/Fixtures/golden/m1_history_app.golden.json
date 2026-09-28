@@ -6759,10 +6759,6 @@
      },
      {
       "raises": "AttributeError",
-      "native": {
-       "divergence": "history-nonstring-content",
-       "result": "\n\nRecent conversation:\nYou: ok"
-      },
       "turns": [
        {
         "role": "user",
