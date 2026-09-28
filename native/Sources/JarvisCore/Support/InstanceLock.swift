@@ -109,18 +109,17 @@ public final class InstanceLock: Sendable {
     }
 
     /// Belt and braces against a pre-patch Python that never takes the lock: pids (other than
-    /// this one) whose executable is <root>/dist/JARVIS.app/Contents/MacOS/JARVIS (the py2app
-    /// bundle) or whose argv has an element equal to <root>/jarvis.py. Processes whose path or
-    /// arguments cannot be read (other users') are skipped.
+    /// this one) whose executable is the py2app bundle (`isPythonBundleExecutable`) or whose
+    /// argv has an element equal to <root>/jarvis.py. Processes whose path or arguments cannot
+    /// be read (other users') are skipped.
     public static func foreignJarvisProcesses(repoRoot: URL) -> [Int32] {
         let roots = rootSpellings(repoRoot)
-        let bundles = Set(roots.map { $0 + "/dist/JARVIS.app/Contents/MacOS/JARVIS" })
         let scripts = Set(roots.map { $0 + "/jarvis.py" })
         let me = getpid()
         var argBuffer = [UInt8](repeating: 0, count: argMax())
         var hits: [Int32] = []
         for pid in allPids() where pid > 0 && pid != me {
-            if let exe = executablePath(pid), bundles.contains(exe) {
+            if let exe = executablePath(pid), isPythonBundleExecutable(path: exe, roots: roots) {
                 hits.append(pid)
             } else if let argv = arguments(pid, &argBuffer), argv.contains(where: scripts.contains) {
                 hits.append(pid)
@@ -129,13 +128,35 @@ public final class InstanceLock: Sendable {
         return hits.sorted()
     }
 
+    /// True iff `path` is Python JARVIS's py2app executable <root>/dist/JARVIS.app/Contents/
+    /// MacOS/JARVIS — never the native app at <root>/native/dist/JARVIS.app. `path` is compared
+    /// after lexical normalisation ("//", ".", ".."); relative paths never match. `repoRoot`
+    /// counts as given and as realpath(3) resolves it. String logic only: no process is read.
+    public static func isPythonBundleExecutable(path: String, repoRoot: URL) -> Bool {
+        isPythonBundleExecutable(path: path, roots: rootSpellings(repoRoot))
+    }
+
     // MARK: - Private
+
+    private static func isPythonBundleExecutable(path: String, roots: [String]) -> Bool {
+        guard let normalized = lexicallyNormalized(path) else { return false }
+        return roots.contains { $0 + "/dist/JARVIS.app/Contents/MacOS/JARVIS" == normalized }
+    }
+
+    /// "/a//b/./c/../d" → "/a/b/d" without touching the filesystem; nil for a relative path.
+    private static func lexicallyNormalized(_ path: String) -> String? {
+        guard path.hasPrefix("/") else { return nil }
+        var parts: [Substring] = []
+        for part in path.split(separator: "/") where part != "." {
+            if part == ".." { _ = parts.popLast() } else { parts.append(part) }
+        }
+        return "/" + parts.joined(separator: "/")
+    }
 
     /// The root as given and as realpath(3) resolves it (proc_pidpath reports resolved paths,
     /// e.g. /private/var/… for /var/…; argv keeps whatever the launcher typed).
     private static func rootSpellings(_ root: URL) -> [String] {
-        var given = root.standardizedFileURL.path(percentEncoded: false)
-        while given.count > 1 && given.hasSuffix("/") { given.removeLast() }
+        let given = lexicallyNormalized(root.standardizedFileURL.path(percentEncoded: false)) ?? "/"
         var out = [given]
         if let resolved = realpath(given, nil) {
             let r = String(cString: resolved)
