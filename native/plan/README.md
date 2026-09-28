@@ -288,30 +288,32 @@ Privacy:
   corpora and fixtures use neutral stand-ins only (Robin, Morgan, Sam, "the university"),
   and every executor scans its added lines for personal details before its final commit.
 
-**M1 status: in progress.** Merged on `main` as of `d75fd2b`:
+**M1 status: in progress.** Merged on `main` as of `97a91ac`:
 
 - M1: `0731dd0` StateStore, core protocols, state lease on InstanceLock; `d144d12` Py string
   semantics; `f054385` PyRegex; `7c7c47e` PyDifflib; `000b46b` personality; `7b033a4`
   emotions and tone; `9227a3e` neutral style-corpus phrases; `dcd9265` shared
   `StateShapeError`; `54fedad`, `aa258e2` taught corrections; `52775cd` history, app
   context and feedback logic; `2e6a5e8` corrections and history throw `StateShapeError`;
-  `2e965b8` profile and knowledge base.
+  `2e965b8` profile and knowledge base; `97a91ac` system prompt builder and `CoreState` turn
+  pipeline (M01 T11, X8; the system prompt is byte-identical to Python's).
 - M1b: `ccf01dd` research oracle, counter keys, line count, git probe, clock; `23049d6`
   UsageStore and MetricsLog (D1–D4); `d049fec` D-31; `3a94af0` read-only schema-compat
   check over the real dataset (judged: it round-trips byte-identically); `fdc65e5` snapshot
   builder; `d75fd2b` ResearchLogger façade.
-- Still in flight: X8 (M01 T11, prompt builder and `CoreState`) and X9b (M01 T12 persona LLM
-  halves, T13 cross-implementation). Then a validation pass (M01 §5 A1–A10, M01b §5 A1–A8)
-  before `main` is pushed.
+- Still in flight: only X9b (M01 T12 persona LLM halves, T13 cross-implementation). Then a
+  validation pass (M01 §5 A1–A10, M01b §5 A1–A8) before `main` is pushed.
 
 ## Open user decisions
 
 - Write `shouldSpeakReply` (text chat, M02–M04 §3.12) and `speakLocally` (sensitive routing
   to Piper, M08 §3.2). The user writes both.
-- Writes under `research/` (README additions, `annotations.jsonl`) and the `jarvis.py`
-  dataset patch need an explicit OK at execution time.
 - Any download or brew install (webrtc VAD source, espeak-ng): only if the spikes fail, and
   only with approval.
 - Deleting or renaming the `~/jarvis-swift` prototype (T0.2 only unregisters it).
 - The M15 benchmark needs Python JARVIS and Ollama running.
 - ElevenLabs: the user creates the account and plan, and stores the API key in the Keychain.
+
+Resolved, no longer open: writes under `research/` were done in M1b T9 on 2026-09-29 with
+the user's approval (an additive README section and `annotations.jsonl`); the `jarvis.py`
+dataset patch (M1b T8) was declined by the user.
