@@ -1,0 +1,194 @@
+# Native JARVIS — execution plan
+
+These files plan the native Swift rewrite of `jarvis.py` described in `../ROADMAP.md`,
+milestone by milestone, in enough detail for an executor to build each one without
+re-deriving the Python behaviour. `../PARITY.md` is the inventory every milestone ticks off,
+and `DEVIATIONS.md` lists every place native deliberately differs from Python.
+
+**Status:** plan complete 2026-09-28; nothing built yet.
+
+Line numbers refer to jarvis.py @ 68cd112.
+
+## Reading order
+
+M00 → M01 → M01b → M02–M04 → M05–M06 → M07+M14 → M08–M13 → M15 (M15 lives in the M00 file).
+
+## Sections
+
+| File | Milestones covered | Lines | Verdict |
+|---|---|---|---|
+| `M00-foundation-and-M15-cutover.md` | M0 foundation (package, bundle build, signing, oracle, exclusion guard, logging) and M15 parity audit & cutover | 1140 | accepted (with D-1) |
+| `M01-core-state-persona.md` | M1 core state & persona: JSON state store, personality, emotions, profile, KB, corrections, tone, app context, history, prompt builder | 1730 | accepted |
+| `M01b-research-dataset.md` | M1b research dataset logger: snapshot writer, counters, additive schema v2, gap annotations | 790 | accepted |
+| `M02-M04-security-brain-chat.md` | M2 security choke point, M3 Claude/FoundationModels brain, M4 text chat | 1249 | accepted (with D-9, D-10, D-11) |
+| `M05-M06-tools.md` | M5 system & file tools, M6 apps & data tools | 475 | accepted (with D-12, D-13, D-14) |
+| `M07-fastpath-M14-loops.md` | M7 offline fast-path router, M14 background life | 832 | accepted (with D-21, D-22) |
+| `M08-M13-voice-hud.md` | M8 voice out, M9 voice in, M10 speaker verification, M11 wake word, M12 conversation loop & barge-in, M13 HUD | 726 | accepted (with D-17 to D-20) |
+
+Also here: `DEVIATIONS.md` (the deviations register) and this index.
+
+## Integration decisions
+
+Made by the orchestrator while judging the sections. Where a section disagrees with a
+decision below, the decision wins. The section plans have their own local `D-n` and `R-n`
+lists (for example M02–M04 §8.2 "Decisions for the user"). Those are separate numbering
+schemes: "W4 D-3" is not integration decision D-3.
+
+- **D-1. PyJSON/AtomicFile ownership.** One module in JarvisCore, built in M0 (W1's
+  placement). The normative types are M01 §3.1/§3.5: `JSONValue` with `int(Int64)` and
+  `bigInt(String)`, `loads(Data)`, ordered `JSONObject.Member`, `setDefault`. M00 §3.6 adds
+  the `dumps` `ensureASCII:` parameter, DEL (0x7f) escaping (matches CPython's
+  `ESCAPE_ASCII` class `[^\ -~]`), `AtomicFile.appendLine`, and the pyjson/pytime/pyround/paths
+  golden suites. M00 §3.6 carries a banner pointing here.
+- **D-2. Personality consolidation and distill backend.** Claude CLI first, then
+  FoundationModels, then skip on refusal or failure. Claude adds no new privacy exposure (the
+  persona is already in every Claude prompt) and avoids on-device guardrail refusals of
+  profanity notes. This is a hygiene job: it never fabricates.
+- **D-3.** M01 R3, the `.unreadable` backup made before overwriting an unparseable state file:
+  approved.
+- **D-4. Bug-compat policy.** Native matches Python by default, enforced by golden fixtures.
+  Every deliberate fix is listed in `DEVIATIONS.md` with its own marked fixture
+  (`"deviation": "DEV-n"`). Known when decided: the chained-sudo guard (W4), the fast-path
+  launcher swallowing "start a timer…" and "start music" (W6), the research 8 KB tail read
+  (W3's D-list), and preserving an unreadable `usage.json` (W3 D1).
+- **D-5.** Dataset rows written by Python carry `runtime.impl="python"` and `build="release"`,
+  since Python JARVIS, whenever it runs, is the production assistant (per W3).
+- **D-6. Commit hygiene.** Plan files must pass `.githooks/pre-commit`, so absolute
+  `/Users/<name>/` paths become `~/`. Applied at integration: 7 home paths rewritten to `~/`
+  (one Python one-liner uses `os.path.expanduser("~/jarvis")`, because `sys.path` does not
+  expand `~`), and 2 synthetic test paths in M05 rewritten as `$HOME/w` and `$SHARED` so
+  the hook's path regex does not fire.
+- **D-7. FoundationModels RAM.** Measure the inference daemon too (W1 flag 6). ROADMAP's
+  "21 MB" is the client process's RSS only; W1's §3.1 corrections are applied.
+- **D-8.** The jarvis-chat Python chat app is superseded and will not be built (W1 flag 7 is moot).
+- **D-9. Guard attack corpus.** Generated programmatically from the guard's own patterns plus
+  systematic mutations (quoting, whitespace, case, chaining, substitution), with Python's
+  verdicts as the expectations. No hand-written payloads: W4 §4 is thin because the
+  classifier stopped the hand-writing.
+- **D-10. M3 task.** Measure claude-opus-5-5's refusal rate on the real `SYSTEM_PROMPT` across
+  about 30 typical JARVIS commands, recording which model answered. If the rate is material,
+  decide between accepting the claude-opus-4-8 fallback and a Claude-only prompt deviation
+  (in `DEVIATIONS.md`). Always record the answering model per turn.
+- **D-11. W4's user-decision list (M02–M04 §8.2), resolved.** W4 D-1 yes (X-1). W4 D-2:
+  tightened sudoers (the user is installing it). W4 D-3 overridden to OFF (the user's July
+  "full read access"; the taint guard is the control). W4 D-4 ON (overage kill, so no
+  pay-as-you-go). W4 D-5 yes (claude-opus-5-5 by default; the counter stays `backend_claude`).
+  W4 D-6: reword for the CLI. W4 D-7: CORE-22 accepted pending the M3 context measurement.
+  W4 D-8 ON. W4 D-9: `interactions` is bumped for text too, plus W3's additive
+  `interactions_text`. W4 D-10: reject. W4 D-11 and D-12: defaults. W4 D-13: the user writes
+  `shouldSpeakReply` (batched to the user).
+- **D-12. Security deviation.** The native executor set is Python's plus `write_file`,
+  `delete_file` and `move_file`. Writes and moves into dotfiles (`~/.zsh*`, `~/.bash*`,
+  `~/.profile`), `~/Library/LaunchAgents`, `~/.ssh`, `~/Library/Keychains` and `~/.claude`
+  take the confirm tier even inside home. `PARITY.md` marks the three rows `X*` with a
+  footnote; `DEVIATIONS.md` has the entry (M05 R2 → D-12) and needs marked fixtures. It stays
+  a deviation, because the Python fix was stopped (D-16).
+- **D-13. Target split** (W5 R8): pure-logic targets are Foundation-only and golden-testable;
+  platform targets may import AppKit, EventKit and so on. This corrects the rule in the
+  `Package.swift` header comment, which now says so.
+- **D-14.** `summarize_page` and `find_song_by_lyrics` use the brain chain (Claude CLI, then
+  FoundationModels) and keep "title + artist only, never lyrics".
+- **D-15.** Wi-Fi SSID comes from CoreWLAN with the Location grant, because the
+  `networksetup` oracle is broken on macOS 27. Accepted deviation (W5 R3).
+- **D-16. Parallel Python session (task_9ad883cb).** The user had started a separate session
+  to fix the write_file/delete_file/move_file injection gap in `jarvis.py`. The user stopped
+  it at 16:56 before it changed anything (verified: `jarvis.py` unmodified, no worktree, no
+  stash). So D-12 stays a native deviation and the Python gap stays open (Python JARVIS is
+  stopped, so nothing is exposed right now); the "becomes parity" branch does not apply.
+  Plan line citations are @68cd112, and the plan commit stages only `native/`.
+- **D-17. `speakLocally` stub.** No `fatalError`. The default body is `return true` (speak
+  locally with Piper, the privacy-safe choice) under a clearly marked USER DECISION comment;
+  the user writes the real rule. M08 §3.2 is edited to match.
+- **D-18. Barge-in.** Native drops queued sentences on both backends, where Python's Claude
+  path keeps speaking. Approved deviation.
+- **D-19. Echo cancellation.** Voice processing on, ducking at its minimum, AGC off.
+  Re-measure the wake and speaker thresholds with AEC on. `JARVIS_AEC=0` is the escape hatch.
+- **D-20.** The native speaker-ID and Piper routes (dlopen of Python's `_webrtcvad.so` and
+  `espeakbridge.so` with dummy symbols) are spikes with a go/no-go. Fallbacks that download
+  or brew-install (webrtc VAD source, espeak-ng) need the user's explicit approval at
+  execution time.
+- **D-21. Router fixes approved as deviations:** DEV-M7-01 (the launcher swallows "start a
+  timer…"), DEV-M7-02 ("start music" and "start the music" → play), DEV-M7-05 (the note
+  regex turns "notes" and "notebook" into notes "s" and "book"). The other W6 DEVs follow
+  M07 §8.
+- **D-22. Ownership.** Alarm store and the `set_alarm` tool: M6. Alarm firing and
+  rescheduling: M14. `web_search` and the KB cache: M6; the background research loop: M14.
+  Research logger logic: M1b, on the shared scheduler M14 provides. Chat-only mode runs the
+  dataset snapshot, alarm and reminder firing, and meeting and low-battery alerts (as
+  UNUserNotifications), never the voice-only loops. Personality distill runs after 10 minutes
+  of chat idle or when the window closes.
+
+## Judging notes
+
+Each section was written by a separate agent (W1–W7; W8 prepared the sudoers file), then
+judged against the live Python code.
+
+- W1, M00 + M15: accepted with D-1. Verified: the prototype bundle's designated
+  requirement differs from the Python bundle's (a TCC hazard); no absolute paths.
+- W2, M01: accepted. Verified: 8 of 8 sections; `app_context` is at jarvis.py:3536 (the
+  brief was wrong); re-serialisation is byte-identical on the real files (indent=1; history
+  compact); the hook blocks `/Users/<name>/`; fixtures need an `m1_` prefix because of
+  `.gitignore`.
+- W3, M01b: accepted. Verified: the 8 KB tail-read bug is real (`_research_last_date`
+  seeks to size − 8192; the longest row today is 4,110 bytes); the 4 undocumented counters are
+  real. Writes under `research/` (README, `annotations.jsonl`) need the user's explicit OK
+  at execution time; task T8 edits `jarvis.py`.
+- W4, M02–M04: accepted with D-9, D-10, D-11. Verified: the probe transcript shows a
+  `"category":"cyber"` refusal on claude-opus-5-5 and the CLI's fallback to
+  claude-opus-4-8; `_sensitive_path` is defined at jarvis.py:1249 and never called.
+  **Rule breach, self-disclosed:** an unsandboxed `emotion_context()` call rewrote
+  `~/jarvis/emotions.json` at 12:46:17. The values are unchanged (equal to the baselines and
+  to the 2026-08-20 dataset snapshot); only the `at` timestamp moved. No other state or
+  dataset file was touched.
+- W5, M05–M06: accepted with D-12, D-13, D-14. Verified: 46 of 46 tools covered;
+  `write_file`, `delete_file` and `move_file` are not in Python's `EXECUTOR_TOOLS`, and
+  in-home writes (including an existing `~/.zshrc` and LaunchAgents) are instant, which is a
+  live injection → persistence chain in Python.
+- W6, M07 + M14: accepted with D-21, D-22. Verified: the launcher branch always returns
+  (the fixture shows "start a timer for 5 minutes" → "I couldn't find an app called a timer
+  for 5 minutes, sir." and "start music" → launches Music); the 280-case fixture is present;
+  `_apply_overlay_main` is scheduled twice (`callAfter` + `callLater 1.5`) and
+  `_install_lock_observer` has no idempotence guard (the double install is real; the double
+  greeting is inferred).
+- W7, M08–M13: accepted with D-17 to D-20. Verified: torch 2.12.0, onnx not installed,
+  onnxruntime 1.26.0, resemblyzer 0.1.4, webrtcvad 2.0.10; the Claude-path `emit()`
+  (jarvis.py ~4949-4954) speaks queued sentences without a barge-in check. One detail was
+  rejected: the `speakLocally` stub was a `fatalError`. It is replaced per D-17.
+- W8, sudoers: accepted. Tightened, 17 entries, sha256 `ca2cfb44…`; `pmset` left
+  unrestricted by the user's decision. The user installs it. **Rule breach, self-disclosed:**
+  one `sudo -V` (version only).
+- Integration: W1's review corrections from M00 §3.1 are applied to `ROADMAP.md`,
+  `PARITY.md` and `Package.swift` (R1–R9, P1–P6, S1; S2 and S3 are T0.3 scaffold work),
+  followed by the ledger edits above, the path hygiene of D-6, and `native/.gitignore`
+  (`.build/`, `dist/`).
+
+## Gaps found in today's Python JARVIS
+
+Found while planning. None is fixed by this plan; native behaviour is in `DEVIATIONS.md`.
+
+- `write_file` / `delete_file` / `move_file` injection gap: not executor tools, and in-home
+  writes are instant. The fix task was stopped by the user, so the gap is still open.
+- Chained-sudo guard gap: only the first command on a line is checked against the sudo
+  allowlist, and the shell then runs all of them.
+- The Claude-path barge-in keeps speaking the queued sentences.
+- The fast-path launcher swallows "start a timer…" and "start music".
+- The research 8 KB tail read can write duplicate daily rows.
+- The lock observer is installed twice.
+- `_sensitive_path` is dead code.
+- `/etc/sudoers.d/jarvis` is missing. A tightened replacement is prepared (W8); the user
+  installs it.
+- `periodic` is absent on macOS 27.2, but still in `_SUDO_ALLOW`.
+- Opus 5.5 refused a probe as "cyber", and the CLI fell back to claude-opus-4-8.
+
+## Open user decisions
+
+- Write `shouldSpeakReply` (text chat, M02–M04 §3.12) and `speakLocally` (sensitive routing
+  to Piper, M08 §3.2). The user writes both.
+- Whether to fix the Python injection gap now.
+- Writes under `research/` (README additions, `annotations.jsonl`) and the `jarvis.py`
+  dataset patch need an explicit OK at execution time.
+- Any download or brew install (webrtc VAD source, espeak-ng): only if the spikes fail, and
+  only with approval.
+- Deleting or renaming the `~/jarvis-swift` prototype (T0.2 only unregisters it).
+- The M15 benchmark needs Python JARVIS and Ollama running.
+- ElevenLabs: the user creates the account and plan, and stores the API key in the Keychain.
