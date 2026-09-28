@@ -2107,112 +2107,112 @@
     "steps": [
      {
       "op": "learn",
-      "text": "correct no ted to noted",
+      "text": "correct no tid to notid",
       "at": 1790582400.25
      },
      {
       "op": "apply",
-      "text": "no ted please"
+      "text": "no tid please"
      },
      {
       "op": "apply",
-      "text": "No Ted, please"
+      "text": "No Tid, please"
      },
      {
       "op": "apply",
-      "text": "no-ted please"
+      "text": "no-tid please"
      },
      {
       "op": "apply",
-      "text": "no  ted please"
+      "text": "no  tid please"
      },
      {
       "op": "apply",
-      "text": "no\tted please"
+      "text": "no\ttid please"
      }
     ]
    },
    "expected": {
     "steps": [
      {
-      "result": "Got it, sir — I'll read 'no ted' as 'noted' from now on.",
+      "result": "Got it, sir — I'll read 'no tid' as 'notid' from now on.",
       "file": {
-       "text": "[\n {\n  \"heard\": \"no ted\",\n  \"meant\": \"noted\",\n  \"added\": 1790582400.25\n }\n]"
+       "text": "[\n {\n  \"heard\": \"no tid\",\n  \"meant\": \"notid\",\n  \"added\": 1790582400.25\n }\n]"
       },
       "cache": [
        {
-        "heard": "no ted",
-        "meant": "noted",
+        "heard": "no tid",
+        "meant": "notid",
         "added": 1790582400.25
        }
       ],
       "effects": []
      },
      {
-      "result": "noted please",
+      "result": "notid please",
       "file": {
-       "text": "[\n {\n  \"heard\": \"no ted\",\n  \"meant\": \"noted\",\n  \"added\": 1790582400.25\n }\n]"
+       "text": "[\n {\n  \"heard\": \"no tid\",\n  \"meant\": \"notid\",\n  \"added\": 1790582400.25\n }\n]"
       },
       "cache": [
        {
-        "heard": "no ted",
-        "meant": "noted",
+        "heard": "no tid",
+        "meant": "notid",
         "added": 1790582400.25
        }
       ],
       "effects": []
      },
      {
-      "result": "noted, please",
+      "result": "notid, please",
       "file": {
-       "text": "[\n {\n  \"heard\": \"no ted\",\n  \"meant\": \"noted\",\n  \"added\": 1790582400.25\n }\n]"
+       "text": "[\n {\n  \"heard\": \"no tid\",\n  \"meant\": \"notid\",\n  \"added\": 1790582400.25\n }\n]"
       },
       "cache": [
        {
-        "heard": "no ted",
-        "meant": "noted",
+        "heard": "no tid",
+        "meant": "notid",
         "added": 1790582400.25
        }
       ],
       "effects": []
      },
      {
-      "result": "no-ted please",
+      "result": "no-tid please",
       "file": {
-       "text": "[\n {\n  \"heard\": \"no ted\",\n  \"meant\": \"noted\",\n  \"added\": 1790582400.25\n }\n]"
+       "text": "[\n {\n  \"heard\": \"no tid\",\n  \"meant\": \"notid\",\n  \"added\": 1790582400.25\n }\n]"
       },
       "cache": [
        {
-        "heard": "no ted",
-        "meant": "noted",
+        "heard": "no tid",
+        "meant": "notid",
         "added": 1790582400.25
        }
       ],
       "effects": []
      },
      {
-      "result": "no  ted please",
+      "result": "no  tid please",
       "file": {
-       "text": "[\n {\n  \"heard\": \"no ted\",\n  \"meant\": \"noted\",\n  \"added\": 1790582400.25\n }\n]"
+       "text": "[\n {\n  \"heard\": \"no tid\",\n  \"meant\": \"notid\",\n  \"added\": 1790582400.25\n }\n]"
       },
       "cache": [
        {
-        "heard": "no ted",
-        "meant": "noted",
+        "heard": "no tid",
+        "meant": "notid",
         "added": 1790582400.25
        }
       ],
       "effects": []
      },
      {
-      "result": "no\tted please",
+      "result": "no\ttid please",
       "file": {
-       "text": "[\n {\n  \"heard\": \"no ted\",\n  \"meant\": \"noted\",\n  \"added\": 1790582400.25\n }\n]"
+       "text": "[\n {\n  \"heard\": \"no tid\",\n  \"meant\": \"notid\",\n  \"added\": 1790582400.25\n }\n]"
       },
       "cache": [
        {
-        "heard": "no ted",
-        "meant": "noted",
+        "heard": "no tid",
+        "meant": "notid",
         "added": 1790582400.25
        }
       ],
@@ -2226,16 +2226,16 @@
    "input": {
     "kind": "scenario",
     "initial": {
-     "text": "[\n {\n  \"heard\": \"ted\",\n  \"meant\": \"fred\",\n  \"added\": 1.0\n },\n {\n  \"heard\": \"no ted\",\n  \"meant\": \"noted\",\n  \"added\": 2.0\n },\n {\n  \"heard\": \"fred\",\n  \"meant\": \"freddie\",\n  \"added\": 3.0\n },\n {\n  \"heard\": \"abc\",\n  \"meant\": \"first\",\n  \"added\": 4.0\n },\n {\n  \"heard\": \"xyz\",\n  \"meant\": \"second\",\n  \"added\": 5.0\n }\n]"
+     "text": "[\n {\n  \"heard\": \"tid\",\n  \"meant\": \"tidal\",\n  \"added\": 1.0\n },\n {\n  \"heard\": \"no tid\",\n  \"meant\": \"notid\",\n  \"added\": 2.0\n },\n {\n  \"heard\": \"tidal\",\n  \"meant\": \"tidally\",\n  \"added\": 3.0\n },\n {\n  \"heard\": \"abc\",\n  \"meant\": \"first\",\n  \"added\": 4.0\n },\n {\n  \"heard\": \"xyz\",\n  \"meant\": \"second\",\n  \"added\": 5.0\n }\n]"
     },
     "steps": [
      {
       "op": "apply",
-      "text": "no ted please"
+      "text": "no tid please"
      },
      {
       "op": "apply",
-      "text": "ted is here"
+      "text": "tid is here"
      },
      {
       "op": "apply",
@@ -2243,31 +2243,31 @@
      },
      {
       "op": "apply",
-      "text": "tell ted"
+      "text": "tell tid"
      }
     ]
    },
    "expected": {
     "steps": [
      {
-      "result": "noted please",
+      "result": "notid please",
       "file": {
-       "text": "[\n {\n  \"heard\": \"ted\",\n  \"meant\": \"fred\",\n  \"added\": 1.0\n },\n {\n  \"heard\": \"no ted\",\n  \"meant\": \"noted\",\n  \"added\": 2.0\n },\n {\n  \"heard\": \"fred\",\n  \"meant\": \"freddie\",\n  \"added\": 3.0\n },\n {\n  \"heard\": \"abc\",\n  \"meant\": \"first\",\n  \"added\": 4.0\n },\n {\n  \"heard\": \"xyz\",\n  \"meant\": \"second\",\n  \"added\": 5.0\n }\n]"
+       "text": "[\n {\n  \"heard\": \"tid\",\n  \"meant\": \"tidal\",\n  \"added\": 1.0\n },\n {\n  \"heard\": \"no tid\",\n  \"meant\": \"notid\",\n  \"added\": 2.0\n },\n {\n  \"heard\": \"tidal\",\n  \"meant\": \"tidally\",\n  \"added\": 3.0\n },\n {\n  \"heard\": \"abc\",\n  \"meant\": \"first\",\n  \"added\": 4.0\n },\n {\n  \"heard\": \"xyz\",\n  \"meant\": \"second\",\n  \"added\": 5.0\n }\n]"
       },
       "cache": [
        {
-        "heard": "ted",
-        "meant": "fred",
+        "heard": "tid",
+        "meant": "tidal",
         "added": 1.0
        },
        {
-        "heard": "no ted",
-        "meant": "noted",
+        "heard": "no tid",
+        "meant": "notid",
         "added": 2.0
        },
        {
-        "heard": "fred",
-        "meant": "freddie",
+        "heard": "tidal",
+        "meant": "tidally",
         "added": 3.0
        },
        {
@@ -2284,24 +2284,24 @@
       "effects": []
      },
      {
-      "result": "fred is here",
+      "result": "tidal is here",
       "file": {
-       "text": "[\n {\n  \"heard\": \"ted\",\n  \"meant\": \"fred\",\n  \"added\": 1.0\n },\n {\n  \"heard\": \"no ted\",\n  \"meant\": \"noted\",\n  \"added\": 2.0\n },\n {\n  \"heard\": \"fred\",\n  \"meant\": \"freddie\",\n  \"added\": 3.0\n },\n {\n  \"heard\": \"abc\",\n  \"meant\": \"first\",\n  \"added\": 4.0\n },\n {\n  \"heard\": \"xyz\",\n  \"meant\": \"second\",\n  \"added\": 5.0\n }\n]"
+       "text": "[\n {\n  \"heard\": \"tid\",\n  \"meant\": \"tidal\",\n  \"added\": 1.0\n },\n {\n  \"heard\": \"no tid\",\n  \"meant\": \"notid\",\n  \"added\": 2.0\n },\n {\n  \"heard\": \"tidal\",\n  \"meant\": \"tidally\",\n  \"added\": 3.0\n },\n {\n  \"heard\": \"abc\",\n  \"meant\": \"first\",\n  \"added\": 4.0\n },\n {\n  \"heard\": \"xyz\",\n  \"meant\": \"second\",\n  \"added\": 5.0\n }\n]"
       },
       "cache": [
        {
-        "heard": "ted",
-        "meant": "fred",
+        "heard": "tid",
+        "meant": "tidal",
         "added": 1.0
        },
        {
-        "heard": "no ted",
-        "meant": "noted",
+        "heard": "no tid",
+        "meant": "notid",
         "added": 2.0
        },
        {
-        "heard": "fred",
-        "meant": "freddie",
+        "heard": "tidal",
+        "meant": "tidally",
         "added": 3.0
        },
        {
@@ -2320,22 +2320,22 @@
      {
       "result": "first second",
       "file": {
-       "text": "[\n {\n  \"heard\": \"ted\",\n  \"meant\": \"fred\",\n  \"added\": 1.0\n },\n {\n  \"heard\": \"no ted\",\n  \"meant\": \"noted\",\n  \"added\": 2.0\n },\n {\n  \"heard\": \"fred\",\n  \"meant\": \"freddie\",\n  \"added\": 3.0\n },\n {\n  \"heard\": \"abc\",\n  \"meant\": \"first\",\n  \"added\": 4.0\n },\n {\n  \"heard\": \"xyz\",\n  \"meant\": \"second\",\n  \"added\": 5.0\n }\n]"
+       "text": "[\n {\n  \"heard\": \"tid\",\n  \"meant\": \"tidal\",\n  \"added\": 1.0\n },\n {\n  \"heard\": \"no tid\",\n  \"meant\": \"notid\",\n  \"added\": 2.0\n },\n {\n  \"heard\": \"tidal\",\n  \"meant\": \"tidally\",\n  \"added\": 3.0\n },\n {\n  \"heard\": \"abc\",\n  \"meant\": \"first\",\n  \"added\": 4.0\n },\n {\n  \"heard\": \"xyz\",\n  \"meant\": \"second\",\n  \"added\": 5.0\n }\n]"
       },
       "cache": [
        {
-        "heard": "ted",
-        "meant": "fred",
+        "heard": "tid",
+        "meant": "tidal",
         "added": 1.0
        },
        {
-        "heard": "no ted",
-        "meant": "noted",
+        "heard": "no tid",
+        "meant": "notid",
         "added": 2.0
        },
        {
-        "heard": "fred",
-        "meant": "freddie",
+        "heard": "tidal",
+        "meant": "tidally",
         "added": 3.0
        },
        {
@@ -2352,24 +2352,24 @@
       "effects": []
      },
      {
-      "result": "tell fred",
+      "result": "tell tidal",
       "file": {
-       "text": "[\n {\n  \"heard\": \"ted\",\n  \"meant\": \"fred\",\n  \"added\": 1.0\n },\n {\n  \"heard\": \"no ted\",\n  \"meant\": \"noted\",\n  \"added\": 2.0\n },\n {\n  \"heard\": \"fred\",\n  \"meant\": \"freddie\",\n  \"added\": 3.0\n },\n {\n  \"heard\": \"abc\",\n  \"meant\": \"first\",\n  \"added\": 4.0\n },\n {\n  \"heard\": \"xyz\",\n  \"meant\": \"second\",\n  \"added\": 5.0\n }\n]"
+       "text": "[\n {\n  \"heard\": \"tid\",\n  \"meant\": \"tidal\",\n  \"added\": 1.0\n },\n {\n  \"heard\": \"no tid\",\n  \"meant\": \"notid\",\n  \"added\": 2.0\n },\n {\n  \"heard\": \"tidal\",\n  \"meant\": \"tidally\",\n  \"added\": 3.0\n },\n {\n  \"heard\": \"abc\",\n  \"meant\": \"first\",\n  \"added\": 4.0\n },\n {\n  \"heard\": \"xyz\",\n  \"meant\": \"second\",\n  \"added\": 5.0\n }\n]"
       },
       "cache": [
        {
-        "heard": "ted",
-        "meant": "fred",
+        "heard": "tid",
+        "meant": "tidal",
         "added": 1.0
        },
        {
-        "heard": "no ted",
-        "meant": "noted",
+        "heard": "no tid",
+        "meant": "notid",
         "added": 2.0
        },
        {
-        "heard": "fred",
-        "meant": "freddie",
+        "heard": "tidal",
+        "meant": "tidally",
         "added": 3.0
        },
        {

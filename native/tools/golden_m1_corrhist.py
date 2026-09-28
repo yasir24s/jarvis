@@ -266,17 +266,17 @@ def _scenarios():
             A("JOIN the Join"),
         ]),
         ("multiword_and_punctuation_split", None, [
-            L("correct no ted to noted", _T0), A("no ted please"), A("No Ted, please"),
-            A("no-ted please"), A("no  ted please"), A("no\tted please"),
+            L("correct no tid to notid", _T0), A("no tid please"), A("No Tid, please"),
+            A("no-tid please"), A("no  tid please"), A("no\ttid please"),
         ]),
         ("longest_first_and_chaining", _indent1([
-            {"heard": "ted", "meant": "fred", "added": 1.0},
-            {"heard": "no ted", "meant": "noted", "added": 2.0},
-            {"heard": "fred", "meant": "freddie", "added": 3.0},
+            {"heard": "tid", "meant": "tidal", "added": 1.0},
+            {"heard": "no tid", "meant": "notid", "added": 2.0},
+            {"heard": "tidal", "meant": "tidally", "added": 3.0},
             {"heard": "abc", "meant": "first", "added": 4.0},
             {"heard": "xyz", "meant": "second", "added": 5.0},
         ]), [
-            A("no ted please"), A("ted is here"), A("abc xyz"), A("tell ted"),
+            A("no tid please"), A("tid is here"), A("abc xyz"), A("tell tid"),
         ]),
         ("short_heard_skipped", _indent1([
             {"heard": "ab", "meant": "cd", "added": 1.0},
