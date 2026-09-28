@@ -1,0 +1,44 @@
+# /etc/sudoers.d/jarvis -- bounded sudo for the JARVIS voice assistant
+#
+# Purpose: let JARVIS run its allowlisted sudo commands without a password
+# prompt (it has no TTY). Each command is additionally confirm-gated in the app.
+# Generated from jarvis.py _SUDO_ALLOW @ 68cd112, 2026-09-28.
+# Tightened per user decision 2026-09-28.
+#
+# WARNING: NOPASSWD applies to EVERY process running as yasir24s, not only
+# JARVIS. Any script, app or agent running as this user can run these commands
+# as root without a password.
+#
+# DEVIATIONS vs jarvis.py _SUDO_ALLOW (all stricter; a denied command falls
+# back to a password prompt, which fails without a TTY):
+#  - powermetrics: removed (-o <file> writes any path as root).
+#  - purge: no arguments allowed.
+#  - mdutil: removed ("mdutil -s /" reports status without root).
+#  - softwareupdate: exact -l / --list only ("-l -i -a" would install).
+#  - fdesetup status: exact, no trailing args (shared option list includes
+#    -defer <file>, which writes a file).
+#  - log show: exact, no trailing args (--pager runs less; -A/-D read any path).
+#  - periodic: absent -- no periodic binary exists on macOS 27.2.
+#  - subcommands are case-sensitive here; the in-app regex is case-insensitive.
+# Unchanged and UNRESTRICTED: pmset (bare path = any arguments).
+
+Cmnd_Alias JARVIS_SUDO = \
+    /usr/sbin/purge "", \
+    /usr/sbin/softwareupdate -l, \
+    /usr/sbin/softwareupdate --list, \
+    /usr/sbin/diskutil list, \
+    /usr/sbin/diskutil list *, \
+    /usr/sbin/diskutil info, \
+    /usr/sbin/diskutil info *, \
+    /usr/sbin/diskutil verifyVolume, \
+    /usr/sbin/diskutil verifyVolume *, \
+    /usr/bin/fdesetup status, \
+    /usr/bin/log show, \
+    /usr/bin/dscacheutil -flushcache, \
+    /usr/bin/dscacheutil -flushcache *, \
+    /usr/bin/killall -HUP mDNSResponder, \
+    /usr/bin/pmset, \
+    /sbin/shutdown -r now, \
+    /sbin/shutdown -h now
+
+yasir24s ALL=(root) NOPASSWD: JARVIS_SUDO
