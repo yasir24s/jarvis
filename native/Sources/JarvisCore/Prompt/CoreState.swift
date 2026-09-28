@@ -6,8 +6,10 @@ import Foundation
 // process_command by the `m1_prompt` golden suite. Every subsystem's logic is the Persona
 // layer's: this type only sequences the calls and owns the state between them.
 //
-// Not here yet: the two persona LLM phases (consolidatePersonalityIfDue,
-// distillPersonalityIfDue) and their `_last_distill` field belong to M01 T12.
+// The two persona LLM phases (consolidatePersonalityIfDue, distillPersonalityIfDue) follow
+// Python's lock pattern: a synchronous check and snapshot, the `await` on the injected
+// PersonaLLM (the actor is reentrant there, as Python releases its locks around the call),
+// then a synchronous reload + commit + bump (M01 §3.8, T12).
 
 /// The snapshot values that live in CoreState rather than in a file: `len(_history)` and
 /// `len(_corrections_load())` (the cache, loaded on first use). The file-backed values come
@@ -40,6 +42,12 @@ public actor CoreState {
     private var lastTone = LastTone()
     /// `_LAST_CMD` (D-35: owned here; FeedbackLogic is the pure half).
     private var lastCmd = FeedbackLogic.LastCommand()
+    /// `_last_distill`: 0.0 at start, like the module global.
+    private var lastDistill: Double = 0
+    /// Counts committed consolidations. A consolidation re-validates it after its `await`, so
+    /// an overlapping call (which Python's single proactive loop never makes) cannot commit
+    /// a second time from the same stale listing.
+    private var consolidationCommits = 0
 
     /// Loads history.json once, as `_history = _history_load()` does at import.
     public init(store: StateStore, clock: any JarvisClock, research: any ResearchCounting,
@@ -118,6 +126,68 @@ public actor CoreState {
     /// `personality_forget()`.
     public func personalityFactoryReset() {
         PersonalityLogic.forget(store: store)
+    }
+
+    /// `personality_consolidate()`, the hourly check: with 10+ notes and 7+ days since
+    /// `consolidated_at`, the model merges the notes; 1 to 8 surviving lines replace
+    /// `learned` in a fresh reload of the file (each with `added: now`), `consolidated_at` is
+    /// set, the file saved, and `personality_consolidations` bumped. Any failure changes nothing.
+    public func consolidatePersonalityIfDue(using llm: any PersonaLLM) async {
+        let p = PersonalityLogic.load(store.load(.personality))
+        guard PersonaDistill.consolidationDue(p, now: clock.now()) else { return }
+        let listing: String
+        do { listing = try PersonaDistill.consolidationListing(p) } catch {
+            JarvisLog.log("Personality consolidation: \(error)", category: .state)
+            return
+        }
+        let noteCount = p["learned"]?.arrayValue?.count ?? 0
+        let generation = consolidationCommits
+        let reply: String
+        do {
+            reply = try await llm.complete(system: PersonaDistill.consolidateSystem, user: listing,
+                                           timeout: PersonaDistill.consolidateTimeout)
+        } catch {
+            JarvisLog.log("Personality consolidation: \(error)", category: .state)
+            return
+        }
+        guard let lines = PersonaDistill.consolidationLines(fromReply: reply) else {
+            let n = PersonaDistill.consolidationCandidates(fromReply: reply).count
+            JarvisLog.log("Personality consolidation rejected (\(n) lines).", category: .state)
+            return
+        }
+        guard consolidationCommits == generation else { return }    // an overlapping call committed
+        var fresh = PersonalityLogic.load(store.load(.personality))
+        fresh["learned"] = .array(lines.map { line in
+            .object(JSONObject([.init(key: "note", value: .string(line)),
+                                .init(key: "added", value: .double(clock.now()))]))
+        })
+        fresh["consolidated_at"] = .double(clock.now())
+        store.save(.personality, .object(fresh))
+        consolidationCommits += 1
+        research.bump("personality_consolidations", by: 1)
+        JarvisLog.log("Personality notes consolidated: \(noteCount) -> \(lines.count).", category: .state)
+    }
+
+    /// `personality_distill_async()`, when a conversation ends: at most every 900 s and with 4+
+    /// turns, the model is shown the last 10 turns and asked for one style preference; a reply
+    /// starting "The user" and under 200 code points goes through `personality_learn`.
+    /// `lastDistill` is set before the call, whatever its outcome. Python runs the call in a
+    /// daemon thread; callers that must not wait detach this into a Task.
+    public func distillPersonalityIfDue(using llm: any PersonaLLM) async {
+        guard PersonaDistill.distillDue(historyCount: history.turns.count, lastDistill: lastDistill,
+                                        now: clock.now()) else { return }
+        lastDistill = clock.now()
+        let turns = Py.tail(history.turns, 10)
+        do {
+            let convo = try PersonaDistill.distillConversation(turns)
+            let reply = try await llm.complete(system: PersonaDistill.distillSystem, user: convo,
+                                               timeout: PersonaDistill.distillTimeout)
+            if let note = PersonaDistill.distillNote(fromReply: reply) {
+                try PersonalityLogic.learn(note, store: store, now: clock.now())
+            }
+        } catch {
+            JarvisLog.log("Personality distill: \(error)", category: .state)
+        }
     }
 
     // MARK: - Emotions / tone
