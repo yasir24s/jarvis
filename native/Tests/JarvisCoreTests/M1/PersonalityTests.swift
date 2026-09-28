@@ -29,7 +29,7 @@ struct M1PersonalityTests {
 
     static func check(_ c: GoldenCase) throws -> [String] {
         if c.name == "literals" { return literals(c.expected) }
-        return try PersonaGolden.run(c, files: ["personality.json"]) { op, args, now, env in
+        let report = try PersonaGolden.run(c, files: ["personality.json"]) { op, args, now, env in
             let store = env.store
             switch op {
             case "load":
@@ -69,6 +69,7 @@ struct M1PersonalityTests {
                 return .init(.value(.string("<unknown op \(op)>")))
             }
         }
+        return report.hard + report.knownPython       // no registered divergences in this suite
     }
 
     /// The seed, `_PERSONALITY_FORGET_RE` and `_STYLE_PATTERNS` (pattern text, re.I, template).
@@ -99,7 +100,16 @@ struct M1PersonalityTests {
 /// The scenario runner shared by the persona golden suites (m1_personality,
 /// m1_emotions_tone). A case is `input.files_before` + `input.steps [{op, args, now}]`;
 /// `expected.steps [{result, bumps, files_after, action?}]` (tools/golden_m1_persona.py).
+/// A case with an `expected.native` block is a registered divergence: from step
+/// `throws_from_step` on, native must throw, bump nothing and leave the files as they started
+/// (`hard`), while the Python expectation for those steps is reported as `knownPython`.
 enum PersonaGolden {
+    struct Report {
+        var hard: [String] = []                 // must be empty
+        var knownPython: [String] = []          // a divergence's Python differences
+        var divergence: String?
+    }
+
     enum Outcome {
         case value(JSONValue)           // {"value": …}; Python's None is .null
         case json(JSONValue)            // {"json": json.dumps(obj, indent=1)}
@@ -119,6 +129,7 @@ enum PersonaGolden {
         let root: String
         let store: StateStore
         let counter = RecordingCounter()
+        var tone = LastTone()                   // LAST_TONE, per scenario
 
         init(root: String, store: StateStore) {
             self.root = root
@@ -142,29 +153,33 @@ enum PersonaGolden {
     }
 
     static func run(_ c: GoldenCase, files: [String],
-                    step: (String, JSONObject, Double, Env) throws -> Step) throws -> [String] {
+                    step: (String, JSONObject, Double, Env) throws -> Step) throws -> Report {
         guard let before = c.input.object("files_before"), let steps = c.input.array("steps"),
               let expected = c.expected.array("steps"), steps.count == expected.count, !steps.isEmpty,
               let now0 = double(steps[0].objectValue?["now"]) else {
-            return ["malformed scenario"]
+            return Report(hard: ["malformed scenario"])
         }
+        let native = c.expected.object("native")
+        var report = Report(divergence: native?.string("divergence"))
+        let throwsFrom = native?.int("throws_from_step").map(Int.init) ?? Int.max
         let sb = try Sandbox()
         defer { sb.remove() }
         var root = sb.root.path(percentEncoded: false)
         while root.hasSuffix("/") { root.removeLast() }
         for f in files {
             guard let b64 = before.string(f) else { continue }
-            guard let data = Data(base64Encoded: b64) else { return ["files_before[\(f)] is not base64"] }
+            guard let data = Data(base64Encoded: b64) else { return Report(hard: ["files_before[\(f)] is not base64"]) }
             try data.write(to: sb.root.appending(path: f, directoryHint: .notDirectory))
         }
         let env = Env(root: root, store: try StateStore(root: root, lease: nil, clock: ManualClock(now0)))
-        var out: [String] = []
         for (k, (s, e)) in zip(steps, expected).enumerated() {
+            var out: [String] = []
+            defer { if k >= throwsFrom { report.knownPython += out } else { report.hard += out } }
             guard let so = s.objectValue, let eo = e.objectValue, let op = so.string("op"),
                   let args = so.object("args"), let now = double(so["now"]),
                   let result = eo.object("result"), let bumps = eo.array("bumps"),
                   let filesAfter = eo.object("files_after") else {
-                out.append("step \(k): malformed")
+                report.hard.append("step \(k): malformed")
                 continue
             }
             let tag = "step \(k) \(op)"
@@ -188,9 +203,16 @@ enum PersonaGolden {
                     let text = data.map { String(decoding: $0, as: UTF8.self) } ?? "<absent>"
                     out.append("\(tag): \(m.key) bytes differ; native wrote \(text.debugDescription.prefix(400))")
                 }
+                if k >= throwsFrom, have != before.string(m.key) {
+                    report.hard.append("\(tag): native changed \(m.key) (the divergence says it must not)")
+                }
+            }
+            if k >= throwsFrom {
+                if case .threw = got.outcome {} else { report.hard.append("\(tag): native did not throw") }
+                if !env.counter.bumps.isEmpty { report.hard.append("\(tag): native bumped \(env.counter.bumps)") }
             }
         }
-        return out
+        return report
     }
 
     static func compare(_ got: Outcome, _ want: JSONObject, root: String) -> String? {
