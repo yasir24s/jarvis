@@ -9,7 +9,8 @@ profile.json
 personality.json
 emotions.json
 proactive.json
-research/
+# Anchored: with core.ignorecase=true an unanchored research/ also matched native/**/Research/
+/research/
 alarms.json
 history.json
 corrections.json
