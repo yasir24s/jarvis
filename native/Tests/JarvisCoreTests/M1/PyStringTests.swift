@@ -37,7 +37,9 @@ struct M1PyStringTests {
         for c in cases {
             let o = try Self.check(c)
             if let d = o.divergence, !o.python.isEmpty { diverged.append("\(c.name) [\(d)]") }
-            if o.native.isEmpty && (o.divergence != nil || o.python.isEmpty) { passed += 1 }
+            // A divergence case passes when native holds and the Python difference shows
+            // (withKnownIssue fails when it does not).
+            if o.native.isEmpty && (o.divergence == nil) == o.python.isEmpty { passed += 1 }
         }
         print("\(Self.suite): \(passed)/\(cases.count)"
               + (diverged.isEmpty ? "" : " (known divergences: \(diverged.joined(separator: "; ")))"))
@@ -166,11 +168,12 @@ struct M1PyStringTests {
         }
     }
 
-    static func versionBound(_ e: JSONObject) throws -> VersionBound? {
+    /// The bound for a table case carrying a `native` block; `fixture` holds its table_unassigned.
+    static func versionBound(_ e: JSONObject, fixture: String = suite) throws -> VersionBound? {
         guard let native = e.object("native") else { return nil }
         #expect(native.string("divergence") == "unicode-version")
         let (major, minor) = try parse(#require(native.string("python_unidata")))
-        let table = try #require(Golden.cases(suite).first { $0.input.string("op") == "table_unassigned" })
+        let table = try #require(Golden.cases(fixture).first { $0.input.string("op") == "table_unassigned" })
         return VersionBound(pyUnassigned: try scalarSet(#require(table.expected.array("unassigned"))),
                             major: major, minor: minor)
     }
