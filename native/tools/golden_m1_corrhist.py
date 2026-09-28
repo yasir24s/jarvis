@@ -16,15 +16,14 @@ scenarios under the frozen clock (research_bump and emotion_event recorded, not 
 history scenarios: _history_load over malformed files, process_command's inline history
 statements (read from its source with ast), _history_save bytes, _claude_history_preamble.
 
-Divergences are `native` blocks inside `expected`, computed here from the stated native
-rule, so the Swift test can assert native behaviour positively:
-- `corr-malformed-pair-raises`: a hand-edited corrections.json pair whose heard/meant is not
-  a string makes _apply_corrections raise (TypeError / AttributeError) in Python; native
-  returns the transcript unchanged.
+Where Python raises on a parseable but wrong-shaped (hand-edited) file — a corrections pair
+whose heard/meant is not a string, a history turn whose content is a truthy non-string — the
+step records `raises`; native throws StateShapeError there (M01 §3.7, §8 R8).
+
+The one divergence is a `native` block inside `expected`, computed here from the stated
+native rule, so the Swift test can assert native behaviour positively:
 - `sub-literal-repl`: a hand-edited `meant` holding a backslash is a re.sub template in
   Python; native substitutes it literally (PyRegex.sub(_:literal:), M01 §3.3).
-- `history-nonstring-content`: a loaded turn whose content is a truthy non-string makes
-  _claude_history_preamble raise AttributeError; native skips that turn.
 """
 import ast
 import copy
@@ -408,43 +407,46 @@ def _corr_step(ctx, fx, st):
 
 def _native_apply(text, cache):
     """The native rule (see the module docstring): Python's pass with every `meant` taken
-    literally, and the transcript unchanged wherever Python would raise."""
+    literally; _RAISES wherever native throws StateShapeError."""
     if not text or _is_teach_py(text) or not cache:
         return text
     if any(not isinstance(p.get("heard", ""), (str, list, dict)) for p in cache):
-        return text                                     # len() in the sort key raises
+        return _RAISES                                     # len() in the sort key raises
     result, norm = text, _norm_py(text)
     for p in sorted(cache, key=lambda x: -len(x.get("heard", ""))):
         heard, meant = p["heard"], p["meant"]
         if len(heard) < 3:
             continue
         if not isinstance(heard, str):
-            return text                                 # re.escape(list/dict) raises
+            return _RAISES                                 # re.escape(list/dict) raises
         if re.search(rf"\b{re.escape(heard)}\b", norm):
             if not isinstance(meant, str):
-                return text                             # re.sub(repl=non-str) raises
+                return _RAISES                             # re.sub(repl=non-str) raises
             result = re.sub(rf"\b{re.escape(heard)}\b", lambda _m: meant, result, flags=re.I)
             norm = _norm_py(result)
         elif len(norm.split()) <= 6 and difflib.SequenceMatcher(None, norm, heard).ratio() >= 0.82:
             if not isinstance(meant, str):
-                return text                             # _corr_norm(non-str) raises
+                return _RAISES                             # _corr_norm(non-str) raises
             result, norm = meant, _norm_py(meant)
     return result
 
 
+_RAISES = object()
+
+
 def _apply_native_block(text, cache, py):
     """A `native` block when the native rule differs from Python — allowed only for the
-    hand-edited shapes the docstring lists (anything else is a model error: fail)."""
+    backslash `meant` the docstring lists (anything else is a model error: fail)."""
     nat = _native_apply(text, cache)
-    if "raises" not in py and nat == py["result"]:
+    if "raises" in py or nat is _RAISES:
+        odd = [p for p in cache or [] if not isinstance(p.get("heard"), str)
+               or not isinstance(p.get("meant"), str)]
+        assert "raises" in py and nat is _RAISES and odd, f"raise models disagree on {text!r}: {py!r}"
         return None
-    odd = [p for p in cache or [] if not isinstance(p.get("heard"), str)
-           or not isinstance(p.get("meant"), str)]
+    if nat == py["result"]:
+        return None
     slash = [p for p in cache or [] if isinstance(p.get("meant"), str) and "\\" in p["meant"]]
-    if "raises" in py:
-        assert odd, f"Python raised with only string pairs: {text!r}"
-        return {"divergence": "corr-malformed-pair-raises", "result": nat}
-    assert slash and not odd, f"native model differs from Python on {text!r}: {nat!r} vs {py!r}"
+    assert slash, f"native model differs from Python on {text!r}: {nat!r} vs {py!r}"
     return {"divergence": "sub-literal-repl", "result": nat}
 
 
@@ -701,22 +703,6 @@ def _history_scenarios():
     ]
 
 
-def _native_preamble(turns, py):
-    """history-nonstring-content: native skips a turn whose content is a truthy non-string."""
-    if "raises" not in py:
-        return None
-    lines = []
-    for m in turns[-7:-1]:
-        c = m.get("content") or ""
-        if not isinstance(c, str):
-            continue
-        c = c.strip()
-        if c:
-            lines.append(("User: " if m.get("role") == "user" else "You: ") + c)
-    return {"divergence": "history-nonstring-content",
-            "result": ("\n\nRecent conversation:\n" + "\n".join(lines)) if lines else ""}
-
-
 @suite("m1_history_app")
 def history_app_suite(ctx):
     J = ctx.J
@@ -769,10 +755,6 @@ def history_app_suite(ctx):
                     r["result"] = res
             except AttributeError as e:
                 r["raises"] = type(e).__name__
-            if op == "preamble":
-                nat = _native_preamble(J._history, r)
-                if nat:
-                    r["native"] = nat
             r["turns"] = copy.deepcopy(J._history)
             if op == "save":
                 r["file"] = _read(J.HIST_FILE)

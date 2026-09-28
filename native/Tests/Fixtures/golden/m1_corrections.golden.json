@@ -9918,11 +9918,7 @@
         "added": 2.0
        }
       ],
-      "effects": [],
-      "native": {
-       "divergence": "corr-malformed-pair-raises",
-       "result": "organ"
-      }
+      "effects": []
      },
      {
       "result": "Got it, sir — I'll read 'tree' as 'tea' from now on.",
@@ -10009,11 +10005,7 @@
         "added": 2.0
        }
       ],
-      "effects": [],
-      "native": {
-       "divergence": "corr-malformed-pair-raises",
-       "result": "organ"
-      }
+      "effects": []
      }
     ]
    }
@@ -10112,11 +10104,7 @@
         "added": 1.0
        }
       ],
-      "effects": [],
-      "native": {
-       "divergence": "corr-malformed-pair-raises",
-       "result": "organ"
-      }
+      "effects": []
      },
      {
       "result": "orgun",
@@ -10144,11 +10132,7 @@
         "added": 1.0
        }
       ],
-      "effects": [],
-      "native": {
-       "divergence": "corr-malformed-pair-raises",
-       "result": "orgn"
-      }
+      "effects": []
      }
     ]
    }
