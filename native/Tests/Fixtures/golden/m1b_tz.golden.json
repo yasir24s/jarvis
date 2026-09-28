@@ -1,0 +1,315 @@
+{
+ "schema": 1,
+ "suite": "m1b_tz",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "Europe/London@1792882799.0",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1792882799.0
+   },
+   "expected": {
+    "date": "2026-10-24",
+    "z": "+0100"
+   }
+  },
+  {
+   "name": "Europe/London@1792882800.0",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1792882800.0
+   },
+   "expected": {
+    "date": "2026-10-25",
+    "z": "+0100"
+   }
+  },
+  {
+   "name": "Europe/London@1792889999.0",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1792889999.0
+   },
+   "expected": {
+    "date": "2026-10-25",
+    "z": "+0100"
+   }
+  },
+  {
+   "name": "Europe/London@1792890000.0",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1792890000.0
+   },
+   "expected": {
+    "date": "2026-10-25",
+    "z": "+0000"
+   }
+  },
+  {
+   "name": "Europe/London@1792972799.0",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1792972799.0
+   },
+   "expected": {
+    "date": "2026-10-25",
+    "z": "+0000"
+   }
+  },
+  {
+   "name": "Europe/London@1792972800.0",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1792972800.0
+   },
+   "expected": {
+    "date": "2026-10-26",
+    "z": "+0000"
+   }
+  },
+  {
+   "name": "Europe/London@1806191999.0",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1806191999.0
+   },
+   "expected": {
+    "date": "2027-03-27",
+    "z": "+0000"
+   }
+  },
+  {
+   "name": "Europe/London@1806195599.0",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1806195599.0
+   },
+   "expected": {
+    "date": "2027-03-28",
+    "z": "+0000"
+   }
+  },
+  {
+   "name": "Europe/London@1806195600.0",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1806195600.0
+   },
+   "expected": {
+    "date": "2027-03-28",
+    "z": "+0100"
+   }
+  },
+  {
+   "name": "Europe/London@1806274799.0",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1806274799.0
+   },
+   "expected": {
+    "date": "2027-03-28",
+    "z": "+0100"
+   }
+  },
+  {
+   "name": "Europe/London@1806274800.0",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1806274800.0
+   },
+   "expected": {
+    "date": "2027-03-29",
+    "z": "+0100"
+   }
+  },
+  {
+   "name": "Europe/London@1787266799.999999",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1787266799.999999
+   },
+   "expected": {
+    "date": "2026-08-20",
+    "z": "+0100"
+   }
+  },
+  {
+   "name": "Europe/London@1790582400.0",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1790582400.0
+   },
+   "expected": {
+    "date": "2026-09-28",
+    "z": "+0100"
+   }
+  },
+  {
+   "name": "Europe/London@1790582400.123456",
+   "input": {
+    "tz": "Europe/London",
+    "ts": 1790582400.123456
+   },
+   "expected": {
+    "date": "2026-09-28",
+    "z": "+0100"
+   }
+  },
+  {
+   "name": "Asia/Kolkata@1790620199.0",
+   "input": {
+    "tz": "Asia/Kolkata",
+    "ts": 1790620199.0
+   },
+   "expected": {
+    "date": "2026-09-28",
+    "z": "+0530"
+   }
+  },
+  {
+   "name": "Asia/Kolkata@1790620200.0",
+   "input": {
+    "tz": "Asia/Kolkata",
+    "ts": 1790620200.0
+   },
+   "expected": {
+    "date": "2026-09-29",
+    "z": "+0530"
+   }
+  },
+  {
+   "name": "Asia/Kolkata@1798741799.5",
+   "input": {
+    "tz": "Asia/Kolkata",
+    "ts": 1798741799.5
+   },
+   "expected": {
+    "date": "2026-12-31",
+    "z": "+0530"
+   }
+  },
+  {
+   "name": "America/St_Johns@1782872999.0",
+   "input": {
+    "tz": "America/St_Johns",
+    "ts": 1782872999.0
+   },
+   "expected": {
+    "date": "2026-06-30",
+    "z": "-0230"
+   }
+  },
+  {
+   "name": "America/St_Johns@1782873000.0",
+   "input": {
+    "tz": "America/St_Johns",
+    "ts": 1782873000.0
+   },
+   "expected": {
+    "date": "2026-07-01",
+    "z": "-0230"
+   }
+  },
+  {
+   "name": "America/St_Johns@1793507399.0",
+   "input": {
+    "tz": "America/St_Johns",
+    "ts": 1793507399.0
+   },
+   "expected": {
+    "date": "2026-11-01",
+    "z": "-0230"
+   }
+  },
+  {
+   "name": "America/St_Johns@1793507400.0",
+   "input": {
+    "tz": "America/St_Johns",
+    "ts": 1793507400.0
+   },
+   "expected": {
+    "date": "2026-11-01",
+    "z": "-0330"
+   }
+  },
+  {
+   "name": "America/St_Johns@1799983799.0",
+   "input": {
+    "tz": "America/St_Johns",
+    "ts": 1799983799.0
+   },
+   "expected": {
+    "date": "2027-01-14",
+    "z": "-0330"
+   }
+  },
+  {
+   "name": "America/St_Johns@1799983800.0",
+   "input": {
+    "tz": "America/St_Johns",
+    "ts": 1799983800.0
+   },
+   "expected": {
+    "date": "2027-01-15",
+    "z": "-0330"
+   }
+  },
+  {
+   "name": "UTC@1798761599.999",
+   "input": {
+    "tz": "UTC",
+    "ts": 1798761599.999
+   },
+   "expected": {
+    "date": "2026-12-31",
+    "z": "+0000"
+   }
+  },
+  {
+   "name": "UTC@1798761600.0",
+   "input": {
+    "tz": "UTC",
+    "ts": 1798761600.0
+   },
+   "expected": {
+    "date": "2027-01-01",
+    "z": "+0000"
+   }
+  },
+  {
+   "name": "Pacific/Chatham@1790594099.0",
+   "input": {
+    "tz": "Pacific/Chatham",
+    "ts": 1790594099.0
+   },
+   "expected": {
+    "date": "2026-09-29",
+    "z": "+1345"
+   }
+  },
+  {
+   "name": "Pacific/Chatham@1790594100.0",
+   "input": {
+    "tz": "Pacific/Chatham",
+    "ts": 1790594100.0
+   },
+   "expected": {
+    "date": "2026-09-29",
+    "z": "+1345"
+   }
+  }
+ ]
+}

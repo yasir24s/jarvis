@@ -1,0 +1,406 @@
+{
+ "schema": 1,
+ "suite": "m1b_git",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "strip_ok",
+   "input": {
+    "kind": "runner",
+    "plan": [
+     {
+      "stdout": "abc1234\n",
+      "rc": 0
+     },
+     {
+      "stdout": "212\n",
+      "rc": 0
+     }
+    ]
+   },
+   "expected": {
+    "calls": [
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-parse",
+       "--short",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     },
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-list",
+       "--count",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     }
+    ],
+    "git_head": "abc1234",
+    "git_commits": "212"
+   }
+  },
+  {
+   "name": "strip_ascii_whitespace",
+   "input": {
+    "kind": "runner",
+    "plan": [
+     {
+      "stdout": " \tdeadbee \r\n",
+      "rc": 0
+     },
+     {
+      "stdout": "\n 3 \f\n",
+      "rc": 0
+     }
+    ]
+   },
+   "expected": {
+    "calls": [
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-parse",
+       "--short",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     },
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-list",
+       "--count",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     }
+    ],
+    "git_head": "deadbee",
+    "git_commits": "3"
+   }
+  },
+  {
+   "name": "strip_unicode_whitespace",
+   "input": {
+    "kind": "runner",
+    "plan": [
+     {
+      "stdout": "abc1234　 ",
+      "rc": 0
+     },
+     {
+      "stdout": "\u001c5",
+      "rc": 0
+     }
+    ]
+   },
+   "expected": {
+    "calls": [
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-parse",
+       "--short",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     },
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-list",
+       "--count",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     }
+    ],
+    "git_head": "abc1234",
+    "git_commits": "5"
+   }
+  },
+  {
+   "name": "strip_nonzero_exit_empty_stdout",
+   "input": {
+    "kind": "runner",
+    "plan": [
+     {
+      "stdout": "",
+      "rc": 128
+     },
+     {
+      "stdout": "",
+      "rc": 128
+     }
+    ]
+   },
+   "expected": {
+    "calls": [
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-parse",
+       "--short",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     },
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-list",
+       "--count",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     }
+    ],
+    "git_head": "",
+    "git_commits": ""
+   }
+  },
+  {
+   "name": "strip_nonzero_exit_with_stdout",
+   "input": {
+    "kind": "runner",
+    "plan": [
+     {
+      "stdout": "HEAD\n",
+      "rc": 128
+     },
+     {
+      "stdout": "",
+      "rc": 128
+     }
+    ]
+   },
+   "expected": {
+    "calls": [
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-parse",
+       "--short",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     },
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-list",
+       "--count",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     }
+    ],
+    "git_head": "HEAD",
+    "git_commits": ""
+   }
+  },
+  {
+   "name": "strip_timeout_first",
+   "input": {
+    "kind": "runner",
+    "plan": [
+     {
+      "raise": "timeout"
+     }
+    ]
+   },
+   "expected": {
+    "calls": [
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-parse",
+       "--short",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     }
+    ],
+    "git_head": "",
+    "git_commits": ""
+   }
+  },
+  {
+   "name": "strip_timeout_second",
+   "input": {
+    "kind": "runner",
+    "plan": [
+     {
+      "stdout": "abc1234\n",
+      "rc": 0
+     },
+     {
+      "raise": "timeout"
+     }
+    ]
+   },
+   "expected": {
+    "calls": [
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-parse",
+       "--short",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     },
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-list",
+       "--count",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     }
+    ],
+    "git_head": "",
+    "git_commits": ""
+   }
+  },
+  {
+   "name": "strip_git_missing",
+   "input": {
+    "kind": "runner",
+    "plan": [
+     {
+      "raise": "missing"
+     }
+    ]
+   },
+   "expected": {
+    "calls": [
+     {
+      "args": [
+       "git",
+       "-C",
+       "${JARVIS_HOME}",
+       "rev-parse",
+       "--short",
+       "HEAD"
+      ],
+      "kwargs": {
+       "capture_output": true,
+       "text": true,
+       "timeout": 5
+      }
+     }
+    ],
+    "git_head": "",
+    "git_commits": ""
+   }
+  },
+  {
+   "name": "fixture_repo",
+   "input": {
+    "kind": "repo",
+    "script": "#!/bin/sh\n# Generated by native/tools/golden_research.py (m1b_git). Builds a throwaway repo\n# in \"$1\"; never point it at a real checkout.\nset -eu\ncd \"$1\"\nexport HOME=\"$1\" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 LC_ALL=C\nexport GIT_AUTHOR_NAME='Fixture Author' GIT_AUTHOR_EMAIL='author@example.invalid'\nexport GIT_COMMITTER_NAME='Fixture Committer' GIT_COMMITTER_EMAIL='committer@example.invalid'\ngit -c init.defaultBranch=main init -q .\nprintf '\\163\\171\\156\\164\\150\\145\\164\\151\\143\\040\\146\\151\\170\\164\\165\\162\\145\\040\\162\\145\\160\\157\\012' > 'README.md'\ngit add -A\nGIT_AUTHOR_DATE='@1790000000 +0000' GIT_COMMITTER_DATE='@1790000000 +0000' git commit -q -m 'first'\nprintf '\\141\\154\\160\\150\\141\\012' > 'a.txt'\nmkdir -p 'dir'\nprintf '\\142\\145\\164\\141\\015\\012' > 'dir/b.txt'\ngit add -A\nGIT_AUTHOR_DATE='@1790000100 +0000' GIT_COMMITTER_DATE='@1790000100 +0000' git commit -q -m 'second'\nprintf '\\163\\171\\156\\164\\150\\145\\164\\151\\143\\040\\146\\151\\170\\164\\165\\162\\145\\040\\162\\145\\160\\157\\054\\040\\145\\144\\151\\164\\145\\144\\012' > 'README.md'\ngit add -A\nGIT_AUTHOR_DATE='@1790000200 +0000' GIT_COMMITTER_DATE='@1790000200 +0000' git commit -q -m 'third'\n"
+   },
+   "expected": {
+    "git_head": "731dfaf",
+    "git_commits": "3",
+    "head_full": "731dfaf1f76b43348e677d8f7981443fe8848d1a",
+    "oracle": "git object format (SHA-1) computed in Python; the harness forbids spawning git in the child"
+   }
+  }
+ ]
+}
