@@ -221,6 +221,89 @@ Integration decisions (D-25, D-26) and findings from building M0 (T0.1–T0.10).
   test), and the commit adding this section (app shell, `build-app.sh`, A1–A13). Measured
   RAM of the idle M0 app (menu-bar shell only, 2026-09-28): `footprint` 16 MB, RSS 25,488 KB.
 
+## M1 build notes
+
+M1 (M01, core state and persona) and M1b (M01b, research dataset) are built by parallel
+executors in git worktrees (`~/jarvis-wt/<name>`, branches `m1/<name>`), at most two at a
+time. Decisions and plan changes below come from M1 judging (2026-09-28/29). Commit hashes
+are the ones on `main` after the 2026-09-28 history rewrite (see Privacy below); hashes
+quoted before the rewrite are not on `main`.
+
+Integration decisions:
+
+- **D-27 … D-30. X1 rulings**, recorded together in the ledger, in this order; each is
+  registered in DEVIATIONS.md as `approved`:
+  - D-27: DEV-M1-01 `unicode-version`: Swift/ICU Unicode 17 vs Python's 16.0.0; only scalars Python leaves unassigned.
+  - D-28: DEV-M1-02 `R5-case-folding`: `İ`/`ı` do not fold to `i`; ICU folds `ß`/`ẞ` to `ss` and `ﬀ` to `ff`.
+  - D-29: DEV-M1-03 `sub-literal-repl`: the `re.sub` replacement is literal; only a hand-edited `corrections.json` hits it.
+  - D-30: DEV-M1-04 `unsupported-construct`: `\B`, `\A`, inline flags, `[\b]` and `\v` throw.
+
+  The same ruling approved the exact `\w` translation (fenced with `(?-i:…)` under
+  ignore-case, private-use scalars excluded).
+- **D-31.** The root `.gitignore` rule `research/` is anchored as `/research/`: with
+  `core.ignorecase` the unanchored rule also hid the `native/**/Research/` sources (`d049fec`).
+- **D-32 (open).** X4's internal `PyStr` duplicates X1's `Py.*`. Unify them and adopt X4's
+  Unicode-16 masking in `Py.*`, which removes DEV-M1-01.
+- **D-33.** M01's `ToneAppFeedback.swift` is split into `Persona/Tone.swift` (X5) and
+  `Persona/AppFeedback.swift` (X6), so two parallel executors never edit one file.
+- **D-34.** Feedback logic exists once: a pure `FeedbackLogic` (in `Persona/AppFeedback.swift`),
+  golden-tested against `track_feedback`; no second copy of its regex or its 0.65 threshold.
+- **D-35.** `CoreState` owns the feedback last-command state and calls `FeedbackLogic` inline
+  in `beginTurn` (the bump order within a turn fixes `usage.json`'s key order). M1b's
+  `FeedbackTracker` is dropped; M1b builds only the `ResearchLogger` façade.
+- **D-36 (M4 requirement).** `ResearchLogger` / `UsageStore` must hold the `InstanceLock`
+  state lease before writing the real `research/` root, as `StateStore` does.
+
+Plan changes:
+
+- M01 T2 (PyJSON) and M1b T1 (JSON layer) are satisfied by M0 (D-1).
+- M1b T8 was declined by the user. The `jarvis.py` dataset patch (M01b §3.7) is not applied;
+  `jarvis.py` stays unpatched. Python rows stay schema 1 with no `schema` key, so a row
+  without `schema` is a Python row. No Python row carries `runtime` (D-5's
+  `runtime.impl = "python"` is never written), `starts_python` does not exist, and Python
+  keeps its 8 KB tail read (native reads the whole last line, D2).
+- M1b T9 was approved by the user: an additive section in `research/README.md` and a new
+  `research/annotations.jsonl`. Both live in the gitignored `research/` folder, not in this repo.
+- M1b's `FeedbackTracker` is dropped (D-35); M1b T6 is the `ResearchLogger` façade only.
+- M1b T10 (`ResearchScheduler` in the app, Info.plist keys) moves to M4. Until then
+  nothing native writes the real `research/` folder.
+- File layout: the D-33 split above replaces M01 §3.0's single `ToneAppFeedback.swift`.
+
+Open follow-ups:
+
+- D-32: unify X4's `PyStr` with `Py.*` and adopt its Unicode-16 masking.
+- `StateStore` recognises test sandboxes by a `jarvis-tests-*` path predicate; a test-only
+  initializer would be cleaner (low priority: the current rule fails safe).
+- `tools/research_schema_check.py` does not yet validate schema-2 key types or key order;
+  add that once native writes schema-2 rows.
+- D-36 is an M4 requirement.
+
+Privacy:
+
+- The GitHub repo is public, so test corpora must contain no personal data. On
+  2026-09-28, unpushed M1 work was found to use personal details as sample regex inputs
+  (one line in a golden plugin, and the fixture variants generated from it). Nothing had
+  been pushed. The unpushed history was rewritten from the first affected commit, the
+  fixture regenerated, the result rescanned, and `main` pushed at `541d9b0`. Since then,
+  corpora and fixtures use neutral stand-ins only (Robin, Morgan, Sam, "the university"),
+  and every executor scans its added lines for personal details before its final commit.
+
+**M1 status: in progress.** Merged on `main` as of `d75fd2b`:
+
+- M1: `0731dd0` StateStore, core protocols, state lease on InstanceLock; `d144d12` Py string
+  semantics; `f054385` PyRegex; `7c7c47e` PyDifflib; `000b46b` personality; `7b033a4`
+  emotions and tone; `9227a3e` neutral style-corpus phrases; `dcd9265` shared
+  `StateShapeError`; `54fedad`, `aa258e2` taught corrections; `52775cd` history, app
+  context and feedback logic; `2e6a5e8` corrections and history throw `StateShapeError`;
+  `2e965b8` profile and knowledge base.
+- M1b: `ccf01dd` research oracle, counter keys, line count, git probe, clock; `23049d6`
+  UsageStore and MetricsLog (D1–D4); `d049fec` D-31; `3a94af0` read-only schema-compat
+  check over the real dataset (judged: it round-trips byte-identically); `fdc65e5` snapshot
+  builder; `d75fd2b` ResearchLogger façade.
+- Still in flight: X8 (M01 T11, prompt builder and `CoreState`) and X9b (M01 T12 persona LLM
+  halves, T13 cross-implementation). Then a validation pass (M01 §5 A1–A10, M01b §5 A1–A8)
+  before `main` is pushed.
+
 ## Open user decisions
 
 - Write `shouldSpeakReply` (text chat, M02–M04 §3.12) and `speakLocally` (sensitive routing
