@@ -1,0 +1,273 @@
+{
+ "schema": 1,
+ "suite": "m1_state_styles",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "knowledge",
+   "input": {
+    "file": "knowledge.json",
+    "writer": "kb_save",
+    "value": {
+     "topics": {
+      "synthetic topic alpha": {
+       "summary": "A made-up summary. A made-up summary. A made-up summary. A made-up summary. ",
+       "updated": 1790582400.123456
+      },
+      "café synthèse": {
+       "summary": "naïve — “q” 😀 \\ \" /",
+       "updated": 1790582400.0
+      }
+     },
+     "queue": [
+      "queued topic one",
+      "queued topic two"
+     ]
+    }
+   },
+   "expected": {
+    "text": "{\n \"topics\": {\n  \"synthetic topic alpha\": {\n   \"summary\": \"A made-up summary. A made-up summary. A made-up summary. A made-up summary. \",\n   \"updated\": 1790582400.123456\n  },\n  \"caf\\u00e9 synth\\u00e8se\": {\n   \"summary\": \"na\\u00efve \\u2014 \\u201cq\\u201d \\ud83d\\ude00 \\\\ \\\" /\",\n   \"updated\": 1790582400.0\n  }\n },\n \"queue\": [\n  \"queued topic one\",\n  \"queued topic two\"\n ]\n}",
+    "style": "indent1",
+    "indent": 1
+   }
+  },
+  {
+   "name": "knowledge_empty",
+   "input": {
+    "file": "knowledge.json",
+    "writer": "kb_save",
+    "value": {
+     "topics": {},
+     "queue": []
+    }
+   },
+   "expected": {
+    "text": "{\n \"topics\": {},\n \"queue\": []\n}",
+    "style": "indent1",
+    "indent": 1
+   }
+  },
+  {
+   "name": "history",
+   "input": {
+    "file": "history.json",
+    "writer": "_history_save",
+    "value": [
+     {
+      "role": "user",
+      "content": "what is the synthetic weather"
+     },
+     {
+      "role": "assistant",
+      "content": "Synthetic, sir.\nLine two\t\"quoted\" é"
+     },
+     {
+      "role": "user",
+      "content": "extra keys survive",
+      "extra": [
+       1,
+       2.5,
+       null,
+       true
+      ]
+     }
+    ]
+   },
+   "expected": {
+    "text": "[{\"role\": \"user\", \"content\": \"what is the synthetic weather\"}, {\"role\": \"assistant\", \"content\": \"Synthetic, sir.\\nLine two\\t\\\"quoted\\\" \\u00e9\"}, {\"role\": \"user\", \"content\": \"extra keys survive\", \"extra\": [1, 2.5, null, true]}]",
+    "style": "compact",
+    "indent": null
+   }
+  },
+  {
+   "name": "corrections",
+   "input": {
+    "file": "corrections.json",
+    "writer": "_corrections_save",
+    "value": [
+     {
+      "heard": "jar this",
+      "meant": "jarvis",
+      "added": 1790582400.123456
+     },
+     {
+      "heard": "no ted",
+      "meant": "noted",
+      "added": 1790582405.0
+     }
+    ]
+   },
+   "expected": {
+    "text": "[\n {\n  \"heard\": \"jar this\",\n  \"meant\": \"jarvis\",\n  \"added\": 1790582400.123456\n },\n {\n  \"heard\": \"no ted\",\n  \"meant\": \"noted\",\n  \"added\": 1790582405.0\n }\n]",
+    "style": "indent1",
+    "indent": 1
+   }
+  },
+  {
+   "name": "profile",
+   "input": {
+    "file": "profile.json",
+    "writer": "profile_save",
+    "value": {
+     "facts": {
+      "favourite synthetic colour": {
+       "value": "teal",
+       "updated": 1790582400.123456
+      },
+      "synthetic city": {
+       "value": "Nowhére",
+       "updated": 1790582400.0
+      }
+     }
+    }
+   },
+   "expected": {
+    "text": "{\n \"facts\": {\n  \"favourite synthetic colour\": {\n   \"value\": \"teal\",\n   \"updated\": 1790582400.123456\n  },\n  \"synthetic city\": {\n   \"value\": \"Nowh\\u00e9re\",\n   \"updated\": 1790582400.0\n  }\n }\n}",
+    "style": "indent1",
+    "indent": 1
+   }
+  },
+  {
+   "name": "personality",
+   "input": {
+    "file": "personality.json",
+    "writer": "personality_save",
+    "value": {
+     "core": [
+      "Synthetic core trait one.",
+      "Synthetic core trait two."
+     ],
+     "learned": [
+      {
+       "note": "Prefers synthetic brevity.",
+       "added": 1790582400.123456
+      },
+      {
+       "note": "Likes made-up jokes.",
+       "added": 1790582400.623456
+      }
+     ],
+     "consolidated_at": 1790582000.125,
+     "unknown_future_key": {
+      "nested": [
+       1,
+       -0.0,
+       1e-07,
+       1e+16,
+       null,
+       false,
+       {},
+       []
+      ]
+     }
+    }
+   },
+   "expected": {
+    "text": "{\n \"core\": [\n  \"Synthetic core trait one.\",\n  \"Synthetic core trait two.\"\n ],\n \"learned\": [\n  {\n   \"note\": \"Prefers synthetic brevity.\",\n   \"added\": 1790582400.123456\n  },\n  {\n   \"note\": \"Likes made-up jokes.\",\n   \"added\": 1790582400.623456\n  }\n ],\n \"consolidated_at\": 1790582000.125,\n \"unknown_future_key\": {\n  \"nested\": [\n   1,\n   -0.0,\n   1e-07,\n   1e+16,\n   null,\n   false,\n   {},\n   []\n  ]\n }\n}",
+    "style": "indent1",
+    "indent": 1
+   }
+  },
+  {
+   "name": "emotions",
+   "input": {
+    "file": "emotions.json",
+    "writer": "_emotions_save",
+    "value": {
+     "mood": 0.6000000000000001,
+     "energy": 0.30000000000000004,
+     "warmth": 0.7,
+     "patience": 0.8,
+     "at": 1790582400.123456,
+     "unknown_extra": "kept"
+    }
+   },
+   "expected": {
+    "text": "{\n \"mood\": 0.6000000000000001,\n \"energy\": 0.30000000000000004,\n \"warmth\": 0.7,\n \"patience\": 0.8,\n \"at\": 1790582400.123456,\n \"unknown_extra\": \"kept\"\n}",
+    "style": "indent1",
+    "indent": 1
+   }
+  },
+  {
+   "name": "proactive",
+   "input": {
+    "file": "proactive.json",
+    "writer": "proactive_loop inline json.dump(st, f)",
+    "value": {
+     "enroll_reminded": "2026-09-28"
+    }
+   },
+   "expected": {
+    "text": "{\"enroll_reminded\": \"2026-09-28\"}",
+    "style": "compact",
+    "indent": null
+   }
+  },
+  {
+   "name": "alarms",
+   "input": {
+    "file": "alarms.json",
+    "writer": "_alarms_save",
+    "value": [
+     {
+      "time": "2026-09-28T07:00:00",
+      "label": "synthetic wake"
+     },
+     {
+      "time": "2026-09-29T07:30:00.123456",
+      "label": "synthetic stretch",
+      "repeat": "daily"
+     },
+     {
+      "time": "2026-10-01T18:45:00",
+      "label": "synthetic call",
+      "repeat": "weekdays"
+     }
+    ]
+   },
+   "expected": {
+    "text": "[{\"time\": \"2026-09-28T07:00:00\", \"label\": \"synthetic wake\"}, {\"time\": \"2026-09-29T07:30:00.123456\", \"label\": \"synthetic stretch\", \"repeat\": \"daily\"}, {\"time\": \"2026-10-01T18:45:00\", \"label\": \"synthetic call\", \"repeat\": \"weekdays\"}]",
+    "style": "compact",
+    "indent": null
+   }
+  },
+  {
+   "name": "alarms_empty",
+   "input": {
+    "file": "alarms.json",
+    "writer": "_alarms_save",
+    "value": []
+   },
+   "expected": {
+    "text": "[]",
+    "style": "either",
+    "indent": null
+   }
+  },
+  {
+   "name": "personality_append_keeps_unknown_keys",
+   "input": {
+    "file": "personality.json",
+    "before_text": "{\n \"core\": [\n  \"Synthetic core trait one.\",\n  \"Synthetic core trait two.\"\n ],\n \"learned\": [\n  {\n   \"note\": \"Prefers synthetic brevity.\",\n   \"added\": 1790582400.123456\n  },\n  {\n   \"note\": \"Likes made-up jokes.\",\n   \"added\": 1790582400.623456\n  }\n ],\n \"consolidated_at\": 1790582000.125,\n \"unknown_future_key\": {\n  \"nested\": [\n   1,\n   -0.0,\n   1e-07,\n   1e+16,\n   null,\n   false,\n   {},\n   []\n  ]\n }\n}",
+    "append_learned": {
+     "note": "Synthetic appended note — ok.",
+     "added": 1790582460.373456
+    }
+   },
+   "expected": {
+    "text": "{\n \"core\": [\n  \"Synthetic core trait one.\",\n  \"Synthetic core trait two.\"\n ],\n \"learned\": [\n  {\n   \"note\": \"Prefers synthetic brevity.\",\n   \"added\": 1790582400.123456\n  },\n  {\n   \"note\": \"Likes made-up jokes.\",\n   \"added\": 1790582400.623456\n  },\n  {\n   \"note\": \"Synthetic appended note \\u2014 ok.\",\n   \"added\": 1790582460.373456\n  }\n ],\n \"consolidated_at\": 1790582000.125,\n \"unknown_future_key\": {\n  \"nested\": [\n   1,\n   -0.0,\n   1e-07,\n   1e+16,\n   null,\n   false,\n   {},\n   []\n  ]\n }\n}"
+   }
+  }
+ ]
+}
