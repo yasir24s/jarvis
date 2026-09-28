@@ -1,0 +1,6950 @@
+{
+ "schema": 1,
+ "suite": "m1_history_app",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "constants",
+   "input": {
+    "kind": "constants"
+   },
+   "expected": {
+    "feedback_pattern": {
+     "pattern": "\\bno,? (?:i said|i meant|that's not)\\b|\\bnot what i (?:said|meant|asked)\\b|\\bthat'?s (?:wrong|not right)\\b|\\bwrong answer\\b|\\bcancel that\\b|\\bundo that\\b|\\bnever ?mind\\b",
+     "ignorecase": true,
+     "other_flags": 0
+    },
+    "feedback_compares": {
+     "now - _LAST_CMD['at'] < 30": 30,
+     "difflib.SequenceMatcher(None, text, _LAST_CMD['text']).ratio() > 0.65": 0.65
+    },
+    "last_cmd_initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "app_exclusions": [
+     [
+      "jarvis",
+      "finder",
+      "loginwindow"
+     ]
+    ],
+    "history": {
+     "process_command_slices": {
+      "_history[-12:]": [
+       -12,
+       null
+      ]
+     },
+     "load_slices": {
+      "[t for t in h if isinstance(t, dict) and t.get('role') in ('user', 'assistant')][-12:]": [
+       -12,
+       null
+      ]
+     },
+     "load_roles": [
+      [
+       "user",
+       "assistant"
+      ]
+     ],
+     "save_slices": {
+      "_history[-12:]": [
+       -12,
+       null
+      ]
+     },
+     "preamble_slices": {
+      "_history[-7:-1]": [
+       -7,
+       -1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "app/xcode",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "Xcode"
+   },
+   "expected": {
+    "front_app": "Xcode",
+    "context": " CONTEXT: the user's frontmost app right now is Xcode — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/music",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "Music"
+   },
+   "expected": {
+    "front_app": "Music",
+    "context": " CONTEXT: the user's frontmost app right now is Music — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/empty",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": ""
+   },
+   "expected": {
+    "front_app": "",
+    "context": ""
+   }
+  },
+  {
+   "name": "app/jarvis",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "jarvis"
+   },
+   "expected": {
+    "front_app": "jarvis",
+    "context": ""
+   }
+  },
+  {
+   "name": "app/JARVIS",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "JARVIS"
+   },
+   "expected": {
+    "front_app": "JARVIS",
+    "context": ""
+   }
+  },
+  {
+   "name": "app/Jarvis",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "Jarvis"
+   },
+   "expected": {
+    "front_app": "Jarvis",
+    "context": ""
+   }
+  },
+  {
+   "name": "app/finder",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "Finder"
+   },
+   "expected": {
+    "front_app": "Finder",
+    "context": ""
+   }
+  },
+  {
+   "name": "app/FINDER",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "FINDER"
+   },
+   "expected": {
+    "front_app": "FINDER",
+    "context": ""
+   }
+  },
+  {
+   "name": "app/loginwindow",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "loginwindow"
+   },
+   "expected": {
+    "front_app": "loginwindow",
+    "context": ""
+   }
+  },
+  {
+   "name": "app/LoginWindow",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "LoginWindow"
+   },
+   "expected": {
+    "front_app": "LoginWindow",
+    "context": ""
+   }
+  },
+  {
+   "name": "app/finder_trailing_space",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "Finder "
+   },
+   "expected": {
+    "front_app": "Finder ",
+    "context": " CONTEXT: the user's frontmost app right now is Finder  — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/jarvis_hud",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "JARVIS HUD"
+   },
+   "expected": {
+    "front_app": "JARVIS HUD",
+    "context": " CONTEXT: the user's frontmost app right now is JARVIS HUD — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/cafe",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "Café Olé"
+   },
+   "expected": {
+    "front_app": "Café Olé",
+    "context": " CONTEXT: the user's frontmost app right now is Café Olé — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/cjk",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "日本語アプリ"
+   },
+   "expected": {
+    "front_app": "日本語アプリ",
+    "context": " CONTEXT: the user's frontmost app right now is 日本語アプリ — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/emoji",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "📝 Notes"
+   },
+   "expected": {
+    "front_app": "📝 Notes",
+    "context": " CONTEXT: the user's frontmost app right now is 📝 Notes — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/dotted_I",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "İnstagram"
+   },
+   "expected": {
+    "front_app": "İnstagram",
+    "context": " CONTEXT: the user's frontmost app right now is İnstagram — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/sigma",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "ΣΑΣ"
+   },
+   "expected": {
+    "front_app": "ΣΑΣ",
+    "context": " CONTEXT: the user's frontmost app right now is ΣΑΣ — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/kelvin_finder",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "KFinder"
+   },
+   "expected": {
+    "front_app": "KFinder",
+    "context": " CONTEXT: the user's frontmost app right now is KFinder — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/braces",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "{app} 100%"
+   },
+   "expected": {
+    "front_app": "{app} 100%",
+    "context": " CONTEXT: the user's frontmost app right now is {app} 100% — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/newline",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "Line\nBreak"
+   },
+   "expected": {
+    "front_app": "Line\nBreak",
+    "context": " CONTEXT: the user's frontmost app right now is Line\nBreak — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/literal_None",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "None"
+   },
+   "expected": {
+    "front_app": "None",
+    "context": " CONTEXT: the user's frontmost app right now is None — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/long",
+   "input": {
+    "kind": "app",
+    "mode": "name",
+    "name": "Visual Studio Code — Insiders Visual Studio Code — Insiders Visual Studio Code — Insiders Visual Studio Code — Insiders "
+   },
+   "expected": {
+    "front_app": "Visual Studio Code — Insiders Visual Studio Code — Insiders Visual Studio Code — Insiders Visual Studio Code — Insiders ",
+    "context": " CONTEXT: the user's frontmost app right now is Visual Studio Code — Insiders Visual Studio Code — Insiders Visual Studio Code — Insiders Visual Studio Code — Insiders  — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/no_frontmost_app",
+   "input": {
+    "kind": "app",
+    "mode": "no_app",
+    "name": null
+   },
+   "expected": {
+    "front_app": "",
+    "context": ""
+   }
+  },
+  {
+   "name": "app/nil_localized_name",
+   "input": {
+    "kind": "app",
+    "mode": "nil_name",
+    "name": null
+   },
+   "expected": {
+    "front_app": "None",
+    "context": " CONTEXT: the user's frontmost app right now is None — interpret ambiguous commands in its light."
+   }
+  },
+  {
+   "name": "app/workspace_raises",
+   "input": {
+    "kind": "app",
+    "mode": "raises",
+    "name": null
+   },
+   "expected": {
+    "front_app": "",
+    "context": ""
+   }
+  },
+  {
+   "name": "feedback/first_command_never_rephrase",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "turn on the lights",
+      "at": 1790582400.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "turn on the lights",
+       "at": 1790582400.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/rephrase_within_window",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "turn on the lights",
+      "at": 1790582400.25
+     },
+     {
+      "text": "turn on the light",
+      "at": 1790582405.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "turn on the lights",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "turn on the light",
+       "at": 1790582405.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/window_29_9",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "turn on the lights",
+      "at": 1790582400.25
+     },
+     {
+      "text": "turn on the light",
+      "at": 1790582430.15
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "turn on the lights",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "turn on the light",
+       "at": 1790582430.15
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/window_29_999999",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "turn on the lights",
+      "at": 1790582400.25
+     },
+     {
+      "text": "turn on the light",
+      "at": 1790582430.249999
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "turn on the lights",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "turn on the light",
+       "at": 1790582430.249999
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/window_30_0",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "turn on the lights",
+      "at": 1790582400.25
+     },
+     {
+      "text": "turn on the light",
+      "at": 1790582430.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "turn on the lights",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "turn on the light",
+       "at": 1790582430.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/window_30_1",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "turn on the lights",
+      "at": 1790582400.25
+     },
+     {
+      "text": "turn on the light",
+      "at": 1790582430.35
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "turn on the lights",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "turn on the light",
+       "at": 1790582430.35
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/clock_backwards",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "turn on the lights",
+      "at": 1790582400.25
+     },
+     {
+      "text": "turn on the light",
+      "at": 1790582300.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "turn on the lights",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "turn on the light",
+       "at": 1790582300.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/clock_backwards_far",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "turn on the lights",
+      "at": 1790582400.25
+     },
+     {
+      "text": "turn on the light",
+      "at": 0.0
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "turn on the lights",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "turn on the light",
+       "at": 0.0
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/identical_text_not_rephrase",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "stop",
+      "at": 1790582400.25
+     },
+     {
+      "text": "stop",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "stop",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "stop",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/dissimilar",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "tell me a joke",
+      "at": 1790582400.25
+     },
+     {
+      "text": "what's on my calendar",
+      "at": 1790582402.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "tell me a joke",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "what's on my calendar",
+       "at": 1790582402.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/negative_first",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "no, I said lights",
+      "at": 1790582400.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "no, I said lights",
+       "at": 1790582400.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/negative_beats_rephrase",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "turn on the lights",
+      "at": 1790582400.25
+     },
+     {
+      "text": "no, I meant the lights",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "turn on the lights",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "no, I meant the lights",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/negative_updates_last",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "cancel that",
+      "at": 1790582400.25
+     },
+     {
+      "text": "cancel that now",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "cancel that",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "cancel that now",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/negatives",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "No, I said lights",
+      "at": 1790582400.25
+     },
+     {
+      "text": "no i meant kitchen",
+      "at": 1790582401.25
+     },
+     {
+      "text": "that's not it",
+      "at": 1790582402.25
+     },
+     {
+      "text": "not what I asked",
+      "at": 1790582403.25
+     },
+     {
+      "text": "that's wrong",
+      "at": 1790582404.25
+     },
+     {
+      "text": "thats not right",
+      "at": 1790582405.25
+     },
+     {
+      "text": "wrong answer",
+      "at": 1790582406.25
+     },
+     {
+      "text": "Cancel that",
+      "at": 1790582407.25
+     },
+     {
+      "text": "undo that",
+      "at": 1790582408.25
+     },
+     {
+      "text": "never mind",
+      "at": 1790582409.25
+     },
+     {
+      "text": "nevermind",
+      "at": 1790582410.25
+     },
+     {
+      "text": "NEVER MIND",
+      "at": 1790582411.25
+     },
+     {
+      "text": "no that is fine",
+      "at": 1790582412.25
+     },
+     {
+      "text": "I said no",
+      "at": 1790582413.25
+     },
+     {
+      "text": "wrongly",
+      "at": 1790582414.25
+     },
+     {
+      "text": "cancel",
+      "at": 1790582415.25
+     },
+     {
+      "text": "mind your step",
+      "at": 1790582416.25
+     },
+     {
+      "text": "not what I expected",
+      "at": 1790582417.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "No, I said lights",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "no i meant kitchen",
+       "at": 1790582401.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "that's not it",
+       "at": 1790582402.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "not what I asked",
+       "at": 1790582403.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "that's wrong",
+       "at": 1790582404.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "thats not right",
+       "at": 1790582405.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "wrong answer",
+       "at": 1790582406.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "Cancel that",
+       "at": 1790582407.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "undo that",
+       "at": 1790582408.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "never mind",
+       "at": 1790582409.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "nevermind",
+       "at": 1790582410.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "user_correction",
+        1
+       ],
+       [
+        "emotion",
+        "corrected",
+        1.0
+       ]
+      ],
+      "last": {
+       "text": "NEVER MIND",
+       "at": 1790582411.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "no that is fine",
+       "at": 1790582412.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "I said no",
+       "at": 1790582413.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "wrongly",
+       "at": 1790582414.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "cancel",
+       "at": 1790582415.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "mind your step",
+       "at": 1790582416.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "not what I expected",
+       "at": 1790582417.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/chain_updates_last",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "play some jazz music",
+      "at": 1790582400.25
+     },
+     {
+      "text": "play some jazz musik",
+      "at": 1790582410.25
+     },
+     {
+      "text": "play some jazz musics",
+      "at": 1790582420.25
+     },
+     {
+      "text": "play some jazz",
+      "at": 1790582445.25
+     },
+     {
+      "text": "play some jaz",
+      "at": 1790582475.15
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "play some jazz music",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "play some jazz musik",
+       "at": 1790582410.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "play some jazz musics",
+       "at": 1790582420.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "play some jazz",
+       "at": 1790582445.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "play some jaz",
+       "at": 1790582475.15
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/empty_text",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "",
+      "at": 1790582400.25
+     },
+     {
+      "text": "",
+      "at": 1790582401.25
+     },
+     {
+      "text": "turn on",
+      "at": 1790582402.25
+     },
+     {
+      "text": "",
+      "at": 1790582403.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "",
+       "at": 1790582401.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "turn on",
+       "at": 1790582402.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "",
+       "at": 1790582403.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/initial_state_at_zero",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "turn on the light",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "turn on the lights",
+      "at": 10.0
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "turn on the lights",
+       "at": 10.0
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/unicode",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 0.0
+    },
+    "steps": [
+     {
+      "text": "café near me",
+      "at": 1790582400.25
+     },
+     {
+      "text": "cafe near me",
+      "at": 1790582403.25
+     },
+     {
+      "text": "日本の天気は",
+      "at": 1790582404.25
+     },
+     {
+      "text": "日本の天気",
+      "at": 1790582405.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "café near me",
+       "at": 1790582400.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "cafe near me",
+       "at": 1790582403.25
+      }
+     },
+     {
+      "effects": [],
+      "last": {
+       "text": "日本の天気は",
+       "at": 1790582404.25
+      }
+     },
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "日本の天気",
+       "at": 1790582405.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_empty-empty",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_empty-last",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "what time is it",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_text-empty",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "hello",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "hello",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_rephrase-like",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "what's the weather like",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "what's the weather",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "what's the weather",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_on-off",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "turn off the lights",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "turn on the lights",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "turn on the lights",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_punct-case",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "play some music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "Play some music.",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "Play some music.",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_number-word",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "set a timer for five minutes",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "set a timer for 5 minutes",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "set a timer for 5 minutes",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_reword",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "what's the time",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "what time is it",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "what time is it",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_different-app",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "open spotify",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "open safari",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "open safari",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_unrelated",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "what's on my calendar",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "tell me a joke",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "tell me a joke",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_mum-mom",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "remind me to call mom",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "remind me to call mum",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "remind me to call mum",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_german",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "wie spat ist es",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "Wie spät ist es?",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "Wie spät ist es?",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_accent",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "cafe near me",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "café near me",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "café near me",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_emoji",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "play music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "play 🎵 music",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "play 🎵 music",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_cjk",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "日本の天気",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "日本の天気は",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "日本の天気は",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_combining",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "naïve question",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "naïve question",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "naïve question",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_identical",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "stop",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "stop",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "stop",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_long-edit",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "Good morning. Today you have a doctor appointment at nine, a call with the research group at eleven, and the quarterly review in the afternoon. The weather is cloudy with light rain expected around four, so take an umbrella when you go.",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "Good morning. Today you have a dentist appointment at nine, a call with the research group at eleven, and the quarterly review in the afternoon. The weather is cloudy with light rain expected around four, so take an umbrella when you go.",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "Good morning. Today you have a dentist appointment at nine, a call with the research group at eleven, and the quarterly review in the afternoon. The weather is cloudy with light rain expected around four, so take an umbrella when you go.",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_long-vs-short",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "what's on my calendar today",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "Good morning. Today you have a dentist appointment at nine, a call with the research group at eleven, and the quarterly review in the afternoon. The weather is cloudy with light rain expected around four, so take an umbrella when you go.",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "Good morning. Today you have a dentist appointment at nine, a call with the research group at eleven, and the quarterly review in the afternoon. The weather is cloudy with light rain expected around four, so take an umbrella when you go.",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_short-vs-long",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "Good morning. Today you have a dentist appointment at nine, a call with the research group at eleven, and the quarterly review in the afternoon. The weather is cloudy with light rain expected around four, so take an umbrella when you go.",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "what's on my calendar today",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "what's on my calendar today",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_00-exact",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "pause the music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "apuse te recommend mwusic",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "apuse te recommend mwusic",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_01-exact",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "how far is the moon",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "hhw far what's is the",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "hhw far what's is the",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_02-exact",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "play some jazz music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "switch play soe jazz",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "switch play soe jazz",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_03-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "pause the music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "pause download the remind music",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "pause download the remind music",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_04-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "what time is it in tokyo",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "tell What is it tokyo!",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "tell What is it tokyo!",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_05-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "start a stopwatch",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "Start download a stopcbtch",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "Start download a stopcbtch",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_06-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "play some jazz music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "what's Play some music.",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "what's Play some music.",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_07-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "play some jazz music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "what's plway bazz music",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "what's plway bazz music",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_08-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "switch off the bedroom lamp",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "translate witch of fthe lamp",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "translate witch of fthe lamp",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_09-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "start a stopwatch",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "what's tsar ta play stopwatch",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "what's tsar ta play stopwatch",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_10-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "what's the capital of australia",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "capital pause how of australia",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "capital pause how of australia",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_11-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "switch off the bedroom lamp",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "Switch off lamp!",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "Switch off lamp!",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_12-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "how far is the moon",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "schedule Howfar is moon.",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "schedule Howfar is moon.",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_13-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "translate unbelievable into portuguese",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "translatewinto recommend portuguese",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "translatewinto recommend portuguese",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_14-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "play some jazz music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "what's play some turn read music",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "what's play some turn read music",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_15-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "download the documentary about photosynthesis",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "download potosynthesis",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "download potosynthesis",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_16-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "play some jazz music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "remind play scheduel some jazz open music",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "remind play scheduel some jazz open music",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_17-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "turn on the living room lights",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "the living rroom",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "the living rroom",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_18-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "tell me a joke",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "tell switch what's me a ijoke",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "tell switch what's me a ijoke",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_19-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "what's the weather like tomorrow",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "open what's remind thew eather like",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "open what's remind thew eather like",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_20-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "start a stopwatch",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "recommend start search a hstopwatch",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "recommend start search a hstopwatch",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_21-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "read me the latest news",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "schedule read m what's the start latest news",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "schedule read m what's the start latest news",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_22-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "play some jazz music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "Play some translate rusic.",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "Play some translate rusic.",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_23-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "what's the weather like tomorrow",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "the download liek tomorrow",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "the download liek tomorrow",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_24-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "download the documentary about photosynthesis",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "download thf edocumentary",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "download thf edocumentary",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_25-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "turn the volume down",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "turn switch vthev olume",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "turn switch vthev olume",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_26-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "play some jazz music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "play some download jazz",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "play some download jazz",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_27-pass",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "turn the volume down",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "irecommend turn volume dwn",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [
+       [
+        "bump",
+        "rephrase_suspected",
+        1
+       ]
+      ],
+      "last": {
+       "text": "irecommend turn volume dwn",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_28-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "download the documentary about photosynthesis",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "downlaod the dcumentary",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "downlaod the dcumentary",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_29-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "start a stopwatch",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "start a sen",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "start a sen",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_30-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "what's the weather like tomorrow",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "what's what's thve tomorrow",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "what's what's thve tomorrow",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_31-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "start a stopwatch",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "who a play stopwatch",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "who a play stopwatch",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_32-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "open spotify",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "Open download spotify.",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "Open download spotify.",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_33-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "recommend something entertaining for tonight",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "something for tonight",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "something for tonight",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_34-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "open spotify",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "schedule spotify",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "schedule spotify",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_35-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "play some jazz music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "tsome music",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "tsome music",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_36-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "recommend something entertaining for tonight",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "recommend for tonight",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "recommend for tonight",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_37-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "pause the music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "search music.",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "search music.",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_38-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "tell me a joke",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "Tell me a turn",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "Tell me a turn",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_39-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "turn the volume down",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "Tzrn the down!",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "Tzrn the down!",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_40-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "what's the weather like tomorrow",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "wha'ts the translate weathen like",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "wha'ts the translate weathen like",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_41-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "what's the capital of australia",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "What's the remind capital fo",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "What's the remind capital fo",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_42-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "turn the volume down",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "Turgnthe down?",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "Turgnthe down?",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_43-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "read me the latest news",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "read me hte",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "read me hte",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_44-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "turn the volume down",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "utrn volume",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "utrn volume",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_45-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "pause the music",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "how pause the",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "how pause the",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_46-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "read me the latest news",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "read me the",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "read me the",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_47-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "open spotify",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "Open read psoteify?",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "Open read psoteify?",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_48-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "tell me a joke",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "translate tel m ea joke",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "translate tel m ea joke",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_49-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "open spotify",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "open translate spoitfy",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "open translate spoitfy",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_51-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "open spotify",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "switch olpne spotfy",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "switch olpne spotfy",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "feedback/pair_feedback_near_52-fail",
+   "input": {
+    "kind": "feedback",
+    "initial": {
+     "text": "tell me a joke",
+     "at": 1790582400.25
+    },
+    "steps": [
+     {
+      "text": "mea how a joke",
+      "at": 1790582401.25
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "effects": [],
+      "last": {
+       "text": "mea how a joke",
+       "at": 1790582401.25
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/missing_file",
+   "input": {
+    "kind": "history",
+    "initial": null,
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "preamble",
+      null
+     ],
+     [
+      "user",
+      "hello"
+     ],
+     [
+      "preamble",
+      null
+     ],
+     [
+      "assistant",
+      "Hello, sir."
+     ],
+     [
+      "save",
+      null
+     ],
+     [
+      "user",
+      "again"
+     ],
+     [
+      "preamble",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "result": "",
+      "turns": []
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "hello"
+       }
+      ]
+     },
+     {
+      "result": "",
+      "turns": [
+       {
+        "role": "user",
+        "content": "hello"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "hello"
+       },
+       {
+        "role": "assistant",
+        "content": "Hello, sir."
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "hello"
+       },
+       {
+        "role": "assistant",
+        "content": "Hello, sir."
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": \"hello\"}, {\"role\": \"assistant\", \"content\": \"Hello, sir.\"}]"
+      }
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "hello"
+       },
+       {
+        "role": "assistant",
+        "content": "Hello, sir."
+       },
+       {
+        "role": "user",
+        "content": "again"
+       }
+      ]
+     },
+     {
+      "result": "\n\nRecent conversation:\nUser: hello\nYou: Hello, sir.",
+      "turns": [
+       {
+        "role": "user",
+        "content": "hello"
+       },
+       {
+        "role": "assistant",
+        "content": "Hello, sir."
+       },
+       {
+        "role": "user",
+        "content": "again"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "hello"
+       },
+       {
+        "role": "assistant",
+        "content": "Hello, sir."
+       },
+       {
+        "role": "user",
+        "content": "again"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": \"hello\"}, {\"role\": \"assistant\", \"content\": \"Hello, sir.\"}, {\"role\": \"user\", \"content\": \"again\"}]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/empty_file",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": ""
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "user",
+      "x"
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "x"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "x"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": \"x\"}]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/invalid_json",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "[{\"role\": \"user\", \"content\": \"x\"}"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "user",
+      "y"
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "y"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "y"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": \"y\"}]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/json_object",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "{\"role\": \"user\", \"content\": \"x\"}"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "user",
+      "y"
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "y"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "y"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": \"y\"}]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/json_string",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "\"user\""
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": [],
+      "file": {
+       "text": "[]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/json_number",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "12"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": [],
+      "file": {
+       "text": "[]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/json_null",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "null"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": [],
+      "file": {
+       "text": "[]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/not_utf8",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "hex": "5b7b22726f6c65223a202275736572222c2022636f6e74656e74223a2022ff227d5d"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": [],
+      "file": {
+       "text": "[]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/bom",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "﻿[{\"role\": \"user\", \"content\": \"turn 00\"}, {\"role\": \"assistant\", \"content\": \"turn 01\"}]"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": [],
+      "file": {
+       "text": "[]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/mixed_entries",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "[{\"role\": \"user\", \"content\": \"kept user\"}, {\"role\": \"system\", \"content\": \"dropped system\"}, {\"role\": \"tool\", \"content\": \"dropped tool\"}, \"a string\", null, [\"role\", \"user\"], {\"content\": \"no role\"}, {\"role\": \"assistant\", \"content\": \"kept assistant\", \"extra\": [1, 2.5, null]}, {\"role\": \"USER\", \"content\": \"wrong case\"}, {\"role\": 1, \"content\": \"numeric role\"}, {\"role\": \"assistant\"}, {\"role\": \"user\", \"content\": null}, {\"role\": \"user\", \"content\": \"  padded  \\n\"}, {\"role\": \"assistant\", \"content\": 0}, {\"role\": \"user\", \"content\": \"\"}]"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "preamble",
+      null
+     ],
+     [
+      "user",
+      "next"
+     ],
+     [
+      "preamble",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "kept user"
+       },
+       {
+        "role": "assistant",
+        "content": "kept assistant",
+        "extra": [
+         1,
+         2.5,
+         null
+        ]
+       },
+       {
+        "role": "assistant"
+       },
+       {
+        "role": "user",
+        "content": null
+       },
+       {
+        "role": "user",
+        "content": "  padded  \n"
+       },
+       {
+        "role": "assistant",
+        "content": 0
+       },
+       {
+        "role": "user",
+        "content": ""
+       }
+      ]
+     },
+     {
+      "result": "\n\nRecent conversation:\nUser: kept user\nYou: kept assistant\nUser: padded",
+      "turns": [
+       {
+        "role": "user",
+        "content": "kept user"
+       },
+       {
+        "role": "assistant",
+        "content": "kept assistant",
+        "extra": [
+         1,
+         2.5,
+         null
+        ]
+       },
+       {
+        "role": "assistant"
+       },
+       {
+        "role": "user",
+        "content": null
+       },
+       {
+        "role": "user",
+        "content": "  padded  \n"
+       },
+       {
+        "role": "assistant",
+        "content": 0
+       },
+       {
+        "role": "user",
+        "content": ""
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "kept user"
+       },
+       {
+        "role": "assistant",
+        "content": "kept assistant",
+        "extra": [
+         1,
+         2.5,
+         null
+        ]
+       },
+       {
+        "role": "assistant"
+       },
+       {
+        "role": "user",
+        "content": null
+       },
+       {
+        "role": "user",
+        "content": "  padded  \n"
+       },
+       {
+        "role": "assistant",
+        "content": 0
+       },
+       {
+        "role": "user",
+        "content": ""
+       },
+       {
+        "role": "user",
+        "content": "next"
+       }
+      ]
+     },
+     {
+      "result": "\n\nRecent conversation:\nYou: kept assistant\nUser: padded",
+      "turns": [
+       {
+        "role": "user",
+        "content": "kept user"
+       },
+       {
+        "role": "assistant",
+        "content": "kept assistant",
+        "extra": [
+         1,
+         2.5,
+         null
+        ]
+       },
+       {
+        "role": "assistant"
+       },
+       {
+        "role": "user",
+        "content": null
+       },
+       {
+        "role": "user",
+        "content": "  padded  \n"
+       },
+       {
+        "role": "assistant",
+        "content": 0
+       },
+       {
+        "role": "user",
+        "content": ""
+       },
+       {
+        "role": "user",
+        "content": "next"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "kept user"
+       },
+       {
+        "role": "assistant",
+        "content": "kept assistant",
+        "extra": [
+         1,
+         2.5,
+         null
+        ]
+       },
+       {
+        "role": "assistant"
+       },
+       {
+        "role": "user",
+        "content": null
+       },
+       {
+        "role": "user",
+        "content": "  padded  \n"
+       },
+       {
+        "role": "assistant",
+        "content": 0
+       },
+       {
+        "role": "user",
+        "content": ""
+       },
+       {
+        "role": "user",
+        "content": "next"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": \"kept user\"}, {\"role\": \"assistant\", \"content\": \"kept assistant\", \"extra\": [1, 2.5, null]}, {\"role\": \"assistant\"}, {\"role\": \"user\", \"content\": null}, {\"role\": \"user\", \"content\": \"  padded  \\n\"}, {\"role\": \"assistant\", \"content\": 0}, {\"role\": \"user\", \"content\": \"\"}, {\"role\": \"user\", \"content\": \"next\"}]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/load_keeps_last_12",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "[{\"role\": \"user\", \"content\": \"turn 00\"}, {\"role\": \"assistant\", \"content\": \"turn 01\"}, {\"role\": \"user\", \"content\": \"turn 02\"}, {\"role\": \"assistant\", \"content\": \"turn 03\"}, {\"role\": \"user\", \"content\": \"turn 04\"}, {\"role\": \"assistant\", \"content\": \"turn 05\"}, {\"role\": \"user\", \"content\": \"turn 06\"}, {\"role\": \"assistant\", \"content\": \"turn 07\"}, {\"role\": \"user\", \"content\": \"turn 08\"}, {\"role\": \"assistant\", \"content\": \"turn 09\"}, {\"role\": \"user\", \"content\": \"turn 10\"}, {\"role\": \"assistant\", \"content\": \"turn 11\"}, {\"role\": \"user\", \"content\": \"turn 12\"}, {\"role\": \"assistant\", \"content\": \"turn 13\"}, {\"role\": \"user\", \"content\": \"turn 14\"}, {\"role\": \"assistant\", \"content\": \"turn 15\"}, {\"role\": \"user\", \"content\": \"turn 16\"}, {\"role\": \"assistant\", \"content\": \"turn 17\"}, {\"role\": \"user\", \"content\": \"turn 18\"}, {\"role\": \"assistant\", \"content\": \"turn 19\"}]"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "preamble",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       },
+       {
+        "role": "user",
+        "content": "turn 12"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 13"
+       },
+       {
+        "role": "user",
+        "content": "turn 14"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 15"
+       },
+       {
+        "role": "user",
+        "content": "turn 16"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 17"
+       },
+       {
+        "role": "user",
+        "content": "turn 18"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 19"
+       }
+      ]
+     },
+     {
+      "result": "\n\nRecent conversation:\nYou: turn 13\nUser: turn 14\nYou: turn 15\nUser: turn 16\nYou: turn 17\nUser: turn 18",
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       },
+       {
+        "role": "user",
+        "content": "turn 12"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 13"
+       },
+       {
+        "role": "user",
+        "content": "turn 14"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 15"
+       },
+       {
+        "role": "user",
+        "content": "turn 16"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 17"
+       },
+       {
+        "role": "user",
+        "content": "turn 18"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 19"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       },
+       {
+        "role": "user",
+        "content": "turn 12"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 13"
+       },
+       {
+        "role": "user",
+        "content": "turn 14"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 15"
+       },
+       {
+        "role": "user",
+        "content": "turn 16"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 17"
+       },
+       {
+        "role": "user",
+        "content": "turn 18"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 19"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": \"turn 08\"}, {\"role\": \"assistant\", \"content\": \"turn 09\"}, {\"role\": \"user\", \"content\": \"turn 10\"}, {\"role\": \"assistant\", \"content\": \"turn 11\"}, {\"role\": \"user\", \"content\": \"turn 12\"}, {\"role\": \"assistant\", \"content\": \"turn 13\"}, {\"role\": \"user\", \"content\": \"turn 14\"}, {\"role\": \"assistant\", \"content\": \"turn 15\"}, {\"role\": \"user\", \"content\": \"turn 16\"}, {\"role\": \"assistant\", \"content\": \"turn 17\"}, {\"role\": \"user\", \"content\": \"turn 18\"}, {\"role\": \"assistant\", \"content\": \"turn 19\"}]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/load_filters_then_last_12",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "[{\"role\": \"user\", \"content\": \"turn 00\"}, {\"role\": \"assistant\", \"content\": \"turn 01\"}, {\"role\": \"user\", \"content\": \"turn 02\"}, {\"role\": \"assistant\", \"content\": \"turn 03\"}, {\"role\": \"user\", \"content\": \"turn 04\"}, {\"role\": \"assistant\", \"content\": \"turn 05\"}, {\"role\": \"user\", \"content\": \"turn 06\"}, {\"role\": \"assistant\", \"content\": \"turn 07\"}, {\"role\": \"user\", \"content\": \"turn 08\"}, {\"role\": \"assistant\", \"content\": \"turn 09\"}, {\"role\": \"system\", \"content\": \"s\"}, {\"role\": \"system\", \"content\": \"s\"}, {\"role\": \"system\", \"content\": \"s\"}, {\"role\": \"system\", \"content\": \"s\"}, {\"role\": \"system\", \"content\": \"s\"}, {\"role\": \"user\", \"content\": \"turn 10\"}, {\"role\": \"assistant\", \"content\": \"turn 11\"}, {\"role\": \"user\", \"content\": \"turn 12\"}, {\"role\": \"assistant\", \"content\": \"turn 13\"}, {\"role\": \"user\", \"content\": \"turn 14\"}, {\"role\": \"assistant\", \"content\": \"turn 15\"}]"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 04"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 05"
+       },
+       {
+        "role": "user",
+        "content": "turn 06"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 07"
+       },
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       },
+       {
+        "role": "user",
+        "content": "turn 12"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 13"
+       },
+       {
+        "role": "user",
+        "content": "turn 14"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 15"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 04"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 05"
+       },
+       {
+        "role": "user",
+        "content": "turn 06"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 07"
+       },
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       },
+       {
+        "role": "user",
+        "content": "turn 12"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 13"
+       },
+       {
+        "role": "user",
+        "content": "turn 14"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 15"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": \"turn 04\"}, {\"role\": \"assistant\", \"content\": \"turn 05\"}, {\"role\": \"user\", \"content\": \"turn 06\"}, {\"role\": \"assistant\", \"content\": \"turn 07\"}, {\"role\": \"user\", \"content\": \"turn 08\"}, {\"role\": \"assistant\", \"content\": \"turn 09\"}, {\"role\": \"user\", \"content\": \"turn 10\"}, {\"role\": \"assistant\", \"content\": \"turn 11\"}, {\"role\": \"user\", \"content\": \"turn 12\"}, {\"role\": \"assistant\", \"content\": \"turn 13\"}, {\"role\": \"user\", \"content\": \"turn 14\"}, {\"role\": \"assistant\", \"content\": \"turn 15\"}]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/cap_12_rolling",
+   "input": {
+    "kind": "history",
+    "initial": null,
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "user",
+      "q0"
+     ],
+     [
+      "assistant",
+      "a0"
+     ],
+     [
+      "user",
+      "q1"
+     ],
+     [
+      "assistant",
+      "a1"
+     ],
+     [
+      "user",
+      "q2"
+     ],
+     [
+      "assistant",
+      "a2"
+     ],
+     [
+      "user",
+      "q3"
+     ],
+     [
+      "assistant",
+      "a3"
+     ],
+     [
+      "user",
+      "q4"
+     ],
+     [
+      "assistant",
+      "a4"
+     ],
+     [
+      "user",
+      "q5"
+     ],
+     [
+      "assistant",
+      "a5"
+     ],
+     [
+      "user",
+      "q6"
+     ],
+     [
+      "assistant",
+      "a6"
+     ],
+     [
+      "user",
+      "q7"
+     ],
+     [
+      "assistant",
+      "a7"
+     ],
+     [
+      "preamble",
+      null
+     ],
+     [
+      "save",
+      null
+     ],
+     [
+      "user",
+      "q8"
+     ],
+     [
+      "preamble",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "q0"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "q0"
+       },
+       {
+        "role": "assistant",
+        "content": "a0"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "q0"
+       },
+       {
+        "role": "assistant",
+        "content": "a0"
+       },
+       {
+        "role": "user",
+        "content": "q1"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "q0"
+       },
+       {
+        "role": "assistant",
+        "content": "a0"
+       },
+       {
+        "role": "user",
+        "content": "q1"
+       },
+       {
+        "role": "assistant",
+        "content": "a1"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "q0"
+       },
+       {
+        "role": "assistant",
+        "content": "a0"
+       },
+       {
+        "role": "user",
+        "content": "q1"
+       },
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "q0"
+       },
+       {
+        "role": "assistant",
+        "content": "a0"
+       },
+       {
+        "role": "user",
+        "content": "q1"
+       },
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       },
+       {
+        "role": "assistant",
+        "content": "a2"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "q0"
+       },
+       {
+        "role": "assistant",
+        "content": "a0"
+       },
+       {
+        "role": "user",
+        "content": "q1"
+       },
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       },
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "q0"
+       },
+       {
+        "role": "assistant",
+        "content": "a0"
+       },
+       {
+        "role": "user",
+        "content": "q1"
+       },
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       },
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "q0"
+       },
+       {
+        "role": "assistant",
+        "content": "a0"
+       },
+       {
+        "role": "user",
+        "content": "q1"
+       },
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       },
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       },
+       {
+        "role": "user",
+        "content": "q4"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "q0"
+       },
+       {
+        "role": "assistant",
+        "content": "a0"
+       },
+       {
+        "role": "user",
+        "content": "q1"
+       },
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       },
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       },
+       {
+        "role": "user",
+        "content": "q4"
+       },
+       {
+        "role": "assistant",
+        "content": "a4"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "q0"
+       },
+       {
+        "role": "assistant",
+        "content": "a0"
+       },
+       {
+        "role": "user",
+        "content": "q1"
+       },
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       },
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       },
+       {
+        "role": "user",
+        "content": "q4"
+       },
+       {
+        "role": "assistant",
+        "content": "a4"
+       },
+       {
+        "role": "user",
+        "content": "q5"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "q0"
+       },
+       {
+        "role": "assistant",
+        "content": "a0"
+       },
+       {
+        "role": "user",
+        "content": "q1"
+       },
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       },
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       },
+       {
+        "role": "user",
+        "content": "q4"
+       },
+       {
+        "role": "assistant",
+        "content": "a4"
+       },
+       {
+        "role": "user",
+        "content": "q5"
+       },
+       {
+        "role": "assistant",
+        "content": "a5"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "a0"
+       },
+       {
+        "role": "user",
+        "content": "q1"
+       },
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       },
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       },
+       {
+        "role": "user",
+        "content": "q4"
+       },
+       {
+        "role": "assistant",
+        "content": "a4"
+       },
+       {
+        "role": "user",
+        "content": "q5"
+       },
+       {
+        "role": "assistant",
+        "content": "a5"
+       },
+       {
+        "role": "user",
+        "content": "q6"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "a0"
+       },
+       {
+        "role": "user",
+        "content": "q1"
+       },
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       },
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       },
+       {
+        "role": "user",
+        "content": "q4"
+       },
+       {
+        "role": "assistant",
+        "content": "a4"
+       },
+       {
+        "role": "user",
+        "content": "q5"
+       },
+       {
+        "role": "assistant",
+        "content": "a5"
+       },
+       {
+        "role": "user",
+        "content": "q6"
+       },
+       {
+        "role": "assistant",
+        "content": "a6"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       },
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       },
+       {
+        "role": "user",
+        "content": "q4"
+       },
+       {
+        "role": "assistant",
+        "content": "a4"
+       },
+       {
+        "role": "user",
+        "content": "q5"
+       },
+       {
+        "role": "assistant",
+        "content": "a5"
+       },
+       {
+        "role": "user",
+        "content": "q6"
+       },
+       {
+        "role": "assistant",
+        "content": "a6"
+       },
+       {
+        "role": "user",
+        "content": "q7"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       },
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       },
+       {
+        "role": "user",
+        "content": "q4"
+       },
+       {
+        "role": "assistant",
+        "content": "a4"
+       },
+       {
+        "role": "user",
+        "content": "q5"
+       },
+       {
+        "role": "assistant",
+        "content": "a5"
+       },
+       {
+        "role": "user",
+        "content": "q6"
+       },
+       {
+        "role": "assistant",
+        "content": "a6"
+       },
+       {
+        "role": "user",
+        "content": "q7"
+       },
+       {
+        "role": "assistant",
+        "content": "a7"
+       }
+      ]
+     },
+     {
+      "result": "\n\nRecent conversation:\nYou: a4\nUser: q5\nYou: a5\nUser: q6\nYou: a6\nUser: q7",
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       },
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       },
+       {
+        "role": "user",
+        "content": "q4"
+       },
+       {
+        "role": "assistant",
+        "content": "a4"
+       },
+       {
+        "role": "user",
+        "content": "q5"
+       },
+       {
+        "role": "assistant",
+        "content": "a5"
+       },
+       {
+        "role": "user",
+        "content": "q6"
+       },
+       {
+        "role": "assistant",
+        "content": "a6"
+       },
+       {
+        "role": "user",
+        "content": "q7"
+       },
+       {
+        "role": "assistant",
+        "content": "a7"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "a1"
+       },
+       {
+        "role": "user",
+        "content": "q2"
+       },
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       },
+       {
+        "role": "user",
+        "content": "q4"
+       },
+       {
+        "role": "assistant",
+        "content": "a4"
+       },
+       {
+        "role": "user",
+        "content": "q5"
+       },
+       {
+        "role": "assistant",
+        "content": "a5"
+       },
+       {
+        "role": "user",
+        "content": "q6"
+       },
+       {
+        "role": "assistant",
+        "content": "a6"
+       },
+       {
+        "role": "user",
+        "content": "q7"
+       },
+       {
+        "role": "assistant",
+        "content": "a7"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": \"q2\"}, {\"role\": \"assistant\", \"content\": \"a2\"}, {\"role\": \"user\", \"content\": \"q3\"}, {\"role\": \"assistant\", \"content\": \"a3\"}, {\"role\": \"user\", \"content\": \"q4\"}, {\"role\": \"assistant\", \"content\": \"a4\"}, {\"role\": \"user\", \"content\": \"q5\"}, {\"role\": \"assistant\", \"content\": \"a5\"}, {\"role\": \"user\", \"content\": \"q6\"}, {\"role\": \"assistant\", \"content\": \"a6\"}, {\"role\": \"user\", \"content\": \"q7\"}, {\"role\": \"assistant\", \"content\": \"a7\"}]"
+      }
+     },
+     {
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       },
+       {
+        "role": "user",
+        "content": "q4"
+       },
+       {
+        "role": "assistant",
+        "content": "a4"
+       },
+       {
+        "role": "user",
+        "content": "q5"
+       },
+       {
+        "role": "assistant",
+        "content": "a5"
+       },
+       {
+        "role": "user",
+        "content": "q6"
+       },
+       {
+        "role": "assistant",
+        "content": "a6"
+       },
+       {
+        "role": "user",
+        "content": "q7"
+       },
+       {
+        "role": "assistant",
+        "content": "a7"
+       },
+       {
+        "role": "user",
+        "content": "q8"
+       }
+      ]
+     },
+     {
+      "result": "\n\nRecent conversation:\nUser: q5\nYou: a5\nUser: q6\nYou: a6\nUser: q7\nYou: a7",
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       },
+       {
+        "role": "user",
+        "content": "q4"
+       },
+       {
+        "role": "assistant",
+        "content": "a4"
+       },
+       {
+        "role": "user",
+        "content": "q5"
+       },
+       {
+        "role": "assistant",
+        "content": "a5"
+       },
+       {
+        "role": "user",
+        "content": "q6"
+       },
+       {
+        "role": "assistant",
+        "content": "a6"
+       },
+       {
+        "role": "user",
+        "content": "q7"
+       },
+       {
+        "role": "assistant",
+        "content": "a7"
+       },
+       {
+        "role": "user",
+        "content": "q8"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "a2"
+       },
+       {
+        "role": "user",
+        "content": "q3"
+       },
+       {
+        "role": "assistant",
+        "content": "a3"
+       },
+       {
+        "role": "user",
+        "content": "q4"
+       },
+       {
+        "role": "assistant",
+        "content": "a4"
+       },
+       {
+        "role": "user",
+        "content": "q5"
+       },
+       {
+        "role": "assistant",
+        "content": "a5"
+       },
+       {
+        "role": "user",
+        "content": "q6"
+       },
+       {
+        "role": "assistant",
+        "content": "a6"
+       },
+       {
+        "role": "user",
+        "content": "q7"
+       },
+       {
+        "role": "assistant",
+        "content": "a7"
+       },
+       {
+        "role": "user",
+        "content": "q8"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"assistant\", \"content\": \"a2\"}, {\"role\": \"user\", \"content\": \"q3\"}, {\"role\": \"assistant\", \"content\": \"a3\"}, {\"role\": \"user\", \"content\": \"q4\"}, {\"role\": \"assistant\", \"content\": \"a4\"}, {\"role\": \"user\", \"content\": \"q5\"}, {\"role\": \"assistant\", \"content\": \"a5\"}, {\"role\": \"user\", \"content\": \"q6\"}, {\"role\": \"assistant\", \"content\": \"a6\"}, {\"role\": \"user\", \"content\": \"q7\"}, {\"role\": \"assistant\", \"content\": \"a7\"}, {\"role\": \"user\", \"content\": \"q8\"}]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/thirteen_in_memory",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "[{\"role\": \"user\", \"content\": \"turn 00\"}, {\"role\": \"assistant\", \"content\": \"turn 01\"}, {\"role\": \"user\", \"content\": \"turn 02\"}, {\"role\": \"assistant\", \"content\": \"turn 03\"}, {\"role\": \"user\", \"content\": \"turn 04\"}, {\"role\": \"assistant\", \"content\": \"turn 05\"}, {\"role\": \"user\", \"content\": \"turn 06\"}, {\"role\": \"assistant\", \"content\": \"turn 07\"}, {\"role\": \"user\", \"content\": \"turn 08\"}, {\"role\": \"assistant\", \"content\": \"turn 09\"}, {\"role\": \"user\", \"content\": \"turn 10\"}, {\"role\": \"assistant\", \"content\": \"turn 11\"}]"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "assistant",
+      "extra assistant"
+     ],
+     [
+      "save",
+      null
+     ],
+     [
+      "user",
+      "then user"
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 00"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 01"
+       },
+       {
+        "role": "user",
+        "content": "turn 02"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 03"
+       },
+       {
+        "role": "user",
+        "content": "turn 04"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 05"
+       },
+       {
+        "role": "user",
+        "content": "turn 06"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 07"
+       },
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 00"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 01"
+       },
+       {
+        "role": "user",
+        "content": "turn 02"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 03"
+       },
+       {
+        "role": "user",
+        "content": "turn 04"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 05"
+       },
+       {
+        "role": "user",
+        "content": "turn 06"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 07"
+       },
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       },
+       {
+        "role": "assistant",
+        "content": "extra assistant"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 00"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 01"
+       },
+       {
+        "role": "user",
+        "content": "turn 02"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 03"
+       },
+       {
+        "role": "user",
+        "content": "turn 04"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 05"
+       },
+       {
+        "role": "user",
+        "content": "turn 06"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 07"
+       },
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       },
+       {
+        "role": "assistant",
+        "content": "extra assistant"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"assistant\", \"content\": \"turn 01\"}, {\"role\": \"user\", \"content\": \"turn 02\"}, {\"role\": \"assistant\", \"content\": \"turn 03\"}, {\"role\": \"user\", \"content\": \"turn 04\"}, {\"role\": \"assistant\", \"content\": \"turn 05\"}, {\"role\": \"user\", \"content\": \"turn 06\"}, {\"role\": \"assistant\", \"content\": \"turn 07\"}, {\"role\": \"user\", \"content\": \"turn 08\"}, {\"role\": \"assistant\", \"content\": \"turn 09\"}, {\"role\": \"user\", \"content\": \"turn 10\"}, {\"role\": \"assistant\", \"content\": \"turn 11\"}, {\"role\": \"assistant\", \"content\": \"extra assistant\"}]"
+      }
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 02"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 03"
+       },
+       {
+        "role": "user",
+        "content": "turn 04"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 05"
+       },
+       {
+        "role": "user",
+        "content": "turn 06"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 07"
+       },
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       },
+       {
+        "role": "assistant",
+        "content": "extra assistant"
+       },
+       {
+        "role": "user",
+        "content": "then user"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 02"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 03"
+       },
+       {
+        "role": "user",
+        "content": "turn 04"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 05"
+       },
+       {
+        "role": "user",
+        "content": "turn 06"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 07"
+       },
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       },
+       {
+        "role": "assistant",
+        "content": "extra assistant"
+       },
+       {
+        "role": "user",
+        "content": "then user"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": \"turn 02\"}, {\"role\": \"assistant\", \"content\": \"turn 03\"}, {\"role\": \"user\", \"content\": \"turn 04\"}, {\"role\": \"assistant\", \"content\": \"turn 05\"}, {\"role\": \"user\", \"content\": \"turn 06\"}, {\"role\": \"assistant\", \"content\": \"turn 07\"}, {\"role\": \"user\", \"content\": \"turn 08\"}, {\"role\": \"assistant\", \"content\": \"turn 09\"}, {\"role\": \"user\", \"content\": \"turn 10\"}, {\"role\": \"assistant\", \"content\": \"turn 11\"}, {\"role\": \"assistant\", \"content\": \"extra assistant\"}, {\"role\": \"user\", \"content\": \"then user\"}]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/pop_trailing_user",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "[{\"role\": \"user\", \"content\": \"turn 00\"}, {\"role\": \"assistant\", \"content\": \"turn 01\"}, {\"role\": \"user\", \"content\": \"turn 02\"}]"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "user",
+      "failed turn"
+     ],
+     [
+      "pop",
+      null
+     ],
+     [
+      "save",
+      null
+     ],
+     [
+      "pop",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 00"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 01"
+       },
+       {
+        "role": "user",
+        "content": "turn 02"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 00"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 01"
+       },
+       {
+        "role": "user",
+        "content": "turn 02"
+       },
+       {
+        "role": "user",
+        "content": "failed turn"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 00"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 01"
+       },
+       {
+        "role": "user",
+        "content": "turn 02"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 00"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 01"
+       },
+       {
+        "role": "user",
+        "content": "turn 02"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": \"turn 00\"}, {\"role\": \"assistant\", \"content\": \"turn 01\"}, {\"role\": \"user\", \"content\": \"turn 02\"}]"
+      }
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 00"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 01"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 00"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 01"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": \"turn 00\"}, {\"role\": \"assistant\", \"content\": \"turn 01\"}]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/pop_empty",
+   "input": {
+    "kind": "history",
+    "initial": null,
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "pop",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": []
+     },
+     {
+      "turns": [],
+      "file": {
+       "text": "[]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/preamble_window",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "[{\"role\": \"user\", \"content\": \"turn 00\"}, {\"role\": \"assistant\", \"content\": \"turn 01\"}, {\"role\": \"user\", \"content\": \"turn 02\"}, {\"role\": \"assistant\", \"content\": \"turn 03\"}, {\"role\": \"user\", \"content\": \"turn 04\"}, {\"role\": \"assistant\", \"content\": \"turn 05\"}, {\"role\": \"user\", \"content\": \"turn 06\"}, {\"role\": \"assistant\", \"content\": \"turn 07\"}, {\"role\": \"user\", \"content\": \"turn 08\"}, {\"role\": \"assistant\", \"content\": \"turn 09\"}, {\"role\": \"user\", \"content\": \"turn 10\"}, {\"role\": \"assistant\", \"content\": \"turn 11\"}]"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "preamble",
+      null
+     ],
+     [
+      "user",
+      "current"
+     ],
+     [
+      "preamble",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 00"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 01"
+       },
+       {
+        "role": "user",
+        "content": "turn 02"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 03"
+       },
+       {
+        "role": "user",
+        "content": "turn 04"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 05"
+       },
+       {
+        "role": "user",
+        "content": "turn 06"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 07"
+       },
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       }
+      ]
+     },
+     {
+      "result": "\n\nRecent conversation:\nYou: turn 05\nUser: turn 06\nYou: turn 07\nUser: turn 08\nYou: turn 09\nUser: turn 10",
+      "turns": [
+       {
+        "role": "user",
+        "content": "turn 00"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 01"
+       },
+       {
+        "role": "user",
+        "content": "turn 02"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 03"
+       },
+       {
+        "role": "user",
+        "content": "turn 04"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 05"
+       },
+       {
+        "role": "user",
+        "content": "turn 06"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 07"
+       },
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "turn 01"
+       },
+       {
+        "role": "user",
+        "content": "turn 02"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 03"
+       },
+       {
+        "role": "user",
+        "content": "turn 04"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 05"
+       },
+       {
+        "role": "user",
+        "content": "turn 06"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 07"
+       },
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       },
+       {
+        "role": "user",
+        "content": "current"
+       }
+      ]
+     },
+     {
+      "result": "\n\nRecent conversation:\nUser: turn 06\nYou: turn 07\nUser: turn 08\nYou: turn 09\nUser: turn 10\nYou: turn 11",
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "turn 01"
+       },
+       {
+        "role": "user",
+        "content": "turn 02"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 03"
+       },
+       {
+        "role": "user",
+        "content": "turn 04"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 05"
+       },
+       {
+        "role": "user",
+        "content": "turn 06"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 07"
+       },
+       {
+        "role": "user",
+        "content": "turn 08"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 09"
+       },
+       {
+        "role": "user",
+        "content": "turn 10"
+       },
+       {
+        "role": "assistant",
+        "content": "turn 11"
+       },
+       {
+        "role": "user",
+        "content": "current"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/preamble_skips_blank",
+   "input": {
+    "kind": "history",
+    "initial": null,
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "user",
+      "first"
+     ],
+     [
+      "assistant",
+      "   "
+     ],
+     [
+      "user",
+      "second"
+     ],
+     [
+      "assistant",
+      ""
+     ],
+     [
+      "user",
+      "  third  "
+     ],
+     [
+      "assistant",
+      "reply\nwith newline"
+     ],
+     [
+      "user",
+      "now"
+     ],
+     [
+      "preamble",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "first"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "first"
+       },
+       {
+        "role": "assistant",
+        "content": "   "
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "first"
+       },
+       {
+        "role": "assistant",
+        "content": "   "
+       },
+       {
+        "role": "user",
+        "content": "second"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "first"
+       },
+       {
+        "role": "assistant",
+        "content": "   "
+       },
+       {
+        "role": "user",
+        "content": "second"
+       },
+       {
+        "role": "assistant",
+        "content": ""
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "first"
+       },
+       {
+        "role": "assistant",
+        "content": "   "
+       },
+       {
+        "role": "user",
+        "content": "second"
+       },
+       {
+        "role": "assistant",
+        "content": ""
+       },
+       {
+        "role": "user",
+        "content": "  third  "
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "first"
+       },
+       {
+        "role": "assistant",
+        "content": "   "
+       },
+       {
+        "role": "user",
+        "content": "second"
+       },
+       {
+        "role": "assistant",
+        "content": ""
+       },
+       {
+        "role": "user",
+        "content": "  third  "
+       },
+       {
+        "role": "assistant",
+        "content": "reply\nwith newline"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "first"
+       },
+       {
+        "role": "assistant",
+        "content": "   "
+       },
+       {
+        "role": "user",
+        "content": "second"
+       },
+       {
+        "role": "assistant",
+        "content": ""
+       },
+       {
+        "role": "user",
+        "content": "  third  "
+       },
+       {
+        "role": "assistant",
+        "content": "reply\nwith newline"
+       },
+       {
+        "role": "user",
+        "content": "now"
+       }
+      ]
+     },
+     {
+      "result": "\n\nRecent conversation:\nUser: first\nUser: second\nUser: third\nYou: reply\nwith newline",
+      "turns": [
+       {
+        "role": "user",
+        "content": "first"
+       },
+       {
+        "role": "assistant",
+        "content": "   "
+       },
+       {
+        "role": "user",
+        "content": "second"
+       },
+       {
+        "role": "assistant",
+        "content": ""
+       },
+       {
+        "role": "user",
+        "content": "  third  "
+       },
+       {
+        "role": "assistant",
+        "content": "reply\nwith newline"
+       },
+       {
+        "role": "user",
+        "content": "now"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/preamble_single_turn",
+   "input": {
+    "kind": "history",
+    "initial": null,
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "user",
+      "only"
+     ],
+     [
+      "preamble",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "only"
+       }
+      ]
+     },
+     {
+      "result": "",
+      "turns": [
+       {
+        "role": "user",
+        "content": "only"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/unicode_content",
+   "input": {
+    "kind": "history",
+    "initial": null,
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "user",
+      "Café — “quoted” 🎵 日本"
+     ],
+     [
+      "assistant",
+      "Sí, señor.\tTab"
+     ],
+     [
+      "save",
+      null
+     ],
+     [
+      "preamble",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "Café — “quoted” 🎵 日本"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "Café — “quoted” 🎵 日本"
+       },
+       {
+        "role": "assistant",
+        "content": "Sí, señor.\tTab"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "Café — “quoted” 🎵 日本"
+       },
+       {
+        "role": "assistant",
+        "content": "Sí, señor.\tTab"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": \"Caf\\u00e9 \\u2014 \\u201cquoted\\u201d \\ud83c\\udfb5 \\u65e5\\u672c\"}, {\"role\": \"assistant\", \"content\": \"S\\u00ed, se\\u00f1or.\\tTab\"}]"
+      }
+     },
+     {
+      "result": "\n\nRecent conversation:\nUser: Café — “quoted” 🎵 日本",
+      "turns": [
+       {
+        "role": "user",
+        "content": "Café — “quoted” 🎵 日本"
+       },
+       {
+        "role": "assistant",
+        "content": "Sí, señor.\tTab"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/nonstring_content",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "[{\"role\": \"user\", \"content\": 5}, {\"role\": \"assistant\", \"content\": \"ok\"}, {\"role\": \"user\", \"content\": \"now\"}]"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "preamble",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": 5
+       },
+       {
+        "role": "assistant",
+        "content": "ok"
+       },
+       {
+        "role": "user",
+        "content": "now"
+       }
+      ]
+     },
+     {
+      "raises": "AttributeError",
+      "native": {
+       "divergence": "history-nonstring-content",
+       "result": "\n\nRecent conversation:\nYou: ok"
+      },
+      "turns": [
+       {
+        "role": "user",
+        "content": 5
+       },
+       {
+        "role": "assistant",
+        "content": "ok"
+       },
+       {
+        "role": "user",
+        "content": "now"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": 5
+       },
+       {
+        "role": "assistant",
+        "content": "ok"
+       },
+       {
+        "role": "user",
+        "content": "now"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"user\", \"content\": 5}, {\"role\": \"assistant\", \"content\": \"ok\"}, {\"role\": \"user\", \"content\": \"now\"}]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/save_empty_after_pop",
+   "input": {
+    "kind": "history",
+    "initial": null,
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "user",
+      "x"
+     ],
+     [
+      "pop",
+      null
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": []
+     },
+     {
+      "turns": [
+       {
+        "role": "user",
+        "content": "x"
+       }
+      ]
+     },
+     {
+      "turns": []
+     },
+     {
+      "turns": [],
+      "file": {
+       "text": "[]"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "history/extra_keys_round_trip",
+   "input": {
+    "kind": "history",
+    "initial": {
+     "text": "[{\"role\": \"assistant\", \"content\": \"c\", \"images\": [], \"tool_calls\": null, \"z\": {\"a\": 1e-07}}]"
+    },
+    "ops": [
+     [
+      "load",
+      null
+     ],
+     [
+      "save",
+      null
+     ],
+     [
+      "user",
+      "q"
+     ],
+     [
+      "save",
+      null
+     ]
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "c",
+        "images": [],
+        "tool_calls": null,
+        "z": {
+         "a": 1e-07
+        }
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "c",
+        "images": [],
+        "tool_calls": null,
+        "z": {
+         "a": 1e-07
+        }
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"assistant\", \"content\": \"c\", \"images\": [], \"tool_calls\": null, \"z\": {\"a\": 1e-07}}]"
+      }
+     },
+     {
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "c",
+        "images": [],
+        "tool_calls": null,
+        "z": {
+         "a": 1e-07
+        }
+       },
+       {
+        "role": "user",
+        "content": "q"
+       }
+      ]
+     },
+     {
+      "turns": [
+       {
+        "role": "assistant",
+        "content": "c",
+        "images": [],
+        "tool_calls": null,
+        "z": {
+         "a": 1e-07
+        }
+       },
+       {
+        "role": "user",
+        "content": "q"
+       }
+      ],
+      "file": {
+       "text": "[{\"role\": \"assistant\", \"content\": \"c\", \"images\": [], \"tool_calls\": null, \"z\": {\"a\": 1e-07}}, {\"role\": \"user\", \"content\": \"q\"}]"
+      }
+     }
+    ]
+   }
+  }
+ ]
+}
