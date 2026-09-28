@@ -1,0 +1,4736 @@
+{
+ "schema": 1,
+ "suite": "pytime",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "c091821a0c11eedb20d095bca9afc20abc54e646e40751fcb02ba54ff718bfe5",
+  "git_head": "fef66c1",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "strftime_default_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790582400.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-09-28"
+   }
+  },
+  {
+   "name": "strftime_default_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790582400.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "09"
+   }
+  },
+  {
+   "name": "strftime_default_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790582400.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 09:00 AM on Monday, September 28."
+   }
+  },
+  {
+   "name": "strftime_default_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790582400.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "09:00 AM"
+   }
+  },
+  {
+   "name": "strftime_default_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790582400.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Monday at 09:00 AM"
+   }
+  },
+  {
+   "name": "strftime_default_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790582400.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-09-28 at 09.00.00"
+   }
+  },
+  {
+   "name": "strftime_default_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790582400.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-09-28 09:00"
+   }
+  },
+  {
+   "name": "strftime_default_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790582400.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|09|28|September|Monday|AM|09|00|2026|09"
+   }
+  },
+  {
+   "name": "strftime_default_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790582400.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "9:00 AM"
+   }
+  },
+  {
+   "name": "strftime_default_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790582400.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Monday at 9:00 AM"
+   }
+  },
+  {
+   "name": "strftime_midnight_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790550000.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-09-28"
+   }
+  },
+  {
+   "name": "strftime_midnight_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790550000.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "00"
+   }
+  },
+  {
+   "name": "strftime_midnight_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790550000.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 12:00 AM on Monday, September 28."
+   }
+  },
+  {
+   "name": "strftime_midnight_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790550000.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "12:00 AM"
+   }
+  },
+  {
+   "name": "strftime_midnight_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790550000.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Monday at 12:00 AM"
+   }
+  },
+  {
+   "name": "strftime_midnight_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790550000.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-09-28 at 00.00.00"
+   }
+  },
+  {
+   "name": "strftime_midnight_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790550000.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-09-28 00:00"
+   }
+  },
+  {
+   "name": "strftime_midnight_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790550000.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|09|28|September|Monday|AM|12|00|2026|00"
+   }
+  },
+  {
+   "name": "strftime_midnight_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790550000.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "12:00 AM"
+   }
+  },
+  {
+   "name": "strftime_midnight_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790550000.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Monday at 12:00 AM"
+   }
+  },
+  {
+   "name": "strftime_last_second_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790636399.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-09-28"
+   }
+  },
+  {
+   "name": "strftime_last_second_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790636399.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "23"
+   }
+  },
+  {
+   "name": "strftime_last_second_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790636399.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 11:59 PM on Monday, September 28."
+   }
+  },
+  {
+   "name": "strftime_last_second_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790636399.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "11:59 PM"
+   }
+  },
+  {
+   "name": "strftime_last_second_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790636399.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Monday at 11:59 PM"
+   }
+  },
+  {
+   "name": "strftime_last_second_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790636399.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-09-28 at 23.59.59"
+   }
+  },
+  {
+   "name": "strftime_last_second_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790636399.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-09-28 23:59"
+   }
+  },
+  {
+   "name": "strftime_last_second_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790636399.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|59|09|28|September|Monday|PM|11|59|2026|23"
+   }
+  },
+  {
+   "name": "strftime_last_second_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790636399.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "11:59 PM"
+   }
+  },
+  {
+   "name": "strftime_last_second_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790636399.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Monday at 11:59 PM"
+   }
+  },
+  {
+   "name": "strftime_noon_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790593200.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-09-28"
+   }
+  },
+  {
+   "name": "strftime_noon_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790593200.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "12"
+   }
+  },
+  {
+   "name": "strftime_noon_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790593200.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 12:00 PM on Monday, September 28."
+   }
+  },
+  {
+   "name": "strftime_noon_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790593200.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "12:00 PM"
+   }
+  },
+  {
+   "name": "strftime_noon_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790593200.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Monday at 12:00 PM"
+   }
+  },
+  {
+   "name": "strftime_noon_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790593200.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-09-28 at 12.00.00"
+   }
+  },
+  {
+   "name": "strftime_noon_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790593200.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-09-28 12:00"
+   }
+  },
+  {
+   "name": "strftime_noon_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790593200.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|09|28|September|Monday|PM|12|00|2026|12"
+   }
+  },
+  {
+   "name": "strftime_noon_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790593200.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "12:00 PM"
+   }
+  },
+  {
+   "name": "strftime_noon_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790593200.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Monday at 12:00 PM"
+   }
+  },
+  {
+   "name": "strftime_half_past_midnight_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790551800.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-09-28"
+   }
+  },
+  {
+   "name": "strftime_half_past_midnight_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790551800.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "00"
+   }
+  },
+  {
+   "name": "strftime_half_past_midnight_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790551800.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 12:30 AM on Monday, September 28."
+   }
+  },
+  {
+   "name": "strftime_half_past_midnight_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790551800.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "12:30 AM"
+   }
+  },
+  {
+   "name": "strftime_half_past_midnight_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790551800.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Monday at 12:30 AM"
+   }
+  },
+  {
+   "name": "strftime_half_past_midnight_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790551800.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-09-28 at 00.30.00"
+   }
+  },
+  {
+   "name": "strftime_half_past_midnight_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790551800.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-09-28 00:30"
+   }
+  },
+  {
+   "name": "strftime_half_past_midnight_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790551800.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|09|28|September|Monday|AM|12|30|2026|00"
+   }
+  },
+  {
+   "name": "strftime_half_past_midnight_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790551800.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "12:30 AM"
+   }
+  },
+  {
+   "name": "strftime_half_past_midnight_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790551800.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Monday at 12:30 AM"
+   }
+  },
+  {
+   "name": "strftime_half_past_noon_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790595000.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-09-28"
+   }
+  },
+  {
+   "name": "strftime_half_past_noon_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790595000.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "12"
+   }
+  },
+  {
+   "name": "strftime_half_past_noon_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790595000.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 12:30 PM on Monday, September 28."
+   }
+  },
+  {
+   "name": "strftime_half_past_noon_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790595000.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "12:30 PM"
+   }
+  },
+  {
+   "name": "strftime_half_past_noon_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790595000.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Monday at 12:30 PM"
+   }
+  },
+  {
+   "name": "strftime_half_past_noon_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790595000.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-09-28 at 12.30.00"
+   }
+  },
+  {
+   "name": "strftime_half_past_noon_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790595000.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-09-28 12:30"
+   }
+  },
+  {
+   "name": "strftime_half_past_noon_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790595000.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|09|28|September|Monday|PM|12|30|2026|12"
+   }
+  },
+  {
+   "name": "strftime_half_past_noon_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790595000.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "12:30 PM"
+   }
+  },
+  {
+   "name": "strftime_half_past_noon_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790595000.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Monday at 12:30 PM"
+   }
+  },
+  {
+   "name": "strftime_one_pm_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790597100.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-09-28"
+   }
+  },
+  {
+   "name": "strftime_one_pm_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790597100.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "13"
+   }
+  },
+  {
+   "name": "strftime_one_pm_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790597100.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 01:05 PM on Monday, September 28."
+   }
+  },
+  {
+   "name": "strftime_one_pm_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790597100.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "01:05 PM"
+   }
+  },
+  {
+   "name": "strftime_one_pm_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790597100.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Monday at 01:05 PM"
+   }
+  },
+  {
+   "name": "strftime_one_pm_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790597100.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-09-28 at 13.05.00"
+   }
+  },
+  {
+   "name": "strftime_one_pm_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790597100.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-09-28 13:05"
+   }
+  },
+  {
+   "name": "strftime_one_pm_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790597100.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|09|28|September|Monday|PM|01|05|2026|13"
+   }
+  },
+  {
+   "name": "strftime_one_pm_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790597100.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "1:05 PM"
+   }
+  },
+  {
+   "name": "strftime_one_pm_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790597100.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Monday at 1:05 PM"
+   }
+  },
+  {
+   "name": "strftime_eleven_pm_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790632867.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-09-28"
+   }
+  },
+  {
+   "name": "strftime_eleven_pm_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790632867.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "23"
+   }
+  },
+  {
+   "name": "strftime_eleven_pm_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790632867.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 11:01 PM on Monday, September 28."
+   }
+  },
+  {
+   "name": "strftime_eleven_pm_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790632867.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "11:01 PM"
+   }
+  },
+  {
+   "name": "strftime_eleven_pm_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790632867.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Monday at 11:01 PM"
+   }
+  },
+  {
+   "name": "strftime_eleven_pm_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790632867.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-09-28 at 23.01.07"
+   }
+  },
+  {
+   "name": "strftime_eleven_pm_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790632867.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-09-28 23:01"
+   }
+  },
+  {
+   "name": "strftime_eleven_pm_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790632867.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|07|09|28|September|Monday|PM|11|01|2026|23"
+   }
+  },
+  {
+   "name": "strftime_eleven_pm_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790632867.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "11:01 PM"
+   }
+  },
+  {
+   "name": "strftime_eleven_pm_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790632867.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Monday at 11:01 PM"
+   }
+  },
+  {
+   "name": "strftime_bst_start_before_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774745999.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-03-29"
+   }
+  },
+  {
+   "name": "strftime_bst_start_before_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774745999.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "00"
+   }
+  },
+  {
+   "name": "strftime_bst_start_before_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774745999.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 12:59 AM on Sunday, March 29."
+   }
+  },
+  {
+   "name": "strftime_bst_start_before_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774745999.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "12:59 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_start_before_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774745999.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Sunday at 12:59 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_start_before_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774745999.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-03-29 at 00.59.59"
+   }
+  },
+  {
+   "name": "strftime_bst_start_before_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774745999.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-03-29 00:59"
+   }
+  },
+  {
+   "name": "strftime_bst_start_before_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774745999.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|59|03|29|March|Sunday|AM|12|59|2026|00"
+   }
+  },
+  {
+   "name": "strftime_bst_start_before_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774745999.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "12:59 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_start_before_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774745999.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Sunday at 12:59 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_start_after_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774746000.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-03-29"
+   }
+  },
+  {
+   "name": "strftime_bst_start_after_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774746000.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "02"
+   }
+  },
+  {
+   "name": "strftime_bst_start_after_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774746000.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 02:00 AM on Sunday, March 29."
+   }
+  },
+  {
+   "name": "strftime_bst_start_after_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774746000.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "02:00 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_start_after_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774746000.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Sunday at 02:00 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_start_after_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774746000.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-03-29 at 02.00.00"
+   }
+  },
+  {
+   "name": "strftime_bst_start_after_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774746000.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-03-29 02:00"
+   }
+  },
+  {
+   "name": "strftime_bst_start_after_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774746000.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|03|29|March|Sunday|AM|02|00|2026|02"
+   }
+  },
+  {
+   "name": "strftime_bst_start_after_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774746000.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "2:00 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_start_after_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1774746000.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Sunday at 2:00 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_end_before_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792889999.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-10-25"
+   }
+  },
+  {
+   "name": "strftime_bst_end_before_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792889999.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "01"
+   }
+  },
+  {
+   "name": "strftime_bst_end_before_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792889999.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 01:59 AM on Sunday, October 25."
+   }
+  },
+  {
+   "name": "strftime_bst_end_before_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792889999.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "01:59 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_end_before_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792889999.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Sunday at 01:59 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_end_before_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792889999.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-10-25 at 01.59.59"
+   }
+  },
+  {
+   "name": "strftime_bst_end_before_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792889999.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-10-25 01:59"
+   }
+  },
+  {
+   "name": "strftime_bst_end_before_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792889999.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|59|10|25|October|Sunday|AM|01|59|2026|01"
+   }
+  },
+  {
+   "name": "strftime_bst_end_before_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792889999.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "1:59 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_end_before_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792889999.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Sunday at 1:59 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_end_after_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792890000.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-10-25"
+   }
+  },
+  {
+   "name": "strftime_bst_end_after_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792890000.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "01"
+   }
+  },
+  {
+   "name": "strftime_bst_end_after_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792890000.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 01:00 AM on Sunday, October 25."
+   }
+  },
+  {
+   "name": "strftime_bst_end_after_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792890000.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "01:00 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_end_after_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792890000.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Sunday at 01:00 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_end_after_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792890000.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-10-25 at 01.00.00"
+   }
+  },
+  {
+   "name": "strftime_bst_end_after_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792890000.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-10-25 01:00"
+   }
+  },
+  {
+   "name": "strftime_bst_end_after_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792890000.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|10|25|October|Sunday|AM|01|00|2026|01"
+   }
+  },
+  {
+   "name": "strftime_bst_end_after_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792890000.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "1:00 AM"
+   }
+  },
+  {
+   "name": "strftime_bst_end_after_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792890000.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Sunday at 1:00 AM"
+   }
+  },
+  {
+   "name": "strftime_leap_day_2028_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1835428087.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2028-02-29"
+   }
+  },
+  {
+   "name": "strftime_leap_day_2028_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1835428087.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "09"
+   }
+  },
+  {
+   "name": "strftime_leap_day_2028_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1835428087.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 09:08 AM on Tuesday, February 29."
+   }
+  },
+  {
+   "name": "strftime_leap_day_2028_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1835428087.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "09:08 AM"
+   }
+  },
+  {
+   "name": "strftime_leap_day_2028_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1835428087.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Tuesday at 09:08 AM"
+   }
+  },
+  {
+   "name": "strftime_leap_day_2028_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1835428087.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2028-02-29 at 09.08.07"
+   }
+  },
+  {
+   "name": "strftime_leap_day_2028_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1835428087.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2028-02-29 09:08"
+   }
+  },
+  {
+   "name": "strftime_leap_day_2028_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1835428087.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|07|02|29|February|Tuesday|AM|09|08|2028|09"
+   }
+  },
+  {
+   "name": "strftime_leap_day_2028_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1835428087.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "9:08 AM"
+   }
+  },
+  {
+   "name": "strftime_leap_day_2028_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1835428087.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Tuesday at 9:08 AM"
+   }
+  },
+  {
+   "name": "strftime_new_year_2027_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1798761600.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2027-01-01"
+   }
+  },
+  {
+   "name": "strftime_new_year_2027_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1798761600.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "00"
+   }
+  },
+  {
+   "name": "strftime_new_year_2027_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1798761600.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 12:00 AM on Friday, January 01."
+   }
+  },
+  {
+   "name": "strftime_new_year_2027_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1798761600.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "12:00 AM"
+   }
+  },
+  {
+   "name": "strftime_new_year_2027_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1798761600.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Friday at 12:00 AM"
+   }
+  },
+  {
+   "name": "strftime_new_year_2027_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1798761600.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2027-01-01 at 00.00.00"
+   }
+  },
+  {
+   "name": "strftime_new_year_2027_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1798761600.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2027-01-01 00:00"
+   }
+  },
+  {
+   "name": "strftime_new_year_2027_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1798761600.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|01|01|January|Friday|AM|12|00|2027|00"
+   }
+  },
+  {
+   "name": "strftime_new_year_2027_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1798761600.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "12:00 AM"
+   }
+  },
+  {
+   "name": "strftime_new_year_2027_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1798761600.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Friday at 12:00 AM"
+   }
+  },
+  {
+   "name": "strftime_fractional_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.524249,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-07-23"
+   }
+  },
+  {
+   "name": "strftime_fractional_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.524249,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "03"
+   }
+  },
+  {
+   "name": "strftime_fractional_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.524249,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 03:10 AM on Thursday, July 23."
+   }
+  },
+  {
+   "name": "strftime_fractional_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.524249,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "03:10 AM"
+   }
+  },
+  {
+   "name": "strftime_fractional_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.524249,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Thursday at 03:10 AM"
+   }
+  },
+  {
+   "name": "strftime_fractional_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.524249,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-07-23 at 03.10.04"
+   }
+  },
+  {
+   "name": "strftime_fractional_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.524249,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-07-23 03:10"
+   }
+  },
+  {
+   "name": "strftime_fractional_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.524249,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|04|07|23|July|Thursday|AM|03|10|2026|03"
+   }
+  },
+  {
+   "name": "strftime_fractional_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.524249,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "3:10 AM"
+   }
+  },
+  {
+   "name": "strftime_fractional_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.524249,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Thursday at 3:10 AM"
+   }
+  },
+  {
+   "name": "strftime_fractional_half_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.5,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-07-23"
+   }
+  },
+  {
+   "name": "strftime_fractional_half_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.5,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "03"
+   }
+  },
+  {
+   "name": "strftime_fractional_half_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.5,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 03:10 AM on Thursday, July 23."
+   }
+  },
+  {
+   "name": "strftime_fractional_half_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.5,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "03:10 AM"
+   }
+  },
+  {
+   "name": "strftime_fractional_half_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.5,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Thursday at 03:10 AM"
+   }
+  },
+  {
+   "name": "strftime_fractional_half_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.5,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-07-23 at 03.10.04"
+   }
+  },
+  {
+   "name": "strftime_fractional_half_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.5,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-07-23 03:10"
+   }
+  },
+  {
+   "name": "strftime_fractional_half_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.5,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|04|07|23|July|Thursday|AM|03|10|2026|03"
+   }
+  },
+  {
+   "name": "strftime_fractional_half_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.5,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "3:10 AM"
+   }
+  },
+  {
+   "name": "strftime_fractional_half_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784772604.5,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Thursday at 3:10 AM"
+   }
+  },
+  {
+   "name": "strftime_y2001_start_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 978307200.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2001-01-01"
+   }
+  },
+  {
+   "name": "strftime_y2001_start_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 978307200.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "00"
+   }
+  },
+  {
+   "name": "strftime_y2001_start_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 978307200.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 12:00 AM on Monday, January 01."
+   }
+  },
+  {
+   "name": "strftime_y2001_start_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 978307200.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "12:00 AM"
+   }
+  },
+  {
+   "name": "strftime_y2001_start_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 978307200.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Monday at 12:00 AM"
+   }
+  },
+  {
+   "name": "strftime_y2001_start_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 978307200.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2001-01-01 at 00.00.00"
+   }
+  },
+  {
+   "name": "strftime_y2001_start_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 978307200.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2001-01-01 00:00"
+   }
+  },
+  {
+   "name": "strftime_y2001_start_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 978307200.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|01|01|January|Monday|AM|12|00|2001|00"
+   }
+  },
+  {
+   "name": "strftime_y2001_start_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 978307200.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "12:00 AM"
+   }
+  },
+  {
+   "name": "strftime_y2001_start_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 978307200.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Monday at 12:00 AM"
+   }
+  },
+  {
+   "name": "strftime_month_01_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1768471509.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-01-15"
+   }
+  },
+  {
+   "name": "strftime_month_01_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1768471509.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "10"
+   }
+  },
+  {
+   "name": "strftime_month_01_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1768471509.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 10:05 AM on Thursday, January 15."
+   }
+  },
+  {
+   "name": "strftime_month_01_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1768471509.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_01_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1768471509.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Thursday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_01_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1768471509.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-01-15 at 10.05.09"
+   }
+  },
+  {
+   "name": "strftime_month_01_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1768471509.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-01-15 10:05"
+   }
+  },
+  {
+   "name": "strftime_month_01_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1768471509.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|09|01|15|January|Thursday|AM|10|05|2026|10"
+   }
+  },
+  {
+   "name": "strftime_month_01_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1768471509.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_01_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1768471509.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Thursday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_02_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1771149909.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-02-15"
+   }
+  },
+  {
+   "name": "strftime_month_02_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1771149909.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "10"
+   }
+  },
+  {
+   "name": "strftime_month_02_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1771149909.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 10:05 AM on Sunday, February 15."
+   }
+  },
+  {
+   "name": "strftime_month_02_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1771149909.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_02_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1771149909.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Sunday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_02_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1771149909.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-02-15 at 10.05.09"
+   }
+  },
+  {
+   "name": "strftime_month_02_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1771149909.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-02-15 10:05"
+   }
+  },
+  {
+   "name": "strftime_month_02_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1771149909.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|09|02|15|February|Sunday|AM|10|05|2026|10"
+   }
+  },
+  {
+   "name": "strftime_month_02_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1771149909.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_02_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1771149909.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Sunday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_03_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1773569109.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-03-15"
+   }
+  },
+  {
+   "name": "strftime_month_03_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1773569109.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "10"
+   }
+  },
+  {
+   "name": "strftime_month_03_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1773569109.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 10:05 AM on Sunday, March 15."
+   }
+  },
+  {
+   "name": "strftime_month_03_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1773569109.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_03_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1773569109.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Sunday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_03_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1773569109.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-03-15 at 10.05.09"
+   }
+  },
+  {
+   "name": "strftime_month_03_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1773569109.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-03-15 10:05"
+   }
+  },
+  {
+   "name": "strftime_month_03_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1773569109.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|09|03|15|March|Sunday|AM|10|05|2026|10"
+   }
+  },
+  {
+   "name": "strftime_month_03_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1773569109.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_03_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1773569109.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Sunday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_04_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1776243909.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-04-15"
+   }
+  },
+  {
+   "name": "strftime_month_04_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1776243909.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "10"
+   }
+  },
+  {
+   "name": "strftime_month_04_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1776243909.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 10:05 AM on Wednesday, April 15."
+   }
+  },
+  {
+   "name": "strftime_month_04_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1776243909.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_04_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1776243909.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Wednesday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_04_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1776243909.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-04-15 at 10.05.09"
+   }
+  },
+  {
+   "name": "strftime_month_04_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1776243909.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-04-15 10:05"
+   }
+  },
+  {
+   "name": "strftime_month_04_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1776243909.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|09|04|15|April|Wednesday|AM|10|05|2026|10"
+   }
+  },
+  {
+   "name": "strftime_month_04_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1776243909.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_04_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1776243909.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Wednesday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_05_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1778835909.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-05-15"
+   }
+  },
+  {
+   "name": "strftime_month_05_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1778835909.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "10"
+   }
+  },
+  {
+   "name": "strftime_month_05_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1778835909.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 10:05 AM on Friday, May 15."
+   }
+  },
+  {
+   "name": "strftime_month_05_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1778835909.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_05_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1778835909.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Friday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_05_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1778835909.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-05-15 at 10.05.09"
+   }
+  },
+  {
+   "name": "strftime_month_05_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1778835909.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-05-15 10:05"
+   }
+  },
+  {
+   "name": "strftime_month_05_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1778835909.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|09|05|15|May|Friday|AM|10|05|2026|10"
+   }
+  },
+  {
+   "name": "strftime_month_05_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1778835909.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_05_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1778835909.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Friday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_06_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1781514309.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-06-15"
+   }
+  },
+  {
+   "name": "strftime_month_06_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1781514309.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "10"
+   }
+  },
+  {
+   "name": "strftime_month_06_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1781514309.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 10:05 AM on Monday, June 15."
+   }
+  },
+  {
+   "name": "strftime_month_06_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1781514309.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_06_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1781514309.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Monday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_06_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1781514309.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-06-15 at 10.05.09"
+   }
+  },
+  {
+   "name": "strftime_month_06_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1781514309.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-06-15 10:05"
+   }
+  },
+  {
+   "name": "strftime_month_06_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1781514309.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|09|06|15|June|Monday|AM|10|05|2026|10"
+   }
+  },
+  {
+   "name": "strftime_month_06_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1781514309.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_06_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1781514309.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Monday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_07_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784106309.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-07-15"
+   }
+  },
+  {
+   "name": "strftime_month_07_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784106309.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "10"
+   }
+  },
+  {
+   "name": "strftime_month_07_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784106309.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 10:05 AM on Wednesday, July 15."
+   }
+  },
+  {
+   "name": "strftime_month_07_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784106309.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_07_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784106309.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Wednesday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_07_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784106309.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-07-15 at 10.05.09"
+   }
+  },
+  {
+   "name": "strftime_month_07_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784106309.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-07-15 10:05"
+   }
+  },
+  {
+   "name": "strftime_month_07_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784106309.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|09|07|15|July|Wednesday|AM|10|05|2026|10"
+   }
+  },
+  {
+   "name": "strftime_month_07_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784106309.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_07_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1784106309.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Wednesday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_08_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1786784709.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-08-15"
+   }
+  },
+  {
+   "name": "strftime_month_08_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1786784709.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "10"
+   }
+  },
+  {
+   "name": "strftime_month_08_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1786784709.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 10:05 AM on Saturday, August 15."
+   }
+  },
+  {
+   "name": "strftime_month_08_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1786784709.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_08_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1786784709.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Saturday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_08_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1786784709.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-08-15 at 10.05.09"
+   }
+  },
+  {
+   "name": "strftime_month_08_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1786784709.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-08-15 10:05"
+   }
+  },
+  {
+   "name": "strftime_month_08_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1786784709.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|09|08|15|August|Saturday|AM|10|05|2026|10"
+   }
+  },
+  {
+   "name": "strftime_month_08_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1786784709.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_08_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1786784709.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Saturday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_09_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1789463109.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-09-15"
+   }
+  },
+  {
+   "name": "strftime_month_09_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1789463109.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "10"
+   }
+  },
+  {
+   "name": "strftime_month_09_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1789463109.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 10:05 AM on Tuesday, September 15."
+   }
+  },
+  {
+   "name": "strftime_month_09_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1789463109.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_09_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1789463109.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Tuesday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_09_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1789463109.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-09-15 at 10.05.09"
+   }
+  },
+  {
+   "name": "strftime_month_09_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1789463109.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-09-15 10:05"
+   }
+  },
+  {
+   "name": "strftime_month_09_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1789463109.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|09|09|15|September|Tuesday|AM|10|05|2026|10"
+   }
+  },
+  {
+   "name": "strftime_month_09_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1789463109.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_09_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1789463109.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Tuesday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_10_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792055109.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-10-15"
+   }
+  },
+  {
+   "name": "strftime_month_10_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792055109.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "10"
+   }
+  },
+  {
+   "name": "strftime_month_10_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792055109.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 10:05 AM on Thursday, October 15."
+   }
+  },
+  {
+   "name": "strftime_month_10_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792055109.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_10_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792055109.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Thursday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_10_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792055109.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-10-15 at 10.05.09"
+   }
+  },
+  {
+   "name": "strftime_month_10_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792055109.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-10-15 10:05"
+   }
+  },
+  {
+   "name": "strftime_month_10_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792055109.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|09|10|15|October|Thursday|AM|10|05|2026|10"
+   }
+  },
+  {
+   "name": "strftime_month_10_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792055109.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_10_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1792055109.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Thursday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_11_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1794737109.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-11-15"
+   }
+  },
+  {
+   "name": "strftime_month_11_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1794737109.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "10"
+   }
+  },
+  {
+   "name": "strftime_month_11_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1794737109.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 10:05 AM on Sunday, November 15."
+   }
+  },
+  {
+   "name": "strftime_month_11_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1794737109.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_11_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1794737109.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Sunday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_11_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1794737109.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-11-15 at 10.05.09"
+   }
+  },
+  {
+   "name": "strftime_month_11_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1794737109.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-11-15 10:05"
+   }
+  },
+  {
+   "name": "strftime_month_11_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1794737109.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|09|11|15|November|Sunday|AM|10|05|2026|10"
+   }
+  },
+  {
+   "name": "strftime_month_11_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1794737109.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_11_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1794737109.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Sunday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_12_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1797329109.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-12-15"
+   }
+  },
+  {
+   "name": "strftime_month_12_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1797329109.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "10"
+   }
+  },
+  {
+   "name": "strftime_month_12_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1797329109.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 10:05 AM on Tuesday, December 15."
+   }
+  },
+  {
+   "name": "strftime_month_12_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1797329109.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_12_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1797329109.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Tuesday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_12_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1797329109.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-12-15 at 10.05.09"
+   }
+  },
+  {
+   "name": "strftime_month_12_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1797329109.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-12-15 10:05"
+   }
+  },
+  {
+   "name": "strftime_month_12_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1797329109.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|09|12|15|December|Tuesday|AM|10|05|2026|10"
+   }
+  },
+  {
+   "name": "strftime_month_12_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1797329109.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_month_12_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1797329109.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Tuesday at 10:05 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_0_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790577900.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-09-28"
+   }
+  },
+  {
+   "name": "strftime_weekday_0_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790577900.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "07"
+   }
+  },
+  {
+   "name": "strftime_weekday_0_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790577900.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 07:45 AM on Monday, September 28."
+   }
+  },
+  {
+   "name": "strftime_weekday_0_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790577900.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_0_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790577900.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Monday at 07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_0_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790577900.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-09-28 at 07.45.00"
+   }
+  },
+  {
+   "name": "strftime_weekday_0_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790577900.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-09-28 07:45"
+   }
+  },
+  {
+   "name": "strftime_weekday_0_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790577900.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|09|28|September|Monday|AM|07|45|2026|07"
+   }
+  },
+  {
+   "name": "strftime_weekday_0_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790577900.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "7:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_0_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790577900.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Monday at 7:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_1_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790664300.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-09-29"
+   }
+  },
+  {
+   "name": "strftime_weekday_1_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790664300.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "07"
+   }
+  },
+  {
+   "name": "strftime_weekday_1_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790664300.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 07:45 AM on Tuesday, September 29."
+   }
+  },
+  {
+   "name": "strftime_weekday_1_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790664300.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_1_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790664300.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Tuesday at 07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_1_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790664300.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-09-29 at 07.45.00"
+   }
+  },
+  {
+   "name": "strftime_weekday_1_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790664300.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-09-29 07:45"
+   }
+  },
+  {
+   "name": "strftime_weekday_1_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790664300.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|09|29|September|Tuesday|AM|07|45|2026|07"
+   }
+  },
+  {
+   "name": "strftime_weekday_1_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790664300.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "7:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_1_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790664300.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Tuesday at 7:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_2_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790750700.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-09-30"
+   }
+  },
+  {
+   "name": "strftime_weekday_2_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790750700.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "07"
+   }
+  },
+  {
+   "name": "strftime_weekday_2_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790750700.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 07:45 AM on Wednesday, September 30."
+   }
+  },
+  {
+   "name": "strftime_weekday_2_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790750700.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_2_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790750700.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Wednesday at 07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_2_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790750700.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-09-30 at 07.45.00"
+   }
+  },
+  {
+   "name": "strftime_weekday_2_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790750700.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-09-30 07:45"
+   }
+  },
+  {
+   "name": "strftime_weekday_2_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790750700.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|09|30|September|Wednesday|AM|07|45|2026|07"
+   }
+  },
+  {
+   "name": "strftime_weekday_2_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790750700.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "7:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_2_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790750700.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Wednesday at 7:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_3_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790837100.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-10-01"
+   }
+  },
+  {
+   "name": "strftime_weekday_3_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790837100.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "07"
+   }
+  },
+  {
+   "name": "strftime_weekday_3_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790837100.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 07:45 AM on Thursday, October 01."
+   }
+  },
+  {
+   "name": "strftime_weekday_3_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790837100.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_3_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790837100.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Thursday at 07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_3_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790837100.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-10-01 at 07.45.00"
+   }
+  },
+  {
+   "name": "strftime_weekday_3_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790837100.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-10-01 07:45"
+   }
+  },
+  {
+   "name": "strftime_weekday_3_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790837100.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|10|01|October|Thursday|AM|07|45|2026|07"
+   }
+  },
+  {
+   "name": "strftime_weekday_3_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790837100.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "7:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_3_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790837100.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Thursday at 7:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_4_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790923500.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-10-02"
+   }
+  },
+  {
+   "name": "strftime_weekday_4_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790923500.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "07"
+   }
+  },
+  {
+   "name": "strftime_weekday_4_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790923500.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 07:45 AM on Friday, October 02."
+   }
+  },
+  {
+   "name": "strftime_weekday_4_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790923500.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_4_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790923500.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Friday at 07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_4_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790923500.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-10-02 at 07.45.00"
+   }
+  },
+  {
+   "name": "strftime_weekday_4_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790923500.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-10-02 07:45"
+   }
+  },
+  {
+   "name": "strftime_weekday_4_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790923500.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|10|02|October|Friday|AM|07|45|2026|07"
+   }
+  },
+  {
+   "name": "strftime_weekday_4_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790923500.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "7:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_4_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1790923500.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Friday at 7:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_5_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791009900.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-10-03"
+   }
+  },
+  {
+   "name": "strftime_weekday_5_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791009900.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "07"
+   }
+  },
+  {
+   "name": "strftime_weekday_5_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791009900.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 07:45 AM on Saturday, October 03."
+   }
+  },
+  {
+   "name": "strftime_weekday_5_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791009900.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_5_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791009900.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Saturday at 07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_5_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791009900.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-10-03 at 07.45.00"
+   }
+  },
+  {
+   "name": "strftime_weekday_5_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791009900.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-10-03 07:45"
+   }
+  },
+  {
+   "name": "strftime_weekday_5_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791009900.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|10|03|October|Saturday|AM|07|45|2026|07"
+   }
+  },
+  {
+   "name": "strftime_weekday_5_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791009900.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "7:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_5_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791009900.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Saturday at 7:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_6_f0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791096300.0,
+    "format": "%Y-%m-%d"
+   },
+   "expected": {
+    "text": "2026-10-04"
+   }
+  },
+  {
+   "name": "strftime_weekday_6_f1",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791096300.0,
+    "format": "%H"
+   },
+   "expected": {
+    "text": "07"
+   }
+  },
+  {
+   "name": "strftime_weekday_6_f2",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791096300.0,
+    "format": "It is %I:%M %p on %A, %B %d."
+   },
+   "expected": {
+    "text": "It is 07:45 AM on Sunday, October 04."
+   }
+  },
+  {
+   "name": "strftime_weekday_6_f3",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791096300.0,
+    "format": "%I:%M %p"
+   },
+   "expected": {
+    "text": "07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_6_f4",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791096300.0,
+    "format": "%A at %I:%M %p"
+   },
+   "expected": {
+    "text": "Sunday at 07:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_6_f5",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791096300.0,
+    "format": "%Y-%m-%d at %H.%M.%S"
+   },
+   "expected": {
+    "text": "2026-10-04 at 07.45.00"
+   }
+  },
+  {
+   "name": "strftime_weekday_6_f6",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791096300.0,
+    "format": "%Y-%m-%d %H:%M"
+   },
+   "expected": {
+    "text": "2026-10-04 07:45"
+   }
+  },
+  {
+   "name": "strftime_weekday_6_f7",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791096300.0,
+    "format": "%%|%S|%m|%d|%B|%A|%p|%I|%M|%Y|%H"
+   },
+   "expected": {
+    "text": "%|00|10|04|October|Sunday|AM|07|45|2026|07"
+   }
+  },
+  {
+   "name": "strftime_weekday_6_lstrip0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791096300.0,
+    "format": "%I:%M %p",
+    "post": "lstrip0"
+   },
+   "expected": {
+    "text": "7:45 AM"
+   }
+  },
+  {
+   "name": "strftime_weekday_6_replace_space0",
+   "input": {
+    "op": "strftime",
+    "epoch": 1791096300.0,
+    "format": "%A at %I:%M %p",
+    "post": "replace_space0"
+   },
+   "expected": {
+    "text": "Sunday at 7:45 AM"
+   }
+  },
+  {
+   "name": "isoformat_default",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1790582400.0
+   },
+   "expected": {
+    "iso": "2026-09-28T09:00:00",
+    "roundtrip_epoch": 1790582400.0
+   }
+  },
+  {
+   "name": "isoformat_midnight",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1790550000.0
+   },
+   "expected": {
+    "iso": "2026-09-28T00:00:00",
+    "roundtrip_epoch": 1790550000.0
+   }
+  },
+  {
+   "name": "isoformat_last_second",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1790636399.0
+   },
+   "expected": {
+    "iso": "2026-09-28T23:59:59",
+    "roundtrip_epoch": 1790636399.0
+   }
+  },
+  {
+   "name": "isoformat_noon",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1790593200.0
+   },
+   "expected": {
+    "iso": "2026-09-28T12:00:00",
+    "roundtrip_epoch": 1790593200.0
+   }
+  },
+  {
+   "name": "isoformat_half_past_midnight",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1790551800.0
+   },
+   "expected": {
+    "iso": "2026-09-28T00:30:00",
+    "roundtrip_epoch": 1790551800.0
+   }
+  },
+  {
+   "name": "isoformat_half_past_noon",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1790595000.0
+   },
+   "expected": {
+    "iso": "2026-09-28T12:30:00",
+    "roundtrip_epoch": 1790595000.0
+   }
+  },
+  {
+   "name": "isoformat_one_pm",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1790597100.0
+   },
+   "expected": {
+    "iso": "2026-09-28T13:05:00",
+    "roundtrip_epoch": 1790597100.0
+   }
+  },
+  {
+   "name": "isoformat_eleven_pm",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1790632867.0
+   },
+   "expected": {
+    "iso": "2026-09-28T23:01:07",
+    "roundtrip_epoch": 1790632867.0
+   }
+  },
+  {
+   "name": "isoformat_bst_start_before",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1774745999.0
+   },
+   "expected": {
+    "iso": "2026-03-29T00:59:59",
+    "roundtrip_epoch": 1774745999.0
+   }
+  },
+  {
+   "name": "isoformat_bst_start_after",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1774746000.0
+   },
+   "expected": {
+    "iso": "2026-03-29T02:00:00",
+    "roundtrip_epoch": 1774746000.0
+   }
+  },
+  {
+   "name": "isoformat_bst_end_before",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1792889999.0
+   },
+   "expected": {
+    "iso": "2026-10-25T01:59:59",
+    "roundtrip_epoch": 1792889999.0
+   }
+  },
+  {
+   "name": "isoformat_bst_end_after",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1792890000.0
+   },
+   "expected": {
+    "iso": "2026-10-25T01:00:00",
+    "roundtrip_epoch": 1792886400.0
+   }
+  },
+  {
+   "name": "isoformat_leap_day_2028",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1835428087.0
+   },
+   "expected": {
+    "iso": "2028-02-29T09:08:07",
+    "roundtrip_epoch": 1835428087.0
+   }
+  },
+  {
+   "name": "isoformat_new_year_2027",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1798761600.0
+   },
+   "expected": {
+    "iso": "2027-01-01T00:00:00",
+    "roundtrip_epoch": 1798761600.0
+   }
+  },
+  {
+   "name": "isoformat_fractional",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1784772604.524249
+   },
+   "expected": {
+    "iso": "2026-07-23T03:10:04.524249",
+    "roundtrip_epoch": 1784772604.524249
+   }
+  },
+  {
+   "name": "isoformat_fractional_half",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1784772604.5
+   },
+   "expected": {
+    "iso": "2026-07-23T03:10:04.500000",
+    "roundtrip_epoch": 1784772604.5
+   }
+  },
+  {
+   "name": "isoformat_y2001_start",
+   "input": {
+    "op": "isoformat",
+    "epoch": 978307200.0
+   },
+   "expected": {
+    "iso": "2001-01-01T00:00:00",
+    "roundtrip_epoch": 978307200.0
+   }
+  },
+  {
+   "name": "isoformat_us_one",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1784772604.000001
+   },
+   "expected": {
+    "iso": "2026-07-23T03:10:04.000001",
+    "roundtrip_epoch": 1784772604.000001
+   }
+  },
+  {
+   "name": "isoformat_us_half_down",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1784772604.0000005
+   },
+   "expected": {
+    "iso": "2026-07-23T03:10:04",
+    "roundtrip_epoch": 1784772604.0
+   }
+  },
+  {
+   "name": "isoformat_us_carry",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1784772604.9999995
+   },
+   "expected": {
+    "iso": "2026-07-23T03:10:05",
+    "roundtrip_epoch": 1784772605.0
+   }
+  },
+  {
+   "name": "isoformat_us_no_carry",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1784772604.9999993
+   },
+   "expected": {
+    "iso": "2026-07-23T03:10:04.999999",
+    "roundtrip_epoch": 1784772604.999999
+   }
+  },
+  {
+   "name": "isoformat_us_999999",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1784772604.999999
+   },
+   "expected": {
+    "iso": "2026-07-23T03:10:04.999999",
+    "roundtrip_epoch": 1784772604.999999
+   }
+  },
+  {
+   "name": "isoformat_us_round_even",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1784772604.0000024
+   },
+   "expected": {
+    "iso": "2026-07-23T03:10:04.000002",
+    "roundtrip_epoch": 1784772604.000002
+   }
+  },
+  {
+   "name": "isoformat_ms_only",
+   "input": {
+    "op": "isoformat",
+    "epoch": 1784772604.25
+   },
+   "expected": {
+    "iso": "2026-07-23T03:10:04.250000",
+    "roundtrip_epoch": 1784772604.25
+   }
+  },
+  {
+   "name": "fromisoformat_00",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09:00:00"
+   },
+   "expected": {
+    "iso": "2026-09-28T09:00:00",
+    "epoch": 1790582400.0,
+    "epoch_iso": "2026-09-28T09:00:00"
+   }
+  },
+  {
+   "name": "fromisoformat_01",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09:00:00.524249"
+   },
+   "expected": {
+    "iso": "2026-09-28T09:00:00.524249",
+    "epoch": 1790582400.524249,
+    "epoch_iso": "2026-09-28T09:00:00.524249"
+   }
+  },
+  {
+   "name": "fromisoformat_02",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09:00"
+   },
+   "expected": {
+    "iso": "2026-09-28T09:00:00",
+    "epoch": 1790582400.0,
+    "epoch_iso": "2026-09-28T09:00:00"
+   }
+  },
+  {
+   "name": "fromisoformat_03",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09"
+   },
+   "expected": {
+    "iso": "2026-09-28T09:00:00",
+    "epoch": 1790582400.0,
+    "epoch_iso": "2026-09-28T09:00:00"
+   }
+  },
+  {
+   "name": "fromisoformat_04",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28"
+   },
+   "expected": {
+    "iso": "2026-09-28T00:00:00",
+    "epoch": 1790550000.0,
+    "epoch_iso": "2026-09-28T00:00:00"
+   }
+  },
+  {
+   "name": "fromisoformat_05",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28 09:00:00"
+   },
+   "expected": {
+    "iso": "2026-09-28T09:00:00",
+    "epoch": 1790582400.0,
+    "epoch_iso": "2026-09-28T09:00:00"
+   }
+  },
+  {
+   "name": "fromisoformat_06",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28x09:00:00"
+   },
+   "expected": {
+    "iso": "2026-09-28T09:00:00",
+    "epoch": 1790582400.0,
+    "epoch_iso": "2026-09-28T09:00:00"
+   }
+  },
+  {
+   "name": "fromisoformat_07",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09:00:00.5"
+   },
+   "expected": {
+    "iso": "2026-09-28T09:00:00.500000",
+    "epoch": 1790582400.5,
+    "epoch_iso": "2026-09-28T09:00:00.500000"
+   }
+  },
+  {
+   "name": "fromisoformat_08",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09:00:00.52"
+   },
+   "expected": {
+    "iso": "2026-09-28T09:00:00.520000",
+    "epoch": 1790582400.52,
+    "epoch_iso": "2026-09-28T09:00:00.520000"
+   }
+  },
+  {
+   "name": "fromisoformat_09",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09:00:00.123"
+   },
+   "expected": {
+    "iso": "2026-09-28T09:00:00.123000",
+    "epoch": 1790582400.123,
+    "epoch_iso": "2026-09-28T09:00:00.123000"
+   }
+  },
+  {
+   "name": "fromisoformat_10",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09:00:00.1234567"
+   },
+   "expected": {
+    "iso": "2026-09-28T09:00:00.123456",
+    "epoch": 1790582400.123456,
+    "epoch_iso": "2026-09-28T09:00:00.123456"
+   }
+  },
+  {
+   "name": "fromisoformat_11",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09:00:00,5"
+   },
+   "expected": {
+    "iso": "2026-09-28T09:00:00.500000",
+    "epoch": 1790582400.5,
+    "epoch_iso": "2026-09-28T09:00:00.500000"
+   }
+  },
+  {
+   "name": "fromisoformat_12",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T24:00:00"
+   },
+   "expected": {
+    "iso": "2026-09-29T00:00:00",
+    "epoch": 1790636400.0,
+    "epoch_iso": "2026-09-29T00:00:00"
+   }
+  },
+  {
+   "name": "fromisoformat_13",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-12-31T24:00:00"
+   },
+   "expected": {
+    "iso": "2027-01-01T00:00:00",
+    "epoch": 1798761600.0,
+    "epoch_iso": "2027-01-01T00:00:00"
+   }
+  },
+  {
+   "name": "fromisoformat_14",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-03-29T01:30:00"
+   },
+   "expected": {
+    "iso": "2026-03-29T01:30:00",
+    "epoch": 1774747800.0,
+    "epoch_iso": "2026-03-29T02:30:00"
+   }
+  },
+  {
+   "name": "fromisoformat_15",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-10-25T01:30:00"
+   },
+   "expected": {
+    "iso": "2026-10-25T01:30:00",
+    "epoch": 1792888200.0,
+    "epoch_iso": "2026-10-25T01:30:00"
+   }
+  },
+  {
+   "name": "fromisoformat_16",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-10-25T00:59:59"
+   },
+   "expected": {
+    "iso": "2026-10-25T00:59:59",
+    "epoch": 1792886399.0,
+    "epoch_iso": "2026-10-25T00:59:59"
+   }
+  },
+  {
+   "name": "fromisoformat_17",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-10-25T02:00:00"
+   },
+   "expected": {
+    "iso": "2026-10-25T02:00:00",
+    "epoch": 1792893600.0,
+    "epoch_iso": "2026-10-25T02:00:00"
+   }
+  },
+  {
+   "name": "fromisoformat_18",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2028-02-29T12:00:00"
+   },
+   "expected": {
+    "iso": "2028-02-29T12:00:00",
+    "epoch": 1835438400.0,
+    "epoch_iso": "2028-02-29T12:00:00"
+   }
+  },
+  {
+   "name": "fromisoformat_19",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-02-29T00:00:00"
+   },
+   "expected": {
+    "raises": "ValueError"
+   }
+  },
+  {
+   "name": "fromisoformat_20",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-02-30T00:00:00"
+   },
+   "expected": {
+    "raises": "ValueError"
+   }
+  },
+  {
+   "name": "fromisoformat_21",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-13-01T00:00:00"
+   },
+   "expected": {
+    "raises": "ValueError"
+   }
+  },
+  {
+   "name": "fromisoformat_22",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T25:00:00"
+   },
+   "expected": {
+    "raises": "ValueError"
+   }
+  },
+  {
+   "name": "fromisoformat_23",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T24:00:01"
+   },
+   "expected": {
+    "raises": "ValueError"
+   }
+  },
+  {
+   "name": "fromisoformat_24",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09:60:00"
+   },
+   "expected": {
+    "raises": "ValueError"
+   }
+  },
+  {
+   "name": "fromisoformat_25",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09:00:61"
+   },
+   "expected": {
+    "raises": "ValueError"
+   }
+  },
+  {
+   "name": "fromisoformat_26",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-9-28"
+   },
+   "expected": {
+    "raises": "ValueError"
+   }
+  },
+  {
+   "name": "fromisoformat_27",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T9:00"
+   },
+   "expected": {
+    "raises": "ValueError"
+   }
+  },
+  {
+   "name": "fromisoformat_28",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "garbage"
+   },
+   "expected": {
+    "raises": "ValueError"
+   }
+  },
+  {
+   "name": "fromisoformat_29",
+   "input": {
+    "op": "fromisoformat",
+    "iso": ""
+   },
+   "expected": {
+    "raises": "ValueError"
+   }
+  },
+  {
+   "name": "fromisoformat_30",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T"
+   },
+   "expected": {
+    "raises": "ValueError"
+   }
+  },
+  {
+   "name": "fromisoformat_31",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09:00:00."
+   },
+   "expected": {
+    "raises": "ValueError"
+   }
+  },
+  {
+   "name": "fromisoformat_32",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "20260928T090000"
+   },
+   "expected": {
+    "iso": "2026-09-28T09:00:00",
+    "epoch": 1790582400.0,
+    "epoch_iso": "2026-09-28T09:00:00",
+    "native": {
+     "divergence": "fromisoformat-subset",
+     "result": null
+    }
+   }
+  },
+  {
+   "name": "fromisoformat_33",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-W40-1"
+   },
+   "expected": {
+    "iso": "2026-09-28T00:00:00",
+    "epoch": 1790550000.0,
+    "epoch_iso": "2026-09-28T00:00:00",
+    "native": {
+     "divergence": "fromisoformat-subset",
+     "result": null
+    }
+   }
+  },
+  {
+   "name": "fromisoformat_34",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09:00:00Z"
+   },
+   "expected": {
+    "aware": true,
+    "iso": "2026-09-28T09:00:00+00:00",
+    "epoch": 1790586000.0,
+    "native": {
+     "divergence": "fromisoformat-subset",
+     "result": null
+    }
+   }
+  },
+  {
+   "name": "fromisoformat_35",
+   "input": {
+    "op": "fromisoformat",
+    "iso": "2026-09-28T09:00:00+01:00"
+   },
+   "expected": {
+    "aware": true,
+    "iso": "2026-09-28T09:00:00+01:00",
+    "epoch": 1790582400.0,
+    "native": {
+     "divergence": "fromisoformat-subset",
+     "result": null
+    }
+   }
+  }
+ ]
+}
