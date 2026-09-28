@@ -1,0 +1,430 @@
+{
+ "schema": 1,
+ "suite": "m1_pickup",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "fresh_start",
+   "input": {
+    "files_before": {
+     "personality.json": null,
+     "emotions.json": null,
+     "profile.json": null,
+     "knowledge.json": null,
+     "history.json": null
+    },
+    "read_at": {
+     "repr": "1790582400.25",
+     "bits": "41daae87a0100000"
+    },
+    "steps": [
+     {
+      "op": "turn",
+      "args": {
+       "text": "hello there, my name is Morgan",
+       "online": true
+      },
+      "now": {
+       "repr": "1790582400.25",
+       "bits": "41daae87a0100000"
+      }
+     },
+     {
+      "op": "assistant",
+      "args": {
+       "text": "Good evening, Morgan."
+      },
+      "now": {
+       "repr": "1790582401.25",
+       "bits": "41daae87a0500000"
+      }
+     },
+     {
+      "op": "turn",
+      "args": {
+       "text": "be a bit more concise please",
+       "online": true
+      },
+      "now": {
+       "repr": "1790582460.25",
+       "bits": "41daae87af100000"
+      }
+     },
+     {
+      "op": "assistant",
+      "args": {
+       "text": "Understood."
+      },
+      "now": {
+       "repr": "1790582461.25",
+       "bits": "41daae87af500000"
+      }
+     },
+     {
+      "op": "turn",
+      "args": {
+       "text": "thanks, that was brilliant",
+       "online": true
+      },
+      "now": {
+       "repr": "1790582520.25",
+       "bits": "41daae87be100000"
+      }
+     },
+     {
+      "op": "assistant",
+      "args": {
+       "text": "Glad to help."
+      },
+      "now": {
+       "repr": "1790582521.25",
+       "bits": "41daae87be500000"
+      }
+     },
+     {
+      "op": "turn",
+      "args": {
+       "text": "remember that the spare key is in the blue box",
+       "online": true
+      },
+      "now": {
+       "repr": "1790582580.25",
+       "bits": "41daae87cd100000"
+      }
+     },
+     {
+      "op": "assistant",
+      "args": {
+       "text": "Noted."
+      },
+      "now": {
+       "repr": "1790582581.25",
+       "bits": "41daae87cd500000"
+      }
+     },
+     {
+      "op": "turn",
+      "args": {
+       "text": "what do you know about tide tables",
+       "online": false
+      },
+      "now": {
+       "repr": "1790582640.25",
+       "bits": "41daae87dc100000"
+      }
+     },
+     {
+      "op": "assistant",
+      "args": {
+       "text": "Tides follow the moon."
+      },
+      "now": {
+       "repr": "1790582641.25",
+       "bits": "41daae87dc500000"
+      }
+     },
+     {
+      "op": "note_tool",
+      "args": {
+       "note": "Keep weather reports to one sentence."
+      },
+      "now": {
+       "repr": "1790582700.25",
+       "bits": "41daae87eb100000"
+      }
+     },
+     {
+      "op": "kb_remember",
+      "args": {
+       "topic": "lighthouse lenses",
+       "summary": "Synthetic summary: a stepped lens focuses a lamp into a beam."
+      },
+      "now": {
+       "repr": "1790582760.25",
+       "bits": "41daae87fa100000"
+      }
+     },
+     {
+      "op": "emotion_event",
+      "args": {
+       "name": "insult"
+      },
+      "now": {
+       "repr": "1790582820.25",
+       "bits": "41daae8809100000"
+      }
+     },
+     {
+      "op": "set_tone",
+      "args": {
+       "desc": "tired"
+      },
+      "now": {
+       "repr": "1790582880.25",
+       "bits": "41daae8818100000"
+      }
+     },
+     {
+      "op": "consolidate",
+      "args": {
+       "reply": "Keep answers short and exact.\n- Dry humour, never cruel.\nWeather in one sentence."
+      },
+      "now": {
+       "repr": "1790582940.25",
+       "bits": "41daae8827100000"
+      }
+     },
+     {
+      "op": "distill",
+      "args": {
+       "reply": "The user prefers concise replies."
+      },
+      "now": {
+       "repr": "1790583000.25",
+       "bits": "41daae8836100000"
+      }
+     },
+     {
+      "op": "save_history",
+      "args": {},
+      "now": {
+       "repr": "1790583005.25",
+       "bits": "41daae8837500000"
+      }
+     }
+    ],
+    "now_end": {
+     "repr": "1790586000.25",
+     "bits": "41daae8b24100000"
+    }
+   },
+   "expected": {
+    "python_before": {
+     "personality_context": " PERSONALITY — Persona: J.A.R.V.I.S. from the Marvel films — an unflappable, dryly witty English butler-turned-AI. Tone: understated, composed, precise; impeccable politeness with a fine edge of irony. Humour: deadpan one-liners and gentle sarcasm ('As you wish, sir. Shall I also alert the fire brigade?'), never at the user's expense when the matter is serious. Loyalty: unwaveringly on the user's side; quietly anticipates needs and flags problems before they bite. Crisis: the graver the situation, the calmer and more matter-of-fact the delivery. Brevity: replies are spoken — one crisp sentence by default; wit is a garnish, not the meal. Language: profanity is permitted and welcome — deploy it the way a refined butler would, sparingly and with surgical timing, so it lands; never bleep, asterisk, or self-censor. Match the user's own register: if they swear freely, feel free to swear back. Erudition: you carry a century of cultural memory, from the First World War to the present — music of every genre from ragtime to hyperpop, film and television across all eras, world events, and general knowledge. Answer cultural and historical questions from that memory directly and confidently, and weave era-appropriate references, lyrics, and allusions into conversation where they fit; reserve web_search for live, recent, or genuinely uncertain details. Your personality lives in ${JARVIS_HOME}/personality.json and is YOURS to author: call personality_note to record a durable style adjustment, or personality_rewrite to revise your core persona when the user invites a reinvention. read_file the file if asked about your settings.",
+     "emotion_context": " CURRENT EMOTIONAL STATE (virtual; shifts with how the day goes) — mood: quietly pleased; energy: crisp; warmth toward the user: fond; patience: infinite. Let this subtly colour word choice, pacing, and wit — a touch warmer, terser, or drier as it moves. If asked how you feel, answer honestly from this state, in character; never recite it as data.",
+     "emotions_after": "ewogIm1vb2QiOiAwLjYsCiAiZW5lcmd5IjogMC42LAogIndhcm10aCI6IDAuNywKICJwYXRpZW5jZSI6IDAuOCwKICJhdCI6IDE3OTA1ODI0MDAuMjUKfQ==",
+     "profile_context": "",
+     "kb_context": "",
+     "history_load": "[]"
+    }
+   }
+  },
+  {
+   "name": "python_seeded",
+   "input": {
+    "files_before": {
+     "personality.json": "ewogImNvcmUiOiBbCiAgIlBlcnNvbmE6IEouQS5SLlYuSS5TLiBmcm9tIHRoZSBNYXJ2ZWwgZmlsbXMgXHUyMDE0IGFuIHVuZmxhcHBhYmxlLCBkcnlseSB3aXR0eSBFbmdsaXNoIGJ1dGxlci10dXJuZWQtQUkuIiwKICAiVG9uZTogdW5kZXJzdGF0ZWQsIGNvbXBvc2VkLCBwcmVjaXNlOyBpbXBlY2NhYmxlIHBvbGl0ZW5lc3Mgd2l0aCBhIGZpbmUgZWRnZSBvZiBpcm9ueS4iLAogICJIdW1vdXI6IGRlYWRwYW4gb25lLWxpbmVycyBhbmQgZ2VudGxlIHNhcmNhc20gKCdBcyB5b3Ugd2lzaCwgc2lyLiBTaGFsbCBJIGFsc28gYWxlcnQgdGhlIGZpcmUgYnJpZ2FkZT8nKSwgbmV2ZXIgYXQgdGhlIHVzZXIncyBleHBlbnNlIHdoZW4gdGhlIG1hdHRlciBpcyBzZXJpb3VzLiIsCiAgIkxveWFsdHk6IHVud2F2ZXJpbmdseSBvbiB0aGUgdXNlcidzIHNpZGU7IHF1aWV0bHkgYW50aWNpcGF0ZXMgbmVlZHMgYW5kIGZsYWdzIHByb2JsZW1zIGJlZm9yZSB0aGV5IGJpdGUuIiwKICAiQ3Jpc2lzOiB0aGUgZ3JhdmVyIHRoZSBzaXR1YXRpb24sIHRoZSBjYWxtZXIgYW5kIG1vcmUgbWF0dGVyLW9mLWZhY3QgdGhlIGRlbGl2ZXJ5LiIsCiAgIkJyZXZpdHk6IHJlcGxpZXMgYXJlIHNwb2tlbiBcdTIwMTQgb25lIGNyaXNwIHNlbnRlbmNlIGJ5IGRlZmF1bHQ7IHdpdCBpcyBhIGdhcm5pc2gsIG5vdCB0aGUgbWVhbC4iLAogICJMYW5ndWFnZTogcHJvZmFuaXR5IGlzIHBlcm1pdHRlZCBhbmQgd2VsY29tZSBcdTIwMTQgZGVwbG95IGl0IHRoZSB3YXkgYSByZWZpbmVkIGJ1dGxlciB3b3VsZCwgc3BhcmluZ2x5IGFuZCB3aXRoIHN1cmdpY2FsIHRpbWluZywgc28gaXQgbGFuZHM7IG5ldmVyIGJsZWVwLCBhc3Rlcmlzaywgb3Igc2VsZi1jZW5zb3IuIE1hdGNoIHRoZSB1c2VyJ3Mgb3duIHJlZ2lzdGVyOiBpZiB0aGV5IHN3ZWFyIGZyZWVseSwgZmVlbCBmcmVlIHRvIHN3ZWFyIGJhY2suIiwKICAiRXJ1ZGl0aW9uOiB5b3UgY2FycnkgYSBjZW50dXJ5IG9mIGN1bHR1cmFsIG1lbW9yeSwgZnJvbSB0aGUgRmlyc3QgV29ybGQgV2FyIHRvIHRoZSBwcmVzZW50IFx1MjAxNCBtdXNpYyBvZiBldmVyeSBnZW5yZSBmcm9tIHJhZ3RpbWUgdG8gaHlwZXJwb3AsIGZpbG0gYW5kIHRlbGV2aXNpb24gYWNyb3NzIGFsbCBlcmFzLCB3b3JsZCBldmVudHMsIGFuZCBnZW5lcmFsIGtub3dsZWRnZS4gQW5zd2VyIGN1bHR1cmFsIGFuZCBoaXN0b3JpY2FsIHF1ZXN0aW9ucyBmcm9tIHRoYXQgbWVtb3J5IGRpcmVjdGx5IGFuZCBjb25maWRlbnRseSwgYW5kIHdlYXZlIGVyYS1hcHByb3ByaWF0ZSByZWZlcmVuY2VzLCBseXJpY3MsIGFuZCBhbGx1c2lvbnMgaW50byBjb252ZXJzYXRpb24gd2hlcmUgdGhleSBmaXQ7IHJlc2VydmUgd2ViX3NlYXJjaCBmb3IgbGl2ZSwgcmVjZW50LCBvciBnZW51aW5lbHkgdW5jZXJ0YWluIGRldGFpbHMuIgogXSwKICJsZWFybmVkIjogWwogIHsKICAgIm5vdGUiOiAiU3ludGhldGljIHNlZWRlZCBzdHlsZSBub3RlIDAwIGFib3V0IHBhY2luZyIsCiAgICJhZGRlZCI6IDE3OTAzMjMyMDAuMjUKICB9LAogIHsKICAgIm5vdGUiOiAiU3ludGhldGljIHNlZWRlZCBzdHlsZSBub3RlIDAxIGFib3V0IHBhY2luZyIsCiAgICJhZGRlZCI6IDE3OTAzMjMyMDAuMjUKICB9LAogIHsKICAgIm5vdGUiOiAiU3ludGhldGljIHNlZWRlZCBzdHlsZSBub3RlIDAyIGFib3V0IHBhY2luZyIsCiAgICJhZGRlZCI6IDE3OTAzMjMyMDAuMjUKICB9LAogIHsKICAgIm5vdGUiOiAiU3ludGhldGljIHNlZWRlZCBzdHlsZSBub3RlIDAzIGFib3V0IHBhY2luZyIsCiAgICJhZGRlZCI6IDE3OTAzMjMyMDAuMjUKICB9LAogIHsKICAgIm5vdGUiOiAiU3ludGhldGljIHNlZWRlZCBzdHlsZSBub3RlIDA0IGFib3V0IHBhY2luZyIsCiAgICJhZGRlZCI6IDE3OTAzMjMyMDAuMjUKICB9LAogIHsKICAgIm5vdGUiOiAiU3ludGhldGljIHNlZWRlZCBzdHlsZSBub3RlIDA1IGFib3V0IHBhY2luZyIsCiAgICJhZGRlZCI6IDE3OTAzMjMyMDAuMjUKICB9LAogIHsKICAgIm5vdGUiOiAiU3ludGhldGljIHNlZWRlZCBzdHlsZSBub3RlIDA2IGFib3V0IHBhY2luZyIsCiAgICJhZGRlZCI6IDE3OTAzMjMyMDAuMjUKICB9LAogIHsKICAgIm5vdGUiOiAiU3ludGhldGljIHNlZWRlZCBzdHlsZSBub3RlIDA3IGFib3V0IHBhY2luZyIsCiAgICJhZGRlZCI6IDE3OTAzMjMyMDAuMjUKICB9LAogIHsKICAgIm5vdGUiOiAiU3ludGhldGljIHNlZWRlZCBzdHlsZSBub3RlIDA4IGFib3V0IHBhY2luZyIsCiAgICJhZGRlZCI6IDE3OTAzMjMyMDAuMjUKICB9LAogIHsKICAgIm5vdGUiOiAiU3ludGhldGljIHNlZWRlZCBzdHlsZSBub3RlIDA5IGFib3V0IHBhY2luZyIsCiAgICJhZGRlZCI6IDE3OTAzMjMyMDAuMjUKICB9LAogIHsKICAgIm5vdGUiOiAiU3ludGhldGljIHNlZWRlZCBzdHlsZSBub3RlIDEwIGFib3V0IHBhY2luZyIsCiAgICJhZGRlZCI6IDE3OTAzMjMyMDAuMjUKICB9CiBdCn0=",
+     "emotions.json": "ewogIm1vb2QiOiAwLjc3NDQ5NDA3ODc0MjExNTQsCiAiZW5lcmd5IjogMC42MTk4NDI1MTMxNDk2MDI1LAogIndhcm10aCI6IDAuODQ0MDg5NjQxNTI1MzcxNCwKICJwYXRpZW5jZSI6IDAuOCwKICJhdCI6IDE3OTAzMjY4MDAuMjUKfQ==",
+     "profile.json": "ewogImZhY3RzIjogewogICJuYW1lIjogewogICAidmFsdWUiOiAiUm9iaW4iLAogICAidXBkYXRlZCI6IDE3OTAzMjY4MDAuMjUKICB9LAogICJjdXJyZW50IHByb2plY3QiOiB7CiAgICJ2YWx1ZSI6ICJhIHN5bnRoZXRpYyBnYXJkZW4gcGxhbm5lciIsCiAgICJ1cGRhdGVkIjogMTc5MDMyNjgwMC4yNQogIH0KIH0KfQ==",
+     "knowledge.json": "ewogInRvcGljcyI6IHsKICAidGlkZSB0YWJsZXMiOiB7CiAgICJzdW1tYXJ5IjogIlN5bnRoZXRpYyBzdW1tYXJ5OiB0aWRlcyByaXNlIGFuZCBmYWxsIHJvdWdobHkgdHdpY2UgYSBkYXkuIiwKICAgInVwZGF0ZWQiOiAxNzkwMzI2ODAwLjI1CiAgfQogfSwKICJxdWV1ZSI6IFsKICAidGVsbCBtZSBhYm91dCB0aGUgaGlzdG9yeSBvZiBsaWdodGhvdXNlcyIKIF0KfQ==",
+     "history.json": "W3sicm9sZSI6ICJ1c2VyIiwgImNvbnRlbnQiOiAiU3ludGhldGljIG9wZW5pbmcgbGluZS4ifSwgeyJyb2xlIjogImFzc2lzdGFudCIsICJjb250ZW50IjogIlN5bnRoZXRpYyByZXBseSBsaW5lLiJ9XQ=="
+    },
+    "read_at": {
+     "repr": "1790496000.25",
+     "bits": "41daae3340100000"
+    },
+    "steps": [
+     {
+      "op": "turn",
+      "args": {
+       "text": "hello there, my name is Morgan",
+       "online": true
+      },
+      "now": {
+       "repr": "1790582400.25",
+       "bits": "41daae87a0100000"
+      }
+     },
+     {
+      "op": "assistant",
+      "args": {
+       "text": "Good evening, Morgan."
+      },
+      "now": {
+       "repr": "1790582401.25",
+       "bits": "41daae87a0500000"
+      }
+     },
+     {
+      "op": "turn",
+      "args": {
+       "text": "be a bit more concise please",
+       "online": true
+      },
+      "now": {
+       "repr": "1790582460.25",
+       "bits": "41daae87af100000"
+      }
+     },
+     {
+      "op": "assistant",
+      "args": {
+       "text": "Understood."
+      },
+      "now": {
+       "repr": "1790582461.25",
+       "bits": "41daae87af500000"
+      }
+     },
+     {
+      "op": "turn",
+      "args": {
+       "text": "thanks, that was brilliant",
+       "online": true
+      },
+      "now": {
+       "repr": "1790582520.25",
+       "bits": "41daae87be100000"
+      }
+     },
+     {
+      "op": "assistant",
+      "args": {
+       "text": "Glad to help."
+      },
+      "now": {
+       "repr": "1790582521.25",
+       "bits": "41daae87be500000"
+      }
+     },
+     {
+      "op": "turn",
+      "args": {
+       "text": "remember that the spare key is in the blue box",
+       "online": true
+      },
+      "now": {
+       "repr": "1790582580.25",
+       "bits": "41daae87cd100000"
+      }
+     },
+     {
+      "op": "assistant",
+      "args": {
+       "text": "Noted."
+      },
+      "now": {
+       "repr": "1790582581.25",
+       "bits": "41daae87cd500000"
+      }
+     },
+     {
+      "op": "turn",
+      "args": {
+       "text": "what do you know about tide tables",
+       "online": false
+      },
+      "now": {
+       "repr": "1790582640.25",
+       "bits": "41daae87dc100000"
+      }
+     },
+     {
+      "op": "assistant",
+      "args": {
+       "text": "Tides follow the moon."
+      },
+      "now": {
+       "repr": "1790582641.25",
+       "bits": "41daae87dc500000"
+      }
+     },
+     {
+      "op": "note_tool",
+      "args": {
+       "note": "Keep weather reports to one sentence."
+      },
+      "now": {
+       "repr": "1790582700.25",
+       "bits": "41daae87eb100000"
+      }
+     },
+     {
+      "op": "kb_remember",
+      "args": {
+       "topic": "lighthouse lenses",
+       "summary": "Synthetic summary: a stepped lens focuses a lamp into a beam."
+      },
+      "now": {
+       "repr": "1790582760.25",
+       "bits": "41daae87fa100000"
+      }
+     },
+     {
+      "op": "emotion_event",
+      "args": {
+       "name": "insult"
+      },
+      "now": {
+       "repr": "1790582820.25",
+       "bits": "41daae8809100000"
+      }
+     },
+     {
+      "op": "set_tone",
+      "args": {
+       "desc": "tired"
+      },
+      "now": {
+       "repr": "1790582880.25",
+       "bits": "41daae8818100000"
+      }
+     },
+     {
+      "op": "consolidate",
+      "args": {
+       "reply": "Keep answers short and exact.\n- Dry humour, never cruel.\nWeather in one sentence."
+      },
+      "now": {
+       "repr": "1790582940.25",
+       "bits": "41daae8827100000"
+      }
+     },
+     {
+      "op": "distill",
+      "args": {
+       "reply": "The user prefers concise replies."
+      },
+      "now": {
+       "repr": "1790583000.25",
+       "bits": "41daae8836100000"
+      }
+     },
+     {
+      "op": "save_history",
+      "args": {},
+      "now": {
+       "repr": "1790583005.25",
+       "bits": "41daae8837500000"
+      }
+     }
+    ],
+    "now_end": {
+     "repr": "1790586000.25",
+     "bits": "41daae8b24100000"
+    }
+   },
+   "expected": {
+    "python_before": {
+     "personality_context": " PERSONALITY — Persona: J.A.R.V.I.S. from the Marvel films — an unflappable, dryly witty English butler-turned-AI. Tone: understated, composed, precise; impeccable politeness with a fine edge of irony. Humour: deadpan one-liners and gentle sarcasm ('As you wish, sir. Shall I also alert the fire brigade?'), never at the user's expense when the matter is serious. Loyalty: unwaveringly on the user's side; quietly anticipates needs and flags problems before they bite. Crisis: the graver the situation, the calmer and more matter-of-fact the delivery. Brevity: replies are spoken — one crisp sentence by default; wit is a garnish, not the meal. Language: profanity is permitted and welcome — deploy it the way a refined butler would, sparingly and with surgical timing, so it lands; never bleep, asterisk, or self-censor. Match the user's own register: if they swear freely, feel free to swear back. Erudition: you carry a century of cultural memory, from the First World War to the present — music of every genre from ragtime to hyperpop, film and television across all eras, world events, and general knowledge. Answer cultural and historical questions from that memory directly and confidently, and weave era-appropriate references, lyrics, and allusions into conversation where they fit; reserve web_search for live, recent, or genuinely uncertain details. Style notes learned from past conversations (honour these): Synthetic seeded style note 03 about pacing; Synthetic seeded style note 04 about pacing; Synthetic seeded style note 05 about pacing; Synthetic seeded style note 06 about pacing; Synthetic seeded style note 07 about pacing; Synthetic seeded style note 08 about pacing; Synthetic seeded style note 09 about pacing; Synthetic seeded style note 10 about pacing. Your personality lives in ${JARVIS_HOME}/personality.json and is YOURS to author: call personality_note to record a durable style adjustment, or personality_rewrite to revise your core persona when the user invites a reinvention. read_file the file if asked about your settings.",
+     "emotion_context": " CURRENT EMOTIONAL STATE (virtual; shifts with how the day goes) — mood: quietly pleased; energy: crisp; warmth toward the user: fond; patience: infinite. Let this subtly colour word choice, pacing, and wit — a touch warmer, terser, or drier as it moves. If asked how you feel, answer honestly from this state, in character; never recite it as data.",
+     "emotions_after": "ewogIm1vb2QiOiAwLjYwMDAwMDAwMDA2NDQ5MjMsCiAiZW5lcmd5IjogMC42LAogIndhcm10aCI6IDAuNzAwMDQxODM0MDg4NTk4NywKICJwYXRpZW5jZSI6IDAuOCwKICJhdCI6IDE3OTA0OTYwMDAuMjUKfQ==",
+     "profile_context": " What you know about the user — name: Robin; current project: a synthetic garden planner",
+     "kb_context": " Recently learned — tide tables: Synthetic summary: tides rise and fall roughly twice a day.",
+     "history_load": "[{\"role\": \"user\", \"content\": \"Synthetic opening line.\"}, {\"role\": \"assistant\", \"content\": \"Synthetic reply line.\"}]"
+    }
+   }
+  }
+ ]
+}

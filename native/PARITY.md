@@ -109,18 +109,18 @@ Native JARVIS reads the same names (LaunchAgent env or `defaults`). Obsolete one
 
 | ✓ | File | Constant | Evidence |
 |---|---|---|---|
-| ☐ | `knowledge.json` | `KB_FILE` | |
-| ☐ | `history.json` | `HIST_FILE` | |
-| ☐ | `corrections.json` | `CORR_FILE` | |
+| ✓ | `knowledge.json` | `KB_FILE` | `M1ProfileKnowledgeTests` / `m1_profile_kb.golden.json`; `M1PromptGoldenTests` / `m1_prompt.golden.json`; Python reads native's file: `M1PythonPickupTests` / `m1_pickup.golden.json` (A9); atomic write + style: `StateStoreTests`, `StateStoreGoldenTests` / `m1_state_styles.golden.json`; real-file load→dump identical: `RealStateRoundTripTests` (A8, 2026-09-29) |
+| ✓ | `history.json` | `HIST_FILE` | `M1HistoryAppFeedbackTests` / `m1_history_app.golden.json`; `M1PromptGoldenTests` / `m1_prompt.golden.json`; Python reads native's file: `M1PythonPickupTests` / `m1_pickup.golden.json` (A9); atomic write + style: `StateStoreTests`, `StateStoreGoldenTests` / `m1_state_styles.golden.json`; real-file load→dump identical: `RealStateRoundTripTests` (A8, 2026-09-29) |
+| ✓ | `corrections.json` | `CORR_FILE` | `M1CorrectionsTests` / `m1_corrections.golden.json`; atomic write + style: `StateStoreTests`, `StateStoreGoldenTests` / `m1_state_styles.golden.json`; real-file load→dump identical: `RealStateRoundTripTests` (A8, 2026-09-29) |
 | ☐ | `CHANGELOG.md` | `CHANGELOG_FILE` | |
-| ☐ | `profile.json` | `PROFILE_FILE` | |
-| ☐ | `personality.json` | `PERSONALITY_FILE` | |
-| ☐ | `emotions.json` | `EMOTIONS_FILE` | |
+| ✓ | `profile.json` | `PROFILE_FILE` | `M1ProfileKnowledgeTests` / `m1_profile_kb.golden.json`; `M1PromptGoldenTests` / `m1_prompt.golden.json`; Python reads native's file: `M1PythonPickupTests` / `m1_pickup.golden.json` (A9); atomic write + style: `StateStoreTests`, `StateStoreGoldenTests` / `m1_state_styles.golden.json`; A8 not run (no real profile.json present) |
+| ✓ | `personality.json` | `PERSONALITY_FILE` | `M1PersonalityTests` / `m1_personality.golden.json`; `M1PersonaLLMTests` / `m1_persona_llm.golden.json`; `M1PromptGoldenTests` / `m1_prompt.golden.json`; Python reads native's file: `M1PythonPickupTests` / `m1_pickup.golden.json` (A9); atomic write + style: `StateStoreTests`, `StateStoreGoldenTests` / `m1_state_styles.golden.json`; real-file load→dump identical: `RealStateRoundTripTests` (A8, 2026-09-29) |
+| ✓ | `emotions.json` | `EMOTIONS_FILE` | `M1EmotionsToneTests` / `m1_emotions_tone.golden.json`; `M1PromptGoldenTests` / `m1_prompt.golden.json`; Python reads native's file: `M1PythonPickupTests` / `m1_pickup.golden.json` (A9); atomic write + style: `StateStoreTests`, `StateStoreGoldenTests` / `m1_state_styles.golden.json`; real-file load→dump identical: `RealStateRoundTripTests` (A8, 2026-09-29) |
 | ☐ | `proactive.json` | `PROACTIVE_FILE` | |
 | ☐ | `alarms.json` | `ALARMS_FILE` | |
 | ☐ | `voiceprint.npy` | `VOICEPRINT_FILE` | |
-| ☐ | `research/metrics.jsonl` | dataset — append-only daily snapshot | |
-| ☐ | `research/usage.json` | dataset — per-day counters | |
+| ✓ | `research/metrics.jsonl` | dataset — append-only daily snapshot | `SnapshotGoldenTests` / `m1b_snapshot.golden.json`; `ResearchLastDateGoldenTests` / `m1b_last_date.golden.json`; `MetricsLogTests` |
+| ✓ | `research/usage.json` | dataset — per-day counters | `ResearchBumpGoldenTests` / `m1b_bump.golden.json`; `UsageStoreTests`; real-file load→dump identical: `RealStateRoundTripTests` (A8, 2026-09-29) |
 | ☐ | `jarvis_notes.txt` | fallback notes file, jarvis.py:3976 (append, UTF-8) | |
 | ☐ | `audd_key.txt` | AudD token (secret; `AUDD_API_KEY` alternative), jarvis.py:4118 | |
 | ☐ | `logs/jarvis.log` | `LOG_FILE` — shared human log, same `[JARVIS] …` line format | |
