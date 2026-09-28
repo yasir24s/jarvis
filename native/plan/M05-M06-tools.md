@@ -334,7 +334,7 @@ state. Private output (messages, contacts, clipboard) is compared by SHA-256 and
 | ID | Tool group | Automated check → observable proof | Manual (needs user / TCC) |
 |---|---|---|---|
 | T-SCHEMA | all 46 | Swift test vs G16: ordered and canonical bytes equal. Names equal to TOOLS order | — |
-| T-GUARD | all | For each of the 8 EXECUTOR names (the set has 9; run_powershell is not ported): a tainted turn gives the exact block string and the fake runner's call count stays 0. For each of the 7 UNTRUSTED: the turn is tainted after the call. Errors give `Tool error: `. `get_system_info` gives `Unknown tool get_system_info` | — |
+| T-GUARD | all | For each of the 11 EXECUTOR names (the set has 12 since fef66c1; run_powershell is not ported): a tainted turn gives the exact block string and the fake runner's call count stays 0. For each of the 7 UNTRUSTED: the turn is tainted after the call. Errors give `Tool error: `. `get_system_info` gives `Unknown tool get_system_info` | — |
 | A-SYS-1 | get_battery | `$PY -c 'import sys,os;sys.path.insert(0,os.path.expanduser("~/jarvis"));import jarvis;print(jarvis._get_system_info("battery"))'` vs the CLI's `get_battery`: equal strings (retry once if the % ticks) | Plugged in / charged states: the user plugs in and both are re-run |
 | A-SYS-2 | get_time | Python `_get_system_info("time")` vs native within the same minute: equal | — |
 | A-SYS-3 | get_cpu_usage | Matches `^CPU user load \d+\.\d{2} percent\.$`. Over 3 paired samples, \|native − `top -l 1 -n 0` user\| ≤ 15 points | — |
@@ -430,8 +430,9 @@ The numbers above are estimates. T6.11 records the measured RSS.
   into read_file, or keep parity.
 - **R2 PARITY.md vs Python taint sets.** PARITY marks `delete_file`, `move_file` and `write_file` as **X**, but
   Python's `EXECUTOR_TOOLS` (4843-4847) omits them. Their only protection is the tier gate. This plan
-  implements Python's sets. Adding them to X is stricter and harmless, but it is a deviation that needs
-  the planner or user to decide.
+  implements Python's sets. **Resolved (D-12):** Python added all three to `EXECUTOR_TOOLS` in fef66c1 and
+  now confirm-gates writes and move destinations under startup and credential paths, so Python's sets
+  include the file tools and PARITY's X is parity, not a deviation.
 - **R3 get_wifi_status oracle is broken on macOS 27.** networksetup prints "not associated" while en0 is
   up (observed). Native uses CoreWLAN, which needs the Location grant. This is a deliberate deviation.
   If full parity must hold literally, the user decides.

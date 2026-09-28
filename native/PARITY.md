@@ -57,7 +57,7 @@ Line numbers refer to jarvis.py @ 68cd112.
 | ☐ | `personality_note` | M6 | X | Add ONE durable note to your own personality file about how you should speak or behave (tone, humour, address, verbosity). Use when the user asks you … | |
 | ☐ | `personality_rewrite` | M6 | X | Rewrite the CORE of your own personality file wholesale — a full self-authored revision of who you are. Use only when the user asks for a personality … | |
 
-X* — native fix, not Python behaviour: Python's EXECUTOR_TOOLS omits these and treats in-home writes as instant (injection → persistence gap, verified 2026-09-28). See plan/DEVIATIONS.md (D-12).
+X* — parity: Python has matched this since fef66c1. Its EXECUTOR_TOOLS now includes these three, and writes and move destinations under startup and credential paths ask for confirmation even inside home (this closed the injection → persistence gap verified 2026-09-28). See plan/DEVIATIONS.md (D-12).
 
 ## Settings (29 environment variables)
 

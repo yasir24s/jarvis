@@ -70,19 +70,20 @@ schemes: "W4 D-3" is not integration decision D-3.
   decide between accepting the claude-opus-4-8 fallback and a Claude-only prompt deviation
   (in `DEVIATIONS.md`). Always record the answering model per turn.
 - **D-11. W4's user-decision list (M02–M04 §8.2), resolved.** W4 D-1 yes (X-1). W4 D-2:
-  tightened sudoers (the user is installing it). W4 D-3 overridden to OFF (the user's July
-  "full read access"; the taint guard is the control). W4 D-4 ON (overage kill, so no
-  pay-as-you-go). W4 D-5 yes (claude-opus-5-5 by default; the counter stays `backend_claude`).
+  tightened sudoers, `native/ops/jarvis.sudoers` (the user is installing it). W4 D-3
+  overridden to OFF (the user's July "full read access"; the taint guard is the control).
+  W4 D-4 ON (overage kill, so no pay-as-you-go). W4 D-5 yes (claude-opus-5-5 by default;
+  the counter stays `backend_claude`).
   W4 D-6: reword for the CLI. W4 D-7: CORE-22 accepted pending the M3 context measurement.
   W4 D-8 ON. W4 D-9: `interactions` is bumped for text too, plus W3's additive
   `interactions_text`. W4 D-10: reject. W4 D-11 and D-12: defaults. W4 D-13: the user writes
   `shouldSpeakReply` (batched to the user).
-- **D-12. Security deviation.** The native executor set is Python's plus `write_file`,
+- **D-12. Security, now parity.** The native executor set includes `write_file`,
   `delete_file` and `move_file`. Writes and moves into dotfiles (`~/.zsh*`, `~/.bash*`,
   `~/.profile`), `~/Library/LaunchAgents`, `~/.ssh`, `~/Library/Keychains` and `~/.claude`
-  take the confirm tier even inside home. `PARITY.md` marks the three rows `X*` with a
-  footnote; `DEVIATIONS.md` has the entry (M05 R2 → D-12) and needs marked fixtures. It stays
-  a deviation, because the Python fix was stopped (D-16).
+  take the confirm tier even inside home. Python has done the same since fef66c1, so this is
+  parity, not a deviation. `PARITY.md` keeps the three rows `X*` with a footnote;
+  `DEVIATIONS.md` has the entry (M05 R2 → D-12), resolved.
 - **D-13. Target split** (W5 R8): pure-logic targets are Foundation-only and golden-testable;
   platform targets may import AppKit, EventKit and so on. This corrects the rule in the
   `Package.swift` header comment, which now says so.
@@ -93,9 +94,9 @@ schemes: "W4 D-3" is not integration decision D-3.
 - **D-16. Parallel Python session (task_9ad883cb).** The user had started a separate session
   to fix the write_file/delete_file/move_file injection gap in `jarvis.py`. The user stopped
   it at 16:56 before it changed anything (verified: `jarvis.py` unmodified, no worktree, no
-  stash). So D-12 stays a native deviation and the Python gap stays open (Python JARVIS is
-  stopped, so nothing is exposed right now); the "becomes parity" branch does not apply.
-  Plan line citations are @68cd112, and the plan commit stages only `native/`.
+  stash). The gap was then fixed in Python by fef66c1, so the "becomes parity" branch applies:
+  D-12 is parity and the Python gap is closed. Plan line citations are @68cd112, and the
+  plan commit stages only `native/`.
 - **D-17. `speakLocally` stub.** No `fatalError`. The default body is `return true` (speak
   locally with Piper, the privacy-safe choice) under a clearly marked USER DECISION comment;
   the user writes the real rule. M08 §3.2 is edited to match.
@@ -154,9 +155,9 @@ judged against the live Python code.
   onnxruntime 1.26.0, resemblyzer 0.1.4, webrtcvad 2.0.10; the Claude-path `emit()`
   (jarvis.py ~4949-4954) speaks queued sentences without a barge-in check. One detail was
   rejected: the `speakLocally` stub was a `fatalError`. It is replaced per D-17.
-- W8, sudoers: accepted. Tightened, 17 entries, sha256 `ca2cfb44…`; `pmset` left
-  unrestricted by the user's decision. The user installs it. **Rule breach, self-disclosed:**
-  one `sudo -V` (version only).
+- W8, sudoers: accepted. Tightened, 17 entries, sha256 `ca2cfb44…`, kept in the repo as
+  `native/ops/jarvis.sudoers`; `pmset` left unrestricted by the user's decision. The user
+  installs it. **Rule breach, self-disclosed:** one `sudo -V` (version only).
 - Integration: W1's review corrections from M00 §3.1 are applied to `ROADMAP.md`,
   `PARITY.md` and `Package.swift` (R1–R9, P1–P6, S1; S2 and S3 are T0.3 scaffold work),
   followed by the ledger edits above, the path hygiene of D-6, and `native/.gitignore`
@@ -167,7 +168,8 @@ judged against the live Python code.
 Found while planning. None is fixed by this plan; native behaviour is in `DEVIATIONS.md`.
 
 - `write_file` / `delete_file` / `move_file` injection gap: not executor tools, and in-home
-  writes are instant. The fix task was stopped by the user, so the gap is still open.
+  writes are instant. **Closed in fef66c1**: the three are executor tools, and writes and move
+  destinations under startup and credential paths ask for confirmation.
 - Chained-sudo guard gap: only the first command on a line is checked against the sudo
   allowlist, and the shell then runs all of them.
 - The Claude-path barge-in keeps speaking the queued sentences.
@@ -175,8 +177,10 @@ Found while planning. None is fixed by this plan; native behaviour is in `DEVIAT
 - The research 8 KB tail read can write duplicate daily rows.
 - The lock observer is installed twice.
 - `_sensitive_path` is dead code.
-- `/etc/sudoers.d/jarvis` is missing. A tightened replacement is prepared (W8); the user
-  installs it.
+- `/etc/sudoers.d/jarvis` is missing. A tightened replacement is prepared (W8) at
+  `native/ops/jarvis.sudoers`; the user installs it:
+  `sudo visudo -cf ~/jarvis/native/ops/jarvis.sudoers && sudo install -m 0440 -o root -g wheel ~/jarvis/native/ops/jarvis.sudoers /etc/sudoers.d/jarvis && sudo visudo -c`.
+  Rollback: `sudo rm /etc/sudoers.d/jarvis`.
 - `periodic` is absent on macOS 27.2, but still in `_SUDO_ALLOW`.
 - Opus 5.5 refused a probe as "cyber", and the CLI fell back to claude-opus-4-8.
 
@@ -184,7 +188,6 @@ Found while planning. None is fixed by this plan; native behaviour is in `DEVIAT
 
 - Write `shouldSpeakReply` (text chat, M02–M04 §3.12) and `speakLocally` (sensitive routing
   to Piper, M08 §3.2). The user writes both.
-- Whether to fix the Python injection gap now.
 - Writes under `research/` (README additions, `annotations.jsonl`) and the `jarvis.py`
   dataset patch need an explicit OK at execution time.
 - Any download or brew install (webrtc VAD source, espeak-ng): only if the spikes fail, and
