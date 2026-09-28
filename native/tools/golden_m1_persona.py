@@ -2,6 +2,8 @@
 
     m1_personality     personality_load / _learn / _forget / _note_tool / _rewrite_tool /
                        _context and maybe_learn_personality, plus the literal tables they use
+    m1_emotions_tone   _emotions_load / _decay, emotion_event, emotion_react, _emo_word,
+                       emotion_context, set_tone, tone_context, plus the literal tables
 
 Plugin for tools/golden.py. Every case but the literal tables is a SCENARIO run through the
 real jarvis.py functions: `input.files_before` holds the state files' starting bytes (base64;
@@ -9,10 +11,14 @@ null = absent), `input.steps` a list of {op, args, now}. `expected.steps` holds,
 `result` ({"value": …} | {"json": text} | {"raises": ExceptionName}), `bumps` (every
 research_bump call, in order, as [key, n]) and `files_after` (the bytes on disk afterwards,
 base64 or null). maybe_learn steps also record `action`: the personality_learn /
-personality_forget call maybe_learn_personality made (seen by wrapping the module globals).
+personality_forget call maybe_learn_personality made (seen by wrapping the module globals);
+react steps record the emotion_event name emotion_react chose the same way.
 
 Times and float arguments travel as {"repr", "bits"}, so the fixture parse never decides a
 value. State contents are SYNTHETIC (never real notes). Literals are read from ctx.J.
+
+A case whose `expected` has a `native` block is a registered divergence: the block says what
+native does instead (the Swift test asserts that positively, Python's result as a known issue).
 """
 import base64
 import json
@@ -361,3 +367,234 @@ def _personality_cases(ctx, rec):
 def personality(ctx):
     rec = _Recorder(ctx.J)
     return _personality_cases(ctx, rec)
+
+
+# ─── m1_emotions_tone ────────────────────────────────────────────────────────────
+
+_EMO_AT = _T0 - 3600.0
+
+
+def _efile(**vals):
+    d = {"mood": 0.45, "energy": 0.9, "warmth": 0.72, "patience": 0.33, "at": _EMO_AT}
+    d.update(vals)
+    return {"emotions.json": _dump({k: v for k, v in d.items() if v is not _DROP})}
+
+
+_DROP = object()
+
+
+def _tone_descriptors(J):
+    """analyze_tone's five possible outputs, read from its source (not retyped)."""
+    import inspect
+    import re
+    return re.findall(r'return "([^"]+)"', inspect.getsource(J.analyze_tone))
+
+
+def _emotion_ops(J):
+    def react(step, text):
+        fired = []
+        event = J.emotion_event
+
+        def rec(name, mag=1.0):
+            fired.append(name)
+            return event(name, mag)
+        J.emotion_event = rec
+        try:
+            step["action"] = None
+            J.emotion_react(text)
+        finally:
+            J.emotion_event = event
+            step["action"] = fired[0] if fired else None
+        return {"value": None}
+
+    def set_last_tone(step, desc, at):
+        J.LAST_TONE["desc"], J.LAST_TONE["at"] = desc, at
+        return {"value": None}
+
+    return {
+        "load": lambda step: {"json": json.dumps(J._emotions_load(), indent=1)},
+        "decay": lambda step: {"json": json.dumps(J._emotions_decay(J._emotions_load()), indent=1)},
+        "event": lambda step, name, mag=None: {"value": J.emotion_event(name) if mag is None
+                                               else J.emotion_event(name, mag)},
+        "react": react,
+        "word": lambda step, dim, v: {"value": J._emo_word(dim, v)},
+        "context": lambda step: {"value": J.emotion_context()},
+        "set_tone": lambda step, desc: {"value": J.set_tone(desc)},
+        "tone_context": lambda step: {"value": J.tone_context()},
+        "set_last_tone": set_last_tone,
+    }
+
+
+_REACT_TEXTS = [
+    # praise
+    "good job", "Good work, Jarvis", "good one", "well done", "brilliant", "amazing",
+    "impressive", "perfect", "nailed it", "love you", "love it", "love that", "you're the best",
+    "youre awesome", "you're great", "you're hilarious", "you're good", "BRILLIANT",
+    "not brilliant at all",
+    # praise near misses
+    "goodjob", "imperfect", "perfectly fine", "you’re the best", "love youtube",
+    # thanks
+    "thanks", "thank you", "cheers", "appreciate it", "appreciate you", "Thanks a lot",
+    "THANK YOU",
+    # thanks near misses
+    "thank", "thankful", "thanksgiving plans", "appreciate that", "cheersome",
+    # insults
+    "you are useless", "you're useless", "you useless", "you are fucking useless",
+    "you're so stupid", "you are absolutely bloody hopeless", "you're an idiot",
+    "you are a idiot", "you're dumb", "you're shit", "you're crap", "you're rubbish",
+    "you're pathetic", "shut up", "fuck you", "fuck off", "piss off", "stupid machine",
+    "dumb robot", "useless assistant", "useless program", "you're so so stupid",
+    "YOU ARE USELESS", "the stupid machine froze",
+    # insult near misses
+    "you're not stupid", "shut upstairs", "youre useless", "you’re useless",
+    "you are uselessly slow",
+    # precedence: insult > praise > thanks
+    "you're brilliant but you're useless", "brilliant, thanks", "thanks for nothing, you useless machine",
+    "good job, thank you", "cheers, well done",
+    # nothing
+    "", "what time is it", "tell me a joke",
+]
+
+_WORD_VALUES = [0.0, -0.0, 0.19999999999999998, 0.2, 0.39999999999999997, 0.4,
+                0.5999999999999999, 0.6, 0.6000000000000001, 0.7999999999999999, 0.8, 0.9999,
+                0.9999999999999999, 1.0, 1.2, -0.1, -0.2, -1.0, 1e300, -1e300, 5e-324,
+                float("nan"), float("inf"), float("-inf")]
+
+
+def _emotion_cases(ctx, rec):
+    J = ctx.J
+    ops = _emotion_ops(J)
+    E = ("emotions.json",)
+    T = _T0
+    cases = []
+
+    def sc(name, before, steps, native=None):
+        c = _scenario(ctx, rec, ops, name, before, steps, E)
+        if native:
+            c["expected"]["native"] = native
+        cases.append(c)
+
+    descs = _tone_descriptors(J)
+    cases.append({"name": "literals", "input": {},
+                  "expected": {
+                      "dims": [{"name": k, "baseline": _f(b), "half": _f(h)}
+                               for k, (b, h) in J._EMO_DIMS.items()],
+                      "deltas": [{"event": ev, "changes": [{"dim": k, "delta": _f(d)} for k, d in ch.items()]}
+                                 for ev, ch in J._EMO_DELTAS.items()],
+                      "bands": [{"dim": k, "words": w} for k, w in J._EMO_BANDS.items()],
+                      "patterns": {n: {"pattern": getattr(J, n).pattern,
+                                       "ignorecase": bool(getattr(J, n).flags & 2)}
+                                   for n in ("_EMO_PRAISE_RE", "_EMO_THANKS_RE", "_EMO_INSULT_RE")},
+                      "tone_descriptors": descs}})
+
+    # ── Loads: each followed by decay, a context build (which saves) and an event ──
+    full = [("load", {}, T), ("decay", {}, T), ("context", {}, T), ("event", {"name": "praise"}, T)]
+    crash = full[1:]
+    loads = [
+        ("load_missing", {}, full),
+        ("load_corrupt", {"emotions.json": b'{"mood": 0.5,'}, full),
+        ("load_empty_file", {"emotions.json": b""}, full),
+        ("load_bom", {"emotions.json": b"\xef\xbb\xbf" + _efile()["emotions.json"]}, full),
+        ("load_not_dict", {"emotions.json": b"[1, 2]"}, full),
+        ("load_number", {"emotions.json": b"42"}, full),
+        ("load_null", {"emotions.json": b"null"}, full),
+        ("load_list_of_dims", {"emotions.json": _dump(["mood", "energy", "warmth", "patience"])}, crash),
+        ("load_str_of_dims", {"emotions.json": _dump("mood energy warmth patience")}, crash),
+        ("load_str_missing_dim", {"emotions.json": _dump("mood energy warmth")}, full),
+        ("load_missing_dimension", _efile(patience=_DROP), full),
+        ("load_extra_key", _efile(extra_synthetic={"kept": [1, 2.5]}), full),
+        ("load_key_order", {"emotions.json": _dump({"at": _EMO_AT, "patience": 0.1, "warmth": 0.2,
+                                                    "energy": 0.3, "mood": 0.4})}, full),
+        ("load_int_values", _efile(mood=1, energy=0, warmth=1, patience=0, at=1790580000), full),
+        ("load_bool_values", _efile(mood=True, energy=False), full),
+        ("load_float_edges", _efile(mood=0.6000000000000001, energy=0.30000000000000004,
+                                    warmth=1e-07, patience=5e-324), full),
+        ("load_at_missing", _efile(at=_DROP), full),
+        ("load_at_int", _efile(at=1790582000), full),
+        ("load_at_bool", _efile(at=True), full),
+        ("load_at_string", _efile(at="yesterday"), full),
+        ("load_at_null", _efile(at=None), full),
+        ("load_at_nan", _efile(at=float("nan")), full),
+        ("load_at_inf", _efile(at=float("inf")), full),
+        ("load_at_minus_inf", _efile(at=float("-inf")), full),
+        ("load_dim_nan", _efile(mood=float("nan")), full + [("event", {"name": "gratitude"}, T)]),
+        ("load_dim_inf", _efile(energy=float("inf")), full),
+        ("load_dim_null", _efile(warmth=None), full),
+        ("load_dim_list", _efile(warmth=[0.5]), full),
+        ("load_dim_bigint", {"emotions.json": _efile()["emotions.json"].replace(b'"mood": 0.45',
+                                                                              b'"mood": ' + b"9" * 400)}, full),
+    ]
+    for name, before, steps in loads:
+        sc(name, before, steps)
+    # float("0.5") parses in Python; native's pyFloat reads JSON numbers only (M01 §3.7, §8 R8).
+    sc("load_dim_numeric_string", _efile(patience="0.5"), full,
+       native={"divergence": "R8-str-float", "throws_from_step": 1, "files_unchanged": True,
+               "bumps": []})
+
+    # ── Decay across dt (minutes unless noted), including backwards and huge ──
+    base = _efile(mood=0.1, energy=1.0, warmth=0.0, patience=0.3, at=T)
+    for label, dt in [("0", 0.0), ("minus_60s", -60.0), ("1e-6s", 1e-6), ("30s", 30.0),
+                      ("1", 60.0), ("7_5", 450.0), ("30", 1800.0), ("45", 2700.0), ("90", 5400.0),
+                      ("240", 14400.0), ("1e6", 6e7), ("1e12s", 1e12)]:
+        sc(f"decay_dt_{label}", base, [("decay", {}, T + dt), ("context", {}, T + dt),
+                                       ("context", {}, T + dt), ("context", {}, T + dt + 30.0)])
+    sc("decay_clock_backwards", _efile(at=T + 3600.0), [
+        ("context", {}, T), ("context", {}, T + 1800.0), ("context", {}, T - 86400.0)])
+    sc("decay_fractional_times", base, [("context", {}, T + 0.1), ("context", {}, T + 0.30000000000000004),
+                                        ("context", {}, T + 1234.5678)])
+
+    # ── Events ──
+    for name in list(J._EMO_DELTAS) + ["surprise", "", "Praise", "emotion_praise"]:
+        sc(f"event_{name or 'empty'}", {}, [("event", {"name": name}, T)])
+    for name in J._EMO_DELTAS:
+        sc(f"event_{name}_decayed", _efile(), [("event", {"name": name}, T)])
+    sc("event_magnitudes", _efile(), [("event", {"name": "praise", "mag": 2.5}, T),
+                                      ("event", {"name": "insult", "mag": -1.0}, T + 1),
+                                      ("event", {"name": "gratitude", "mag": 0.0}, T + 2)])
+    sc("event_clamp", _efile(mood=0.95, energy=0.02, warmth=0.99, patience=0.05, at=T),
+       [("event", {"name": "insult"}, T)] * 6 + [("event", {"name": "praise"}, T)] * 4
+       + [("event", {"name": "barge_in"}, T), ("context", {}, T)])
+    sc("event_bad_at", _efile(at="later"), [("event", {"name": "praise"}, T),
+                                            ("event", {"name": "surprise"}, T)])
+
+    # ── emotion_react corpus (one evolving state; insult > praise > thanks) ──
+    sc("react_corpus", {}, [("react", {"text": t}, T) for t in _REACT_TEXTS] + [("context", {}, T)])
+    sc("react_decaying", _efile(), [("react", {"text": t}, T + 600.0 * k)
+                                    for k, t in enumerate(["you're useless", "thanks", "well done",
+                                                           "shut up", "cheers"])])
+
+    # ── _emo_word ──
+    sc("word_table", {}, [("word", {"dim": d, "v": v}, T) for d in J._EMO_DIMS for v in _WORD_VALUES]
+       + [("word", {"dim": "Mood", "v": 0.5}, T), ("word", {"dim": "", "v": 0.5}, T)])
+
+    # ── emotion_context at exact band boundaries (dt = 0) ──
+    for b in (0.0, 0.2, 0.4, 0.6, 0.8, 1.0):
+        sc(f"context_all_{b}", _efile(mood=b, energy=b, warmth=b, patience=b, at=T), [("context", {}, T)])
+    sc("context_seed", {}, [("context", {}, T)])
+
+    # ── set_tone / tone_context ──
+    synthetic = ["", "unhurried, calm", ",,,", "  weird—desc ,x", "Café über-calm, x"]
+    for k, desc in enumerate(descs + synthetic):
+        sc(f"tone_{k:02d}", {}, [("set_tone", {"desc": desc}, T), ("tone_context", {}, T),
+                                 ("tone_context", {}, T + 89.99), ("tone_context", {}, T + 90.0),
+                                 ("tone_context", {}, T + 90.000001), ("tone_context", {}, T - 10.0)])
+    sc("tone_initial", {}, [("tone_context", {}, T)])
+    sc("tone_empty_keeps_previous", {}, [
+        ("set_tone", {"desc": descs[-1]}, T), ("set_tone", {"desc": ""}, T + 50.0),
+        ("tone_context", {}, T + 90.0), ("tone_context", {}, T + 95.0)])
+    sc("tone_set_directly", {}, [
+        ("set_last_tone", {"desc": descs[0], "at": 1000.0}, T), ("tone_context", {}, 1090.0),
+        ("tone_context", {}, 1090.0000001), ("set_last_tone", {"desc": "", "at": T}, T),
+        ("tone_context", {}, T)])
+    sc("tone_hurried_twice", _efile(), [("set_tone", {"desc": descs[0]}, T),
+                                        ("set_tone", {"desc": descs[0]}, T + 120.0),
+                                        ("tone_context", {}, T + 120.0)])
+    sc("tone_hurried_bad_emotions", _efile(at="later"), [
+        ("set_tone", {"desc": descs[0]}, T), ("tone_context", {}, T)])
+    return cases
+
+
+@suite("m1_emotions_tone")
+def emotions_tone(ctx):
+    rec = _Recorder(ctx.J)
+    return _emotion_cases(ctx, rec)
