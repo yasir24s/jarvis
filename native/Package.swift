@@ -16,7 +16,7 @@ let package = Package(
         .executable(name: "JARVIS", targets: ["JarvisApp"]),
     ],
     targets: [
-        // State, persona, emotions, prompt, dataset, security, routing. Foundation only.
+        // State primitives + (from M1) persona, emotions, prompt, dataset, security, routing.
         .target(name: "JarvisCore"),
 
         .executableTarget(
@@ -24,11 +24,19 @@ let package = Package(
             dependencies: ["JarvisCore"]
         ),
 
+        // Sandbox + golden-fixture loader shared by every test target. Foundation only —
+        // it must NOT import Testing (Testing.framework is only on the test targets' search path).
+        .target(
+            name: "JarvisTestSupport",
+            dependencies: ["JarvisCore"],
+            path: "Tests/JarvisTestSupport"
+        ),
+
         // Golden fixtures live in Tests/Fixtures and are located via #filePath, not
         // bundled as resources — they are produced by tools/golden.py from Python JARVIS.
         .testTarget(
             name: "JarvisCoreTests",
-            dependencies: ["JarvisCore"]
+            dependencies: ["JarvisCore", "JarvisTestSupport"]
         ),
     ]
 )
