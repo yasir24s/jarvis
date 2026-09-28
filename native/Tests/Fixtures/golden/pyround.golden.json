@@ -3,8 +3,8 @@
  "suite": "pyround",
  "generator": "native/tools/golden.py",
  "generated_from": {
-  "jarvis_py_sha256": "c091821a0c11eedb20d095bca9afc20abc54e646e40751fcb02ba54ff718bfe5",
-  "git_head": "fef66c1",
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
   "jarvis_py_dirty": false,
   "python": "3.14.2"
  },
