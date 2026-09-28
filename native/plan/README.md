@@ -184,6 +184,43 @@ Found while planning. None is fixed by this plan; native behaviour is in `DEVIAT
 - `periodic` is absent on macOS 27.2, but still in `_SUDO_ALLOW`.
 - Opus 5.5 refused a probe as "cyber", and the CLI fell back to claude-opus-4-8.
 
+## M0 build notes
+
+Integration decisions (D-25, D-26) and findings from building M0 (T0.1–T0.10).
+
+- **D-25. The implemented golden harness is canonical.** `native/tools/golden.py` as built
+  in M0 supersedes the §3.7 sketch: every fixture has an envelope with
+  `generated_from.jarvis_py_sha256`; paths are written as `${JARVIS_HOME}` tokens; time is
+  frozen by `ShimTime`. M1 suites plug in as `native/tools/golden_<x>.py` (registered with
+  `@suite`, discovered by the `golden_*.py` glob) and pin time with `ctx.at()`.
+- **D-26. Clock type.** M01's `JarvisClock` (`func now() -> Double`, in
+  `State/CoreProtocols.swift`) is canonical from M1 on. M0's
+  `JarvisLog.banner(now: Date = Date(), timeZone: TimeZone = .current)` stands as built; the
+  plan's `banner(clock:)` does not exist.
+- **A2.** Swift Testing counts test functions, not fixture cases: `Test run with 53 tests in
+  9 suites passed … with 34 known issues`. The per-case counts appear on each
+  parameterised test (for example `matchesPython(_:) with 428 test cases passed`), so
+  "N ≥ number of golden cases" is read against those lines.
+- **A12** needs `PYTHONUNBUFFERED=1`: piped stdout is block-buffered, so without it the
+  `… holds .jarvis.lock — waiting.` line is still in Python's buffer when the alarm kills it.
+- **Test rule.** Tests and checks never launch a fake or unsigned `*.app` (Gatekeeper shows a
+  "damaged" dialog on the user's screen). Launching the real signed `native/dist/JARVIS.app`
+  for acceptance is intended; the notarized framework `Python.app` is fine. Stop JARVIS with
+  `kill -TERM <pid>` (it logs `received SIGTERM — exiting.`, releases the lock, exits 0),
+  never with Apple Events (`osascript … quit` triggers an Automation prompt).
+- **T0.11** (`--permissions` probe) is deferred to M15. Until then `--permissions` exits 64
+  rather than falling through to the GUI.
+- **Flags.** `PyMath.round(x, n)` returns ±inf where Python raises `OverflowError`;
+  `PyMath.round(x)` (to `Int`) is a precondition failure on non-finite or out-of-range input.
+- **App order** (executor choice, differs from §3.9). `AppDelegate` configures the log sink and writes the banner before it
+  logs `activation policy: accessory` (read back from `NSApp`), so the line reaches
+  `logs/jarvis.log` (A9); §3.9 lists the log line before `JarvisLog.configure`.
+- **M0 status: done.** Commits 2af6e32 (scaffold, StatePaths), b8e3da8 (golden.py, paths
+  suite, parity inventory), 7a93659 (PyJSON, PyTime, PyMath, AtomicFile), 720d2bc
+  (`jarvis.py` lock patch), ea7c85f (InstanceLock, JarvisLog), 7ad11f2 (executable-path
+  test), and the commit adding this section (app shell, `build-app.sh`, A1–A13). Measured
+  RAM of the idle M0 app (menu-bar shell only, 2026-09-28): `footprint` 16 MB, RSS 25,488 KB.
+
 ## Open user decisions
 
 - Write `shouldSpeakReply` (text chat, M02–M04 §3.12) and `speakLocally` (sensitive routing

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>com.jarvis.assistant</string>
+	<key>CFBundleName</key>
+	<string>JARVIS</string>
+	<key>CFBundleDisplayName</key>
+	<string>JARVIS</string>
+	<key>CFBundleExecutable</key>
+	<string>JARVIS</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleShortVersionString</key>
+	<string>2.0.0</string>
+	<key>CFBundleVersion</key>
+	<string>0</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>26.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Local-first voice assistant. Runs on this Mac.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>JARVIS listens for your voice commands so it can respond and control your Mac.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>JARVIS transcribes your spoken commands.</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>JARVIS controls other apps on your behalf when you ask it to.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>JARVIS reads and adds your calendar events when you ask (via EventKit).</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>JARVIS reads and adds your calendar events when you ask.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>JARVIS adds reminders when you ask.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>JARVIS looks up a contact's number or email when you ask.</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>JARVIS reads, moves and saves files there when you ask.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>JARVIS reads, moves and saves files there when you ask.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>JARVIS reads, moves and saves files there when you ask.</string>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>JARVIS reads, moves and saves files there when you ask.</string>
+	<key>NSNetworkVolumesUsageDescription</key>
+	<string>JARVIS reads, moves and saves files there when you ask.</string>
+</dict>
+</plist>

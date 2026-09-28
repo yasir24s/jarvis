@@ -11,12 +11,12 @@ Line numbers refer to jarvis.py @ 68cd112.
   matches. They are only unique together with the **source** column. Where an integration
   decision covers the entry, it is shown as `→ D-n`.
 - **Status.** `approved` = approved in the judging ledger (D-3, D-14, D-15, D-18, D-21, and
-  X-1, X-2, X-8 via D-11; X-10 in part). `rejected` = ruled out by the ledger (X-5, D-11).
+  X-1, X-2, X-8 via D-11; X-10 in part; DEV-M0-01…03 at M0 judging). `rejected` = ruled out by the ledger (X-5, D-11).
   `resolved — parity since fef66c1` = Python was changed to match (D-12). Everything else is
   `proposed — decide at milestone start`. Where the ledger already rules on a related point,
   the reason column says so under **Ledger:**.
 - Consolidated 2026-09-28 by grepping each section for `DEV-`, `X-[0-9]`, `D1`–`D5`
-  (M01b), "deviation" and "improvement". Nothing here is built yet.
+  (M01b), "deviation" and "improvement". Nothing here is built yet except DEV-M0-01…03 (M0).
 
 | ID | Milestone | Python behaviour | Native behaviour | Reason | Fixture marker | Status | Source |
 |---|---|---|---|---|---|---|---|
@@ -62,6 +62,9 @@ Line numbers refer to jarvis.py @ 68cd112.
 | DEV-M14-04 | M14 | Non-integer `JARVIS_LOW_BATTERY` / `JARVIS_MEETING_ALERTS`: `int()` at import raises, JARVIS fails to start | Treated as 0 (off) + log line | Robust start | `fastpath_deviations.json` | `proposed — decide at milestone start` | M07-fastpath-M14-loops.md §8.1 |
 | DEV-M14-05 | M14 | `JARVIS_NO_HUD=1` ⇒ no lock observer ⇒ no unlock greeting | Observer independent of the HUD | Plan recommendation: decide (M07 §8.3 Q2) | `fastpath_deviations.json` | `proposed — decide at milestone start` | M07-fastpath-M14-loops.md §8.1 |
 | R9 → D-18 | M12 | Claude-path `emit` (jarvis.py:4949-4954) keeps speaking queued sentences after a barge-in; only the Ollama consumer (jarvis.py:4789) drops them | `SpeechQueue.cancelAll` drops queued sentences for both backends | Verified Python bug | `SpeechQueue` tests (T8.5 / A8); marked case to add | `approved` | M08-M13-voice-hud.md §2.2, §8 R9 |
+| DEV-M0-01 | M0 | `json.loads` keeps a lone surrogate escape (`"\ud800"`) as a lone code point in the `str` | Decoded as U+FFFD | Swift `String` cannot hold a lone surrogate (M01 §8 R6, accepted by the planner) | `pyjson.golden.json` cases whose expected block has `"native": {"divergence": "R6"}` (7); Python's bytes are checked under `withKnownIssue` in `PyJSONGoldenTests` | `approved` | M01-core-state-persona.md §3.1, §8 R6 |
+| DEV-M0-02 | M0 | `json.loads` accepts deep nesting (Python 3.14, C scanner: 50,000 levels parse, `RecursionError` at 100,000 — measured 2026-09-28) | Nesting > 512 (`PyJSON.maxDepth`) throws `.depth` | Bounded recursion in a hand-written parser (M01 §3.1 rule 7) | `pyjson.golden.json` cases with `"native": {"divergence": "depth"}` (2, depth 513); Python's result is checked under `withKnownIssue` in `PyJSONGoldenTests` | `approved` | M01-core-state-persona.md §3.1 rule 7 |
+| DEV-M0-03 | M0 | `datetime.fromisoformat` accepts every ISO 8601 form Python 3.11+ knows (basic format, week dates, `Z`, UTC offsets) | `PyTime.fromisoformat` parses only the naive forms JARVIS writes (`YYYY-MM-DD` and `YYYY-MM-DD?HH[:MM[:SS[(.|,)f…]]]`); basic format, ISO week dates, `Z` and any UTC offset return `nil` | JARVIS parses only naive local ISO strings it wrote itself (alarm keys; M00 §2.3 `isoformat`/`fromisoformat` row) | `pytime.golden.json` cases with `"native": {"divergence": "fromisoformat-subset", "result": null}` (4); Python's value is checked under `withKnownIssue` in `PyTimeGoldenTests` | `approved` | M00-foundation-and-M15-cutover.md §2.3, §3.6 |
 
 The M7 table gives one fixture for all 15 `DEV-M7-*` / `DEV-M14-*` rows (§8.1 heading:
 "fixture §4.2"). For the `DEV-M14-*` rows that marker was carried over as written; the
@@ -69,8 +72,8 @@ loop behaviours may need their own tests at M14.
 
 ## Counts
 
-42 entries: 10 `approved` (R3, X-1, X-2, X-8, R3 → D-15, R4 → D-14, DEV-M7-01, DEV-M7-02,
-DEV-M7-05, R9 → D-18), 1 `approved (overage kill-switch only)` (X-10), 1 `rejected` (X-5),
+45 entries: 13 `approved` (R3, X-1, X-2, X-8, R3 → D-15, R4 → D-14, DEV-M7-01, DEV-M7-02,
+DEV-M7-05, R9 → D-18, DEV-M0-01, DEV-M0-02, DEV-M0-03), 1 `approved (overage kill-switch only)` (X-10), 1 `rejected` (X-5),
 1 `resolved — parity since fef66c1` (R2 → D-12) and 29 `proposed — decide at milestone start`.
 
 ## Not registered: differences mentioned only in the M05 §3.5 tool table
