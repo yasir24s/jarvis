@@ -5733,8 +5733,33 @@ BANNER = r"""
   Self-hosted · Ollama brain · offline-capable
 """
 
+_instance_lock_fd = None
+
+def acquire_instance_lock():
+    """Single-instance guard shared with native JARVIS: both hold an flock on .jarvis.lock
+    for their whole life, so the two never write the shared state files at the same time."""
+    global _instance_lock_fd
+    if IS_WIN:
+        return
+    import fcntl
+    fd = os.open(os.path.join(HERE, ".jarvis.lock"), os.O_RDWR | os.O_CREAT, 0o600)
+    warned = False
+    while True:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            break
+        except BlockingIOError:
+            if not warned:
+                log("Another JARVIS instance holds .jarvis.lock — waiting.")
+                warned = True
+            time.sleep(5)
+    os.ftruncate(fd, 0)
+    os.write(fd, f"python {os.getpid()} {int(time.time())}\n".encode())
+    _instance_lock_fd = fd   # keep open (and locked) until the process exits
+
 def main():
     install_logging()
+    acquire_instance_lock()
     print(f"\n===== JARVIS starting {datetime.now():%Y-%m-%d %H:%M:%S} =====")
     print(BANNER)
 
