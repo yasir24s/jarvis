@@ -1,0 +1,1418 @@
+{
+ "schema": 1,
+ "suite": "m1b_bump",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "missing_file",
+   "input": {
+    "initial_b64": null,
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1786527001.25,
+      "key": "backend_claude",
+      "n": 1
+     },
+     {
+      "ts": 1786527002.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+      "native": null
+     },
+     {
+      "ts": 1786527001.25,
+      "key": "backend_claude",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEsCiAgImJhY2tlbmRfY2xhdWRlIjogMQogfQp9",
+      "native": null
+     },
+     {
+      "ts": 1786527002.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDIsCiAgImJhY2tlbmRfY2xhdWRlIjogMQogfQp9",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDIsCiAgImJhY2tlbmRfY2xhdWRlIjogMQogfQp9",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"interactions\": 2, \"backend_claude\": 1}"
+   }
+  },
+  {
+   "name": "missing_research_dir",
+   "input": {
+    "initial_b64": null,
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ],
+    "research_dir_missing": true
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"interactions\": 1}"
+   }
+  },
+  {
+   "name": "empty_object",
+   "input": {
+    "initial_b64": "e30=",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "speaker_pass",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "speaker_pass",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEsCiAgInNwZWFrZXJfcGFzcyI6IDEKIH0KfQ==",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEsCiAgInNwZWFrZXJfcGFzcyI6IDEKIH0KfQ==",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"interactions\": 1, \"speaker_pass\": 1}"
+   }
+  },
+  {
+   "name": "real_shaped_days_out_of_order",
+   "input": {
+    "initial_b64": "ewogIjIwMjYtMDgtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDE0LAogICJiYWNrZW5kX2NsYXVkZSI6IDExLAogICJiYWNrZW5kX2xvY2FsX3F3ZW4yXzVfM2JfIjogMywKICAidG9uZV9jYWxtX2FuZF9ldmVuIjogNSwKICAic3BlYWtlcl9wYXNzIjogOQogfSwKICIyMDI2LTA4LTA5IjogewogICJpbnRlcmFjdGlvbnMiOiAyLAogICJzdHRfc2VnbWVudHNfZHJvcHBlZCI6IDcKIH0sCiAiMjAyNi0wOC0xMiI6IHsKICAiaW50ZXJhY3Rpb25zIjogNCwKICAidG9uZV9xdWlldF9hbmRfc3ViZHVlZCI6IDEsCiAgInNwZWFrZXJfcmVqZWN0IjogMiwKICAid2FrZV9yZWplY3RlZF9mb3JlaWduX3ZvaWNlIjogMQogfSwKICIyMDI2LTA4LTExIjogewogICJwZXJzb25hbGl0eV9jb25zb2xpZGF0aW9ucyI6IDEsCiAgImVtb3Rpb25fdXNlcl91cmdlbnQiOiAzCiB9Cn0=",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "tone_hurried_and_tense",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "speaker_reject",
+      "n": 1
+     },
+     {
+      "ts": 1786613400.25,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1786613400.25,
+      "key": "backend_claude",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "wake_rejected_foreign_voice",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDE0LAogICJiYWNrZW5kX2NsYXVkZSI6IDExLAogICJiYWNrZW5kX2xvY2FsX3F3ZW4yXzVfM2JfIjogMywKICAidG9uZV9jYWxtX2FuZF9ldmVuIjogNSwKICAic3BlYWtlcl9wYXNzIjogOQogfSwKICIyMDI2LTA4LTA5IjogewogICJpbnRlcmFjdGlvbnMiOiAyLAogICJzdHRfc2VnbWVudHNfZHJvcHBlZCI6IDcKIH0sCiAiMjAyNi0wOC0xMiI6IHsKICAiaW50ZXJhY3Rpb25zIjogNSwKICAidG9uZV9xdWlldF9hbmRfc3ViZHVlZCI6IDEsCiAgInNwZWFrZXJfcmVqZWN0IjogMiwKICAid2FrZV9yZWplY3RlZF9mb3JlaWduX3ZvaWNlIjogMQogfSwKICIyMDI2LTA4LTExIjogewogICJwZXJzb25hbGl0eV9jb25zb2xpZGF0aW9ucyI6IDEsCiAgImVtb3Rpb25fdXNlcl91cmdlbnQiOiAzCiB9Cn0=",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "tone_hurried_and_tense",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDE0LAogICJiYWNrZW5kX2NsYXVkZSI6IDExLAogICJiYWNrZW5kX2xvY2FsX3F3ZW4yXzVfM2JfIjogMywKICAidG9uZV9jYWxtX2FuZF9ldmVuIjogNSwKICAic3BlYWtlcl9wYXNzIjogOQogfSwKICIyMDI2LTA4LTA5IjogewogICJpbnRlcmFjdGlvbnMiOiAyLAogICJzdHRfc2VnbWVudHNfZHJvcHBlZCI6IDcKIH0sCiAiMjAyNi0wOC0xMiI6IHsKICAiaW50ZXJhY3Rpb25zIjogNSwKICAidG9uZV9xdWlldF9hbmRfc3ViZHVlZCI6IDEsCiAgInNwZWFrZXJfcmVqZWN0IjogMiwKICAid2FrZV9yZWplY3RlZF9mb3JlaWduX3ZvaWNlIjogMSwKICAidG9uZV9odXJyaWVkX2FuZF90ZW5zZSI6IDEKIH0sCiAiMjAyNi0wOC0xMSI6IHsKICAicGVyc29uYWxpdHlfY29uc29saWRhdGlvbnMiOiAxLAogICJlbW90aW9uX3VzZXJfdXJnZW50IjogMwogfQp9",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "speaker_reject",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDE0LAogICJiYWNrZW5kX2NsYXVkZSI6IDExLAogICJiYWNrZW5kX2xvY2FsX3F3ZW4yXzVfM2JfIjogMywKICAidG9uZV9jYWxtX2FuZF9ldmVuIjogNSwKICAic3BlYWtlcl9wYXNzIjogOQogfSwKICIyMDI2LTA4LTA5IjogewogICJpbnRlcmFjdGlvbnMiOiAyLAogICJzdHRfc2VnbWVudHNfZHJvcHBlZCI6IDcKIH0sCiAiMjAyNi0wOC0xMiI6IHsKICAiaW50ZXJhY3Rpb25zIjogNSwKICAidG9uZV9xdWlldF9hbmRfc3ViZHVlZCI6IDEsCiAgInNwZWFrZXJfcmVqZWN0IjogMywKICAid2FrZV9yZWplY3RlZF9mb3JlaWduX3ZvaWNlIjogMSwKICAidG9uZV9odXJyaWVkX2FuZF90ZW5zZSI6IDEKIH0sCiAiMjAyNi0wOC0xMSI6IHsKICAicGVyc29uYWxpdHlfY29uc29saWRhdGlvbnMiOiAxLAogICJlbW90aW9uX3VzZXJfdXJnZW50IjogMwogfQp9",
+      "native": null
+     },
+     {
+      "ts": 1786613400.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-13",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDE0LAogICJiYWNrZW5kX2NsYXVkZSI6IDExLAogICJiYWNrZW5kX2xvY2FsX3F3ZW4yXzVfM2JfIjogMywKICAidG9uZV9jYWxtX2FuZF9ldmVuIjogNSwKICAic3BlYWtlcl9wYXNzIjogOQogfSwKICIyMDI2LTA4LTA5IjogewogICJpbnRlcmFjdGlvbnMiOiAyLAogICJzdHRfc2VnbWVudHNfZHJvcHBlZCI6IDcKIH0sCiAiMjAyNi0wOC0xMiI6IHsKICAiaW50ZXJhY3Rpb25zIjogNSwKICAidG9uZV9xdWlldF9hbmRfc3ViZHVlZCI6IDEsCiAgInNwZWFrZXJfcmVqZWN0IjogMywKICAid2FrZV9yZWplY3RlZF9mb3JlaWduX3ZvaWNlIjogMSwKICAidG9uZV9odXJyaWVkX2FuZF90ZW5zZSI6IDEKIH0sCiAiMjAyNi0wOC0xMSI6IHsKICAicGVyc29uYWxpdHlfY29uc29saWRhdGlvbnMiOiAxLAogICJlbW90aW9uX3VzZXJfdXJnZW50IjogMwogfSwKICIyMDI2LTA4LTEzIjogewogICJpbnRlcmFjdGlvbnMiOiAxCiB9Cn0=",
+      "native": null
+     },
+     {
+      "ts": 1786613400.25,
+      "key": "backend_claude",
+      "n": 1,
+      "day": "2026-08-13",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDE0LAogICJiYWNrZW5kX2NsYXVkZSI6IDExLAogICJiYWNrZW5kX2xvY2FsX3F3ZW4yXzVfM2JfIjogMywKICAidG9uZV9jYWxtX2FuZF9ldmVuIjogNSwKICAic3BlYWtlcl9wYXNzIjogOQogfSwKICIyMDI2LTA4LTA5IjogewogICJpbnRlcmFjdGlvbnMiOiAyLAogICJzdHRfc2VnbWVudHNfZHJvcHBlZCI6IDcKIH0sCiAiMjAyNi0wOC0xMiI6IHsKICAiaW50ZXJhY3Rpb25zIjogNSwKICAidG9uZV9xdWlldF9hbmRfc3ViZHVlZCI6IDEsCiAgInNwZWFrZXJfcmVqZWN0IjogMywKICAid2FrZV9yZWplY3RlZF9mb3JlaWduX3ZvaWNlIjogMSwKICAidG9uZV9odXJyaWVkX2FuZF90ZW5zZSI6IDEKIH0sCiAiMjAyNi0wOC0xMSI6IHsKICAicGVyc29uYWxpdHlfY29uc29saWRhdGlvbnMiOiAxLAogICJlbW90aW9uX3VzZXJfdXJnZW50IjogMwogfSwKICIyMDI2LTA4LTEzIjogewogICJpbnRlcmFjdGlvbnMiOiAxLAogICJiYWNrZW5kX2NsYXVkZSI6IDEKIH0KfQ==",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "wake_rejected_foreign_voice",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDE0LAogICJiYWNrZW5kX2NsYXVkZSI6IDExLAogICJiYWNrZW5kX2xvY2FsX3F3ZW4yXzVfM2JfIjogMywKICAidG9uZV9jYWxtX2FuZF9ldmVuIjogNSwKICAic3BlYWtlcl9wYXNzIjogOQogfSwKICIyMDI2LTA4LTA5IjogewogICJpbnRlcmFjdGlvbnMiOiAyLAogICJzdHRfc2VnbWVudHNfZHJvcHBlZCI6IDcKIH0sCiAiMjAyNi0wOC0xMiI6IHsKICAiaW50ZXJhY3Rpb25zIjogNSwKICAidG9uZV9xdWlldF9hbmRfc3ViZHVlZCI6IDEsCiAgInNwZWFrZXJfcmVqZWN0IjogMywKICAid2FrZV9yZWplY3RlZF9mb3JlaWduX3ZvaWNlIjogMiwKICAidG9uZV9odXJyaWVkX2FuZF90ZW5zZSI6IDEKIH0sCiAiMjAyNi0wOC0xMSI6IHsKICAicGVyc29uYWxpdHlfY29uc29saWRhdGlvbnMiOiAxLAogICJlbW90aW9uX3VzZXJfdXJnZW50IjogMwogfSwKICIyMDI2LTA4LTEzIjogewogICJpbnRlcmFjdGlvbnMiOiAxLAogICJiYWNrZW5kX2NsYXVkZSI6IDEKIH0KfQ==",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDE0LAogICJiYWNrZW5kX2NsYXVkZSI6IDExLAogICJiYWNrZW5kX2xvY2FsX3F3ZW4yXzVfM2JfIjogMywKICAidG9uZV9jYWxtX2FuZF9ldmVuIjogNSwKICAic3BlYWtlcl9wYXNzIjogOQogfSwKICIyMDI2LTA4LTA5IjogewogICJpbnRlcmFjdGlvbnMiOiAyLAogICJzdHRfc2VnbWVudHNfZHJvcHBlZCI6IDcKIH0sCiAiMjAyNi0wOC0xMiI6IHsKICAiaW50ZXJhY3Rpb25zIjogNSwKICAidG9uZV9xdWlldF9hbmRfc3ViZHVlZCI6IDEsCiAgInNwZWFrZXJfcmVqZWN0IjogMywKICAid2FrZV9yZWplY3RlZF9mb3JlaWduX3ZvaWNlIjogMiwKICAidG9uZV9odXJyaWVkX2FuZF90ZW5zZSI6IDEKIH0sCiAiMjAyNi0wOC0xMSI6IHsKICAicGVyc29uYWxpdHlfY29uc29saWRhdGlvbnMiOiAxLAogICJlbW90aW9uX3VzZXJfdXJnZW50IjogMwogfSwKICIyMDI2LTA4LTEzIjogewogICJpbnRlcmFjdGlvbnMiOiAxLAogICJiYWNrZW5kX2NsYXVkZSI6IDEKIH0KfQ==",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"interactions\": 5, \"tone_quiet_and_subdued\": 1, \"speaker_reject\": 3, \"wake_rejected_foreign_voice\": 2, \"tone_hurried_and_tense\": 1}"
+   }
+  },
+  {
+   "name": "real_shaped_compact_with_newline",
+   "input": {
+    "initial_b64": "eyIyMDI2LTA4LTEwIjogeyJpbnRlcmFjdGlvbnMiOiAxNCwgImJhY2tlbmRfY2xhdWRlIjogMTEsICJiYWNrZW5kX2xvY2FsX3F3ZW4yXzVfM2JfIjogMywgInRvbmVfY2FsbV9hbmRfZXZlbiI6IDUsICJzcGVha2VyX3Bhc3MiOiA5fSwgIjIwMjYtMDgtMDkiOiB7ImludGVyYWN0aW9ucyI6IDIsICJzdHRfc2VnbWVudHNfZHJvcHBlZCI6IDd9LCAiMjAyNi0wOC0xMiI6IHsiaW50ZXJhY3Rpb25zIjogNCwgInRvbmVfcXVpZXRfYW5kX3N1YmR1ZWQiOiAxLCAic3BlYWtlcl9yZWplY3QiOiAyLCAid2FrZV9yZWplY3RlZF9mb3JlaWduX3ZvaWNlIjogMX0sICIyMDI2LTA4LTExIjogeyJwZXJzb25hbGl0eV9jb25zb2xpZGF0aW9ucyI6IDEsICJlbW90aW9uX3VzZXJfdXJnZW50IjogM319Cg==",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDE0LAogICJiYWNrZW5kX2NsYXVkZSI6IDExLAogICJiYWNrZW5kX2xvY2FsX3F3ZW4yXzVfM2JfIjogMywKICAidG9uZV9jYWxtX2FuZF9ldmVuIjogNSwKICAic3BlYWtlcl9wYXNzIjogOQogfSwKICIyMDI2LTA4LTA5IjogewogICJpbnRlcmFjdGlvbnMiOiAyLAogICJzdHRfc2VnbWVudHNfZHJvcHBlZCI6IDcKIH0sCiAiMjAyNi0wOC0xMiI6IHsKICAiaW50ZXJhY3Rpb25zIjogNSwKICAidG9uZV9xdWlldF9hbmRfc3ViZHVlZCI6IDEsCiAgInNwZWFrZXJfcmVqZWN0IjogMiwKICAid2FrZV9yZWplY3RlZF9mb3JlaWduX3ZvaWNlIjogMQogfSwKICIyMDI2LTA4LTExIjogewogICJwZXJzb25hbGl0eV9jb25zb2xpZGF0aW9ucyI6IDEsCiAgImVtb3Rpb25fdXNlcl91cmdlbnQiOiAzCiB9Cn0=",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDE0LAogICJiYWNrZW5kX2NsYXVkZSI6IDExLAogICJiYWNrZW5kX2xvY2FsX3F3ZW4yXzVfM2JfIjogMywKICAidG9uZV9jYWxtX2FuZF9ldmVuIjogNSwKICAic3BlYWtlcl9wYXNzIjogOQogfSwKICIyMDI2LTA4LTA5IjogewogICJpbnRlcmFjdGlvbnMiOiAyLAogICJzdHRfc2VnbWVudHNfZHJvcHBlZCI6IDcKIH0sCiAiMjAyNi0wOC0xMiI6IHsKICAiaW50ZXJhY3Rpb25zIjogNSwKICAidG9uZV9xdWlldF9hbmRfc3ViZHVlZCI6IDEsCiAgInNwZWFrZXJfcmVqZWN0IjogMiwKICAid2FrZV9yZWplY3RlZF9mb3JlaWduX3ZvaWNlIjogMQogfSwKICIyMDI2LTA4LTExIjogewogICJwZXJzb25hbGl0eV9jb25zb2xpZGF0aW9ucyI6IDEsCiAgImVtb3Rpb25fdXNlcl91cmdlbnQiOiAzCiB9Cn0=",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"interactions\": 5, \"tone_quiet_and_subdued\": 1, \"speaker_reject\": 2, \"wake_rejected_foreign_voice\": 1}"
+   }
+  },
+  {
+   "name": "non_ascii_keys",
+   "input": {
+    "initial_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgInRvbmVfY2FmXHUwMGU5X1x1MDBmYyI6IDIsCiAgImVtb3Rpb25fXHVkODNkXHVkZTAwIjogMSwKICAiYVwiYlxcYy9cdTIwMjgiOiAxCiB9Cn0=",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "tone_café_ü",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "backend_émile_ä_",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "emotion_😀",
+      "n": 3
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "tone_café_ü",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgInRvbmVfY2FmXHUwMGU5X1x1MDBmYyI6IDMsCiAgImVtb3Rpb25fXHVkODNkXHVkZTAwIjogMSwKICAiYVwiYlxcYy9cdTIwMjgiOiAxCiB9Cn0=",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "backend_émile_ä_",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgInRvbmVfY2FmXHUwMGU5X1x1MDBmYyI6IDMsCiAgImVtb3Rpb25fXHVkODNkXHVkZTAwIjogMSwKICAiYVwiYlxcYy9cdTIwMjgiOiAxLAogICJiYWNrZW5kX1x1MDBlOW1pbGVfXHUwMGU0XyI6IDEKIH0KfQ==",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "emotion_😀",
+      "n": 3,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgInRvbmVfY2FmXHUwMGU5X1x1MDBmYyI6IDMsCiAgImVtb3Rpb25fXHVkODNkXHVkZTAwIjogNCwKICAiYVwiYlxcYy9cdTIwMjgiOiAxLAogICJiYWNrZW5kX1x1MDBlOW1pbGVfXHUwMGU0XyI6IDEKIH0KfQ==",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgInRvbmVfY2FmXHUwMGU5X1x1MDBmYyI6IDMsCiAgImVtb3Rpb25fXHVkODNkXHVkZTAwIjogNCwKICAiYVwiYlxcYy9cdTIwMjgiOiAxLAogICJiYWNrZW5kX1x1MDBlOW1pbGVfXHUwMGU0XyI6IDEKIH0KfQ==",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"tone_caf\\u00e9_\\u00fc\": 3, \"emotion_\\ud83d\\ude00\": 4, \"a\\\"b\\\\c/\\u2028\": 1, \"backend_\\u00e9mile_\\u00e4_\": 1}"
+   }
+  },
+  {
+   "name": "float_counter",
+   "input": {
+    "initial_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDIuMCwKICAieCI6IDAuMSwKICAiYmlnIjogMWUrMTYKIH0KfQ==",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "x",
+      "n": 2
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "big",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDMuMCwKICAieCI6IDAuMSwKICAiYmlnIjogMWUrMTYKIH0KfQ==",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "x",
+      "n": 2,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDMuMCwKICAieCI6IDIuMSwKICAiYmlnIjogMWUrMTYKIH0KfQ==",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "big",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDMuMCwKICAieCI6IDIuMSwKICAiYmlnIjogMWUrMTYKIH0KfQ==",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDMuMCwKICAieCI6IDIuMSwKICAiYmlnIjogMWUrMTYKIH0KfQ==",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"interactions\": 3.0, \"x\": 2.1, \"big\": 1e+16}"
+   }
+  },
+  {
+   "name": "bool_counter",
+   "input": {
+    "initial_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgInNwZWFrZXJfcGFzcyI6IHRydWUsCiAgInNwZWFrZXJfcmVqZWN0IjogZmFsc2UKIH0KfQ==",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "speaker_pass",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "speaker_reject",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "speaker_pass",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgInNwZWFrZXJfcGFzcyI6IDIsCiAgInNwZWFrZXJfcmVqZWN0IjogZmFsc2UKIH0KfQ==",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "speaker_reject",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgInNwZWFrZXJfcGFzcyI6IDIsCiAgInNwZWFrZXJfcmVqZWN0IjogMQogfQp9",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgInNwZWFrZXJfcGFzcyI6IDIsCiAgInNwZWFrZXJfcmVqZWN0IjogMQogfQp9",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"speaker_pass\": 2, \"speaker_reject\": 1}"
+   }
+  },
+  {
+   "name": "n_values",
+   "input": {
+    "initial_b64": null,
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "a",
+      "n": 5
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "b",
+      "n": 0
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "a",
+      "n": -2
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "c",
+      "n": -1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "a",
+      "n": 5,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImEiOiA1CiB9Cn0=",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "b",
+      "n": 0,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImEiOiA1LAogICJiIjogMAogfQp9",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "a",
+      "n": -2,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImEiOiAzLAogICJiIjogMAogfQp9",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "c",
+      "n": -1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImEiOiAzLAogICJiIjogMCwKICAiYyI6IC0xCiB9Cn0=",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImEiOiAzLAogICJiIjogMCwKICAiYyI6IC0xCiB9Cn0=",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"a\": 3, \"b\": 0, \"c\": -1}"
+   }
+  },
+  {
+   "name": "bigint_counter",
+   "input": {
+    "initial_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDkyMjMzNzIwMzY4NTQ3NzU4MDcsCiAgImh1Z2UiOiAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAsCiAgIm5lZyI6IC05MjIzMzcyMDM2ODU0Nzc1ODA4CiB9Cn0=",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "huge",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "neg",
+      "n": -1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": -2
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDkyMjMzNzIwMzY4NTQ3NzU4MDgsCiAgImh1Z2UiOiAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAsCiAgIm5lZyI6IC05MjIzMzcyMDM2ODU0Nzc1ODA4CiB9Cn0=",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "huge",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDkyMjMzNzIwMzY4NTQ3NzU4MDgsCiAgImh1Z2UiOiAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTEsCiAgIm5lZyI6IC05MjIzMzcyMDM2ODU0Nzc1ODA4CiB9Cn0=",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "neg",
+      "n": -1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDkyMjMzNzIwMzY4NTQ3NzU4MDgsCiAgImh1Z2UiOiAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTEsCiAgIm5lZyI6IC05MjIzMzcyMDM2ODU0Nzc1ODA5CiB9Cn0=",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": -2,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDkyMjMzNzIwMzY4NTQ3NzU4MDYsCiAgImh1Z2UiOiAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTEsCiAgIm5lZyI6IC05MjIzMzcyMDM2ODU0Nzc1ODA5CiB9Cn0=",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDkyMjMzNzIwMzY4NTQ3NzU4MDYsCiAgImh1Z2UiOiAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTEsCiAgIm5lZyI6IC05MjIzMzcyMDM2ODU0Nzc1ODA5CiB9Cn0=",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"interactions\": 9223372036854775806, \"huge\": 123456789012345678901234567891, \"neg\": -9223372036854775809}"
+   }
+  },
+  {
+   "name": "nan_inf_counter",
+   "input": {
+    "initial_b64": "eyIyMDI2LTA4LTEyIjogeyJhIjogTmFOLCAiYiI6IEluZmluaXR5LCAiYyI6IC1JbmZpbml0eX19",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "a",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "b",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "c",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "a",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImEiOiBOYU4sCiAgImIiOiBJbmZpbml0eSwKICAiYyI6IC1JbmZpbml0eQogfQp9",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "b",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImEiOiBOYU4sCiAgImIiOiBJbmZpbml0eSwKICAiYyI6IC1JbmZpbml0eQogfQp9",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "c",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImEiOiBOYU4sCiAgImIiOiBJbmZpbml0eSwKICAiYyI6IC1JbmZpbml0eQogfQp9",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImEiOiBOYU4sCiAgImIiOiBJbmZpbml0eSwKICAiYyI6IC1JbmZpbml0eQogfQp9",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"a\": NaN, \"b\": Infinity, \"c\": -Infinity}"
+   }
+  },
+  {
+   "name": "other_values_preserved",
+   "input": {
+    "initial_b64": "ewogIm1ldGEiOiB7CiAgIm5vdGUiOiAic3ludGhldGljIiwKICAibGlzdCI6IFsKICAgMSwKICAgMi41LAogICBudWxsLAogICB0cnVlLAogICB7fSwKICAgW10KICBdCiB9LAogIjIwMjYtMDgtMDEiOiB7CiAgIngiOiAxZS0wNywKICAieSI6IC0wLjAKIH0sCiAiMjAyNi0wOC0xMiI6IHt9Cn0=",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIm1ldGEiOiB7CiAgIm5vdGUiOiAic3ludGhldGljIiwKICAibGlzdCI6IFsKICAgMSwKICAgMi41LAogICBudWxsLAogICB0cnVlLAogICB7fSwKICAgW10KICBdCiB9LAogIjIwMjYtMDgtMDEiOiB7CiAgIngiOiAxZS0wNywKICAieSI6IC0wLjAKIH0sCiAiMjAyNi0wOC0xMiI6IHsKICAiaW50ZXJhY3Rpb25zIjogMQogfQp9",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIm1ldGEiOiB7CiAgIm5vdGUiOiAic3ludGhldGljIiwKICAibGlzdCI6IFsKICAgMSwKICAgMi41LAogICBudWxsLAogICB0cnVlLAogICB7fSwKICAgW10KICBdCiB9LAogIjIwMjYtMDgtMDEiOiB7CiAgIngiOiAxZS0wNywKICAieSI6IC0wLjAKIH0sCiAiMjAyNi0wOC0xMiI6IHsKICAiaW50ZXJhY3Rpb25zIjogMQogfQp9",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"interactions\": 1}"
+   }
+  },
+  {
+   "name": "duplicate_keys",
+   "input": {
+    "initial_b64": "eyIyMDI2LTA4LTEyIjogeyJhIjogMSwgImIiOiAyLCAiYSI6IDV9LCAiMjAyNi0wOC0xMSI6IHsieiI6IDF9LCAiMjAyNi0wOC0xMiI6IHsiYSI6IDcsICJjIjogMX19",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "a",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "d",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "a",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImEiOiA4LAogICJjIjogMQogfSwKICIyMDI2LTA4LTExIjogewogICJ6IjogMQogfQp9",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "d",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImEiOiA4LAogICJjIjogMSwKICAiZCI6IDEKIH0sCiAiMjAyNi0wOC0xMSI6IHsKICAieiI6IDEKIH0KfQ==",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImEiOiA4LAogICJjIjogMSwKICAiZCI6IDEKIH0sCiAiMjAyNi0wOC0xMSI6IHsKICAieiI6IDEKIH0KfQ==",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"a\": 8, \"c\": 1, \"d\": 1}"
+   }
+  },
+  {
+   "name": "rollover_bst_midnight",
+   "input": {
+    "initial_b64": "ewogIjIwMjYtMDgtMjAiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+    "steps": [
+     {
+      "ts": 1787266799.5,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1787266800.0,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1787266801.0,
+      "key": "speaker_pass",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1787266799.5,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-20",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMjAiOiB7CiAgImludGVyYWN0aW9ucyI6IDIKIH0KfQ==",
+      "native": null
+     },
+     {
+      "ts": 1787266800.0,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-21",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMjAiOiB7CiAgImludGVyYWN0aW9ucyI6IDIKIH0sCiAiMjAyNi0wOC0yMSI6IHsKICAiaW50ZXJhY3Rpb25zIjogMQogfQp9",
+      "native": null
+     },
+     {
+      "ts": 1787266801.0,
+      "key": "speaker_pass",
+      "n": 1,
+      "day": "2026-08-21",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMjAiOiB7CiAgImludGVyYWN0aW9ucyI6IDIKIH0sCiAiMjAyNi0wOC0yMSI6IHsKICAiaW50ZXJhY3Rpb25zIjogMSwKICAic3BlYWtlcl9wYXNzIjogMQogfQp9",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMjAiOiB7CiAgImludGVyYWN0aW9ucyI6IDIKIH0sCiAiMjAyNi0wOC0yMSI6IHsKICAiaW50ZXJhY3Rpb25zIjogMSwKICAic3BlYWtlcl9wYXNzIjogMQogfQp9",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"interactions\": 1, \"speaker_pass\": 1}"
+   }
+  },
+  {
+   "name": "rollover_gmt_midnight",
+   "input": {
+    "initial_b64": null,
+    "steps": [
+     {
+      "ts": 1794355199.0,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1794355200.0,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1794355199.0,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-11-10",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMTEtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+      "native": null
+     },
+     {
+      "ts": 1794355200.0,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-11-11",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMTEtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0sCiAiMjAyNi0xMS0xMSI6IHsKICAiaW50ZXJhY3Rpb25zIjogMQogfQp9",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMTEtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0sCiAiMjAyNi0xMS0xMSI6IHsKICAiaW50ZXJhY3Rpb25zIjogMQogfQp9",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"interactions\": 1}"
+   }
+  },
+  {
+   "name": "dst_end_day",
+   "input": {
+    "initial_b64": null,
+    "steps": [
+     {
+      "ts": 1792882799.0,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1792882800.0,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1792891800.0,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1792972799.0,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1792972800.0,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1792882799.0,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-10-24",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMTAtMjQiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+      "native": null
+     },
+     {
+      "ts": 1792882800.0,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-10-25",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMTAtMjQiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0sCiAiMjAyNi0xMC0yNSI6IHsKICAiaW50ZXJhY3Rpb25zIjogMQogfQp9",
+      "native": null
+     },
+     {
+      "ts": 1792891800.0,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-10-25",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMTAtMjQiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0sCiAiMjAyNi0xMC0yNSI6IHsKICAiaW50ZXJhY3Rpb25zIjogMgogfQp9",
+      "native": null
+     },
+     {
+      "ts": 1792972799.0,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-10-25",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMTAtMjQiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0sCiAiMjAyNi0xMC0yNSI6IHsKICAiaW50ZXJhY3Rpb25zIjogMwogfQp9",
+      "native": null
+     },
+     {
+      "ts": 1792972800.0,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-10-26",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMTAtMjQiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0sCiAiMjAyNi0xMC0yNSI6IHsKICAiaW50ZXJhY3Rpb25zIjogMwogfSwKICIyMDI2LTEwLTI2IjogewogICJpbnRlcmFjdGlvbnMiOiAxCiB9Cn0=",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMTAtMjQiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0sCiAiMjAyNi0xMC0yNSI6IHsKICAiaW50ZXJhY3Rpb25zIjogMwogfSwKICIyMDI2LTEwLTI2IjogewogICJpbnRlcmFjdGlvbnMiOiAxCiB9Cn0=",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"interactions\": 1}"
+   }
+  },
+  {
+   "name": "non_dict_root",
+   "input": {
+    "initial_b64": "W10=",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": "Research bump: 'list' object has no attribute 'get'",
+      "python_wrote": false,
+      "after_b64": "W10=",
+      "native": null
+     }
+    ],
+    "final_b64": "W10=",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{}"
+   }
+  },
+  {
+   "name": "non_dict_root_number",
+   "input": {
+    "initial_b64": "Nw==",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": "Research bump: 'int' object has no attribute 'get'",
+      "python_wrote": false,
+      "after_b64": "Nw==",
+      "native": null
+     }
+    ],
+    "final_b64": "Nw==",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{}"
+   }
+  },
+  {
+   "name": "non_dict_day_value",
+   "input": {
+    "initial_b64": "ewogIjIwMjYtMDgtMTEiOiB7CiAgImEiOiAxCiB9LAogIjIwMjYtMDgtMTIiOiBbCiAgMSwKICAyCiBdCn0=",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1786440600.25,
+      "key": "a",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": "Research bump: 'list' object has no attribute 'get'",
+      "python_wrote": false,
+      "after_b64": "ewogIjIwMjYtMDgtMTEiOiB7CiAgImEiOiAxCiB9LAogIjIwMjYtMDgtMTIiOiBbCiAgMSwKICAyCiBdCn0=",
+      "native": null
+     },
+     {
+      "ts": 1786440600.25,
+      "key": "a",
+      "n": 1,
+      "day": "2026-08-11",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTEiOiB7CiAgImEiOiAyCiB9LAogIjIwMjYtMDgtMTIiOiBbCiAgMSwKICAyCiBdCn0=",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTEiOiB7CiAgImEiOiAyCiB9LAogIjIwMjYtMDgtMTIiOiBbCiAgMSwKICAyCiBdCn0=",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"a\": 2}"
+   }
+  },
+  {
+   "name": "non_dict_day_string",
+   "input": {
+    "initial_b64": "ewogIjIwMjYtMDgtMTIiOiAieCIKfQ==",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": "Research bump: 'str' object has no attribute 'get'",
+      "python_wrote": false,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiAieCIKfQ==",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiAieCIKfQ==",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "\"x\""
+   }
+  },
+  {
+   "name": "non_numeric_counter",
+   "input": {
+    "initial_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6ICI3IiwKICAibiI6IG51bGwsCiAgImwiOiBbCiAgIDEKICBdCiB9Cn0=",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "n",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "l",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "fresh",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": "Research bump: can only concatenate str (not \"int\") to str",
+      "python_wrote": false,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6ICI3IiwKICAibiI6IG51bGwsCiAgImwiOiBbCiAgIDEKICBdCiB9Cn0=",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "n",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": "Research bump: unsupported operand type(s) for +: 'NoneType' and 'int'",
+      "python_wrote": false,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6ICI3IiwKICAibiI6IG51bGwsCiAgImwiOiBbCiAgIDEKICBdCiB9Cn0=",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "l",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": "Research bump: can only concatenate list (not \"int\") to list",
+      "python_wrote": false,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6ICI3IiwKICAibiI6IG51bGwsCiAgImwiOiBbCiAgIDEKICBdCiB9Cn0=",
+      "native": null
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "fresh",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6ICI3IiwKICAibiI6IG51bGwsCiAgImwiOiBbCiAgIDEKICBdLAogICJmcmVzaCI6IDEKIH0KfQ==",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6ICI3IiwKICAibiI6IG51bGwsCiAgImwiOiBbCiAgIDEKICBdLAogICJmcmVzaCI6IDEKIH0KfQ==",
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{\"interactions\": \"7\", \"n\": null, \"l\": [1], \"fresh\": 1}"
+   }
+  },
+  {
+   "name": "truncated_json",
+   "input": {
+    "initial_b64": "ewogIjIwMjYtMDgtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDE0LAogICJiYWNrZW5kX2NsYXVkZSI6IDExLAogICJiYWNrZW5kX2xvY2FsX3F3ZW4yXzVfM2JfIjogMywKICAidG9uZV9jYWxtX2FuZF9ldmVuIjogNSwKICAic3BlYWtlcl9wYXNzIjogOQogfSwKICIyMDI2LTA4LTA5IjogewogICJpbnRlcmFjdGlvbnMiOiAyLAogICJzdHRfc2VnbWVudHNfZHJvcHBlZCI6IDcKIA==",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+      "native": {
+       "deviation": "D1",
+       "quarantine_b64": "ewogIjIwMjYtMDgtMTAiOiB7CiAgImludGVyYWN0aW9ucyI6IDE0LAogICJiYWNrZW5kX2NsYXVkZSI6IDExLAogICJiYWNrZW5kX2xvY2FsX3F3ZW4yXzVfM2JfIjogMywKICAidG9uZV9jYWxtX2FuZF9ldmVuIjogNSwKICAic3BlYWtlcl9wYXNzIjogOQogfSwKICIyMDI2LTA4LTA5IjogewogICJpbnRlcmFjdGlvbnMiOiAyLAogICJzdHRfc2VnbWVudHNfZHJvcHBlZCI6IDcKIA==",
+       "quarantine_name": "usage.json.corrupt-1786527000"
+      }
+     },
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDIKIH0KfQ==",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDIKIH0KfQ==",
+    "parse_failure": "JSONDecodeError",
+    "deviation": "D1",
+    "usage_today_json": "{\"interactions\": 2}"
+   }
+  },
+  {
+   "name": "garbage_text",
+   "input": {
+    "initial_b64": "bm90IGpzb24gYXQgYWxsCg==",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+      "native": {
+       "deviation": "D1",
+       "quarantine_b64": "bm90IGpzb24gYXQgYWxsCg==",
+       "quarantine_name": "usage.json.corrupt-1786527000"
+      }
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+    "parse_failure": "JSONDecodeError",
+    "deviation": "D1",
+    "usage_today_json": "{\"interactions\": 1}"
+   }
+  },
+  {
+   "name": "invalid_utf8",
+   "input": {
+    "initial_b64": "eyIyMDI2LTA4LTExIjogeyJ4/yI6IDF9fQ==",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+      "native": {
+       "deviation": "D1",
+       "quarantine_b64": "eyIyMDI2LTA4LTExIjogeyJ4/yI6IDF9fQ==",
+       "quarantine_name": "usage.json.corrupt-1786527000"
+      }
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+    "parse_failure": "UnicodeDecodeError",
+    "deviation": "D1",
+    "usage_today_json": "{\"interactions\": 1}"
+   }
+  },
+  {
+   "name": "utf8_bom",
+   "input": {
+    "initial_b64": "77u/eyIyMDI2LTA4LTExIjogeyJ4IjogMX19",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+      "native": {
+       "deviation": "D1",
+       "quarantine_b64": "77u/eyIyMDI2LTA4LTExIjogeyJ4IjogMX19",
+       "quarantine_name": "usage.json.corrupt-1786527000"
+      }
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+    "parse_failure": "JSONDecodeError",
+    "deviation": "D1",
+    "usage_today_json": "{\"interactions\": 1}"
+   }
+  },
+  {
+   "name": "empty_file",
+   "input": {
+    "initial_b64": "",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+      "native": null
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+    "parse_failure": "JSONDecodeError",
+    "deviation": null,
+    "usage_today_json": "{\"interactions\": 1}"
+   }
+  },
+  {
+   "name": "whitespace_only_file",
+   "input": {
+    "initial_b64": "IAo=",
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ]
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": null,
+      "python_wrote": true,
+      "after_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+      "native": {
+       "deviation": "D1",
+       "quarantine_b64": "IAo=",
+       "quarantine_name": "usage.json.corrupt-1786527000"
+      }
+     }
+    ],
+    "final_b64": "ewogIjIwMjYtMDgtMTIiOiB7CiAgImludGVyYWN0aW9ucyI6IDEKIH0KfQ==",
+    "parse_failure": "JSONDecodeError",
+    "deviation": "D1",
+    "usage_today_json": "{\"interactions\": 1}"
+   }
+  },
+  {
+   "name": "usage_is_directory",
+   "input": {
+    "initial_b64": null,
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1
+     }
+    ],
+    "usage_is_directory": true
+   },
+   "expected": {
+    "steps": [
+     {
+      "ts": 1786527000.25,
+      "key": "interactions",
+      "n": 1,
+      "day": "2026-08-12",
+      "error": "Research bump: [Errno 21] Is a directory: '${JARVIS_HOME}/research/usage.json'",
+      "python_wrote": false,
+      "after_b64": null,
+      "native": null
+     }
+    ],
+    "final_b64": null,
+    "parse_failure": null,
+    "deviation": null,
+    "usage_today_json": "{}"
+   }
+  }
+ ]
+}
