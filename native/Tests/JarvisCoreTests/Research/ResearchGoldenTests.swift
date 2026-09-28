@@ -295,3 +295,128 @@ final class RecordedCalls: @unchecked Sendable {
 
     var all: [(args: [String], timeout: Double)] { lock.withLock { calls } }
 }
+
+// MARK: - m1b_bump
+
+@Suite("Research golden: usage.json bumps (m1b_bump)")
+struct ResearchBumpGoldenTests {
+    @Test(arguments: try Golden.cases("m1b_bump"))
+    func matchesPython(_ c: GoldenCase) throws {
+        let sb = try ResearchSandbox()
+        defer { sb.remove() }
+        let fm = FileManager.default
+        let usage = sb.paths.usage
+        let usagePath = usage.path(percentEncoded: false)
+        if c.input["research_dir_missing"] == .bool(true) {
+            try fm.removeItem(at: sb.paths.dir)
+        }
+        if c.input["usage_is_directory"] == .bool(true) {
+            try fm.createDirectory(at: usage, withIntermediateDirectories: false)
+        }
+        if let initial = ResearchFixture.data(c.input, "initial_b64") {
+            try initial.write(to: usage)
+        }
+        let clock = ManualClock(0)
+        let london = try #require(TimeZone(identifier: "Europe/London"))
+        let rclock = ResearchClock(clock, timeZone: london)
+        let store: any ResearchCounting = UsageStore(paths: sb.paths, clock: rclock)
+
+        let steps = try #require(c.expected.array("steps")).compactMap(\.objectValue)
+        for (k, step) in steps.enumerated() {
+            let ts = try #require(step.double("ts"))
+            let key = try #require(step.string("key"))
+            let n = try #require(step.int("n"))
+            #expect(rclock.localDate(ts) == step.string("day"), "step \(k) day")
+            let before = Self.regularFile(usagePath)
+            clock.set(ts)
+            store.bump(key, by: Int(n))                     // the ResearchCounting path
+            let after = Self.regularFile(usagePath)
+            if step["python_wrote"] == .bool(true) {
+                #expect(after == ResearchFixture.data(step, "after_b64"), "step \(k) bytes")
+            } else {
+                #expect(after == before, "step \(k): Python wrote nothing, native must not either")
+                #expect(step.string("after_b64").flatMap { Data(base64Encoded: $0) } == before)
+            }
+            if let native = step.object("native") {
+                // D1 (positive): the unparseable original is kept, byte for byte, once.
+                #expect(native.string("deviation") == "D1")
+                let name = try #require(native.string("quarantine_name"))
+                let kept = sb.paths.dir.appending(path: name, directoryHint: .notDirectory)
+                #expect(Self.regularFile(kept.path(percentEncoded: false))
+                        == ResearchFixture.data(native, "quarantine_b64"))
+                withKnownIssue("D1: Python keeps no copy of the unparseable usage.json") {
+                    let names = try fm.contentsOfDirectory(atPath: sb.paths.dir.path(percentEncoded: false))
+                    #expect(names == ["usage.json"])
+                }
+            }
+        }
+        #expect(Self.regularFile(usagePath) == ResearchFixture.data(c.expected, "final_b64"))
+        let names = (try? fm.contentsOfDirectory(atPath: sb.paths.dir.path(percentEncoded: false))) ?? []
+        #expect(!names.contains { $0.contains(".jarvis-tmp.") }, "no temp file left behind (D3)")
+        let quarantined = names.filter { $0.hasPrefix("usage.json.corrupt-") }
+        #expect(quarantined.count == (c.expected.string("deviation") == "D1" ? 1 : 0))
+
+        // research_snapshot's usage_today for the last step's day.
+        let lastDay = try #require(steps.last?.string("day"))
+        let today = UsageStore(paths: sb.paths, clock: rclock).day(lastDay)
+        #expect(PyJSON.dumps(today) == c.expected.string("usage_today_json"))
+    }
+
+    /// The bytes of a regular file; nil if missing or not a regular file (os.path.isfile).
+    static func regularFile(_ path: String) -> Data? {
+        var st = stat()
+        guard stat(path, &st) == 0, st.st_mode & S_IFMT == S_IFREG else { return nil }
+        return FileManager.default.contents(atPath: path)
+    }
+}
+
+// MARK: - m1b_last_date
+
+@Suite("Research golden: metrics.jsonl last date and append (m1b_last_date)")
+struct ResearchLastDateGoldenTests {
+    @Test(arguments: try Golden.cases("m1b_last_date").filter { !$0.expected.has("python_after_b64") })
+    func lastDateMatchesPython(_ c: GoldenCase) throws {
+        let sb = try ResearchSandbox()
+        defer { sb.remove() }
+        if let data = ResearchFixture.data(c.input, "b64") {
+            try data.write(to: sb.paths.metrics)
+        }
+        let got = MetricsLog(paths: sb.paths).lastDate()
+        let python = try #require(c.expected.string("python"))
+        #expect(got == c.expected.string("native"))
+        if c.expected.string("deviation") == "D2" {
+            #expect(python == "" && got != "", "D2: the full last line is read")
+            withKnownIssue("D2: Python reads only the last 8 KB, so this last row reads \"\"") {
+                #expect(got == python)
+            }
+        } else {
+            #expect(got == python)
+        }
+    }
+
+    @Test(arguments: try Golden.cases("m1b_last_date").filter { $0.expected.has("python_after_b64") })
+    func appendMatchesPython(_ c: GoldenCase) throws {
+        let sb = try ResearchSandbox()
+        defer { sb.remove() }
+        if let data = ResearchFixture.data(c.input, "initial_b64") {
+            try data.write(to: sb.paths.metrics)
+        }
+        let row = try #require(ResearchFixture.data(c.input, "append_line_b64"))
+        let log = MetricsLog(paths: sb.paths)
+        try log.append(String(decoding: row, as: UTF8.self))
+        let after = FileManager.default.contents(atPath: sb.paths.metrics.path(percentEncoded: false))
+        let native = try #require(c.expected.object("native"))
+        let pythonAfter = ResearchFixture.data(c.expected, "python_after_b64")
+        #expect(after == ResearchFixture.data(native, "after_b64"))
+        #expect(log.lastDate() == native.string("last_date"))
+        if native.string("deviation") == "D4" {
+            #expect(c.expected.string("python") == "", "Python's merged line reads as no date")
+            withKnownIssue("D4: Python appends straight after the dangling line and merges them") {
+                #expect(after == pythonAfter)
+            }
+        } else {
+            #expect(after == pythonAfter)
+            #expect(log.lastDate() == c.expected.string("python"))
+        }
+    }
+}
