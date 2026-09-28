@@ -58,6 +58,26 @@ public enum AtomicFile {
         }
     }
 
+    /// Deletes leftover `write` temp files (`.<name>.jarvis-tmp.XXXXXXXX`, regular files only,
+    /// symlinks and directories are never touched) directly inside `dir` whose mtime is more
+    /// than `age` seconds before `now` (M01 §3.5 step 6). Returns the removed names, sorted.
+    /// A crash between `mkstemp` and `rename` is the only way one survives.
+    @discardableResult
+    public static func removeStaleTemps(in dir: String, olderThan age: Double, now: Double) -> [String] {
+        guard let names = try? FileManager.default.contentsOfDirectory(atPath: dir) else { return [] }
+        var removed: [String] = []
+        for name in names where name.hasPrefix(".") && name.contains(".jarvis-tmp.") {
+            let path = (dir.hasSuffix("/") ? dir : dir + "/") + name
+            var st = stat()
+            guard lstat(path, &st) == 0, st.st_mode & S_IFMT == S_IFREG else { continue }
+            let mtime = Double(st.st_mtimespec.tv_sec) + Double(st.st_mtimespec.tv_nsec) / 1e9
+            if now - mtime > age && unlink(path) == 0 {
+                removed.append(name)
+            }
+        }
+        return removed.sorted()
+    }
+
     /// Python "a"-mode append of one line (metrics.jsonl, jarvis_notes.txt): opens with
     /// O_WRONLY|O_APPEND|O_CREAT|O_CLOEXEC (a new file gets 0o666 & ~umask, like Python),
     /// writes `line + "\n"` as UTF-8 in one write(2) (retried only on a short write), closes.
