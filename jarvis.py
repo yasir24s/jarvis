@@ -1233,6 +1233,14 @@ _HOME = os.path.expanduser("~")
 _SYS_ROOTS = ("/System", "/Library", "/usr", "/bin", "/sbin", "/etc", "/var", "/private", "/opt")
 def _in_home(p):
     return os.path.abspath(p).startswith(_HOME + os.sep)
+_PERSIST_FILES = (".zshrc", ".zprofile", ".zshenv", ".zlogin", ".bashrc", ".bash_profile", ".profile")
+_PERSIST_DIRS  = ("Library/LaunchAgents", ".ssh", "Library/Keychains", ".claude")
+def _persistence_path(p):
+    """Shell startup / LaunchAgent / credential target (symlinks resolved) → confirm even in home."""
+    a, h = os.path.realpath(p).lower(), os.path.realpath(_HOME)   # lower(): APFS is case-insensitive
+    files = [os.path.join(h, f).lower() for f in _PERSIST_FILES]
+    dirs  = [os.path.join(h, d).lower() for d in _PERSIST_DIRS]
+    return a in files or any(a == d or a.startswith(d + os.sep) for d in dirs)
 def _is_system_path(p):
     a = os.path.abspath(p)
     return a == "/" or a == _HOME or any(a == r or a.startswith(r + os.sep) for r in _SYS_ROOTS)
@@ -2778,6 +2786,9 @@ def _move_file(src, dst):
             return f"Moved {os.path.basename(s)} to {os.path.basename(d)}, sir."
         except Exception as e:
             return f"Move failed, sir: {e}"
+    into = os.path.join(d, os.path.basename(s.rstrip(os.sep))) if os.path.isdir(d) else d
+    if _persistence_path(d) or _persistence_path(into):   # startup / credential destination → confirm
+        return _gate(f"That will move {os.path.basename(s)} into a startup or credential location", _do)
     if clobber:
         return _gate(f"That will overwrite {os.path.basename(d)}", _do)
     if not (_in_home(s) and _in_home(d)):
@@ -2803,6 +2814,8 @@ def _write_file(path, content):
             return f"Wrote {os.path.basename(a)}, sir."
         except Exception as e:
             return f"Write failed, sir: {e}"
+    if _persistence_path(a):                                       # startup / credential → confirm
+        return _gate(f"That will write {os.path.basename(a)}, a startup or credential file", _do)
     if not exists or a in _written_this_session or _in_home(a):   # new / ours / in-home → instant
         return _do()
     return _gate(f"That will overwrite {os.path.basename(a)} outside your home folder", _do)
@@ -4844,7 +4857,9 @@ EXECUTOR_TOOLS  = {"run_command", "run_applescript", "run_powershell",
                    "send_message", "send_email", "type_text", "run_shortcut",
                    # Self-writing personality: an injected page must never get to
                    # redefine who JARVIS is or plant instructions in his prompt.
-                   "personality_note", "personality_rewrite"}
+                   "personality_note", "personality_rewrite",
+                   # File tools: an injected page must never plant code in ~/.zshrc or a LaunchAgent.
+                   "write_file", "delete_file", "move_file"}
 
 # Which backend served the most recent request (ask JARVIS "which model are you using").
 LAST_BACKEND = {"name": "local", "at": 0.0}

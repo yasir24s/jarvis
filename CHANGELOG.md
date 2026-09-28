@@ -1,3 +1,19 @@
+# JARVIS Changelog — 2026-09-28 (injection guard covers file tools)
+
+### Security: untrusted content could plant persistent code
+- The chain: content JARVIS reads (a web page, the screen, the clipboard, a file, messages)
+  could steer the model into `write_file`/`move_file`, which were not in `EXECUTOR_TOOLS`,
+  and every in-home write was instant, including overwriting `~/.zshrc` or dropping a plist
+  in `~/Library/LaunchAgents`. That is persistent code execution at the next shell or login.
+- `write_file`, `delete_file` and `move_file` are now in `EXECUTOR_TOOLS`, so both backends
+  (Claude MCP bridge and the local loop) block them for the rest of a turn once an untrusted
+  tool has run.
+- New `_persistence_path()`: a write, or a move destination, that resolves (expanduser +
+  realpath, so symlinks count; case-insensitive) to a shell startup file (`~/.zshrc`,
+  `.zprofile`, `.zshenv`, `.zlogin`, `.bashrc`, `.bash_profile`, `.profile`) or anywhere
+  under `~/Library/LaunchAgents`, `~/.ssh`, `~/Library/Keychains` or `~/.claude` now goes
+  through the spoken confirmation gate, even inside home. Other file behaviour is unchanged.
+
 # JARVIS Changelog — 2026-07-22 (music, self-correcting STT, risk-tiered actions)
 
 ### Music.app control
