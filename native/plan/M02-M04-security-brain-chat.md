@@ -1250,6 +1250,10 @@ checks observed and a commit on the milestone branch.
   come to 5,753, so the turn is offered CORE-22 (3,393 tokens, nothing dropped). Reply time
   was 5.3 s. The model called no tool and invented a time ("14:37" at about 21:53) when asked
   "what time is it": before M5, get_time has no body, and the model did not try it.
+  With the real per-turn prompt (personality, emotion, knowledge and history) the instructions are
+  about 1,600 tokens, and CORE-22 still fits. After M3 B4 gave get_time its body, A-11 passed 3 of 3:
+  the model called get_time and read back the correct time. In earlier runs Apple's filter ended the
+  turn ("May contain unsafe content") only when the model wrote a run_command call, whatever the persona.
 - **R-8.** The relay is the full app binary (brief decision). If its RSS is high, move to
   a helper executable in `Contents/MacOS/`.
 - **R-9.** `TurnSummary.dataSources` does not cover sensitive data re-entering through the

@@ -398,6 +398,22 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
     unknown-tool reply, and to write the `BLOCKED` log lines and bump `taint_block` (plan §3.3
     steps 2 to 4). GPT is making that change.
 
+- Live acceptance, 2026-09-29, each run on a sandbox copy of the state (D-39), with the real
+  state files and logs byte-identical before and after:
+  - A-9 (one Claude turn): init apiKeySource=none, tools=46, mcp jarvis=connected; Claude called
+    get_time, which had no body yet, then run_command, and nothing ran; the reply said it could
+    not read the clock rather than guessing; backend_claude +1.
+  - A-10 (one Claude turn, started tainted): Claude called run_command for `echo hi`; the gateway
+    logged the BLOCKED injection-guard line, returned the Claude block text as an error, and
+    bumped taint_block; nothing ran.
+  - A-11 (on-device, three runs after M3 B4 gave get_time its body): the model called get_time
+    and read back the correct time each time. Before that body existed, Apple's filter ended two
+    turns ("May contain unsafe content"); both were turns where the model wrote a run_command
+    call, and a comparison with profanity turned off showed the persona was not the cause.
+- Dataset: text turns bump interactions_text (M1b's key); the M3 code adds taint_block and
+  claude_refusal_fallback; the on-device backend counter is backend_local_apple_foundation_model_
+  with a trailing underscore. research/README.md documents all four.
+
 ## Open user decisions
 
 - Write `shouldSpeakReply` (text chat, M02–M04 §3.12) and `speakLocally` (sensitive routing
