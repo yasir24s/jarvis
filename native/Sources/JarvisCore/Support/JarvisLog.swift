@@ -43,8 +43,10 @@ public enum JarvisLog {
     }
 
     /// Python's log(msg): file (and stdout if mirrored) get "[JARVIS] <message>\n" in one
-    /// write(2); the unified log gets the message under `category`.
+    /// write(2); the unified log gets the message under `category`. Every value registered in
+    /// `SecretRegistry.shared` is replaced with ‹redacted› first (M02-M04 §3.11).
     public static func log(_ message: String, category: LogCategory = .app) {
+        let message = SecretRegistry.shared.redact(message)
         loggers[category]!.notice("\(message, privacy: .private)")
         emit("[JARVIS] " + message + "\n")
     }
