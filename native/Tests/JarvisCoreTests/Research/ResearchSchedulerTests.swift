@@ -198,6 +198,38 @@ struct ResearchSchedulerTests {
         #expect(described(try rig.counters("2026-09-29")) == ["starts_swift_dev=1", "alive_hours=1"])
     }
 
+    // MARK: One UsageStore per process
+
+    @Test func theSchedulerAndTheAppShareOneStoreAndEveryBumpLands() async throws {
+        let box = try Sandbox()
+        defer { box.remove() }
+        // 12 checks, 10:01:30 to 21:01:30: every bump below lands on the 29th.
+        let rig = try SchedulerRig(root: box.root, at: schedulerMorning, budget: 12)
+        #expect(rig.scheduler.store === rig.store)
+        #expect(rig.logger.store === rig.store)
+        let store = rig.store, logger = rig.logger
+        // Other threads bump the same instance while the scheduler runs: directly, as CoreState's
+        // counter does, and through the logger's queue, as the scheduler's own bumps go.
+        let app = Task.detached {
+            DispatchQueue.concurrentPerform(iterations: 400) { i in
+                if i.isMultiple(of: 2) {
+                    store.bump(ResearchKey.interactions, by: 1)
+                } else {
+                    logger.bump(ResearchKey.interactionsText)
+                }
+            }
+        }
+        rig.scheduler.start()
+        await app.value
+        try await until("the scheduler's 12 checks") { rig.sleeper.isParked }
+        await rig.scheduler.stopAndWait()
+
+        let counts = Dictionary(uniqueKeysWithValues: try rig.counters("2026-09-29"))
+        #expect(counts == ["interactions": .int(200), "interactions_text": .int(200),
+                           "starts_swift_dev": .int(1), "alive_hours": .int(12)])
+        #expect(try rig.rows().count == 1)
+    }
+
     // MARK: D-37
 
     @Test func snapshotCountsAreCoreStatesEvenWhenTheFilesSayOtherwise() async throws {
@@ -212,13 +244,14 @@ struct ResearchSchedulerTests {
                   case .array(let turns)? = try? PyJSON.loads(data) else { return 0 }
             return turns.count
         }
-        let logger = ResearchLogger(paths: ResearchPaths(box.paths),
-                                    clock: ResearchClock(clock, timeZone: schedulerLondon),
+        let rclock = ResearchClock(clock, timeZone: schedulerLondon)
+        let usage = UsageStore(paths: ResearchPaths(box.paths), clock: rclock)
+        let logger = ResearchLogger(paths: ResearchPaths(box.paths), clock: rclock,
                                     sources: FileSnapshotSources(here: box.root, historyTurns: historyOnDisk),
-                                    runtime: { SchedulerFixtures.runtime(.dev) },
+                                    runtime: { SchedulerFixtures.runtime(.dev) }, store: usage,
                                     git: { _, _ in "" }, host: { SchedulerFixtures.host })
         let store = try StateStore(root: box.root.path(percentEncoded: false), lease: nil, clock: clock)
-        let core = CoreState(store: store, clock: clock, research: logger, frontApp: BlankFrontApp())
+        let core = CoreState(store: store, clock: clock, research: usage, frontApp: BlankFrontApp())
 
         await core.popTrailingUserTurn()                // memory 2 turns; the file still says 3
         let expected = await core.snapshotInputs()      // loads the corrections cache (2 pairs)
@@ -232,7 +265,7 @@ struct ResearchSchedulerTests {
 
         let sleeper = VirtualSleeper(clock: clock, budget: 1)
         let lines = LogLines()
-        let scheduler = ResearchScheduler(logger: logger, build: .dev, core: core, environment: [:],
+        let scheduler = ResearchScheduler(store: usage, logger: logger, build: .dev, core: core, environment: [:],
                                           sleep: { try await sleeper.sleep($0) }, log: { lines.record($0) })
         scheduler.start()
         try await until("one check") { sleeper.isParked }

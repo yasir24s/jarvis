@@ -24,23 +24,40 @@ import Foundation
 public final class ResearchLogger: ResearchCounting, Sendable {
     public let paths: ResearchPaths
     public let clock: ResearchClock
-    private let store: UsageStore
+    /// Every bump goes through this one UsageStore. Its Mutex is what makes usage.json's
+    /// read-modify-write atomic, and only within one instance, so the app gives the logger the
+    /// same instance everything else bumps (a second instance over the file could lose bumps).
+    public let store: UsageStore
     private let builder: SnapshotBuilder
     private let queue = DispatchQueue(label: "com.jarvis.assistant.research", qos: .utility)
 
-    /// `git` and `host` are SnapshotBuilder's (tests inject a recorder and a fixed host).
-    /// `lease` is the InstanceLock state lease (D-36): required for a real repo root, and
-    /// once given it must be held for any root.
+    /// The app's wiring: `store` is the process's one UsageStore over `paths.usage`, and it
+    /// carries the InstanceLock state lease (D-36). `git` and `host` are SnapshotBuilder's
+    /// (tests inject a recorder and a fixed host).
     public init(paths: ResearchPaths, clock: ResearchClock, sources: any SnapshotSources,
-                runtime: @escaping @Sendable () -> RuntimeInfo,
-                lease: (any StateLease)? = nil,
+                runtime: @escaping @Sendable () -> RuntimeInfo, store: UsageStore,
                 git: @escaping GitProbe.Runner = GitProbe.run,
                 host: @escaping @Sendable () -> HostSample = { HostSample.current() }) {
+        precondition(store.url.standardizedFileURL.path(percentEncoded: false)
+                     == paths.usage.standardizedFileURL.path(percentEncoded: false),
+                     "ResearchLogger: the UsageStore must be over paths.usage")
         self.paths = paths
         self.clock = clock
-        self.store = UsageStore(paths: paths, clock: clock, lease: lease)
+        self.store = store
         self.builder = SnapshotBuilder(paths: paths, clock: clock, sources: sources,
                                        runtime: runtime, git: git, host: host)
+    }
+
+    /// A logger with a UsageStore of its own over `paths.usage`, for tests and tools that
+    /// bump nothing else. `lease` is the InstanceLock state lease (D-36): required for a real
+    /// repo root, and once given it must be held for any root.
+    public convenience init(paths: ResearchPaths, clock: ResearchClock, sources: any SnapshotSources,
+                            runtime: @escaping @Sendable () -> RuntimeInfo,
+                            lease: (any StateLease)? = nil,
+                            git: @escaping GitProbe.Runner = GitProbe.run,
+                            host: @escaping @Sendable () -> HostSample = { HostSample.current() }) {
+        self.init(paths: paths, clock: clock, sources: sources, runtime: runtime,
+                  store: UsageStore(paths: paths, clock: clock, lease: lease), git: git, host: host)
     }
 
     /// D-36: false while research/ may not be written (the store's lease rule).

@@ -157,14 +157,16 @@ func fileTree(_ root: URL) -> [String: Data] {
 }
 
 /// The scheduler over `root` at `ts` (Europe/London) on virtual time, wired as the app will
-/// wire it: a CoreState over the same root with the logger as its counter, and the snapshot
-/// counts from `core.snapshotInputs()` (D-37), counted in `inputCalls`. `researchLease` goes to
-/// the logger (D-36), `stateLease` to the StateStore (a real-like root needs one).
+/// wire it: one UsageStore (`store`) that the logger and CoreState both bump through, and the
+/// snapshot counts from `core.snapshotInputs()` (D-37), counted in `inputCalls`.
+/// `researchLease` goes to the UsageStore (D-36), `stateLease` to the StateStore (a real-like
+/// root needs one).
 @MainActor
 final class SchedulerRig {
     let root: URL
     let paths: ResearchPaths
     let clock: ManualClock
+    let store: UsageStore
     let logger: ResearchLogger
     let core: CoreState
     let sleeper: VirtualSleeper
@@ -178,15 +180,17 @@ final class SchedulerRig {
         self.root = root
         paths = ResearchPaths(here: root)
         clock = ManualClock(ts)
-        logger = ResearchLogger(paths: paths, clock: ResearchClock(clock, timeZone: schedulerLondon),
+        let rclock = ResearchClock(clock, timeZone: schedulerLondon)
+        store = UsageStore(paths: paths, clock: rclock, lease: researchLease)
+        logger = ResearchLogger(paths: paths, clock: rclock,
                                 sources: FileSnapshotSources(here: root, historyTurns: { 0 }),
-                                runtime: { SchedulerFixtures.runtime(build) }, lease: researchLease,
+                                runtime: { SchedulerFixtures.runtime(build) }, store: store,
                                 git: { _, _ in "" }, host: { SchedulerFixtures.host })
-        let store = try StateStore(root: root.path(percentEncoded: false), lease: stateLease, clock: clock)
-        core = CoreState(store: store, clock: clock, research: logger, frontApp: BlankFrontApp())
+        let state = try StateStore(root: root.path(percentEncoded: false), lease: stateLease, clock: clock)
+        core = CoreState(store: state, clock: clock, research: store, frontApp: BlankFrontApp())
         sleeper = VirtualSleeper(clock: clock, budget: budget)
         let core = core, calls = inputCalls, sleeper = sleeper, lines = lines
-        scheduler = ResearchScheduler(logger: logger, build: build,
+        scheduler = ResearchScheduler(store: store, logger: logger, build: build,
                                       snapshotInputs: {
                                           calls.bump()
                                           return await core.snapshotInputs()

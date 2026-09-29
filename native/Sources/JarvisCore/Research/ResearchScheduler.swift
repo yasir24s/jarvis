@@ -19,6 +19,10 @@ import Foundation
 // state lease the logger refuses to write a real research/ root and logs why (D-36). The sleep
 // and the log are injected and the time is the logger's clock, so a test runs a day in
 // milliseconds.
+//
+// The scheduler constructs no store or logger of its own. It is given the app's one UsageStore
+// and the ResearchLogger built over that same instance (checked at init): UsageStore's Mutex
+// serializes usage.json's read-modify-write only within one instance.
 
 @MainActor
 public final class ResearchScheduler {
@@ -31,6 +35,9 @@ public final class ResearchScheduler {
     /// Whole seconds replacing `period` in a dev build (A7).
     nonisolated public static let tickVariable = "JARVIS_RESEARCH_TICK"
 
+    /// The process's one UsageStore, which `logger` bumps through.
+    public let store: UsageStore
+    /// Writes the counters (through `store`), the metrics rows and the snapshots.
     public let logger: ResearchLogger
     public let build: BuildChannel
     /// The time between checks: `period`, or JARVIS_RESEARCH_TICK in a dev build.
@@ -42,13 +49,16 @@ public final class ResearchScheduler {
     private var started = false
     private var task: Task<Void, Never>?
 
-    /// `snapshotInputs` is `CoreState.snapshotInputs` in the app (D-37; see the `core:`
-    /// initializer). `environment` is read once, here.
-    public init(logger: ResearchLogger, build: BuildChannel,
+    /// `store` is the app's one UsageStore and `logger` must bump through that same instance
+    /// (a precondition). `snapshotInputs` is `CoreState.snapshotInputs` in the app (D-37; see
+    /// the `core:` initializer). `environment` is read once, here.
+    public init(store: UsageStore, logger: ResearchLogger, build: BuildChannel,
                 snapshotInputs: @escaping @Sendable () async -> CoreSnapshotInputs,
                 environment: [String: String] = ProcessInfo.processInfo.environment,
                 sleep: @escaping Sleep = { try await Task.sleep(for: $0, clock: .suspending) },
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .research) }) {
+        precondition(logger.store === store, "ResearchScheduler: the logger must bump through the injected UsageStore")
+        self.store = store
         self.logger = logger
         self.build = build
         let (every, note) = Self.checkInterval(build: build, environment: environment)
@@ -61,11 +71,11 @@ public final class ResearchScheduler {
 
     /// D-37 as the app wires it: a snapshot counts `core`'s cached corrections and in-memory
     /// history, as Python counts `_corr_cache` and `_history`, not the files.
-    public convenience init(logger: ResearchLogger, build: BuildChannel, core: CoreState,
+    public convenience init(store: UsageStore, logger: ResearchLogger, build: BuildChannel, core: CoreState,
                             environment: [String: String] = ProcessInfo.processInfo.environment,
                             sleep: @escaping Sleep = { try await Task.sleep(for: $0, clock: .suspending) },
                             log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .research) }) {
-        self.init(logger: logger, build: build, snapshotInputs: { await core.snapshotInputs() },
+        self.init(store: store, logger: logger, build: build, snapshotInputs: { await core.snapshotInputs() },
                   environment: environment, sleep: sleep, log: log)
     }
 
