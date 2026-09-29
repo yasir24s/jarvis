@@ -64,8 +64,14 @@ public enum MCPSocket {
         guard unlink(path) == 0 || errno == ENOENT else { throw MCPSocketError.system("unlink", errno) }
     }
 
-    /// Binds and listens at `path`: stale-socket rule first, then `umask(0o177)` around `bind`
-    /// and `chmod 0600`. Returns the listening descriptor (non-blocking, close-on-exec).
+    /// Binds and listens at `path`: stale-socket rule first, then `bind` and `chmod 0600`.
+    /// Returns the listening descriptor (non-blocking, close-on-exec).
+    ///
+    /// Plan §3.7 also puts `umask(0o177)` around `bind`. That is left out on purpose: umask is
+    /// process-wide, so any other thread creating a directory during the window got mode 0600,
+    /// with no search bit, and a later create inside it failed with EACCES (seen in the full
+    /// test run). The socket is never reachable by another user in that window anyway: it is
+    /// created inside the run directory, which `prepareRunDirectory` has already made 0700 and ours.
     public static func listen(at path: String, backlog: Int32 = 8) throws -> Int32 {
         var address = try address(for: path)
         try removeStaleSocket(at: path)
@@ -77,15 +83,12 @@ public enum MCPSocket {
             guard fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK) == 0 else {
                 throw MCPSocketError.system("fcntl", errno)
             }
-            let saved = umask(0o177)
             let rc = withUnsafePointer(to: &address) {
                 $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
                     bind(fd, $0, socklen_t(MemoryLayout<sockaddr_un>.size))
                 }
             }
-            let bindErrno = errno
-            umask(saved)
-            guard rc == 0 else { throw MCPSocketError.system("bind", bindErrno) }
+            guard rc == 0 else { throw MCPSocketError.system("bind", errno) }
             bound = true
             guard chmod(path, 0o600) == 0 else { throw MCPSocketError.system("chmod", errno) }
             guard Darwin.listen(fd, backlog) == 0 else { throw MCPSocketError.system("listen", errno) }
