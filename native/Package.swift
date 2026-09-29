@@ -28,8 +28,13 @@ let package = Package(
 
         .executableTarget(
             name: "JarvisApp",
-            dependencies: ["JarvisCore", "JarvisTools", "JarvisBrain"]
+            dependencies: ["JarvisCore", "JarvisTools", "JarvisBrain", "JarvisChat"]
         ),
+
+        // M4 text chat (plan: M02-M04 §3.12): the chat window's logic, so it tests headless.
+        // Foundation and Observation only, never SwiftUI or AppKit (D-13); the views stay in JarvisApp.
+        .target(name: "JarvisChat", dependencies: ["JarvisCore", "JarvisTools", "JarvisBrain"]),
+        .testTarget(name: "JarvisChatTests", dependencies: ["JarvisChat", "JarvisBrain", "JarvisTools", "JarvisCore"]),
 
         // M3 Claude driver. The JarvisTools dependency arrives in T3.3, once M2's target exists.
         .target(name: "JarvisBrain", dependencies: ["JarvisCore", "JarvisTools"]),
