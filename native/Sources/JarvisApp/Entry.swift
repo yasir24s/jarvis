@@ -17,6 +17,17 @@ enum Entry {
             }
             exit(RelayMain.run(socket: relay.socket, tokenFile: relay.tokenFile))
         }
+        #if DEBUG
+        // One headless brain turn (M02-M04 §5 A-9 to A-11); DEBUG builds only. It takes the
+        // lock of its own state root and never touches AppKit or SwiftUI.
+        if arguments.first == "--brain-smoke" {
+            guard let options = BrainSmoke.parse(arguments) else {
+                FileHandle.standardError.write(Data(BrainSmoke.usage.utf8))
+                exit(64)   // EX_USAGE
+            }
+            BrainSmoke.start(options)
+        }
+        #endif
         if arguments.contains("--version") {
             print("JARVIS \(infoString("CFBundleShortVersionString")) (\(infoString("CFBundleVersion")))")
             exit(0)
