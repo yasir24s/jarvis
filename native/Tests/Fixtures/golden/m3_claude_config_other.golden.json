@@ -1,0 +1,36 @@
+{
+ "schema": 1,
+ "suite": "m3_claude_config_other",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "config",
+   "input": {
+    "env": {
+     "JARVIS_USE_CLAUDE": "false",
+     "JARVIS_CLAUDE_MODEL": "claude-opus-5-5",
+     "JARVIS_CLAUDE_EFFORT": "max",
+     "JARVIS_CLAUDE_MAX_TURNS": "+12"
+    }
+   },
+   "expected": {
+    "enabled": true,
+    "model": "claude-opus-5-5",
+    "effort": "max",
+    "max_turns": 12,
+    "timeout_ms": "45000"
+   }
+  }
+ ]
+}

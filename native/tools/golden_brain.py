@@ -478,3 +478,33 @@ def claude_env_path(ctx):
         else:
             os.environ["PATH"] = saved
     return cases
+
+
+# ─── m3_claude_config_* ────────────────────────────────────────────────────────
+# The CLAUDE_* constants are read at import, so each environment is its own suite; the child
+# starts from a clean env plus the suite's JARVIS_* overrides.
+
+_CONFIG_KEYS = ("JARVIS_USE_CLAUDE", "JARVIS_CLAUDE_MODEL", "JARVIS_CLAUDE_EFFORT",
+                "JARVIS_CLAUDE_MAX_TURNS", "JARVIS_CLAUDE_TIMEOUT_MS")
+
+
+def _claude_config(ctx):
+    J = ctx.J
+    env = {k: os.environ[k] for k in _CONFIG_KEYS if k in os.environ}
+    return [{"name": "config", "input": {"env": env},
+             "expected": {"enabled": J.CLAUDE_ENABLED, "model": J.CLAUDE_MODEL,
+                          "effort": J.CLAUDE_EFFORT, "max_turns": J.CLAUDE_MAX_TURNS,
+                          "timeout_ms": J.CLAUDE_TIMEOUT_MS}}]
+
+
+suite("m3_claude_config_default")(_claude_config)
+suite("m3_claude_config_set", env={
+    "JARVIS_USE_CLAUDE": "0", "JARVIS_CLAUDE_MODEL": "  claude-sonnet-test \n",
+    "JARVIS_CLAUDE_EFFORT": " high ", "JARVIS_CLAUDE_MAX_TURNS": " 9 ",
+    "JARVIS_CLAUDE_TIMEOUT_MS": " 30000 "})(_claude_config)
+suite("m3_claude_config_blank", env={
+    "JARVIS_USE_CLAUDE": "", "JARVIS_CLAUDE_MODEL": "   ", "JARVIS_CLAUDE_EFFORT": "\t ",
+    "JARVIS_CLAUDE_MAX_TURNS": "", "JARVIS_CLAUDE_TIMEOUT_MS": ""})(_claude_config)
+suite("m3_claude_config_other", env={
+    "JARVIS_USE_CLAUDE": "false", "JARVIS_CLAUDE_MODEL": "claude-opus-5-5",
+    "JARVIS_CLAUDE_EFFORT": "max", "JARVIS_CLAUDE_MAX_TURNS": "+12"})(_claude_config)
