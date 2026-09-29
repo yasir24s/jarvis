@@ -1,0 +1,387 @@
+{
+ "schema": 1,
+ "suite": "m3_get_time",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "clock/midnight",
+   "input": {
+    "epoch": 1790550000
+   },
+   "expected": {
+    "text": "It is 12:00 AM on Monday, September 28."
+   }
+  },
+  {
+   "name": "clock/00:05",
+   "input": {
+    "epoch": 1790550300
+   },
+   "expected": {
+    "text": "It is 12:05 AM on Monday, September 28."
+   }
+  },
+  {
+   "name": "clock/09:05",
+   "input": {
+    "epoch": 1790582700
+   },
+   "expected": {
+    "text": "It is 09:05 AM on Monday, September 28."
+   }
+  },
+  {
+   "name": "clock/11:59:59",
+   "input": {
+    "epoch": 1790593199
+   },
+   "expected": {
+    "text": "It is 11:59 AM on Monday, September 28."
+   }
+  },
+  {
+   "name": "clock/noon",
+   "input": {
+    "epoch": 1790593200
+   },
+   "expected": {
+    "text": "It is 12:00 PM on Monday, September 28."
+   }
+  },
+  {
+   "name": "clock/12:30",
+   "input": {
+    "epoch": 1790595000
+   },
+   "expected": {
+    "text": "It is 12:30 PM on Monday, September 28."
+   }
+  },
+  {
+   "name": "clock/13:00",
+   "input": {
+    "epoch": 1790596800
+   },
+   "expected": {
+    "text": "It is 01:00 PM on Monday, September 28."
+   }
+  },
+  {
+   "name": "clock/23:59",
+   "input": {
+    "epoch": 1790636340
+   },
+   "expected": {
+    "text": "It is 11:59 PM on Monday, September 28."
+   }
+  },
+  {
+   "name": "clock/23:59:59.5",
+   "input": {
+    "epoch": 1790636399.5
+   },
+   "expected": {
+    "text": "It is 11:59 PM on Monday, September 28."
+   }
+  },
+  {
+   "name": "day/single-digit",
+   "input": {
+    "epoch": 1788595500
+   },
+   "expected": {
+    "text": "It is 09:05 AM on Saturday, September 05."
+   }
+  },
+  {
+   "name": "weekday/2026-09-28",
+   "input": {
+    "epoch": 1790604300
+   },
+   "expected": {
+    "text": "It is 03:05 PM on Monday, September 28."
+   }
+  },
+  {
+   "name": "weekday/2026-09-29",
+   "input": {
+    "epoch": 1790690700
+   },
+   "expected": {
+    "text": "It is 03:05 PM on Tuesday, September 29."
+   }
+  },
+  {
+   "name": "weekday/2026-09-30",
+   "input": {
+    "epoch": 1790777100
+   },
+   "expected": {
+    "text": "It is 03:05 PM on Wednesday, September 30."
+   }
+  },
+  {
+   "name": "weekday/2026-10-01",
+   "input": {
+    "epoch": 1790863500
+   },
+   "expected": {
+    "text": "It is 03:05 PM on Thursday, October 01."
+   }
+  },
+  {
+   "name": "weekday/2026-10-02",
+   "input": {
+    "epoch": 1790949900
+   },
+   "expected": {
+    "text": "It is 03:05 PM on Friday, October 02."
+   }
+  },
+  {
+   "name": "weekday/2026-10-03",
+   "input": {
+    "epoch": 1791036300
+   },
+   "expected": {
+    "text": "It is 03:05 PM on Saturday, October 03."
+   }
+  },
+  {
+   "name": "weekday/2026-10-04",
+   "input": {
+    "epoch": 1791122700
+   },
+   "expected": {
+    "text": "It is 03:05 PM on Sunday, October 04."
+   }
+  },
+  {
+   "name": "month/2026-01-01 09:04",
+   "input": {
+    "epoch": 1767258240
+   },
+   "expected": {
+    "text": "It is 09:04 AM on Thursday, January 01."
+   }
+  },
+  {
+   "name": "month/2026-02-02 10:08",
+   "input": {
+    "epoch": 1770026880
+   },
+   "expected": {
+    "text": "It is 10:08 AM on Monday, February 02."
+   }
+  },
+  {
+   "name": "month/2026-03-03 11:12",
+   "input": {
+    "epoch": 1772536320
+   },
+   "expected": {
+    "text": "It is 11:12 AM on Tuesday, March 03."
+   }
+  },
+  {
+   "name": "month/2026-04-04 12:16",
+   "input": {
+    "epoch": 1775301360
+   },
+   "expected": {
+    "text": "It is 12:16 PM on Saturday, April 04."
+   }
+  },
+  {
+   "name": "month/2026-05-05 13:20",
+   "input": {
+    "epoch": 1777983600
+   },
+   "expected": {
+    "text": "It is 01:20 PM on Tuesday, May 05."
+   }
+  },
+  {
+   "name": "month/2026-06-06 14:24",
+   "input": {
+    "epoch": 1780752240
+   },
+   "expected": {
+    "text": "It is 02:24 PM on Saturday, June 06."
+   }
+  },
+  {
+   "name": "month/2026-07-07 15:28",
+   "input": {
+    "epoch": 1783434480
+   },
+   "expected": {
+    "text": "It is 03:28 PM on Tuesday, July 07."
+   }
+  },
+  {
+   "name": "month/2026-08-08 16:32",
+   "input": {
+    "epoch": 1786203120
+   },
+   "expected": {
+    "text": "It is 04:32 PM on Saturday, August 08."
+   }
+  },
+  {
+   "name": "month/2026-09-09 17:36",
+   "input": {
+    "epoch": 1788971760
+   },
+   "expected": {
+    "text": "It is 05:36 PM on Wednesday, September 09."
+   }
+  },
+  {
+   "name": "month/2026-10-10 18:40",
+   "input": {
+    "epoch": 1791654000
+   },
+   "expected": {
+    "text": "It is 06:40 PM on Saturday, October 10."
+   }
+  },
+  {
+   "name": "month/2026-11-11 19:44",
+   "input": {
+    "epoch": 1794426240
+   },
+   "expected": {
+    "text": "It is 07:44 PM on Wednesday, November 11."
+   }
+  },
+  {
+   "name": "month/2026-12-12 20:48",
+   "input": {
+    "epoch": 1797108480
+   },
+   "expected": {
+    "text": "It is 08:48 PM on Saturday, December 12."
+   }
+  },
+  {
+   "name": "change/2026-march/before-1800s",
+   "input": {
+    "epoch": 1774744200
+   },
+   "expected": {
+    "text": "It is 12:30 AM on Sunday, March 29."
+   }
+  },
+  {
+   "name": "change/2026-march/before-1s",
+   "input": {
+    "epoch": 1774745999
+   },
+   "expected": {
+    "text": "It is 12:59 AM on Sunday, March 29."
+   }
+  },
+  {
+   "name": "change/2026-march/after+0s",
+   "input": {
+    "epoch": 1774746000
+   },
+   "expected": {
+    "text": "It is 02:00 AM on Sunday, March 29."
+   }
+  },
+  {
+   "name": "change/2026-march/after+1800s",
+   "input": {
+    "epoch": 1774747800
+   },
+   "expected": {
+    "text": "It is 02:30 AM on Sunday, March 29."
+   }
+  },
+  {
+   "name": "change/2026-october/before-1800s",
+   "input": {
+    "epoch": 1792888200
+   },
+   "expected": {
+    "text": "It is 01:30 AM on Sunday, October 25."
+   }
+  },
+  {
+   "name": "change/2026-october/before-1s",
+   "input": {
+    "epoch": 1792889999
+   },
+   "expected": {
+    "text": "It is 01:59 AM on Sunday, October 25."
+   }
+  },
+  {
+   "name": "change/2026-october/after+0s",
+   "input": {
+    "epoch": 1792890000
+   },
+   "expected": {
+    "text": "It is 01:00 AM on Sunday, October 25."
+   }
+  },
+  {
+   "name": "change/2026-october/after+1800s",
+   "input": {
+    "epoch": 1792891800
+   },
+   "expected": {
+    "text": "It is 01:30 AM on Sunday, October 25."
+   }
+  },
+  {
+   "name": "change/2027-march/before-1s",
+   "input": {
+    "epoch": 1806195599
+   },
+   "expected": {
+    "text": "It is 12:59 AM on Sunday, March 28."
+   }
+  },
+  {
+   "name": "change/2027-march/after+0s",
+   "input": {
+    "epoch": 1806195600
+   },
+   "expected": {
+    "text": "It is 02:00 AM on Sunday, March 28."
+   }
+  },
+  {
+   "name": "change/2027-october/before-1s",
+   "input": {
+    "epoch": 1824944399
+   },
+   "expected": {
+    "text": "It is 01:59 AM on Sunday, October 31."
+   }
+  },
+  {
+   "name": "change/2027-october/after+0s",
+   "input": {
+    "epoch": 1824944400
+   },
+   "expected": {
+    "text": "It is 01:00 AM on Sunday, October 31."
+   }
+  }
+ ]
+}

@@ -631,3 +631,56 @@ def backend_report(ctx):
         J.LAST_BACKEND.update(saved[2])
         J.MODEL = saved[3]
     return cases
+
+
+# ─── m3_get_time ───────────────────────────────────────────────────────────────
+# _get_system_info("time"), which execute_tool returns for get_time (B4; plan M05-M06 A-SYS-2),
+# at pinned instants in Europe/London: the times of day where the 12-hour clock turns over, a
+# single-digit day, all seven weekdays, all twelve months, and each side of both clock changes
+# (01:00 UTC on the last Sundays of March and October, 2026 and 2027). Wall times become epochs
+# through time.mktime under the suite's TZ. The clock changes are UTC instants, and each pair is
+# checked to straddle a change of UTC offset, so a tz database without the rule fails loudly.
+
+@suite("m3_get_time", tz="Europe/London")
+def get_time(ctx):
+    import calendar
+    import time
+
+    def wall(y, mo, d, h, mi, s=0):
+        return int(time.mktime((y, mo, d, h, mi, s, 0, 0, -1)))
+
+    def last_sunday(y, mo):
+        return max(week[calendar.SUNDAY] for week in calendar.monthcalendar(y, mo))
+
+    instants = [
+        ("clock/midnight", wall(2026, 9, 28, 0, 0)),
+        ("clock/00:05", wall(2026, 9, 28, 0, 5)),
+        ("clock/09:05", wall(2026, 9, 28, 9, 5)),
+        ("clock/11:59:59", wall(2026, 9, 28, 11, 59, 59)),
+        ("clock/noon", wall(2026, 9, 28, 12, 0)),
+        ("clock/12:30", wall(2026, 9, 28, 12, 30)),
+        ("clock/13:00", wall(2026, 9, 28, 13, 0)),
+        ("clock/23:59", wall(2026, 9, 28, 23, 59)),
+        ("clock/23:59:59.5", wall(2026, 9, 28, 23, 59, 59) + 0.5),
+        ("day/single-digit", wall(2026, 9, 5, 9, 5)),
+    ]
+    week = [wall(2026, 9, 28, 15, 5) + i * 86400 for i in range(7)]     # no clock change inside
+    if len({time.localtime(e).tm_wday for e in week}) != 7:
+        raise RuntimeError("the weekday cases do not cover seven weekdays")
+    instants += [(f"weekday/{time.strftime('%Y-%m-%d', time.localtime(e))}", e) for e in week]
+    instants += [(f"month/2026-{m:02d}-{m:02d} {8 + m:02d}:{4 * m:02d}", wall(2026, m, m, 8 + m, 4 * m))
+                 for m in range(1, 13)]
+    for y, offsets in ((2026, (-1800, -1, 0, 1800)), (2027, (-1, 0))):
+        for mo, label in ((3, "march"), (10, "october")):
+            change = calendar.timegm((y, mo, last_sunday(y, mo), 1, 0, 0))
+            if time.localtime(change - 1).tm_gmtoff == time.localtime(change).tm_gmtoff:
+                raise RuntimeError(f"no UTC offset change at {y}-{mo:02d} 01:00 UTC")
+            instants += [(f"change/{y}-{label}/{'before' if dt < 0 else 'after'}{dt:+d}s", change + dt)
+                         for dt in offsets]
+
+    cases = []
+    for name, epoch in instants:
+        ctx.at(epoch)
+        cases.append({"name": name, "input": {"epoch": epoch},
+                      "expected": {"text": ctx.J._get_system_info("time")}})
+    return cases
