@@ -59,10 +59,11 @@ enum ClaudeStreams {
     static let stderrCapacity = 8192
 
     // Each pipe is read by its own thread with blocking read(2). `FileHandle.bytes` is not
-    // used: it runs every read in the process one at a time, so an idle stderr read held
-    // stdout's lines back until the child exited (observed 2026-09-29: a line written at once
-    // arrived after 3.01 s instead of 0.11 s). Its `.lines` also breaks at U+0085, U+2028 and
-    // U+2029, which a JSON string may hold raw, and drops empty lines.
+    // used: while a `bytes` read waited on the idle stderr pipe, stdout's `bytes` reads did
+    // not complete either, so stdout's lines arrived only when the child exited (observed
+    // 2026-09-29: a line written at once arrived after 3.01 s instead of 0.11 s). Its `.lines`
+    // also breaks at U+0085, U+2028 and U+2029, which a JSON string may hold raw, and drops
+    // empty lines.
 
     /// Yields each line of `handle` without its "\n" (only "\n" ends a line), then an
     /// unterminated last line if there is one, then `.stdoutClosed`.
