@@ -68,8 +68,11 @@ public final class BrainAssembly: Sendable {
                                       onTurnStart: onTurnStart)
     }
 
-    /// Creates the run directory (0700) and starts the MCP server on it.
+    /// Registers the built-in tool bodies on the gateway (the system clock, and the system time
+    /// zone as `autoupdatingCurrent`, so a change of zone needs no restart), then creates the
+    /// run directory (0700) and starts the MCP server on it.
     public func start() async throws {
+        await BuiltInTools.register(on: gateway, clock: SystemClock(), timeZone: .autoupdatingCurrent)
         try await server.start()
     }
 

@@ -98,6 +98,26 @@ struct BrainRouterWiringTests {
         await rig.remove()
     }
 
+    /// B4: `start()` registers the built-in bodies, so the assembled gateway lists get_time's
+    /// catalog entry and serves Python's sentence from the system clock and time zone.
+    @Test func assembledGatewayListsAndServesGetTime() async throws {
+        let rig = try Rig()
+        try await rig.assembly.start()
+        let listed = await rig.assembly.gateway.toolList().first { $0.name == "get_time" }
+        #expect(listed == ToolCatalog.tools.first { $0.name == "get_time" })
+        let before = SystemClock().now()
+        let served = await rig.assembly.gateway.call("get_time", JSONObject(), turn: TurnContext(channel: .voice),
+                                                     origin: .model(.claude))
+        let after = SystemClock().now()
+        // `_get_system_info("time")`'s format in jarvis.py, at either end of the call.
+        let expected = [before, after].map {
+            PyTime.strftime("It is %I:%M %p on %A, %B %d.", Date(timeIntervalSince1970: $0), timeZone: .autoupdatingCurrent)
+        }
+        #expect(expected.contains(served.text), "\(served.text)")
+        #expect(served.record.outcome == .ran)
+        await rig.remove()
+    }
+
     @Test func secretIsRegisteredBeforeItIsReturned() {
         let registry = SecretRegistry()
         let value = BrainAssembly.secret(account: "elevenlabs", registry: registry) { service, account in
