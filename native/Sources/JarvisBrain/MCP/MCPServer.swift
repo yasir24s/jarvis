@@ -72,15 +72,16 @@ public actor MCPServer {
         log("mcp: listening on \(socketPath)")
     }
 
-    /// Stops accepting, drops every connection and removes the socket file.
+    /// Stops accepting, removes the socket file and drops every connection.
     public func stop() {
-        guard let source = listener else { return }
-        listener = nil
-        source.cancel()
-        unlink(socketPath)
+        if let source = listener {
+            listener = nil
+            source.cancel()
+            unlink(socketPath)
+            log("mcp: stopped")
+        }
         for connection in connections.values { connection.abort() }
         connections.removeAll()
-        log("mcp: stopped")
     }
 
     /// Serves one connected socket until it closes: the handshake, then JSON-RPC. Every accepted
