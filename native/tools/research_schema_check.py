@@ -46,6 +46,7 @@ STATIC_COUNTERS = frozenset((
     "rephrase_suspected", "speaker_reject", "speaker_pass", "wake_rejected_foreign_voice",
     "alive_hours", "fast_path_handled", "interactions_text", "tts_elevenlabs", "tts_piper",
     "tts_chars_elevenlabs",
+    "channel_text", "taint_block", "claude_refusal_fallback",
 ))
 DYNAMIC_PREFIXES = ("backend_", "emotion_", "tone_", "tool_", "tts_fallback_", "starts_")
 
