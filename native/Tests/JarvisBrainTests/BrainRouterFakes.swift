@@ -148,8 +148,9 @@ struct FixedFrontApp: FrontAppProviding {
 /// seed give the same `beginTurn` result, so one can serve as the other's oracle.
 struct CoreHarness {
     static let epoch: Double = 1_790_582_400
-    /// Two earlier turns, so the history preamble is not empty.
-    static let seedHistory = #"[{"role": "user", "content": "Robin asked about the weather"}, {"role": "assistant", "content": "It is sunny, sir."}]"#
+    /// Two earlier turns, so the history preamble is not empty. Written without spaces, so a
+    /// save (which writes json.dumps' ", " and ": ") changes the bytes even for the same turns.
+    static let seedHistory = #"[{"role":"user","content":"Robin asked about the weather"},{"role":"assistant","content":"It is sunny, sir."}]"#
 
     let sandbox: Sandbox
     let store: StateStore
@@ -166,6 +167,46 @@ struct CoreHarness {
     /// history.json as the store wrote it, or nil if it is missing.
     func historyFile() -> String? {
         try? sandbox.read("history.json")
+    }
+
+    /// What `beginTurn(text)` gives on this root, from a second CoreState, and the history
+    /// preamble in it. The prompt embeds the root's paths (PERSONALITY_FILE), so the oracle
+    /// must use this same root; every file is then put back, and `core` (which read history.json
+    /// at init and has run no turn) sees the seed again.
+    func oracle(_ text: String, online: Bool) async throws -> (head: CoreState.TurnPrompt, preamble: String) {
+        let before = try snapshot()
+        let clock = ManualClock(Self.epoch)
+        let twin = CoreState(store: try StateStore(root: sandbox.root.path(percentEncoded: false), lease: nil, clock: clock),
+                             clock: clock, research: NullCounter(), frontApp: FixedFrontApp())
+        let head = try await twin.beginTurn(text, online: online)
+        let preamble = try HistoryPreamble.text(for: await twin.history)
+        try restore(before)
+        guard try snapshot() == before else { throw CocoaError(.fileWriteUnknown) }
+        return (head, preamble)
+    }
+
+    private var rootPath: String { sandbox.root.resolvingSymlinksInPath().path(percentEncoded: false) }
+
+    /// Every regular file under the root, by relative path.
+    private func snapshot() throws -> [String: Data] {
+        var out: [String: Data] = [:]
+        let enumerator = FileManager.default.enumerator(at: sandbox.root, includingPropertiesForKeys: [.isRegularFileKey])
+        while let url = enumerator?.nextObject() as? URL {
+            guard try url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true else { continue }
+            let path = url.resolvingSymlinksInPath().path(percentEncoded: false)
+            out[String(path.dropFirst(rootPath.count))] = try Data(contentsOf: url)
+        }
+        return out
+    }
+
+    private func restore(_ files: [String: Data]) throws {
+        let now = try snapshot()
+        for relative in now.keys where files[relative] == nil {
+            try FileManager.default.removeItem(atPath: rootPath + relative)
+        }
+        for (relative, data) in files where now[relative] != data {
+            try data.write(to: URL(fileURLWithPath: rootPath + relative))
+        }
     }
 
     func remove() { sandbox.remove() }
