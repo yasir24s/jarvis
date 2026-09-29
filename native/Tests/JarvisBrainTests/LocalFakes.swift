@@ -47,6 +47,8 @@ enum FakeStep: Sendable {
     case call(String, String)
     /// End the response with this error.
     case fail(any Error)
+    /// Wait until the stream is cancelled.
+    case hang
 }
 
 /// A test error with a fixed description.
@@ -159,6 +161,8 @@ final class FakeSession: LocalModelSession {
                             }
                         case .fail(let error):
                             throw error
+                        case .hang:
+                            try await Task.sleep(for: .seconds(3600))
                         }
                     }
                     continuation.finish()

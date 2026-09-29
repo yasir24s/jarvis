@@ -22,6 +22,8 @@ import JarvisTools
 ///   round count). The eleventh call does not run.
 /// - The model being unavailable is a failure, with its reason logged. Ollama had no
 ///   equivalent; its errors were exceptions.
+/// - Cancelling the calling task stops the generation. A cancelled turn with no reply yet is
+///   an error (no retry); one with text already streamed returns that text.
 public actor LocalBrain: LocalGenerating {
     /// `_set_backend` name for this brain. Its counter is `backend_local_apple_foundation_model_`:
     /// Python's `\W+` replaces the closing parenthesis too (golden m3_backend_key).
@@ -76,6 +78,8 @@ public actor LocalBrain: LocalGenerating {
             while true {
                 let content = try await reply(from: session, to: user, options: options, sink: sink)
                 if !Py.strip(content).isEmpty { return .reply(content) }
+                // A cancelled turn ends its stream early. That is an error, not an empty reply.
+                try Task.checkCancellation()
                 guard retries < Self.emptyRetries else { break }
                 retries += 1
                 log("Empty model response — retry \(retries).")

@@ -159,6 +159,37 @@ struct LocalBrainTests {
         #expect(run.logs.lines == ["Brain error: tool not_a_catalog_tool not offered"])
     }
 
+    @Test("a cancelled turn is an error: no retry, and the stream is stopped")
+    func cancelled() async throws {
+        let run = Run(FakeLocalModel(attempts: [[.hang]]))
+        let task = Task { await run.generate() }
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(5)
+        while run.model.seen.prompts.isEmpty, clock.now < deadline {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        task.cancel()
+        let outcome = await task.value
+        #expect(outcome == .failed(LocalBrain.errorReply))
+        #expect(run.model.seen.prompts.count == 1)
+        #expect(run.logs.lines.count == 1)
+        #expect(run.logs.lines.first?.hasPrefix("Brain error: ") == true)
+    }
+
+    @Test("a cancelled turn keeps text it already streamed")
+    func cancelledAfterText() async throws {
+        let run = Run(FakeLocalModel(attempts: [[.snapshot("Half a reply, sir."), .hang]]))
+        let task = Task { await run.generate() }
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(5)
+        while await run.sink.deltas.isEmpty, clock.now < deadline {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        task.cancel()
+        #expect(await task.value == .reply("Half a reply, sir."))
+        #expect(run.logs.lines.isEmpty)
+    }
+
     @Test("an unavailable model fails the turn with its reason logged, and no session")
     func unavailable() async {
         let run = Run(FakeLocalModel(reason: "appleIntelligenceNotEnabled", attempts: [[.snapshot("never")]]))
