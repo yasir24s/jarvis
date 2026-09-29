@@ -1,0 +1,865 @@
+{
+ "schema": 1,
+ "suite": "m2_rules",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "object/_SHELL_BLOCK",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "used_by": "_shell_risk"
+   },
+   "expected": {
+    "pattern": "\\brm\\b.*\\s(/|~)(\\s|$)|\\brm\\b.*\\s/(System|Library|usr|bin|sbin|etc|var|private)\\b|:\\s*\\(\\s*\\)\\s*\\{|\\bmkfs\\b|\\bnewfs\\b|diskutil\\s+(erase|partition|reformat)|\\bdd\\b.*of=/dev/|>\\s*/dev/(r?disk|sd)|(curl|wget|fetch)\\b.*\\|\\s*(ba|z)?sh|\\$\\(\\s*(curl|wget)|base64\\b.*\\|\\s*(ba|z)?sh|\\bnc\\b\\s+-|\\bncat\\b|/dev/(tcp|udp)/|\\b(csrutil|spctl|tccutil|softwareupdate\\s+-i)\\b|\\blaunchctl\\b|\\b(dscl|sysadminctl)\\b|\\bvisudo\\b|/etc/sudoers|>\\s*/(etc|System|usr|bin|sbin)/|\\bsudo\\s+(bash|sh|zsh|-i|su|-s)\\b|chmod\\s+-R\\b.*\\s(/|/System|/Library|/usr)|chown\\s+-R\\b.*\\s(/|/System|/Library|/usr)|\\bformat\\s+[a-z]:|\\bdel\\s+/[sfq]|\\b(rd|rmdir)\\s+/s|\\bvssadmin\\b|\\bbcdedit\\b|\\bdiskpart\\b|\\bcipher\\s+/w|remove-item\\b.*-recurse.*c:\\\\",
+    "flags": 34,
+    "count": 31
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/000",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 0
+   },
+   "expected": {
+    "pattern": "\\brm\\b.*\\s(/|~)(\\s|$)",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/001",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 1
+   },
+   "expected": {
+    "pattern": "\\brm\\b.*\\s/(System|Library|usr|bin|sbin|etc|var|private)\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/002",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 2
+   },
+   "expected": {
+    "pattern": ":\\s*\\(\\s*\\)\\s*\\{",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/003",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 3
+   },
+   "expected": {
+    "pattern": "\\bmkfs\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/004",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 4
+   },
+   "expected": {
+    "pattern": "\\bnewfs\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/005",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 5
+   },
+   "expected": {
+    "pattern": "diskutil\\s+(erase|partition|reformat)",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/006",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 6
+   },
+   "expected": {
+    "pattern": "\\bdd\\b.*of=/dev/",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/007",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 7
+   },
+   "expected": {
+    "pattern": ">\\s*/dev/(r?disk|sd)",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/008",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 8
+   },
+   "expected": {
+    "pattern": "(curl|wget|fetch)\\b.*\\|\\s*(ba|z)?sh",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/009",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 9
+   },
+   "expected": {
+    "pattern": "\\$\\(\\s*(curl|wget)",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/010",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 10
+   },
+   "expected": {
+    "pattern": "base64\\b.*\\|\\s*(ba|z)?sh",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/011",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 11
+   },
+   "expected": {
+    "pattern": "\\bnc\\b\\s+-",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/012",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 12
+   },
+   "expected": {
+    "pattern": "\\bncat\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/013",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 13
+   },
+   "expected": {
+    "pattern": "/dev/(tcp|udp)/",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/014",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 14
+   },
+   "expected": {
+    "pattern": "\\b(csrutil|spctl|tccutil|softwareupdate\\s+-i)\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/015",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 15
+   },
+   "expected": {
+    "pattern": "\\blaunchctl\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/016",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 16
+   },
+   "expected": {
+    "pattern": "\\b(dscl|sysadminctl)\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/017",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 17
+   },
+   "expected": {
+    "pattern": "\\bvisudo\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/018",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 18
+   },
+   "expected": {
+    "pattern": "/etc/sudoers",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/019",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 19
+   },
+   "expected": {
+    "pattern": ">\\s*/(etc|System|usr|bin|sbin)/",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/020",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 20
+   },
+   "expected": {
+    "pattern": "\\bsudo\\s+(bash|sh|zsh|-i|su|-s)\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/021",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 21
+   },
+   "expected": {
+    "pattern": "chmod\\s+-R\\b.*\\s(/|/System|/Library|/usr)",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/022",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 22
+   },
+   "expected": {
+    "pattern": "chown\\s+-R\\b.*\\s(/|/System|/Library|/usr)",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/023",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 23
+   },
+   "expected": {
+    "pattern": "\\bformat\\s+[a-z]:",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/024",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 24
+   },
+   "expected": {
+    "pattern": "\\bdel\\s+/[sfq]",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/025",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 25
+   },
+   "expected": {
+    "pattern": "\\b(rd|rmdir)\\s+/s",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/026",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 26
+   },
+   "expected": {
+    "pattern": "\\bvssadmin\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/027",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 27
+   },
+   "expected": {
+    "pattern": "\\bbcdedit\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/028",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 28
+   },
+   "expected": {
+    "pattern": "\\bdiskpart\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/029",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 29
+   },
+   "expected": {
+    "pattern": "\\bcipher\\s+/w",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_BLOCK/030",
+   "input": {
+    "list": "_SHELL_BLOCK",
+    "index": 30
+   },
+   "expected": {
+    "pattern": "remove-item\\b.*-recurse.*c:\\\\",
+    "flags": 34
+   }
+  },
+  {
+   "name": "object/_shell_risk.inline",
+   "input": {
+    "list": "_shell_risk.inline",
+    "used_by": "_shell_risk"
+   },
+   "expected": {
+    "pattern": "\\bsudo\\b",
+    "flags": 32,
+    "count": 1
+   }
+  },
+  {
+   "name": "rule/_shell_risk.inline/000",
+   "input": {
+    "list": "_shell_risk.inline",
+    "index": 0
+   },
+   "expected": {
+    "pattern": "\\bsudo\\b",
+    "flags": 32
+   }
+  },
+  {
+   "name": "object/_SUDO_ALLOW",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "used_by": "_shell_risk"
+   },
+   "expected": {
+    "pattern": "^sudo\\s+purge\\b|^sudo\\s+softwareupdate\\s+(-l|--list)\\b|^sudo\\s+powermetrics\\b|^sudo\\s+diskutil\\s+(list|info|verifyVolume)\\b|^sudo\\s+fdesetup\\s+status\\b|^sudo\\s+log\\s+show\\b|^sudo\\s+periodic\\s+(daily|weekly|monthly)\\b|^sudo\\s+dscacheutil\\s+-flushcache\\b|^sudo\\s+killall\\s+-HUP\\s+mDNSResponder\\s*$|^sudo\\s+mdutil\\b|^sudo\\s+pmset\\b|^sudo\\s+shutdown\\s+-r\\s+now\\s*$|^sudo\\s+shutdown\\s+-h\\s+now\\s*$",
+    "flags": 34,
+    "count": 13
+   }
+  },
+  {
+   "name": "rule/_SUDO_ALLOW/000",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "index": 0
+   },
+   "expected": {
+    "pattern": "^sudo\\s+purge\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SUDO_ALLOW/001",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "index": 1
+   },
+   "expected": {
+    "pattern": "^sudo\\s+softwareupdate\\s+(-l|--list)\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SUDO_ALLOW/002",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "index": 2
+   },
+   "expected": {
+    "pattern": "^sudo\\s+powermetrics\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SUDO_ALLOW/003",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "index": 3
+   },
+   "expected": {
+    "pattern": "^sudo\\s+diskutil\\s+(list|info|verifyVolume)\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SUDO_ALLOW/004",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "index": 4
+   },
+   "expected": {
+    "pattern": "^sudo\\s+fdesetup\\s+status\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SUDO_ALLOW/005",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "index": 5
+   },
+   "expected": {
+    "pattern": "^sudo\\s+log\\s+show\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SUDO_ALLOW/006",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "index": 6
+   },
+   "expected": {
+    "pattern": "^sudo\\s+periodic\\s+(daily|weekly|monthly)\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SUDO_ALLOW/007",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "index": 7
+   },
+   "expected": {
+    "pattern": "^sudo\\s+dscacheutil\\s+-flushcache\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SUDO_ALLOW/008",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "index": 8
+   },
+   "expected": {
+    "pattern": "^sudo\\s+killall\\s+-HUP\\s+mDNSResponder\\s*$",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SUDO_ALLOW/009",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "index": 9
+   },
+   "expected": {
+    "pattern": "^sudo\\s+mdutil\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SUDO_ALLOW/010",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "index": 10
+   },
+   "expected": {
+    "pattern": "^sudo\\s+pmset\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SUDO_ALLOW/011",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "index": 11
+   },
+   "expected": {
+    "pattern": "^sudo\\s+shutdown\\s+-r\\s+now\\s*$",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SUDO_ALLOW/012",
+   "input": {
+    "list": "_SUDO_ALLOW",
+    "index": 12
+   },
+   "expected": {
+    "pattern": "^sudo\\s+shutdown\\s+-h\\s+now\\s*$",
+    "flags": 34
+   }
+  },
+  {
+   "name": "object/_SHELL_CONFIRM",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "used_by": "_shell_risk"
+   },
+   "expected": {
+    "pattern": "\\brm\\b|\\brmdir\\b|\\bunlink\\b|\\bshred\\b|\\bsrm\\b|\\bkillall\\b|\\bpkill\\b|\\bkill\\s+-9\\b|\\bshutdown\\b|\\breboot\\b|\\bhalt\\b|\\bdefaults\\s+delete\\b|\\bchmod\\b|\\bchown\\b|\\bdel\\b|\\btaskkill\\b|remove-item\\b",
+    "flags": 34,
+    "count": 17
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/000",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 0
+   },
+   "expected": {
+    "pattern": "\\brm\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/001",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 1
+   },
+   "expected": {
+    "pattern": "\\brmdir\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/002",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 2
+   },
+   "expected": {
+    "pattern": "\\bunlink\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/003",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 3
+   },
+   "expected": {
+    "pattern": "\\bshred\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/004",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 4
+   },
+   "expected": {
+    "pattern": "\\bsrm\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/005",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 5
+   },
+   "expected": {
+    "pattern": "\\bkillall\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/006",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 6
+   },
+   "expected": {
+    "pattern": "\\bpkill\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/007",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 7
+   },
+   "expected": {
+    "pattern": "\\bkill\\s+-9\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/008",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 8
+   },
+   "expected": {
+    "pattern": "\\bshutdown\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/009",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 9
+   },
+   "expected": {
+    "pattern": "\\breboot\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/010",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 10
+   },
+   "expected": {
+    "pattern": "\\bhalt\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/011",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 11
+   },
+   "expected": {
+    "pattern": "\\bdefaults\\s+delete\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/012",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 12
+   },
+   "expected": {
+    "pattern": "\\bchmod\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/013",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 13
+   },
+   "expected": {
+    "pattern": "\\bchown\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/014",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 14
+   },
+   "expected": {
+    "pattern": "\\bdel\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/015",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 15
+   },
+   "expected": {
+    "pattern": "\\btaskkill\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "rule/_SHELL_CONFIRM/016",
+   "input": {
+    "list": "_SHELL_CONFIRM",
+    "index": 16
+   },
+   "expected": {
+    "pattern": "remove-item\\b",
+    "flags": 34
+   }
+  },
+  {
+   "name": "object/_AS_DENY",
+   "input": {
+    "list": "_AS_DENY",
+    "used_by": "_dangerous_applescript"
+   },
+   "expected": {
+    "pattern": "do\\s+shell\\s+script|administrator\\s+privileges|system\\s+events",
+    "flags": 34,
+    "count": 1
+   }
+  },
+  {
+   "name": "rule/_AS_DENY/000",
+   "input": {
+    "list": "_AS_DENY",
+    "index": 0
+   },
+   "expected": {
+    "pattern": "do\\s+shell\\s+script|administrator\\s+privileges|system\\s+events",
+    "flags": 34
+   }
+  },
+  {
+   "name": "set/_PERSIST_FILES",
+   "input": {
+    "set": "_PERSIST_FILES"
+   },
+   "expected": {
+    "members": [
+     ".bash_profile",
+     ".bashrc",
+     ".profile",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc"
+    ],
+    "count": 7
+   }
+  },
+  {
+   "name": "set/_PERSIST_DIRS",
+   "input": {
+    "set": "_PERSIST_DIRS"
+   },
+   "expected": {
+    "members": [
+     ".claude",
+     ".ssh",
+     "Library/Keychains",
+     "Library/LaunchAgents"
+    ],
+    "count": 4
+   }
+  },
+  {
+   "name": "set/_SYS_ROOTS",
+   "input": {
+    "set": "_SYS_ROOTS"
+   },
+   "expected": {
+    "members": [
+     "/Library",
+     "/System",
+     "/bin",
+     "/etc",
+     "/opt",
+     "/private",
+     "/sbin",
+     "/usr",
+     "/var"
+    ],
+    "count": 9
+   }
+  },
+  {
+   "name": "set/UNTRUSTED_TOOLS",
+   "input": {
+    "set": "UNTRUSTED_TOOLS"
+   },
+   "expected": {
+    "members": [
+     "get_messages",
+     "get_news",
+     "read_clipboard",
+     "read_file",
+     "see_screen",
+     "summarize_page",
+     "web_search"
+    ],
+    "count": 7
+   }
+  },
+  {
+   "name": "set/EXECUTOR_TOOLS",
+   "input": {
+    "set": "EXECUTOR_TOOLS"
+   },
+   "expected": {
+    "members": [
+     "delete_file",
+     "move_file",
+     "personality_note",
+     "personality_rewrite",
+     "run_applescript",
+     "run_command",
+     "run_powershell",
+     "run_shortcut",
+     "send_email",
+     "send_message",
+     "type_text",
+     "write_file"
+    ],
+    "count": 12
+   }
+  }
+ ]
+}

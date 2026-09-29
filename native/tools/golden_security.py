@@ -1,5 +1,5 @@
 """M2 golden suites for the Python command guard: m2_shell, m2_applescript, m2_file_tiers,
-m2_taint (M02 plan §2.1, §2.2, §4; task T2.1).
+m2_taint, m2_rules (M02 plan §2.1, §2.2, §4; task T2.1).
 
 Plugin for tools/golden.py (it imports every tools/golden_*.py). Python is the oracle: every
 expected value comes from calling jarvis.py's own guard functions, except the refusal strings
@@ -33,6 +33,12 @@ m2_file_tiers   _write_file / _move_file / _delete_file over everyday in-home pa
                 confirm cases come from the stubs, so they are recorded as null.
 m2_taint        UNTRUSTED_TOOLS, EXECUTOR_TOOLS, each tool's membership, and the exact refusal
                 strings (injection guard x2, run_command x2, run_applescript, PowerShell).
+m2_rules        the rule lists as data, for the Swift port to assert its lists are identical:
+                per compiled pattern (_SHELL_BLOCK, the inline sudo test, _SUDO_ALLOW,
+                _SHELL_CONFIRM, _AS_DENY) its .pattern, .flags and each list entry by index
+                (entries from jarvis.py's AST, checked to join to the live .pattern); and
+                _PERSIST_FILES, _PERSIST_DIRS, _SYS_ROOTS, UNTRUSTED_TOOLS, EXECUTOR_TOOLS as
+                sorted lists.
 """
 import ast
 import builtins
@@ -565,4 +571,73 @@ def taint_suite(ctx):
                           "input": {"site": "run_applescript/block", "script": as_block},
                           "expected": {"text": reply}})
     _assert_guard_live("m2_taint")
+    return cases
+
+
+# ─── m2_rules ───────────────────────────────────────────────────────────────────
+
+# The compiled patterns _shell_risk and _dangerous_applescript consult, in evaluation order.
+_RULE_OBJECTS = (("_SHELL_BLOCK", "_shell_risk"), ("_shell_risk.inline", "_shell_risk"),
+                 ("_SUDO_ALLOW", "_shell_risk"), ("_SHELL_CONFIRM", "_shell_risk"),
+                 ("_AS_DENY", "_dangerous_applescript"))
+_RULE_SETS = ("_PERSIST_FILES", "_PERSIST_DIRS", "_SYS_ROOTS", "UNTRUSTED_TOOLS",
+              "EXECUTOR_TOOLS")
+
+
+def _rule_sources(J):
+    """{name: [pattern literal, ...]}: the list each module-level re.compile joins with "|"
+    (or its single literal), plus the literal _shell_risk passes to re.search inline."""
+    tree = ast.parse(Path(J.__file__).read_text(encoding="utf-8"))
+    wanted = {n for n, _ in _RULE_OBJECTS}
+    out = {}
+    for n in tree.body:
+        if not (isinstance(n, ast.Assign) and len(n.targets) == 1
+                and isinstance(n.targets[0], ast.Name) and n.targets[0].id in wanted):
+            continue
+        name, arg = n.targets[0].id, n.value.args[0]
+        if isinstance(arg, ast.Call) and ast.unparse(arg.func) == "'|'.join" \
+                and isinstance(arg.args[0], ast.List):
+            elts = arg.args[0].elts
+        else:
+            elts = [arg]
+        if not all(isinstance(e, ast.Constant) and isinstance(e.value, str) for e in elts):
+            raise RuntimeError(f"jarvis.py {name}: pattern list is not all str literals")
+        out[name] = [e.value for e in elts]
+    inline = [c.args[0].value for c in ast.walk(_func(tree, "_shell_risk"))
+              if isinstance(c, ast.Call) and ast.unparse(c.func) == "re.search"
+              and c.args and isinstance(c.args[0], ast.Constant)]
+    if len(inline) != 1:
+        raise RuntimeError(f"jarvis.py _shell_risk: expected 1 inline re.search literal, "
+                           f"found {len(inline)}")
+    out["_shell_risk.inline"] = inline
+    missing = wanted - set(out)
+    if missing:
+        raise RuntimeError(f"jarvis.py: no module-level re.compile for {sorted(missing)}")
+    return out
+
+
+@suite("m2_rules")
+def rules_suite(ctx):
+    J = ctx.J
+    _assert_guard_live("m2_rules")
+    sources = _rule_sources(J)
+    cases = []
+    for name, used_by in _RULE_OBJECTS:
+        alts = sources[name]
+        # The module objects are the oracle; the source list must join to exactly their pattern.
+        # The inline literal has no module object: re.search compiles it with flags=0.
+        obj = J.re.compile(alts[0]) if name == "_shell_risk.inline" else getattr(J, name)
+        if "|".join(alts) != obj.pattern:
+            raise RuntimeError(f"m2_rules: {name} source list does not join to its .pattern")
+        cases.append({"name": f"object/{name}", "input": {"list": name, "used_by": used_by},
+                      "expected": {"pattern": obj.pattern, "flags": obj.flags,
+                                   "count": len(alts)}})
+        for i, alt in enumerate(alts):
+            cases.append({"name": f"rule/{name}/{i:03d}", "input": {"list": name, "index": i},
+                          "expected": {"pattern": alt, "flags": obj.flags}})
+    for name in _RULE_SETS:
+        members = sorted(getattr(J, name))
+        cases.append({"name": f"set/{name}", "input": {"set": name},
+                      "expected": {"members": members, "count": len(members)}})
+    _assert_guard_live("m2_rules")
     return cases
