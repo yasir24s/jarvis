@@ -17,7 +17,7 @@ import JarvisTools
 ///   `sys_prompt` plus the 12 raw history turns.
 public struct BrainRouter: Sendable {
     /// The backend name for an on-device turn (plan §3.8); its counter is
-    /// `backend_local_apple_foundation_model`.
+    /// `backend_local_apple_foundation_model_` (the closing parenthesis becomes "_").
     public static let localBackend = "local (apple-foundation-model)"
 
     private let core: CoreState
@@ -84,10 +84,16 @@ public struct BrainRouter: Sendable {
         }
 
         await backend.set(Self.localBackend)                                          // step 13
+        // History as Python's four local-loop endings leave it (jarvis.py 5086-5118).
         switch await local.generate(system: system, user: text, channel: channel, turn: turn, sink: sink) {
         case .reply(let reply):
             await core.recordAssistant(reply)
             return reply
+        case .emptyReply(let spoken):
+            await core.recordAssistant("")
+            return spoken
+        case .stuck(let spoken):
+            return spoken
         case .failed(let reply):
             await core.popTrailingUserTurn()
             return reply

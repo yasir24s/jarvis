@@ -152,23 +152,48 @@ struct BrainRouterTests {
 
     // MARK: - History
 
-    @Test func failedLocalTurnPopsTheUserTurnAndSaves() async throws {
-        let rig = try Rig(claude: nil, local: .failed("My local reasoning core had an error, sir."), config: Self.disabled)
-        defer { rig.harness.remove() }
-        #expect(await rig.run() == "My local reasoning core had an error, sir.")
-        // Saved (the bytes now have json.dumps' spacing), and the user turn is gone.
-        #expect(rig.harness.historyFile() == (try Self.seedAsSaved()))
-        #expect(await rig.harness.core.history.turns.count == 2)
+    enum Ending: String, CaseIterable, Sendable {
+        case reply, emptyReply, stuck, failed
     }
 
-    @Test func localReplyIsRecordedAndSaved() async throws {
-        let rig = try Rig(claude: nil, config: Self.disabled)
+    static func turn(_ role: String, _ content: String) -> JSONValue {
+        .object(JSONObject([.init(key: "role", value: .string(role)), .init(key: "content", value: .string(content))]))
+    }
+
+    /// Python's four local-loop endings (jarvis.py 5086-5118): what the router returns, and
+    /// what history.json then holds. History is saved in every case, and the router says
+    /// nothing to the sink (the brain speaks its own fixed replies).
+    @Test(arguments: Ending.allCases)
+    func localEndingShapesHistory(_ ending: Ending) async throws {
+        let spoken = "Spoken text for \(ending.rawValue), sir."
+        let outcome: LocalOutcome = switch ending {
+        case .reply: .reply(spoken)
+        case .emptyReply: .emptyReply(spoken: spoken)
+        case .stuck: .stuck(spoken: spoken)
+        case .failed: .failed(spoken)
+        }
+        let rig = try Rig(claude: nil, local: outcome, config: Self.disabled)
         defer { rig.harness.remove() }
-        _ = await rig.run()
-        let turns = try rig.savedTurns()
-        #expect(turns.count == 4)
-        #expect(turns[2].objectValue?.string("content") == Self.text)
-        #expect(turns[3].objectValue?.string("content") == "Local reply, sir.")
+        let sink = RecordingSink()
+        let reply = await rig.router.process(Self.text, online: true, channel: .voice,
+                                             turn: TurnContext(channel: .voice), sink: sink)
+        #expect(reply == spoken)
+        #expect(await sink.sentences.isEmpty)
+
+        let seed = try #require(PyJSON.loads(Data(CoreHarness.seedHistory.utf8)).arrayValue)
+        let user = Self.turn("user", Self.text)
+        let expected: [JSONValue] = switch ending {
+        case .reply: seed + [user, Self.turn("assistant", spoken)]
+        case .emptyReply: seed + [user, Self.turn("assistant", "")]
+        case .stuck: seed + [user]
+        case .failed: seed
+        }
+        #expect(try rig.savedTurns() == expected)
+        #expect(await rig.harness.core.history.turns.map(JSONValue.object) == expected)
+        if ending == .failed {
+            // Same turns as the seed, but re-saved: the bytes now have json.dumps' spacing.
+            #expect(rig.harness.historyFile() == (try Self.seedAsSaved()))
+        }
     }
 
     /// A wrong-shaped state file: Python's turn raises before its `finally`, so nothing is said
