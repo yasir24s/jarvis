@@ -5,7 +5,8 @@ import JarvisTestSupport
 import Testing
 
 /// A-8 (plan M02-M04 §5) and the child PATH rule, checked against m3_claude_env_path: the
-/// REAL `_claude_env()["PATH"]` for six parent PATHs (tools/golden_brain.py). The fixture's
+/// REAL `_claude_env()["PATH"]` for six parent PATHs (tools/golden_brain.py), except the two
+/// missing-PATH cases, which follow their `native` block (DEV-M3-01). The fixture's
 /// `${JARVIS_HOME}` is the Python child's HOME; any absolute path stands in for it here.
 /// Drops are logged through an injected closure, so nothing here writes to JarvisLog.
 @Suite("M3 Claude child environment (A-8)")
@@ -51,29 +52,63 @@ struct ChildEnvironmentTests {
         #expect(env["PATH"] == expected)
     }
 
+    /// Native must match the case's `native` block when it has one (DEV-M3-01: a missing or
+    /// empty parent PATH starts from `ChildEnvironment.fallbackPATH`), and Python otherwise.
+    /// Python's value for a deviating case stays recorded as a known issue.
     @Test(arguments: try Golden.cases("m3_claude_env_path"))
-    func pathMatchesPython(_ c: GoldenCase) throws {
-        #expect(Self.check(c).isEmpty, "\(c.name): \(Self.check(c))")
+    func pathMatchesPythonOrRegisteredDeviation(_ c: GoldenCase) throws {
+        let r = Self.check(c)
+        #expect(r.native.isEmpty, "\(c.name): \(r.native)")
+        if let d = r.divergence {
+            withKnownIssue(Comment(rawValue: d)) {
+                for m in r.python { Issue.record(Comment(rawValue: "\(c.name): \(m)")) }
+            }
+        }
     }
 
     @Test func allPathCasesAsserted() throws {
-        let cases = try Golden.cases("m3_claude_env_path")
-        let passed = cases.filter { Self.check($0).isEmpty }.count
-        print("m3_claude_env_path: \(passed)/\(cases.count)")
-        #expect(passed == cases.count && cases.count == 6)
+        let results = try Golden.cases("m3_claude_env_path").map(Self.check)
+        let passed = results.filter { $0.native.isEmpty }.count
+        let deviations = results.compactMap(\.divergence)
+        print("m3_claude_env_path: \(passed)/\(results.count), \(deviations.count) under DEV-M3-01")
+        #expect(passed == results.count && results.count == 6)
+        #expect(deviations == ["DEV-M3-01", "DEV-M3-01"])
     }
 
-    static func check(_ c: GoldenCase) -> [String] {
-        guard c.input.string("HOME") == homeToken, let raw = c.expected.string("PATH") else { return ["malformed case"] }
+    @Test func missingParentPathNeverYieldsAnEmptyField() {
+        for parent in [nil, ""] as [String?] {
+            let path = ChildEnvironment.path(parent: parent, home: Self.home)
+            #expect(!path.hasSuffix(":") && !path.hasPrefix(":") && !path.contains("::"), "\(String(describing: parent))")
+            #expect(path.hasSuffix(":" + ChildEnvironment.fallbackPATH))
+        }
+    }
+
+    struct PathCheck { var native: [String]; var python: [String]; var divergence: String? }
+
+    static func check(_ c: GoldenCase) -> PathCheck {
+        guard c.input.string("HOME") == homeToken, let pythonRaw = c.expected.string("PATH") else {
+            return PathCheck(native: ["malformed case"], python: [], divergence: nil)
+        }
         var parent = ["HOME": home]
         if let p = c.input.string("PATH") { parent["PATH"] = p.replacingOccurrences(of: homeToken, with: home) }
-        let expected = raw.replacingOccurrences(of: homeToken, with: home)
         let env = ChildEnvironment.forClaude(parent: parent, config: ClaudeConfig(environment: [:]),
                                              secrets: SecretRegistry(), assertOnDrop: false, log: { _ in })
-        var out: [String] = []
-        if env["PATH"] != expected { out.append("forClaude PATH \(env["PATH"] ?? "nil")") }
-        if ChildEnvironment.path(parent: parent["PATH"], home: home) != expected { out.append("path(parent:home:)") }
-        return out
+        let direct = ChildEnvironment.path(parent: parent["PATH"], home: home)
+        func mismatches(_ raw: String) -> [String] {
+            let expected = raw.replacingOccurrences(of: homeToken, with: home)
+            var out: [String] = []
+            if env["PATH"] != expected { out.append("forClaude PATH \(env["PATH"] ?? "nil") != \(expected)") }
+            if direct != expected { out.append("path(parent:home:) \(direct) != \(expected)") }
+            return out
+        }
+        guard let native = c.expected.object("native") else {
+            return PathCheck(native: mismatches(pythonRaw), python: [], divergence: nil)
+        }
+        let divergence = native.string("divergence") ?? "unnamed divergence"
+        guard let nativeRaw = native.string("PATH") else {
+            return PathCheck(native: ["native block without PATH"], python: mismatches(pythonRaw), divergence: divergence)
+        }
+        return PathCheck(native: mismatches(nativeRaw), python: mismatches(pythonRaw), divergence: divergence)
     }
 
     @Test func forbiddenKeyPattern() {

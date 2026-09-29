@@ -56,12 +56,19 @@ public enum ChildEnvironment {
         return env
     }
 
-    /// `_claude_env()["PATH"]`: starting from the parent's PATH (unset counts as ""),
-    /// `~/.local/bin`, `/opt/homebrew/bin` and `/usr/local/bin` are each prepended, in that
-    /// order, when they are not already one of its `:`-separated fields. Golden suite
-    /// m3_claude_env_path. `home` is `$HOME`, as `os.path.expanduser` reads it.
+    /// The base PATH when the parent has none (plan §3.6, DEV-M3-01).
+    public static let fallbackPATH = "/usr/bin:/bin:/usr/sbin:/sbin"
+
+    /// `_claude_env()["PATH"]`, with one registered difference: starting from the parent's
+    /// PATH, or from `fallbackPATH` when that is unset or empty, `~/.local/bin`,
+    /// `/opt/homebrew/bin` and `/usr/local/bin` are each prepended, in that order, when they are
+    /// not already one of its `:`-separated fields. Python starts an unset PATH from "", which
+    /// leaves the system directories out and ends the result with an empty field, so command
+    /// lookup would search the working directory (DEV-M3-01). Golden suite m3_claude_env_path.
+    /// `home` is `$HOME`, as `os.path.expanduser` reads it.
     public static func path(parent: String?, home: String) -> String {
         var path = parent ?? ""
+        if path.isEmpty { path = fallbackPATH }      // DEV-M3-01: never inherit an empty PATH
         let localBin = Py.rstrip(home, "/") + "/.local/bin"      // expanduser("~/.local/bin")
         for dir in [localBin, "/opt/homebrew/bin", "/usr/local/bin"] {
             if !fields(path).contains(where: { Py.eq($0, dir) }) {

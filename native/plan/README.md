@@ -345,6 +345,13 @@ Merged on `main`:
   block patterns, 6 of 17 confirm patterns, 1 of 13 sudo entries). So M2 also requires the Swift
   rule lists to equal Python's: every pattern and flag, both tool sets and the path lists, as
   recorded in the `m2_rules` fixture. Verdict parity applies to every recorded input.
+- **D-41. Security rules win over Python quirks** (user, 2026-09-29). Native preserves Python's
+  behaviour on compatibility surfaces, such as the state files, the research dataset and the
+  strings users see or hear. Where a Python quirk would weaken the native app, the native
+  macOS security and orchestrator rules take precedence: native follows the plan, the
+  difference is registered in DEVIATIONS.md, and tests assert the native value directly while
+  Python's value stays recorded as a known issue. First case: DEV-M3-01, the child PATH
+  fallback of §3.6.
 
 M2 status: **accepted on 2026-09-29 at `52487e5`.** GPT built it in the Codex app (`894bf44`
 guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each commit.

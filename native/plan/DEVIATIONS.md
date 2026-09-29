@@ -81,6 +81,7 @@ Line numbers refer to jarvis.py @ 68cd112.
 | R8-nan-sort | M1 | A profile fact whose `updated` is `NaN` is sorted anyway when the profile context is built, and the context is returned | Throws `StateShapeError` when building the context; files unchanged, no counter bumps | Sorting with a NaN key has no defined order, so Python's output depends on the input order. **Ledger:** X7 accepted, to register | `m1_profile_kb.golden.json` `shape_nan_updated` with `"native": {"divergence": "R8-nan-sort", "throws_from_step": 0}` (1); checked as above | `approved` | M01-core-state-persona.md §8 R8; landed `2e965b8` |
 | R8-kb-summary-not-str | M1 | `kb_lookup` on a topic whose `summary` is not a string (for example `5`) returns that value | Throws `StateShapeError`; files unchanged, no counter bumps | A summary is text wherever it is used; a non-string is a wrong-shaped file (M01 §8 R8). **Ledger:** X7 accepted, to register | `m1_profile_kb.golden.json` `kb_lookup_nonstr_summary` with `"native": {"divergence": "R8-kb-summary-not-str", "throws_from_step": 0}` (1); checked as above | `approved` | M01-core-state-persona.md §8 R8; landed `2e965b8` |
 | R8-list-content | M1 | `personality_distill_async` on a history turn whose `content` is a list (for example `["x"]`) formats it with `repr()` and sends the distill request | Skips the distill: no model call, files unchanged | Any non-string `content` is a malformed history; it is reachable only via a hand-edited `history.json` (M01 §8 R8). **Ledger:** X9b accepted, to register | `m1_persona_llm.golden.json` `distill_list_content` with `"native": {"divergence": "R8-list-content", "no_request": true, "files_unchanged": true}` (1); Python's steps are checked under `withKnownIssue` in `PersonaLLMTests` | `approved` | M01-core-state-persona.md §8 R8; landed `9fea3e3` |
+| DEV-M3-01 | M3 | With the parent PATH unset or empty, `_claude_env()` builds `/usr/local/bin:/opt/homebrew/bin:<home>/.local/bin:`: no `/usr/bin` or `/bin`, and a trailing empty field, which makes command lookup search the working directory | The child PATH starts from `/usr/bin:/bin:/usr/sbin:/sbin` when the parent PATH is unset or empty, then the same three directories are prepended | Native security rule (plan §3.6; D-41): the child must never get an empty PATH field, and `claude` needs the system directories | `m3_claude_env_path` cases `unset` and `empty`: `expected.native.divergence = "DEV-M3-01"` | `approved` | M02-M04-security-brain-chat.md §3.6; user decision 2026-09-29 |
 
 The M7 table gives one fixture for all 15 `DEV-M7-*` / `DEV-M14-*` rows (§8.1 heading:
 "fixture §4.2"). For the `DEV-M14-*` rows that marker was carried over as written; the
@@ -88,10 +89,10 @@ loop behaviours may need their own tests at M14.
 
 ## Counts
 
-58 entries: 31 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-8, R3 → D-15, R4 → D-14, DEV-M7-01,
+59 entries: 32 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-8, R3 → D-15, R4 → D-14, DEV-M7-01,
 DEV-M7-02, DEV-M7-05, R9 → D-18, DEV-M0-01, DEV-M0-02, DEV-M0-03, DEV-M1-01, DEV-M1-02, DEV-M1-03,
 DEV-M1-04, D1a, D1b, D1c, D5a, R8-str-float, R8-load-not-dict, R8-nan-sort,
-R8-kb-summary-not-str, R8-list-content), 1 `approved (overage kill-switch only)` (X-10), 1 `rejected` (X-5),
+R8-kb-summary-not-str, R8-list-content, DEV-M3-01), 1 `approved (overage kill-switch only)` (X-10), 1 `rejected` (X-5),
 1 `resolved — parity since fef66c1` (R2 → D-12) and 24 `proposed — decide at milestone start`.
 
 ## Not registered: differences mentioned only in the M05 §3.5 tool table

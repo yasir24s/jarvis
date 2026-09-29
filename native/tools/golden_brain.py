@@ -453,6 +453,9 @@ def history_preamble(ctx):
 
 # ─── m3_claude_env_path ────────────────────────────────────────────────────────
 
+NATIVE_FALLBACK_PATH = "/usr/bin:/bin:/usr/sbin:/sbin"   # plan §3.6; ChildEnvironment.fallbackPATH
+
+
 @suite("m3_claude_env_path")
 def claude_env_path(ctx):
     J = ctx.J
@@ -470,8 +473,14 @@ def claude_env_path(ctx):
                 os.environ.pop("PATH", None)
             else:
                 os.environ["PATH"] = value
-            cases.append({"name": name, "input": {"PATH": value, "HOME": home},
-                          "expected": {"PATH": J._claude_env()["PATH"]}})
+            expected = {"PATH": J._claude_env()["PATH"]}
+            if not value:
+                # DEV-M3-01 (hand-specified native half): a missing or empty parent PATH starts
+                # from the system PATH, so the child never gets an empty (current-directory)
+                # field. The native value is Python's own rule applied to that base.
+                os.environ["PATH"] = NATIVE_FALLBACK_PATH
+                expected["native"] = {"divergence": "DEV-M3-01", "PATH": J._claude_env()["PATH"]}
+            cases.append({"name": name, "input": {"PATH": value, "HOME": home}, "expected": expected})
     finally:
         if saved is None:
             os.environ.pop("PATH", None)
