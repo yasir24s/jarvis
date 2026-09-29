@@ -15,7 +15,7 @@ struct BrainRouterTests {
     static let disabled = ClaudeConfig(environment: ["JARVIS_USE_CLAUDE": "0"])
     static let text = "what time is it"
     static let interactions = "bump \(ResearchKey.interactions)+1"
-    static let channelText = "bump \(ResearchKey.channelText)+1"
+    static let interactionsText = "bump \(ResearchKey.interactionsText)+1"
     static let localBackend = "backend \(LocalBrain.backendName)"
 
     struct Rig {
@@ -111,9 +111,9 @@ struct BrainRouterTests {
         #expect(await rig.claude.calls.isEmpty)
     }
 
-    // MARK: - channel_text
+    // MARK: - interactions_text
 
-    @Test func channelTextOnlyForText() async throws {
+    @Test func interactionsTextOnlyForText() async throws {
         let voice = try Rig(claude: "Voice reply, sir.")
         defer { voice.harness.remove() }
         _ = await voice.run(.voice)
@@ -122,7 +122,7 @@ struct BrainRouterTests {
         let text = try Rig(claude: "Text reply, sir.")
         defer { text.harness.remove() }
         _ = await text.run(.text)
-        #expect(text.events.events.filter { $0.hasPrefix("bump ") } == [Self.interactions, Self.channelText])
+        #expect(text.events.events.filter { $0.hasPrefix("bump ") } == [Self.interactions, Self.interactionsText])
     }
 
     // MARK: - The prompt

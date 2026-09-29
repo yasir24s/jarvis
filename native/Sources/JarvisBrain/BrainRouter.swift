@@ -10,9 +10,10 @@ import JarvisTools
 /// and its `say()` for the fixed replies), so the router only returns the text.
 ///
 /// Where native differs from Python:
-/// - `channel_text` is bumped for a text turn (Python has no text channel). It comes after
-///   `beginTurn`, so after the counters `track_feedback` bumps rather than next to
-///   `interactions`: only the first-bump key order in usage.json can show it.
+/// - A text turn also bumps `interactions_text` (M01b's key: a typed command reached the LLM
+///   path; Python has no text channel). It comes after `beginTurn`, so after the counters
+///   `track_feedback` bumps rather than next to `interactions`: only the first-bump key order
+///   in usage.json can show it.
 /// - The local model gets the same folded prompt as Claude (D-11), where Python hands Ollama
 ///   `sys_prompt` plus the 12 raw history turns.
 public struct BrainRouter: Sendable {
@@ -66,7 +67,7 @@ public struct BrainRouter: Sendable {
         }
         defer { await core.saveHistory() }                                            // step 14
         if channel == .text {
-            research.bump(ResearchKey.channelText, by: 1)                            // step 5
+            research.bump(ResearchKey.interactionsText, by: 1)                       // step 5
         }
         let system = Self.prompt(head, channel: channel)                              // step 10
 
