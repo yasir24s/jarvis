@@ -464,7 +464,10 @@ def claude_env_path(ctx):
                ("system", "/usr/bin:/bin:/usr/sbin:/sbin"),
                ("has_local_bin", f"{home}/.local/bin:/usr/bin:/bin"),
                ("homebrew_twice", "/opt/homebrew/bin:/usr/bin:/opt/homebrew/bin:/bin"),
-               ("trailing_colon", "/usr/bin:/bin:")]
+               ("trailing_colon", "/usr/bin:/bin:"),
+               ("leading_colon", ":/usr/bin:/bin"),
+               ("double_colon", "/usr/bin::/bin"),
+               ("only_colon", ":")]
     saved = os.environ.get("PATH")
     cases = []
     try:
@@ -474,12 +477,15 @@ def claude_env_path(ctx):
             else:
                 os.environ["PATH"] = value
             expected = {"PATH": J._claude_env()["PATH"]}
-            if not value:
-                # DEV-M3-01 (hand-specified native half): a missing or empty parent PATH starts
-                # from the system PATH, so the child never gets an empty (current-directory)
-                # field. The native value is Python's own rule applied to that base.
-                os.environ["PATH"] = NATIVE_FALLBACK_PATH
-                expected["native"] = {"divergence": "DEV-M3-01", "PATH": J._claude_env()["PATH"]}
+            # Hand-specified native half: the child never gets an empty (current-directory)
+            # field. An inherited PATH keeps only its non-empty fields (DEV-M3-02); a PATH that
+            # is unset or empty starts from the system PATH (DEV-M3-01), as does one with no
+            # non-empty field left. The native value is Python's own rule applied to that base.
+            if not value or "" in value.split(":"):
+                base = ":".join(f for f in (value or "").split(":") if f) or NATIVE_FALLBACK_PATH
+                os.environ["PATH"] = base
+                divergence = "DEV-M3-01" if not value else "DEV-M3-02"
+                expected["native"] = {"divergence": divergence, "PATH": J._claude_env()["PATH"]}
             cases.append({"name": name, "input": {"PATH": value, "HOME": home}, "expected": expected})
     finally:
         if saved is None:

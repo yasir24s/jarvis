@@ -59,16 +59,17 @@ public enum ChildEnvironment {
     /// The base PATH when the parent has none (plan §3.6, DEV-M3-01).
     public static let fallbackPATH = "/usr/bin:/bin:/usr/sbin:/sbin"
 
-    /// `_claude_env()["PATH"]`, with one registered difference: starting from the parent's
-    /// PATH, or from `fallbackPATH` when that is unset or empty, `~/.local/bin`,
-    /// `/opt/homebrew/bin` and `/usr/local/bin` are each prepended, in that order, when they are
-    /// not already one of its `:`-separated fields. Python starts an unset PATH from "", which
-    /// leaves the system directories out and ends the result with an empty field, so command
-    /// lookup would search the working directory (DEV-M3-01). Golden suite m3_claude_env_path.
-    /// `home` is `$HOME`, as `os.path.expanduser` reads it.
+    /// `_claude_env()["PATH"]`, with two registered differences. An empty `:`-separated field
+    /// makes command lookup search the working directory, so the parent's PATH keeps only its
+    /// non-empty fields (DEV-M3-02), and when nothing is left, because the PATH is unset, empty
+    /// or only colons, it starts from `fallbackPATH` (DEV-M3-01). Python keeps every field and
+    /// starts an unset PATH from "", which also leaves the system directories out. Then
+    /// `~/.local/bin`, `/opt/homebrew/bin` and `/usr/local/bin` are each prepended, in that order,
+    /// when they are not already one of its fields. Golden suite m3_claude_env_path. `home` is
+    /// `$HOME`, as `os.path.expanduser` reads it.
     public static func path(parent: String?, home: String) -> String {
-        var path = parent ?? ""
-        if path.isEmpty { path = fallbackPATH }      // DEV-M3-01: never inherit an empty PATH
+        var path = fields(parent ?? "").filter { !$0.isEmpty }.joined(separator: ":")  // DEV-M3-02
+        if path.isEmpty { path = fallbackPATH }                                          // DEV-M3-01
         let localBin = Py.rstrip(home, "/") + "/.local/bin"      // expanduser("~/.local/bin")
         for dir in [localBin, "/opt/homebrew/bin", "/usr/local/bin"] {
             if !fields(path).contains(where: { Py.eq($0, dir) }) {

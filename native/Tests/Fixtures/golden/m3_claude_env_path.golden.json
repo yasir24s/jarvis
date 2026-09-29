@@ -79,7 +79,53 @@
     "HOME": "${JARVIS_HOME}"
    },
    "expected": {
-    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin:"
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin:",
+    "native": {
+     "divergence": "DEV-M3-02",
+     "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin"
+    }
+   }
+  },
+  {
+   "name": "leading_colon",
+   "input": {
+    "PATH": ":/usr/bin:/bin",
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin::/usr/bin:/bin",
+    "native": {
+     "divergence": "DEV-M3-02",
+     "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin"
+    }
+   }
+  },
+  {
+   "name": "double_colon",
+   "input": {
+    "PATH": "/usr/bin::/bin",
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin::/bin",
+    "native": {
+     "divergence": "DEV-M3-02",
+     "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin"
+    }
+   }
+  },
+  {
+   "name": "only_colon",
+   "input": {
+    "PATH": ":",
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin::",
+    "native": {
+     "divergence": "DEV-M3-02",
+     "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    }
    }
   }
  ]

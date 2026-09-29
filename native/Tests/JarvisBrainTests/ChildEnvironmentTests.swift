@@ -5,8 +5,9 @@ import JarvisTestSupport
 import Testing
 
 /// A-8 (plan M02-M04 §5) and the child PATH rule, checked against m3_claude_env_path: the
-/// REAL `_claude_env()["PATH"]` for six parent PATHs (tools/golden_brain.py), except the two
-/// missing-PATH cases, which follow their `native` block (DEV-M3-01). The fixture's
+/// REAL `_claude_env()["PATH"]` for nine parent PATHs (tools/golden_brain.py), except the six
+/// cases with a missing PATH or an empty field, which follow their `native` block (DEV-M3-01,
+/// DEV-M3-02). The fixture's
 /// `${JARVIS_HOME}` is the Python child's HOME; any absolute path stands in for it here.
 /// Drops are logged through an injected closure, so nothing here writes to JarvisLog.
 @Suite("M3 Claude child environment (A-8)")
@@ -53,7 +54,8 @@ struct ChildEnvironmentTests {
     }
 
     /// Native must match the case's `native` block when it has one (DEV-M3-01: a missing or
-    /// empty parent PATH starts from `ChildEnvironment.fallbackPATH`), and Python otherwise.
+    /// empty parent PATH starts from `ChildEnvironment.fallbackPATH`; DEV-M3-02: empty fields
+    /// are dropped), and Python otherwise.
     /// Python's value for a deviating case stays recorded as a known issue.
     @Test(arguments: try Golden.cases("m3_claude_env_path"))
     func pathMatchesPythonOrRegisteredDeviation(_ c: GoldenCase) throws {
@@ -70,16 +72,21 @@ struct ChildEnvironmentTests {
         let results = try Golden.cases("m3_claude_env_path").map(Self.check)
         let passed = results.filter { $0.native.isEmpty }.count
         let deviations = results.compactMap(\.divergence)
-        print("m3_claude_env_path: \(passed)/\(results.count), \(deviations.count) under DEV-M3-01")
-        #expect(passed == results.count && results.count == 6)
-        #expect(deviations == ["DEV-M3-01", "DEV-M3-01"])
+        let m301 = deviations.filter { $0 == "DEV-M3-01" }.count, m302 = deviations.filter { $0 == "DEV-M3-02" }.count
+        print("m3_claude_env_path: \(passed)/\(results.count); DEV-M3-01 \(m301), DEV-M3-02 \(m302)")
+        #expect(passed == results.count && results.count == 9)
+        #expect(m301 == 2 && m302 == 4 && deviations.count == 6)
     }
 
-    @Test func missingParentPathNeverYieldsAnEmptyField() {
-        for parent in [nil, ""] as [String?] {
+    @Test func childPathNeverHasAnEmptyField() {
+        let parents: [String?] = [nil, "", ":", "::", "/usr/bin:", ":/usr/bin", "/usr/bin::/bin", "/usr/bin:/bin"]
+        for parent in parents {
             let path = ChildEnvironment.path(parent: parent, home: Self.home)
             #expect(!path.hasSuffix(":") && !path.hasPrefix(":") && !path.contains("::"), "\(String(describing: parent))")
-            #expect(path.hasSuffix(":" + ChildEnvironment.fallbackPATH))
+        }
+        for parent in [nil, "", ":", "::"] as [String?] {
+            #expect(ChildEnvironment.path(parent: parent, home: Self.home).hasSuffix(":" + ChildEnvironment.fallbackPATH),
+                    "\(String(describing: parent))")
         }
     }
 
