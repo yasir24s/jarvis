@@ -15,11 +15,15 @@ CONFIG="$REPO/.signing/config"                      # the PYTHON app's identity,
 # shellcheck disable=SC1090
 source "$CONFIG"                                    # defines KEYCHAIN, KEYCHAIN_PASSWORD, IDENTITY — never echo them
 JOBS="${JOBS:-2}"                                   # 8 GB machine: cap compiler parallelism
+# Opt-in dev build: `build-app.sh --debug` builds the debug configuration, which adds the
+# DEBUG-only modes (M3's --brain-smoke). With no argument the build is release, as before.
+CONFIGURATION=release
+if [[ "${1:-}" == "--debug" ]]; then CONFIGURATION=debug; fi
 
-swift build -c release --package-path "$NATIVE" --product JARVIS -j "$JOBS" \
+swift build -c "$CONFIGURATION" --package-path "$NATIVE" --product JARVIS -j "$JOBS" \
     -Xlinker -rpath -Xlinker @executable_path/../Frameworks \
     ${ORT_LIB:+-Xlinker -L"$ORT_LIB"}               # ORT_LIB set only from M10
-BIN="$(swift build -c release --package-path "$NATIVE" --show-bin-path)/JARVIS"
+BIN="$(swift build -c "$CONFIGURATION" --package-path "$NATIVE" --show-bin-path)/JARVIS"
 
 STAGE="$NATIVE/dist/.JARVIS.app.staging"; APP="$NATIVE/dist/JARVIS.app"
 rm -rf "$STAGE"; mkdir -p "$STAGE/Contents/MacOS" "$STAGE/Contents/Resources" "$STAGE/Contents/Frameworks"
@@ -61,4 +65,4 @@ if [[ -d "$PY_APP" ]]; then
 fi
 
 rm -rf "$APP"; mv "$STAGE" "$APP"                   # swap only after a verified signature
-echo "Built: $APP"
+if [[ "$CONFIGURATION" == debug ]]; then echo "Built: $APP (debug configuration)"; else echo "Built: $APP"; fi

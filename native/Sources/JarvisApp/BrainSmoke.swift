@@ -14,6 +14,8 @@ import Synchronization
 ///
 /// Prints, besides the log (mirrored to stdout as "[JARVIS] …" lines):
 ///   init apiKeySource=<v>, tools=<n>, mcp <server>=<status>   from `claude`'s init event
+///   tool_use <name> <input>, tool_result: <text>              the model's calls and what came
+///                                                             back to it, from the stream
 ///   tools/call <name> -> <outcome>                            each call the MCP server passed
 ///                                                             to the gateway for this turn
 ///   sentence: <text>                                          each sentence sent to the sink
@@ -217,6 +219,7 @@ private actor StreamTap {
                     let line = String(decoding: pending[pending.startIndex..<newline], as: UTF8.self)
                     pending.removeSubrange(pending.startIndex...newline)
                     for event in parser.parse(line) { report(event) }
+                    reportTools(line)
                 }
             }
         }
@@ -224,6 +227,30 @@ private actor StreamTap {
             let runs = await turn.summary().toolRuns
             for run in runs.dropFirst(printedRuns) { BrainSmoke.say("tools/call \(run.name) -> \(run.outcome)") }
             printedRuns = runs.count
+        }
+    }
+
+    /// The model's tool calls and what came back to it, from the complete "assistant" and
+    /// "user" messages (the partial-message events repeat them in pieces).
+    private func reportTools(_ line: String) {
+        guard let message = try? PyJSON.loads(Data(line.utf8)).objectValue,
+              let content = message["message"]?.objectValue?["content"]?.arrayValue else { return }
+        for item in content.compactMap(\.objectValue) {
+            switch (message["type"]?.stringValue, item["type"]?.stringValue) {
+            case ("assistant", "tool_use"):
+                let input = item["input"].map { PyJSON.dumps($0) } ?? "{}"
+                BrainSmoke.say("tool_use \(item["name"]?.stringValue ?? "?") \(input)")
+            case ("user", "tool_result"):
+                let text: String = switch item["content"] {
+                case .string(let s)?: s
+                case .array(let parts)?: parts.compactMap { $0.objectValue?["text"]?.stringValue }.joined(separator: " ")
+                default: ""
+                }
+                let error = item["is_error"] == .bool(true) ? " (is_error)" : ""
+                BrainSmoke.say("tool_result\(error): \(text)")
+            default:
+                continue
+            }
         }
     }
 
