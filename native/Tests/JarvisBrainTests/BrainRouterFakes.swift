@@ -70,7 +70,7 @@ struct BrainCall: Sendable {
 }
 
 /// A Claude brain that records each call, sends `sentences` to the sink and returns `reply`.
-actor FakeClaude: ClaudeGenerating {
+actor FakeClaudeBrain: ClaudeGenerating {
     private(set) var calls: [BrainCall] = []
     private let reply: String?
     private let sentences: [String]
@@ -85,8 +85,9 @@ actor FakeClaude: ClaudeGenerating {
     }
 
     func generate(system: String, user: String, turn: TurnContext, sink: any ReplySink) async -> String? {
-        calls.append(BrainCall(system: system, user: user, channel: turn.channel, turn: turn,
-                               tainted: await turn.tainted, startedPasteTainted: turn.startedPasteTainted))
+        let channel = await turn.channel, pasted = await turn.startedPasteTainted, tainted = await turn.tainted
+        calls.append(BrainCall(system: system, user: user, channel: channel, turn: turn,
+                               tainted: tainted, startedPasteTainted: pasted))
         events?.add("claude")
         for s in sentences { await sink.sentence(s) }
         if let hold { await hold.enter() }
@@ -95,7 +96,7 @@ actor FakeClaude: ClaudeGenerating {
 }
 
 /// An on-device brain that records each call and returns `outcome`.
-actor FakeLocal: LocalGenerating {
+actor FakeLocalBrain: LocalGenerating {
     private(set) var calls: [BrainCall] = []
     private let outcome: LocalOutcome
     private let events: EventLog?
@@ -107,8 +108,9 @@ actor FakeLocal: LocalGenerating {
 
     func generate(system: String, user: String, channel: Channel, turn: TurnContext,
                   sink: any ReplySink) async -> LocalOutcome {
+        let pasted = await turn.startedPasteTainted, tainted = await turn.tainted
         calls.append(BrainCall(system: system, user: user, channel: channel, turn: turn,
-                               tainted: await turn.tainted, startedPasteTainted: turn.startedPasteTainted))
+                               tainted: tainted, startedPasteTainted: pasted))
         events?.add("local")
         return outcome
     }
