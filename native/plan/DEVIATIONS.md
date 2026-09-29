@@ -84,6 +84,7 @@ Line numbers refer to jarvis.py @ 68cd112.
 | DEV-M3-01 | M3 | With the parent PATH unset or empty, `_claude_env()` builds `/usr/local/bin:/opt/homebrew/bin:<home>/.local/bin:`: no `/usr/bin` or `/bin`, and a trailing empty field, which makes command lookup search the working directory | The child PATH starts from `/usr/bin:/bin:/usr/sbin:/sbin` when the parent PATH is unset or empty, then the same three directories are prepended | Native security rule (plan §3.6; D-41): the child must never get an empty PATH field, and `claude` needs the system directories | `m3_claude_env_path` cases `unset` and `empty`: `expected.native.divergence = "DEV-M3-01"` | `approved` | M02-M04-security-brain-chat.md §3.6; user decision 2026-09-29 |
 | DEV-M3-02 | M3 | `_claude_env()` keeps every `:`-separated field of the parent PATH, so an inherited empty field (a leading, trailing or doubled colon) reaches the child, and command lookup then searches the working directory | The child PATH keeps only the parent's non-empty fields; if none is left (for example a PATH of only colons), DEV-M3-01's fallback applies. Then the same three directories are prepended | Native security rule (D-41): the child must never get an empty PATH field | `m3_claude_env_path` cases `trailing_colon`, `leading_colon`, `double_colon` and `only_colon`: `expected.native.divergence = "DEV-M3-02"` | `approved` | user decision 2026-09-29 |
 | DEV-M3-03 | M3 | `_claude_env()` keeps relative fields of the parent PATH (`.`, `..`, `bin`, `./bin`, `~/bin`; command lookup never expands `~`), and prepends `~/.local/bin` even when a relative HOME makes it relative, so command lookup searches from the working directory | The child PATH keeps only the parent's absolute fields, and `~/.local/bin` is added only when it is absolute; if no field is left, DEV-M3-01's fallback applies | Native security rule (D-41): every child PATH field must be absolute | `m3_claude_env_path` cases `dot_entry`, `relative_entry`, `tilde_entry`, `only_relative` and `empty_and_relative`: `expected.native.divergence = "DEV-M3-03"`; the relative-HOME case is `ChildEnvironmentTests.childPathHasOnlyAbsoluteFields` | `approved` | user decision 2026-09-29 |
+| DEV-M3-04 | M3 | `_backend_report()` answers "The last request was handled by Claude, through the Agent SDK, sir." | Native answers "The last request was handled by Claude, through Claude Code, sir." The local sentence is unchanged apart from the model name ("Apple's on-device model", §3.10) | User decision W4 D-6 (README D-11): native reaches Claude through the Claude Code CLI, not the Agent SDK, so the Python sentence would be wrong | `m3_backend_report` cases with a Claude backend: `expected.native.divergence = "DEV-M3-04"` | `approved` | M02-M04-security-brain-chat.md §8.2 D-6; README D-11 |
 
 The M7 table gives one fixture for all 15 `DEV-M7-*` / `DEV-M14-*` rows (§8.1 heading:
 "fixture §4.2"). For the `DEV-M14-*` rows that marker was carried over as written; the
@@ -91,10 +92,10 @@ loop behaviours may need their own tests at M14.
 
 ## Counts
 
-61 entries: 34 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-8, R3 → D-15, R4 → D-14, DEV-M7-01,
+62 entries: 35 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-8, R3 → D-15, R4 → D-14, DEV-M7-01,
 DEV-M7-02, DEV-M7-05, R9 → D-18, DEV-M0-01, DEV-M0-02, DEV-M0-03, DEV-M1-01, DEV-M1-02, DEV-M1-03,
 DEV-M1-04, D1a, D1b, D1c, D5a, R8-str-float, R8-load-not-dict, R8-nan-sort,
-R8-kb-summary-not-str, R8-list-content, DEV-M3-01, DEV-M3-02, DEV-M3-03), 1 `approved (overage kill-switch only)` (X-10), 1 `rejected` (X-5),
+R8-kb-summary-not-str, R8-list-content, DEV-M3-01, DEV-M3-02, DEV-M3-03, DEV-M3-04), 1 `approved (overage kill-switch only)` (X-10), 1 `rejected` (X-5),
 1 `resolved — parity since fef66c1` (R2 → D-12) and 24 `proposed — decide at milestone start`.
 
 ## Not registered: differences mentioned only in the M05 §3.5 tool table
