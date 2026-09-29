@@ -8,6 +8,15 @@ import Foundation
 enum Entry {
     static func main() {
         let arguments = CommandLine.arguments.dropFirst()
+        // The MCP relay (M02-M04 §3.7) comes first: before any AppKit/SwiftUI touch and
+        // before the single-instance lock, since it runs while the app itself holds the lock.
+        if arguments.first == "--mcp-relay" {
+            guard let relay = RelayMain.parse(arguments) else {
+                FileHandle.standardError.write(Data("usage: JARVIS --mcp-relay <socket> --token-file <path>\n".utf8))
+                exit(64)   // EX_USAGE
+            }
+            exit(RelayMain.run(socket: relay.socket, tokenFile: relay.tokenFile))
+        }
         if arguments.contains("--version") {
             print("JARVIS \(infoString("CFBundleShortVersionString")) (\(infoString("CFBundleVersion")))")
             exit(0)
