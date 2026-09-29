@@ -31,6 +31,10 @@ let package = Package(
             dependencies: ["JarvisCore", "JarvisTools"]
         ),
 
+        // M3 Claude driver. The JarvisTools dependency arrives in T3.3, once M2's target exists.
+        .target(name: "JarvisBrain", dependencies: ["JarvisCore"]),
+        .testTarget(name: "JarvisBrainTests", dependencies: ["JarvisBrain", "JarvisTestSupport"]),
+
         // Sandbox + golden-fixture loader shared by every test target. Foundation only —
         // it must NOT import Testing (Testing.framework is only on the test targets' search path).
         .target(
