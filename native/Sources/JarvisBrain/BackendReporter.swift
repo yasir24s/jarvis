@@ -39,11 +39,12 @@ public actor BackendReporter {
         research.bump(Self.counterKey(name), by: 1)
     }
 
-    /// `_backend_report()`, with `localModelName` where Python has `MODEL`. Python's strings
-    /// verbatim (D-6), including "through the Agent SDK".
+    /// `_backend_report()`, with `localModelName` where Python has `MODEL`. The local sentence
+    /// is Python's. The Claude sentence names Claude Code, the CLI native reaches Claude
+    /// through, where Python says "the Agent SDK" (DEV-M3-04; README D-11 resolves D-6).
     public func report(localModelName: String) -> String {
         if Py.contains(Py.lower(last.name), "claude") {
-            return "The last request was handled by Claude, through the Agent SDK, sir."
+            return "The last request was handled by Claude, through Claude Code, sir."
         }
         return "The last request was handled by the local model, sir — \(localModelName)."
     }

@@ -12,42 +12,67 @@ import Testing
 struct BackendReportGoldenTests {
     static let suite = "m3_backend_report"
 
+    /// Native must equal the case's `native` block when it has one (DEV-M3-04: the Claude
+    /// sentence names Claude Code, not the Agent SDK), and Python's value otherwise. Python's
+    /// value for a deviating case stays recorded as a known issue.
     @Test(arguments: try Golden.cases(suite))
-    func matchesPython(_ c: GoldenCase) async throws {
-        for m in await Self.check(c) { Issue.record(Comment(rawValue: "\(c.name): \(m)")) }
+    func matchesPythonOrRegisteredDeviation(_ c: GoldenCase) async throws {
+        let r = await Self.check(c)
+        #expect(r.native.isEmpty, "\(c.name): \(r.native)")
+        if let d = r.divergence {
+            withKnownIssue(Comment(rawValue: d)) {
+                for m in r.python { Issue.record(Comment(rawValue: "\(c.name): \(m)")) }
+            }
+        }
     }
 
     @Test func allCasesAsserted() async throws {
         let cases = try Golden.cases(Self.suite)
-        var passed = 0
-        for c in cases where await Self.check(c).isEmpty { passed += 1 }
-        print("\(Self.suite): \(passed)/\(cases.count)")
+        var results: [ReportCheck] = []
+        for c in cases { results.append(await Self.check(c)) }
+        let passed = results.filter { $0.native.isEmpty }.count
+        let deviations = results.compactMap(\.divergence)
+        print("\(Self.suite): \(passed)/\(cases.count); DEV-M3-04 \(deviations.filter { $0 == "DEV-M3-04" }.count)")
         #expect(passed == cases.count)
         #expect(cases.count >= 60)
+        #expect(!deviations.isEmpty && deviations.allSatisfy { $0 == "DEV-M3-04" })
+        // A deviating case really differs from Python; every other case is Python's value.
+        #expect(results.allSatisfy { ($0.divergence == nil) == $0.python.isEmpty })
         // Python was run with the native display name as MODEL.
         #expect(cases.contains { $0.input.string("local_model") == BackendReporter.localDisplayName })
-        // Both of Python's strings occur.
-        let reports = Set(cases.compactMap { $0.expected.string("report") })
-        #expect(reports.contains { $0.contains("Claude") } && reports.contains { $0.contains("local model") })
     }
 
-    static func check(_ c: GoldenCase) async -> [String] {
-        guard let model = c.input.string("local_model"), let want = c.expected.string("report"),
+    struct ReportCheck { var native: [String]; var python: [String]; var divergence: String? }
+
+    static func check(_ c: GoldenCase) async -> ReportCheck {
+        guard let model = c.input.string("local_model"), let pythonReport = c.expected.string("report"),
               let wantName = c.expected.string("last_name"), let wantAt = c.expected.double("last_at"),
-              let epoch = c.clock.double("epoch") else { return ["malformed case"] }
+              let epoch = c.clock.double("epoch") else {
+            return ReportCheck(native: ["malformed case"], python: [], divergence: nil)
+        }
         let reporter = BackendReporter(research: BumpRecorder(), clock: ManualClock(epoch), log: { _ in })
         if let name = c.input.string("name") {
             await reporter.set(name)
         } else if c.input["name"] != .null {
-            return ["malformed name"]
+            return ReportCheck(native: ["malformed name"], python: [], divergence: nil)
         }
-        var out: [String] = []
         let got = await reporter.report(localModelName: model)
-        if !Py.eq(got, want) { out.append("report \(got.debugDescription) != \(want.debugDescription)") }
         let last = await reporter.last
-        if !Py.eq(last.name, wantName) { out.append("last.name \(last.name.debugDescription) != \(wantName.debugDescription)") }
-        if last.at.timeIntervalSince1970 != wantAt { out.append("last.at \(last.at.timeIntervalSince1970) != \(wantAt)") }
-        return out
+        var always: [String] = []
+        if !Py.eq(last.name, wantName) { always.append("last.name \(last.name.debugDescription) != \(wantName.debugDescription)") }
+        if last.at.timeIntervalSince1970 != wantAt { always.append("last.at \(last.at.timeIntervalSince1970) != \(wantAt)") }
+        func mismatch(_ want: String) -> [String] {
+            Py.eq(got, want) ? [] : ["report \(got.debugDescription) != \(want.debugDescription)"]
+        }
+        guard let native = c.expected.object("native") else {
+            return ReportCheck(native: always + mismatch(pythonReport), python: [], divergence: nil)
+        }
+        let divergence = native.string("divergence") ?? "unnamed divergence"
+        guard let nativeText = native.string("text") else {
+            return ReportCheck(native: always + ["native block without text"], python: mismatch(pythonReport),
+                               divergence: divergence)
+        }
+        return ReportCheck(native: always + mismatch(nativeText), python: mismatch(pythonReport), divergence: divergence)
     }
 }
 

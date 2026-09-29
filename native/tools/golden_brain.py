@@ -584,6 +584,21 @@ def tool_schemas(ctx):
 # log patched). "last" is what LAST_BACKEND then holds. The names cover the case, homoglyph
 # and code-point rules of `"claude" in name.lower()`; the models include the native display
 # name, "Apple's on-device model".
+# DEV-M3-04: native's Claude sentence names Claude Code, not the Agent SDK (README D-11). The
+# native value is built from Python's own sentence, so it is never typed out here.
+
+_SDK, _CLI = "the Agent SDK", "Claude Code"
+
+
+def _report_expected(J, **last):
+    report = J._backend_report()
+    expected = {"report": report, **last}
+    if _SDK in report:
+        native = report.replace(_SDK, _CLI)
+        if native == report:
+            raise RuntimeError(f"DEV-M3-04 left {report!r} unchanged")
+        expected["native"] = {"divergence": "DEV-M3-04", "text": native}
+    return expected
 
 @suite("m3_backend_report")
 def backend_report(ctx):
@@ -602,16 +617,14 @@ def backend_report(ctx):
         for model in models:
             J.MODEL = model
             cases.append({"name": f"initial | {model}", "input": {"name": None, "local_model": model},
-                          "expected": {"report": J._backend_report(), "last_name": initial["name"],
-                                       "last_at": initial["at"]}})
+                          "expected": _report_expected(J, last_name=initial["name"], last_at=initial["at"])})
         for name in names:
             J._set_backend(name)
             for model in models:
                 J.MODEL = model
                 cases.append({"name": f"{name!r} | {model}", "input": {"name": name, "local_model": model},
-                              "expected": {"report": J._backend_report(),
-                                           "last_name": J.LAST_BACKEND["name"],
-                                           "last_at": J.LAST_BACKEND["at"]}})
+                              "expected": _report_expected(J, last_name=J.LAST_BACKEND["name"],
+                                                           last_at=J.LAST_BACKEND["at"])})
     finally:
         J.research_bump, J.log = saved[0], saved[1]
         J.LAST_BACKEND.clear()

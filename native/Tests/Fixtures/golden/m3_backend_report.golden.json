@@ -71,7 +71,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claude",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -83,7 +87,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claude",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -95,7 +103,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claude",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -107,7 +119,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claude",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -119,7 +135,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claude (partial)",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -131,7 +151,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claude (partial)",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -143,7 +167,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claude (partial)",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -155,7 +183,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claude (partial)",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -167,7 +199,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claude (claude-opus-4-8)",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -179,7 +215,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claude (claude-opus-4-8)",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -191,7 +231,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claude (claude-opus-4-8)",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -203,7 +247,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claude (claude-opus-4-8)",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -215,7 +263,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "Claude (Opus 5.5)",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -227,7 +279,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "Claude (Opus 5.5)",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -239,7 +295,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "Claude (Opus 5.5)",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -251,7 +311,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "Claude (Opus 5.5)",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -263,7 +327,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "CLAUDE",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -275,7 +343,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "CLAUDE",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -287,7 +359,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "CLAUDE",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -299,7 +375,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "CLAUDE",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -551,7 +631,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "xclaudex",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -563,7 +647,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "xclaudex",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -575,7 +663,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "xclaudex",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -587,7 +679,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "xclaudex",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -599,7 +695,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claudé",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -611,7 +711,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claudé",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -623,7 +727,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claudé",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
@@ -635,7 +743,11 @@
    "expected": {
     "report": "The last request was handled by Claude, through the Agent SDK, sir.",
     "last_name": "claudé",
-    "last_at": 1790582400.0
+    "last_at": 1790582400.0,
+    "native": {
+     "divergence": "DEV-M3-04",
+     "text": "The last request was handled by Claude, through Claude Code, sir."
+    }
    }
   },
   {
