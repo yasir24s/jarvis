@@ -58,41 +58,68 @@ enum ClaudeStreams {
     /// The stderr ring's size (plan §3.6).
     static let stderrCapacity = 8192
 
-    /// Yields each line of `handle` without its "\n", then an unterminated last line if there
-    /// is one, then `.stdoutClosed`. Only "\n" ends a line. `FileHandle.bytes.lines` is not
-    /// used: it also breaks at U+0085, U+2028 and U+2029, which a JSON string may hold raw,
-    /// and it drops empty lines (both observed 2026-09-29).
-    static func readLines(_ handle: FileHandle, into signals: AsyncStream<ClaudeSignal>.Continuation) async {
-        var line: [UInt8] = []
-        do {
-            for try await byte in handle.bytes {
-                if byte == 0x0A {
+    // Each pipe is read by its own thread with blocking read(2). `FileHandle.bytes` is not
+    // used: it runs every read in the process one at a time, so an idle stderr read held
+    // stdout's lines back until the child exited (observed 2026-09-29: a line written at once
+    // arrived after 3.01 s instead of 0.11 s). Its `.lines` also breaks at U+0085, U+2028 and
+    // U+2029, which a JSON string may hold raw, and drops empty lines.
+
+    /// Yields each line of `handle` without its "\n" (only "\n" ends a line), then an
+    /// unterminated last line if there is one, then `.stdoutClosed`.
+    static func startLineReader(_ handle: FileHandle, into signals: AsyncStream<ClaudeSignal>.Continuation) {
+        startThread(name: "claude stdout") {
+            var line: [UInt8] = []
+            readToEOF(handle) { chunk in
+                var rest = chunk[...]
+                while let newline = rest.firstIndex(of: 0x0A) {
+                    line.append(contentsOf: rest[..<newline])
                     signals.yield(.line(String(decoding: line, as: UTF8.self)))
                     line.removeAll(keepingCapacity: true)
-                } else {
-                    line.append(byte)
+                    rest = rest[(newline + 1)...]
                 }
+                line.append(contentsOf: rest)
             }
-        } catch {
-            // A read error ends the stream like EOF does; R10 then reports the exit.
+            if !line.isEmpty {
+                signals.yield(.line(String(decoding: line, as: UTF8.self)))
+            }
+            signals.yield(.stdoutClosed)
         }
-        if !line.isEmpty {
-            signals.yield(.line(String(decoding: line, as: UTF8.self)))
-        }
-        signals.yield(.stdoutClosed)
     }
 
     /// Keeps the last `stderrCapacity` bytes of `handle` and yields them at EOF.
-    static func readTail(_ handle: FileHandle, into signals: AsyncStream<ClaudeSignal>.Continuation) async {
-        var ring = ByteRing(capacity: stderrCapacity)
-        do {
-            for try await byte in handle.bytes {
-                ring.append(byte)
+    static func startTailReader(_ handle: FileHandle, into signals: AsyncStream<ClaudeSignal>.Continuation) {
+        startThread(name: "claude stderr") {
+            var ring = ByteRing(capacity: stderrCapacity)
+            readToEOF(handle) { chunk in
+                for byte in chunk { ring.append(byte) }
             }
-        } catch {
-            // Keep what was read.
+            signals.yield(.stderrClosed(tail: ring.bytes))
         }
-        signals.yield(.stderrClosed(tail: ring.bytes))
+    }
+
+    /// Blocking reads until EOF, or an error other than EINTR (which ends the stream like
+    /// EOF; R10 then reports the exit). `handle` owns the descriptor, so it is kept alive.
+    private static func readToEOF(_ handle: FileHandle, _ body: (ArraySlice<UInt8>) -> Void) {
+        withExtendedLifetime(handle) {
+            let fd = handle.fileDescriptor
+            var buffer = [UInt8](repeating: 0, count: 65536)
+            while true {
+                let n = buffer.withUnsafeMutableBytes { read(fd, $0.baseAddress, $0.count) }
+                if n > 0 {
+                    body(buffer[..<n])
+                } else if n < 0 && errno == EINTR {
+                    continue
+                } else {
+                    return
+                }
+            }
+        }
+    }
+
+    private static func startThread(name: String, _ body: @escaping @Sendable () -> Void) {
+        let thread = Thread(block: body)
+        thread.name = name
+        thread.start()
     }
 }
 

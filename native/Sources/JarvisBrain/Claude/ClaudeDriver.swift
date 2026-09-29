@@ -73,6 +73,9 @@ public actor ClaudeDriver {
 
     /// The last finished turn's error (an R-rule's text), or nil if it succeeded.
     public private(set) var lastError: String?
+    /// How the last turn's `claude` ended: its exit status, or minus the signal that killed
+    /// it (-15 for SIGTERM, -9 for SIGKILL). nil if it did not start.
+    public private(set) var lastExit: Int32?
     /// The model that served the last finished turn: the configured model, or R7's
     /// fallback model after a refusal fallback.
     public private(set) var servingModel: String?
@@ -169,9 +172,8 @@ public actor ClaudeDriver {
                 // Cancelled: the turn ended first.
             }
         }
-        let out = stdout.fileHandleForReading, err = stderr.fileHandleForReading
-        Task.detached { await ClaudeStreams.readLines(out, into: input) }
-        Task.detached { await ClaudeStreams.readTail(err, into: input) }
+        ClaudeStreams.startLineReader(stdout.fileHandleForReading, into: input)
+        ClaudeStreams.startTailReader(stderr.fileHandleForReading, into: input)
         await bridge.setClaudePID(child.pid, for: files.turnID)
         Self.write(Self.stdinLine(user: user), to: stdin.fileHandleForWriting)
 
@@ -211,7 +213,6 @@ public actor ClaudeDriver {
             }
         }
         timer.cancel()
-        watch.deadline?.cancel()
         withExtendedLifetime(process) {}
 
         if watch.stopping {
@@ -228,7 +229,7 @@ public actor ClaudeDriver {
             let sentences = state.pop(force: true)
             await emit(sentences, to: &state, sink: sink)
         }
-        return await conclude(state, channel: channel)
+        return await conclude(state, channel: channel, exit: watch.exit)
     }
 
     /// R1-R9 for one event. Returns an error that must stop the child (a guard trip).
@@ -302,8 +303,9 @@ public actor ClaudeDriver {
     }
 
     /// Salvage (jarvis.py `claude_generate`'s except branch) and the success return.
-    private func conclude(_ s: TurnState, channel: Channel) async -> String? {
+    private func conclude(_ s: TurnState, channel: Channel, exit: ClaudeExit? = nil) async -> String? {
         lastError = s.error
+        lastExit = exit?.code
         servingModel = s.servingModel
         if let error = s.error {
             var emitted = s.spoken
@@ -430,7 +432,9 @@ private struct TurnState {
 }
 
 /// The child's side of one turn: which pipes are still open, how it exited, and the stop
-/// sequence (SIGTERM, `ClaudeDriver.stopGrace`, SIGKILL).
+/// sequence. The stop sequence does not rely on SIGTERM being honoured: SIGTERM, then
+/// `ClaudeDriver.stopGrace`, then SIGKILL. The loop ends once claude itself has exited;
+/// the SIGKILL to its process group still follows the grace, for anything it started.
 private struct Watch {
     var exit: ClaudeExit?
     var stdoutOpen = true
@@ -438,21 +442,31 @@ private struct Watch {
     var stderrTail: [UInt8] = []
     var stopping = false
     var killed = false
-    var deadline: Task<Void, Never>?
 
-    /// Sends SIGTERM once, unless the child has already exited.
+    /// SIGTERM to claude's process group (to claude alone while it runs, if it is not a
+    /// group leader), and the timer for SIGKILL. Once.
     mutating func beginStop(_ child: ClaudeChild, why: String, input: AsyncStream<ClaudeSignal>.Continuation,
                             log: @Sendable (String) -> Void) {
         guard !stopping else { return }
         stopping = true
-        guard exit == nil else { return }
+        guard exit == nil || child.isGroupLeader else { return }
         log("Claude: stopping claude (\(why)): SIGTERM")
         child.send(SIGTERM)
-        deadline = Self.after(ClaudeDriver.stopGrace, input)
+        let exited = exit != nil
+        Task.detached {
+            do {
+                try await Task.sleep(for: ClaudeDriver.stopGrace)
+            } catch {
+                return
+            }
+            if child.isGroupLeader { child.send(SIGKILL) }
+            if !exited { input.yield(.stopDeadline) }
+        }
     }
 
-    /// After the grace: SIGKILL, then one more grace. Returns false when there is nothing
-    /// left to wait for.
+    /// The grace is over and claude has not exited: the group already got SIGKILL; a child
+    /// that is not a group leader gets it now. Then one more grace. Returns false when there
+    /// is nothing left to wait for.
     mutating func escalate(_ child: ClaudeChild, input: AsyncStream<ClaudeSignal>.Continuation,
                            log: @Sendable (String) -> Void) -> Bool {
         guard exit == nil else { return false }
@@ -461,20 +475,16 @@ private struct Watch {
             return false
         }
         log("Claude: claude still running 2 s after SIGTERM: SIGKILL")
-        child.send(SIGKILL)
+        if !child.isGroupLeader { child.send(SIGKILL) }
         killed = true
-        deadline = Self.after(ClaudeDriver.stopGrace, input)
-        return true
-    }
-
-    private static func after(_ delay: Duration, _ input: AsyncStream<ClaudeSignal>.Continuation) -> Task<Void, Never> {
         Task.detached {
             do {
-                try await Task.sleep(for: delay)
+                try await Task.sleep(for: ClaudeDriver.stopGrace)
                 input.yield(.stopDeadline)
             } catch {
-                // Cancelled: the child exited first.
+                // Cancelled.
             }
         }
+        return true
     }
 }

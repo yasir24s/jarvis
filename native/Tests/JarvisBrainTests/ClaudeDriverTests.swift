@@ -92,6 +92,7 @@ struct ClaudeDriverTests {
         #expect(await run.bridgeSawOneFullTurn())
         #expect(await run.driver.servingModel == "claude-opus-4-8")
         #expect(await run.driver.lastError == nil)
+        #expect(await run.driver.lastExit == 0)
         #expect(await run.turn.isOpen)
         #expect(run.logs.lines == ["Claude refusal fallback: claude-opus-5-5→claude-opus-4-8 (cyber)"])
     }
@@ -162,7 +163,7 @@ struct ClaudeDriverTests {
         #expect(await run.generate() == nil)
         #expect(ContinuousClock.now - start < .seconds(10))
         #expect(await run.driver.lastError == edit.error)
-        #expect(fake.text("term") == "TERM\n")      // the child got SIGTERM
+        #expect(await run.driver.lastExit == -SIGTERM)   // the child died of SIGTERM
         #expect(await !run.turn.isOpen)
         #expect(await run.bridgeSawOneFullTurn())
         #expect(await run.sink.sentences.isEmpty)
@@ -181,7 +182,7 @@ struct ClaudeDriverTests {
         let run = Run(fake)
         #expect(await run.generate() == nil)
         #expect(await run.driver.lastError == "overage billing refused")
-        #expect(fake.text("term") == "TERM\n")
+        #expect(await run.driver.lastExit == -SIGTERM)
         #expect(await !run.turn.isOpen)
         #expect(await run.bridgeSawOneFullTurn())
         #expect(run.logs.lines == ["Claude: stopping claude (overage billing refused): SIGTERM",
@@ -217,7 +218,7 @@ struct ClaudeDriverTests {
         let run = Run(fake)
         #expect(await run.generate() == nil)
         #expect(await run.driver.lastError == c.error)
-        #expect(!fake.exists("term"))
+        #expect(await run.driver.lastExit == 0)          // not stopped: it exited by itself
         #expect(await run.bridgeSawOneFullTurn())
         #expect(await run.sink.sentences.isEmpty)
         #expect(await run.backend.names.isEmpty)
@@ -233,6 +234,7 @@ struct ClaudeDriverTests {
         #expect(await run.generate() == nil)
         let error = "exit 3: " + String(repeating: "x", count: 8192 - 9) + "TAIL-END"
         #expect(await run.driver.lastError == error)
+        #expect(await run.driver.lastExit == 3)
         #expect(await run.bridgeSawOneFullTurn())
         #expect(run.logs.lines == [Self.unavailable + ClaudeReason.reason(error)])
     }
@@ -266,10 +268,9 @@ struct ClaudeDriverTests {
                                    Self.unavailable + ClaudeReason.reason("timeout after 1000 ms")])
         #expect(await !run.turn.isOpen)
         #expect(await run.bridgeSawOneFullTurn())
-        // The script and the sleep it started are both gone.
+        #expect(await run.driver.lastExit == -SIGKILL)   // SIGTERM was ignored
         let pid = try #require(await run.bridge.pid)
-        let sleepPID = try #require(fake.text("sleep.pid").flatMap { Int32(Py.strip($0)) })
-        #expect(await Self.eventually { Self.isGone(pid) && Self.isGone(sleepPID) })
+        #expect(await Self.eventually { Self.isGone(pid) })
     }
 
     @Test func cancellingTheCallerStopsTheChild() async throws {
@@ -281,7 +282,7 @@ struct ClaudeDriverTests {
         task.cancel()
         #expect(await task.value == nil)
         #expect(await run.driver.lastError == "cancelled")
-        #expect(fake.text("term") == "TERM\n")
+        #expect(await run.driver.lastExit == -SIGTERM)
         #expect(await !run.turn.isOpen)
         #expect(await run.bridgeSawOneFullTurn())
         #expect(run.logs.lines == ["Claude: stopping claude (cancelled): SIGTERM",
@@ -304,6 +305,7 @@ struct ClaudeDriverTests {
         #expect(await run.sink.deltas == ["It is sunny. ", "It is wa"])
         #expect(await run.backend.names == ["claude (partial)"])
         #expect(await run.driver.lastError == "exit 1: stream ended")
+        #expect(await run.driver.lastExit == 1)
         #expect(await run.bridgeSawOneFullTurn())
         #expect(run.logs.lines.isEmpty)
     }
@@ -440,6 +442,7 @@ struct ClaudeDriverTests {
         let id = await run.turn.turnID
         #expect(await run.generate() == nil)
         #expect(await run.driver.lastError == ClaudeLocator.notFoundMessage)
+        #expect(await run.driver.lastExit == nil)
         #expect(await run.bridge.calls == [.open(id), .close(id)])
         #expect(run.logs.lines == [Self.unavailable + ClaudeReason.reason(ClaudeLocator.notFoundMessage)])
     }

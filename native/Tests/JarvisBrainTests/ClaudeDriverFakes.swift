@@ -90,9 +90,10 @@ final class LogRecorder: Sendable {
 
 /// A fake `claude` in its own Sandbox. The script records its argv (NUL-separated), its
 /// working directory, its environment and the stdin line, prints `transcript.jsonl` to
-/// stdout and `stderr.txt` to stderr, then ends as `Ending` says. `.hang` writes a `term`
-/// file when SIGTERM arrives and exits 143; `.hangIgnoringTerm` ignores SIGTERM (so only
-/// SIGKILL stops it) and writes its `sleep`'s pid to `sleep.pid`.
+/// stdout and `stderr.txt` to stderr, then ends as `Ending` says. The hanging endings `exec`
+/// a long `sleep`, so the pid the driver signals is the process that must die, and nothing
+/// else is left: `.hang` dies of SIGTERM (exit -15), `.hangIgnoringTerm` ignores SIGTERM
+/// from its first line on, so only SIGKILL stops it (exit -9).
 struct FakeClaude {
     enum Ending {
         case exit(Int32)
@@ -116,11 +117,11 @@ struct FakeClaude {
             trap = ""
             end = "exit \(code)"
         case .hang:
-            trap = #"trap 'echo TERM > "$D/term"; kill $! 2>/dev/null; exit 143' TERM"#
-            end = "/bin/sleep 30 &\nwait $!"
+            trap = ""
+            end = "exec /bin/sleep 30"
         case .hangIgnoringTerm:
             trap = "trap '' TERM"
-            end = "/bin/sleep 30 &\necho $! > \"$D/sleep.pid\"\nwait $!"
+            end = "exec /bin/sleep 30"
         }
         let text = """
             #!/bin/sh
