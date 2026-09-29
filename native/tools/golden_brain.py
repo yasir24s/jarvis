@@ -537,3 +537,42 @@ suite("m3_claude_config_blank", env={
 suite("m3_claude_config_other", env={
     "JARVIS_USE_CLAUDE": "false", "JARVIS_CLAUDE_MODEL": "claude-opus-5-5",
     "JARVIS_CLAUDE_EFFORT": "max", "JARVIS_CLAUDE_MAX_TURNS": "+12"})(_claude_config)
+
+
+# ─── m3_tool_schemas ───────────────────────────────────────────────────────────
+# One case per tool, in TOOLS order: the name, description and schema that
+# _build_claude_server() hands the SDK's tool(), after its own
+# `fn.get("parameters") or {"type": "object", "properties": {}}`. MCP tools/list serves
+# exactly these; tools/gen_tool_catalog.py turns this fixture into ToolCatalog.swift.
+
+class _RecordingSDK:
+    """A claude_agent_sdk stand-in whose tool() records its arguments in call order."""
+
+    def __init__(self):
+        self.seen = []
+
+    def tool(self, name, description, schema):
+        self.seen.append((name, description, schema))
+        return lambda handler: name
+
+    @staticmethod
+    def create_sdk_mcp_server(name, version, tools):
+        return {"name": name, "version": version, "tools": list(tools)}
+
+
+@suite("m3_tool_schemas")
+def tool_schemas(ctx):
+    J = ctx.J
+    sdk = _RecordingSDK()
+    saved = (J._load_claude_sdk, J._claude_server, J._claude_allowed)
+    J._load_claude_sdk = lambda: sdk
+    J._claude_server = None
+    try:
+        J._build_claude_server()
+    finally:
+        J._load_claude_sdk, J._claude_server, J._claude_allowed = saved
+    if [name for name, _, _ in sdk.seen] != [t["function"]["name"] for t in J.TOOLS]:
+        raise RuntimeError("recording SDK saw a different tool list than TOOLS")
+    return [{"name": name, "input": {"index": i},
+             "expected": {"name": name, "description": description, "parameters": schema}}
+            for i, (name, description, schema) in enumerate(sdk.seen)]
