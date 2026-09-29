@@ -11,9 +11,17 @@ public actor ToolGateway {
 
     private var handlers: [String: Handler] = [:]
     private let confirmationGate: ConfirmationGate
+    private let log: @Sendable (String) -> Void
+    private let research: (any ResearchCounting)?
 
-    public init(confirmationGate: ConfirmationGate = .shared) {
+    public init(confirmationGate: ConfirmationGate = .shared,
+                log: @escaping @Sendable (String) -> Void = {
+                    JarvisLog.log($0, category: .tools)
+                },
+                research: (any ResearchCounting)? = nil) {
         self.confirmationGate = confirmationGate
+        self.log = log
+        self.research = research
     }
 
     /// Registers an implementation for later milestones. Registration is deliberately an
@@ -49,11 +57,16 @@ public actor ToolGateway {
             return await result("Turn closed.", name: name, origin: origin, outcome: .failed,
                                 error: true, turn: turn)
         }
-        guard let handler = handlers[name] else {
+
+        // A catalog tool is known even before a later milestone registers its body. This
+        // distinction keeps M3's taint and static guards active while the M5/M6 bodies land.
+        guard DataSourceMap.allTools.contains(name) || handlers[name] != nil else {
             return await result(GuardStrings.unknownTool(name), name: name, origin: origin,
                                 outcome: .unknown, error: false, turn: turn)
         }
         if TaintPolicy.executors.contains(name), await turn.tainted {
+            log("BLOCKED \(name) after untrusted-content ingestion (injection guard)")
+            research?.bump("taint_block", by: 1)
             let text: String
             let isError: Bool
             if case .model(.claude) = origin {
@@ -76,6 +89,7 @@ public actor ToolGateway {
                                        isSudo: PyShellRisk.containsSudo(command))
             switch tier {
             case .block:
+                log("BLOCKED command: \(String(command.prefix(120)))")
                 let text = PyShellRisk.containsSudo(command) ? GuardStrings.sudoNotAllowed : GuardStrings.systemDamaging
                 return await result(text, name: name, origin: origin, outcome: .blockedGuard,
                                     error: false, turn: turn)
@@ -95,8 +109,14 @@ public actor ToolGateway {
             }
         } else if name == "run_applescript",
                   AppleScriptPolicy.isDangerous(args["script"]?.stringValue) {
+            log("BLOCKED dangerous AppleScript from LLM")
             return await result(GuardStrings.appleScriptRefused, name: name, origin: origin,
                                 outcome: .blockedGuard, error: false, turn: turn)
+        }
+
+        guard let handler = handlers[name] else {
+            return await result(GuardStrings.unknownTool(name), name: name, origin: origin,
+                                outcome: .unknown, error: false, turn: turn)
         }
 
         await turn.recordSources(for: name)

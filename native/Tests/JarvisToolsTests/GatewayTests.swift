@@ -1,5 +1,6 @@
 import JarvisCore
 import JarvisTools
+import Synchronization
 import Testing
 
 @Suite("ToolGatewayTests")
@@ -64,6 +65,60 @@ struct ToolGatewayTests {
         #expect(blocked.record.outcome == ToolRunRecord.Outcome.blockedTaint)
     }
 
+    @Test(arguments: [BackendKind.local, BackendKind.claude])
+    func taintBlocksCatalogToolBeforeMissingBodyAndRecordsResearch(_ backend: BackendKind) async {
+        let logs = RecordingLog()
+        let counter = RecordingCounter()
+        let gateway = ToolGateway(log: logs.sink, research: counter)
+        let turn = TurnContext(channel: .voice, startTainted: true)
+
+        let blocked = await gateway.call("run_command", Self.args(("command", .string("echo hi"))),
+                                         turn: turn, origin: .model(backend))
+
+        #expect(blocked.text == (backend == .claude ? TaintPolicy.blockedTextClaude : TaintPolicy.blockedTextLocal))
+        #expect(blocked.record.outcome == ToolRunRecord.Outcome.blockedTaint)
+        #expect(logs.all == ["BLOCKED run_command after untrusted-content ingestion (injection guard)"])
+        #expect(counter.bumps == ["taint_block+1"])
+    }
+
+    @Test
+    func staticGuardsRunBeforeMissingBodyAndUseExactBlockLogs() async {
+        let logs = RecordingLog()
+        let gateway = ToolGateway(log: logs.sink)
+        let turn = TurnContext(channel: .voice)
+        let command = String(repeating: "x", count: 140)
+
+        let commandResult = await gateway.call(
+            "run_command", Self.args(("command", .string("rm -rf / " + command))),
+            turn: turn, origin: .model(.local))
+        let scriptResult = await gateway.call(
+            "run_applescript", Self.args(("script", .string("tell application \"System Events\" to keystroke \"x\""))),
+            turn: turn, origin: .model(.local))
+
+        #expect(commandResult.record.outcome == .blockedGuard)
+        #expect(scriptResult.record.outcome == .blockedGuard)
+        #expect(logs.all == [
+            "BLOCKED command: \(String(("rm -rf / " + command).prefix(120)))",
+            "BLOCKED dangerous AppleScript from LLM"
+        ])
+    }
+
+    @Test
+    func genuinelyUnknownToolStillReturnsUnknownBeforeGuards() async {
+        let logs = RecordingLog()
+        let counter = RecordingCounter()
+        let gateway = ToolGateway(log: logs.sink, research: counter)
+        let turn = TurnContext(channel: .voice, startTainted: true)
+
+        let result = await gateway.call("not_a_jarvis_tool", JSONObject(), turn: turn,
+                                        origin: .model(.local))
+
+        #expect(result.text == "Unknown tool not_a_jarvis_tool")
+        #expect(result.record.outcome == .unknown)
+        #expect(logs.all.isEmpty)
+        #expect(counter.bumps.isEmpty)
+    }
+
     @Test
     func taintIsSetOnlyAfterUntrustedToolReturns() async {
         let gateway = ToolGateway()
@@ -121,7 +176,7 @@ struct ToolGatewayTests {
         let gateway = ToolGateway(confirmationGate: gate)
         await gateway.register(ConfirmTool())
         let turn = TurnContext(channel: .voice)
-        let pending = await gateway.call("confirm_me", JSONObject(), turn: turn, origin: .ui)
+        let pending = await gateway.call("write_file", JSONObject(), turn: turn, origin: .ui)
         #expect(pending.text == "That will do it, sir — say 'confirm' to proceed.")
         let consumed = await gate.consume("confirm", via: .voice, runIn: turn)
         #expect(consumed == .handled("done"))
@@ -157,7 +212,7 @@ struct ToolGatewayTests {
     }
 
     private struct ConfirmTool: ToolImpl {
-        static let name = "confirm_me"
+        static let name = "write_file"
         static let schema = ToolSchema(name: name)
         func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome {
             .needsConfirmation(desc: "That will do it") { "done" }
@@ -166,5 +221,22 @@ struct ToolGatewayTests {
 
     private static func args(_ pairs: (String, JSONValue)...) -> JSONObject {
         JSONObject(pairs.map { JSONObject.Member(key: $0.0, value: $0.1) })
+    }
+}
+
+private final class RecordingLog: Sendable {
+    private let lines = Mutex<[String]>([])
+
+    var all: [String] { lines.withLock { $0 } }
+    var sink: @Sendable (String) -> Void { { [self] line in lines.withLock { $0.append(line) } } }
+}
+
+private final class RecordingCounter: ResearchCounting {
+    private let bumpsStorage = Mutex<[String]>([])
+
+    var bumps: [String] { bumpsStorage.withLock { $0 } }
+
+    func bump(_ key: String, by n: Int) {
+        bumpsStorage.withLock { $0.append("\(key)+\(n)") }
     }
 }
