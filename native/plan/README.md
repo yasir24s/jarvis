@@ -346,23 +346,27 @@ Merged on `main`:
   rule lists to equal Python's: every pattern and flag, both tool sets and the path lists, as
   recorded in the `m2_rules` fixture. Verdict parity applies to every recorded input.
 
-M2 status (commit `894bf44`, built by GPT in the Codex app; checked by Claude on 2026-09-29):
+M2 status: **accepted on 2026-09-29 at `52487e5`.** GPT built it in the Codex app (`894bf44`
+guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each commit.
 
 - `SwiftGuard.shellVerdict` returns Python's tier exactly. The stricter version,
   `ShellPolicy.strictVerdict` (command splitting, the sudoers file as the allowlist, blocking
   keychain reads), is in the code but not wired in. It waits for the gated M5 step (D-38).
-- Observed: `swift test -j 2` passes 162 tests in 39 suites (the 162 known issues are M1's
-  registered deviations; none are in M2). `m2_shell` (3,182 cases) and `m2_applescript` (3,182)
-  match Python exactly, as do `m2_file_tiers` (216), the taint sets and the refusal strings. The
-  four pattern lists and the inline sudo test match Python's pattern strings and counts. A-0
-  prints `ok 12/12`, `golden.py --check` reports 28/28 fresh, and JarvisCore still imports only
-  Foundation.
-- Open: T2.5, the tool gateway (`ToolGateway`, `TurnContext`, `ConfirmationGate` in a
-  `JarvisTools` target), is not built. A-4 and A-5 stay open, and M3's MCP server (T3.3) waits
-  for it. The `m2_rules` path lists (`_PERSIST_FILES`, `_PERSIST_DIRS`, `_SYS_ROOTS`) are
-  recorded but not asserted by any test. The commit skipped the pre-commit hook: a test
-  hard-codes a `/Users/<user>/jarvis/...` path, and `SudoAllowlist` hard-codes the account name
-  when it parses the sudoers file.
+- Observed at `52487e5`: `swift test -j 2` passes with no failures (the 162 known issues are
+  M1's registered deviations; none are in M2). `m2_shell` (3,182 cases) and `m2_applescript`
+  (3,182) match Python exactly, as do `m2_file_tiers` (216), the taint sets and the refusal
+  strings. The four pattern lists, the inline sudo test and the three path lists
+  (`_PERSIST_FILES`, `_PERSIST_DIRS`, `_SYS_ROOTS`) match Python's. A-0 prints `ok 12/12`,
+  `golden.py --check` reports 28/28 fresh, and JarvisCore still imports only Foundation.
+- Gateway (T2.5, target `JarvisTools`): calls on one turn run in first-in, first-out order
+  (`TurnFIFO` in `TurnContext`), and JarvisTools uses JarvisCore's JSON types. The 8
+  `ToolGatewayTests` cover A-4: each backend's taint text, taint set only after the untrusted
+  tool returns, a concurrent `web_search` and `run_command` on one turn, "Turn closed.", and the
+  46-tool data-source map. A-5 holds: `Sources/JarvisTools/Tools` does not exist yet, and
+  nothing in JarvisApp calls a tool directly.
+- Left as is: `894bf44` added 9 test lines with made-up `/Users/<name>/` example paths. The
+  pre-commit hook would block them if they were added again. That commit's hard-coded repo path
+  and account name were removed in `4cf4fb0`.
 
 ## Open user decisions
 
