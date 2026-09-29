@@ -1243,6 +1243,13 @@ checks observed and a commit on the milestone branch.
   summarized hostile content re-enters as history. Open question.
 - **R-7.** The on-device context size on macOS 27 is unmeasured (T3.6 measures it). On
   26.x it is fixed at 4096.
+  **Measured by T3.6 on 2026-09-29** (macOS 27.2, one live probe, tokenCount(for:)):
+  contextSize is 8192. SYSTEM_PROMPT alone is 963 tokens (about 3.8 chars per token). All
+  46 tools are 4,790 tokens and CORE-22 is 2,430 (about 2.3 chars per token for tool JSON, so
+  chars ÷ 3.5 undercounts tools). The limit 0.6 × 8192 = 4,915; 46 tools plus instructions
+  come to 5,753, so the turn is offered CORE-22 (3,393 tokens, nothing dropped). Reply time
+  was 5.3 s. The model called no tool and invented a time ("14:37" at about 21:53) when asked
+  "what time is it": before M5, get_time has no body, and the model did not try it.
 - **R-8.** The relay is the full app binary (brief decision). If its RSS is high, move to
   a helper executable in `Contents/MacOS/`.
 - **R-9.** `TurnSummary.dataSources` does not cover sensitive data re-entering through the
