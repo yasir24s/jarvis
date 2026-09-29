@@ -31,8 +31,9 @@ final class EventBackend: BackendReporting, Sendable {
     func set(_ name: String) async { log.add("backend \(name)") }
 }
 
-/// Keeps a fake brain inside `generate` until `open()`; `waitUntilEntered()` returns once a
-/// call is inside.
+/// Keeps the FIRST call of a fake brain inside `generate` until `open()`; later calls pass
+/// straight through, so a coordinator that let a second turn in fails at once instead of
+/// hanging. `waitUntilEntered()` returns once the first call is inside.
 actor Hold {
     private var isOpen = false
     private var entered = false
@@ -40,6 +41,7 @@ actor Hold {
     private var enteredWaiters: [CheckedContinuation<Void, Never>] = []
 
     func enter() async {
+        guard !entered else { return }
         entered = true
         for w in enteredWaiters { w.resume() }
         enteredWaiters.removeAll()
@@ -59,7 +61,7 @@ actor Hold {
     }
 }
 
-/// What a fake brain saw on one call. `tainted` is read at the start of the call.
+/// What a fake brain saw on one call, read at the start of the call.
 struct BrainCall: Sendable {
     let system: String
     let user: String
@@ -67,6 +69,7 @@ struct BrainCall: Sendable {
     let turn: TurnContext
     let tainted: Bool
     let startedPasteTainted: Bool
+    let turnWasOpen: Bool
 }
 
 /// A Claude brain that records each call, sends `sentences` to the sink and returns `reply`.
@@ -87,7 +90,7 @@ actor FakeClaudeBrain: ClaudeGenerating {
     func generate(system: String, user: String, turn: TurnContext, sink: any ReplySink) async -> String? {
         let channel = await turn.channel, pasted = await turn.startedPasteTainted, tainted = await turn.tainted
         calls.append(BrainCall(system: system, user: user, channel: channel, turn: turn,
-                               tainted: tainted, startedPasteTainted: pasted))
+                               tainted: tainted, startedPasteTainted: pasted, turnWasOpen: await turn.isOpen))
         events?.add("claude")
         for s in sentences { await sink.sentence(s) }
         if let hold { await hold.enter() }
@@ -110,7 +113,7 @@ actor FakeLocalBrain: LocalGenerating {
                   sink: any ReplySink) async -> LocalOutcome {
         let pasted = await turn.startedPasteTainted, tainted = await turn.tainted
         calls.append(BrainCall(system: system, user: user, channel: channel, turn: turn,
-                               tainted: tainted, startedPasteTainted: pasted))
+                               tainted: tainted, startedPasteTainted: pasted, turnWasOpen: await turn.isOpen))
         events?.add("local")
         return outcome
     }
@@ -210,6 +213,29 @@ struct CoreHarness {
     }
 
     func remove() { sandbox.remove() }
+}
+
+/// Every TurnContext the coordinator made, in order (its `onTurnStart`).
+final class TurnRecorder: Sendable {
+    private let state = Mutex<[TurnContext]>([])
+
+    func add(_ turn: TurnContext) { state.withLock { $0.append(turn) } }
+    var all: [TurnContext] { state.withLock { $0 } }
+}
+
+/// Python's `is_online()` stand-in: a fixed answer, and how often it was asked.
+final class OnlineProbe: Sendable {
+    private let asked = Mutex(0)
+    let answer: Bool
+
+    init(_ answer: Bool) { self.answer = answer }
+
+    func ask() -> Bool {
+        asked.withLock { $0 += 1 }
+        return answer
+    }
+
+    var count: Int { asked.withLock { $0 } }
 }
 
 /// A ResearchCounting that drops everything (for oracles whose bumps do not matter).
