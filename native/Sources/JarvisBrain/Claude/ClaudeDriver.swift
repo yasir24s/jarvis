@@ -26,6 +26,9 @@ public protocol BackendReporting: Sendable {
 ///   it after the sentences. The voice channel returns the spoken sentences, as Python does.
 /// - Text for a message that has been retracted (R6) is not fed.
 /// - Stop signals go to the child's process group (see `ClaudeChild`).
+/// - A success result stands even if `claude` then exits non-zero (plan §3.6 has no rule
+///   for it). The Agent SDK raises `ProcessError` there ("Command failed with exit code"),
+///   so Python salvages or falls back.
 public actor ClaudeDriver {
     /// R7's research counter (plan §3.12, additive). Not in `ResearchKey` yet.
     public static let refusalFallbackCounter = "claude_refusal_fallback"
