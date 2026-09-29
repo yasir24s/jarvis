@@ -329,6 +329,41 @@ Merged on `main`:
   history counts come from `CoreState.snapshotInputs()`, as Python counts its in-memory
   cache, not from the files).
 
+## M2 to M5 build notes
+
+- **D-38. M2 is a faithful port.** By the user's instruction (2026-09-29), M2's guard returns
+  exactly Python's verdicts. Plan decision D-9 (mutation-generated corpora) and every
+  native-stricter guard deviation that would change a verdict (X-1, X-2 with the sudoers file
+  as the allowlist, X-4) are deferred out of M2. The M2 sudo allowlist is jarvis.py's
+  `_SUDO_ALLOW` verbatim; `native/ops/jarvis.sudoers` appears only in a rule-list consistency
+  test. Golden inputs are everyday commands plus strings already in jarvis.py or this plan;
+  must-block cases reuse those strings or test the rule list itself.
+- **D-39. Sandboxed app runs.** M3 and M4 acceptance runs of the app set `JARVIS_HOME` to a
+  sandbox copy of the state, never the real `~/jarvis` root. The first run against real state
+  happens with the user present.
+- **D-40. Rule-list parity.** The inputs D-38 allows reach only part of the rule lists (5 of 31
+  block patterns, 6 of 17 confirm patterns, 1 of 13 sudo entries). So M2 also requires the Swift
+  rule lists to equal Python's: every pattern and flag, both tool sets and the path lists, as
+  recorded in the `m2_rules` fixture. Verdict parity applies to every recorded input.
+
+M2 status (commit `894bf44`, built by GPT in the Codex app; checked by Claude on 2026-09-29):
+
+- `SwiftGuard.shellVerdict` returns Python's tier exactly. The stricter version,
+  `ShellPolicy.strictVerdict` (command splitting, the sudoers file as the allowlist, blocking
+  keychain reads), is in the code but not wired in. It waits for the gated M5 step (D-38).
+- Observed: `swift test -j 2` passes 162 tests in 39 suites (the 162 known issues are M1's
+  registered deviations; none are in M2). `m2_shell` (3,182 cases) and `m2_applescript` (3,182)
+  match Python exactly, as do `m2_file_tiers` (216), the taint sets and the refusal strings. The
+  four pattern lists and the inline sudo test match Python's pattern strings and counts. A-0
+  prints `ok 12/12`, `golden.py --check` reports 28/28 fresh, and JarvisCore still imports only
+  Foundation.
+- Open: T2.5, the tool gateway (`ToolGateway`, `TurnContext`, `ConfirmationGate` in a
+  `JarvisTools` target), is not built. A-4 and A-5 stay open, and M3's MCP server (T3.3) waits
+  for it. The `m2_rules` path lists (`_PERSIST_FILES`, `_PERSIST_DIRS`, `_SYS_ROOTS`) are
+  recorded but not asserted by any test. The commit skipped the pre-commit hook: a test
+  hard-codes a `/Users/<user>/jarvis/...` path, and `SudoAllowlist` hard-codes the account name
+  when it parses the sudoers file.
+
 ## Open user decisions
 
 - Write `shouldSpeakReply` (text chat, M02–M04 §3.12) and `speakLocally` (sensitive routing
