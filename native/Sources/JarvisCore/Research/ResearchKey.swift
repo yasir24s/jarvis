@@ -28,6 +28,10 @@ public enum ResearchKey {
     public static let ttsPiper = "tts_piper"
     public static let ttsCharsElevenLabs = "tts_chars_elevenlabs"
 
+    // M3 counters (plan: M02-M04 §3.12, additive; native-specified, no Python oracle).
+    public static let channelText = "channel_text"
+    public static let claudeRefusalFallback = "claude_refusal_fallback"
+
     /// The emotion events jarvis.py's call sites actually emit (§2.3). `task_ok` is in
     /// `_EMO_DELTAS` (Python would count it) but no call site emits it, so native never does.
     public static let emittedEmotionEvents: Set<String> = [

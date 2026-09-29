@@ -576,3 +576,45 @@ def tool_schemas(ctx):
     return [{"name": name, "input": {"index": i},
              "expected": {"name": name, "description": description, "parameters": schema}}
             for i, (name, description, schema) in enumerate(sdk.seen)]
+
+
+# ─── m3_backend_report ─────────────────────────────────────────────────────────
+# _backend_report() with MODEL patched per case: first on the import-time LAST_BACKEND (no
+# _set_backend yet), then after the REAL _set_backend(name) for each name (research_bump and
+# log patched). "last" is what LAST_BACKEND then holds. The names cover the case, homoglyph
+# and code-point rules of `"claude" in name.lower()`; the models include the native display
+# name, "Apple's on-device model".
+
+@suite("m3_backend_report")
+def backend_report(ctx):
+    J = ctx.J
+    names = ["claude", "claude (partial)", "claude (claude-opus-4-8)", "Claude (Opus 5.5)", "CLAUDE",
+             "local (apple-foundation-model)", "local (qwen2.5:3b)", "local", "", "claud",
+             "xclaudex", "claudé", "ＣＬＡＵＤＥ",
+             "Сlaude", "cla​ude"]
+    models = ["Apple's on-device model", "qwen2.5:3b", "", "llama3.2 über-modèle"]
+    saved = (J.research_bump, J.log, dict(J.LAST_BACKEND), J.MODEL)
+    J.research_bump = lambda *a, **kw: None
+    J.log = lambda *a, **kw: None
+    cases = []
+    try:
+        initial = dict(J.LAST_BACKEND)
+        for model in models:
+            J.MODEL = model
+            cases.append({"name": f"initial | {model}", "input": {"name": None, "local_model": model},
+                          "expected": {"report": J._backend_report(), "last_name": initial["name"],
+                                       "last_at": initial["at"]}})
+        for name in names:
+            J._set_backend(name)
+            for model in models:
+                J.MODEL = model
+                cases.append({"name": f"{name!r} | {model}", "input": {"name": name, "local_model": model},
+                              "expected": {"report": J._backend_report(),
+                                           "last_name": J.LAST_BACKEND["name"],
+                                           "last_at": J.LAST_BACKEND["at"]}})
+    finally:
+        J.research_bump, J.log = saved[0], saved[1]
+        J.LAST_BACKEND.clear()
+        J.LAST_BACKEND.update(saved[2])
+        J.MODEL = saved[3]
+    return cases

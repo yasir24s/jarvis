@@ -1,0 +1,786 @@
+{
+ "schema": 1,
+ "suite": "m3_backend_report",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "initial | Apple's on-device model",
+   "input": {
+    "name": null,
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — Apple's on-device model.",
+    "last_name": "local",
+    "last_at": 0.0
+   }
+  },
+  {
+   "name": "initial | qwen2.5:3b",
+   "input": {
+    "name": null,
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — qwen2.5:3b.",
+    "last_name": "local",
+    "last_at": 0.0
+   }
+  },
+  {
+   "name": "initial | ",
+   "input": {
+    "name": null,
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — .",
+    "last_name": "local",
+    "last_at": 0.0
+   }
+  },
+  {
+   "name": "initial | llama3.2 über-modèle",
+   "input": {
+    "name": null,
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — llama3.2 über-modèle.",
+    "last_name": "local",
+    "last_at": 0.0
+   }
+  },
+  {
+   "name": "'claude' | Apple's on-device model",
+   "input": {
+    "name": "claude",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claude",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claude' | qwen2.5:3b",
+   "input": {
+    "name": "claude",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claude",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claude' | ",
+   "input": {
+    "name": "claude",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claude",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claude' | llama3.2 über-modèle",
+   "input": {
+    "name": "claude",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claude",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claude (partial)' | Apple's on-device model",
+   "input": {
+    "name": "claude (partial)",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claude (partial)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claude (partial)' | qwen2.5:3b",
+   "input": {
+    "name": "claude (partial)",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claude (partial)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claude (partial)' | ",
+   "input": {
+    "name": "claude (partial)",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claude (partial)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claude (partial)' | llama3.2 über-modèle",
+   "input": {
+    "name": "claude (partial)",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claude (partial)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claude (claude-opus-4-8)' | Apple's on-device model",
+   "input": {
+    "name": "claude (claude-opus-4-8)",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claude (claude-opus-4-8)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claude (claude-opus-4-8)' | qwen2.5:3b",
+   "input": {
+    "name": "claude (claude-opus-4-8)",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claude (claude-opus-4-8)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claude (claude-opus-4-8)' | ",
+   "input": {
+    "name": "claude (claude-opus-4-8)",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claude (claude-opus-4-8)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claude (claude-opus-4-8)' | llama3.2 über-modèle",
+   "input": {
+    "name": "claude (claude-opus-4-8)",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claude (claude-opus-4-8)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'Claude (Opus 5.5)' | Apple's on-device model",
+   "input": {
+    "name": "Claude (Opus 5.5)",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "Claude (Opus 5.5)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'Claude (Opus 5.5)' | qwen2.5:3b",
+   "input": {
+    "name": "Claude (Opus 5.5)",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "Claude (Opus 5.5)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'Claude (Opus 5.5)' | ",
+   "input": {
+    "name": "Claude (Opus 5.5)",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "Claude (Opus 5.5)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'Claude (Opus 5.5)' | llama3.2 über-modèle",
+   "input": {
+    "name": "Claude (Opus 5.5)",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "Claude (Opus 5.5)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'CLAUDE' | Apple's on-device model",
+   "input": {
+    "name": "CLAUDE",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "CLAUDE",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'CLAUDE' | qwen2.5:3b",
+   "input": {
+    "name": "CLAUDE",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "CLAUDE",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'CLAUDE' | ",
+   "input": {
+    "name": "CLAUDE",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "CLAUDE",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'CLAUDE' | llama3.2 über-modèle",
+   "input": {
+    "name": "CLAUDE",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "CLAUDE",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'local (apple-foundation-model)' | Apple's on-device model",
+   "input": {
+    "name": "local (apple-foundation-model)",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — Apple's on-device model.",
+    "last_name": "local (apple-foundation-model)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'local (apple-foundation-model)' | qwen2.5:3b",
+   "input": {
+    "name": "local (apple-foundation-model)",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — qwen2.5:3b.",
+    "last_name": "local (apple-foundation-model)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'local (apple-foundation-model)' | ",
+   "input": {
+    "name": "local (apple-foundation-model)",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — .",
+    "last_name": "local (apple-foundation-model)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'local (apple-foundation-model)' | llama3.2 über-modèle",
+   "input": {
+    "name": "local (apple-foundation-model)",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — llama3.2 über-modèle.",
+    "last_name": "local (apple-foundation-model)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'local (qwen2.5:3b)' | Apple's on-device model",
+   "input": {
+    "name": "local (qwen2.5:3b)",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — Apple's on-device model.",
+    "last_name": "local (qwen2.5:3b)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'local (qwen2.5:3b)' | qwen2.5:3b",
+   "input": {
+    "name": "local (qwen2.5:3b)",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — qwen2.5:3b.",
+    "last_name": "local (qwen2.5:3b)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'local (qwen2.5:3b)' | ",
+   "input": {
+    "name": "local (qwen2.5:3b)",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — .",
+    "last_name": "local (qwen2.5:3b)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'local (qwen2.5:3b)' | llama3.2 über-modèle",
+   "input": {
+    "name": "local (qwen2.5:3b)",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — llama3.2 über-modèle.",
+    "last_name": "local (qwen2.5:3b)",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'local' | Apple's on-device model",
+   "input": {
+    "name": "local",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — Apple's on-device model.",
+    "last_name": "local",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'local' | qwen2.5:3b",
+   "input": {
+    "name": "local",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — qwen2.5:3b.",
+    "last_name": "local",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'local' | ",
+   "input": {
+    "name": "local",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — .",
+    "last_name": "local",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'local' | llama3.2 über-modèle",
+   "input": {
+    "name": "local",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — llama3.2 über-modèle.",
+    "last_name": "local",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'' | Apple's on-device model",
+   "input": {
+    "name": "",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — Apple's on-device model.",
+    "last_name": "",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'' | qwen2.5:3b",
+   "input": {
+    "name": "",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — qwen2.5:3b.",
+    "last_name": "",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'' | ",
+   "input": {
+    "name": "",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — .",
+    "last_name": "",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'' | llama3.2 über-modèle",
+   "input": {
+    "name": "",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — llama3.2 über-modèle.",
+    "last_name": "",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claud' | Apple's on-device model",
+   "input": {
+    "name": "claud",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — Apple's on-device model.",
+    "last_name": "claud",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claud' | qwen2.5:3b",
+   "input": {
+    "name": "claud",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — qwen2.5:3b.",
+    "last_name": "claud",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claud' | ",
+   "input": {
+    "name": "claud",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — .",
+    "last_name": "claud",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claud' | llama3.2 über-modèle",
+   "input": {
+    "name": "claud",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — llama3.2 über-modèle.",
+    "last_name": "claud",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'xclaudex' | Apple's on-device model",
+   "input": {
+    "name": "xclaudex",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "xclaudex",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'xclaudex' | qwen2.5:3b",
+   "input": {
+    "name": "xclaudex",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "xclaudex",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'xclaudex' | ",
+   "input": {
+    "name": "xclaudex",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "xclaudex",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'xclaudex' | llama3.2 über-modèle",
+   "input": {
+    "name": "xclaudex",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "xclaudex",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claudé' | Apple's on-device model",
+   "input": {
+    "name": "claudé",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claudé",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claudé' | qwen2.5:3b",
+   "input": {
+    "name": "claudé",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claudé",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claudé' | ",
+   "input": {
+    "name": "claudé",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claudé",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'claudé' | llama3.2 über-modèle",
+   "input": {
+    "name": "claudé",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by Claude, through the Agent SDK, sir.",
+    "last_name": "claudé",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'ＣＬＡＵＤＥ' | Apple's on-device model",
+   "input": {
+    "name": "ＣＬＡＵＤＥ",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — Apple's on-device model.",
+    "last_name": "ＣＬＡＵＤＥ",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'ＣＬＡＵＤＥ' | qwen2.5:3b",
+   "input": {
+    "name": "ＣＬＡＵＤＥ",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — qwen2.5:3b.",
+    "last_name": "ＣＬＡＵＤＥ",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'ＣＬＡＵＤＥ' | ",
+   "input": {
+    "name": "ＣＬＡＵＤＥ",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — .",
+    "last_name": "ＣＬＡＵＤＥ",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'ＣＬＡＵＤＥ' | llama3.2 über-modèle",
+   "input": {
+    "name": "ＣＬＡＵＤＥ",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — llama3.2 über-modèle.",
+    "last_name": "ＣＬＡＵＤＥ",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'Сlaude' | Apple's on-device model",
+   "input": {
+    "name": "Сlaude",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — Apple's on-device model.",
+    "last_name": "Сlaude",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'Сlaude' | qwen2.5:3b",
+   "input": {
+    "name": "Сlaude",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — qwen2.5:3b.",
+    "last_name": "Сlaude",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'Сlaude' | ",
+   "input": {
+    "name": "Сlaude",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — .",
+    "last_name": "Сlaude",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'Сlaude' | llama3.2 über-modèle",
+   "input": {
+    "name": "Сlaude",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — llama3.2 über-modèle.",
+    "last_name": "Сlaude",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'cla\\u200bude' | Apple's on-device model",
+   "input": {
+    "name": "cla​ude",
+    "local_model": "Apple's on-device model"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — Apple's on-device model.",
+    "last_name": "cla​ude",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'cla\\u200bude' | qwen2.5:3b",
+   "input": {
+    "name": "cla​ude",
+    "local_model": "qwen2.5:3b"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — qwen2.5:3b.",
+    "last_name": "cla​ude",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'cla\\u200bude' | ",
+   "input": {
+    "name": "cla​ude",
+    "local_model": ""
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — .",
+    "last_name": "cla​ude",
+    "last_at": 1790582400.0
+   }
+  },
+  {
+   "name": "'cla\\u200bude' | llama3.2 über-modèle",
+   "input": {
+    "name": "cla​ude",
+    "local_model": "llama3.2 über-modèle"
+   },
+   "expected": {
+    "report": "The last request was handled by the local model, sir — llama3.2 über-modèle.",
+    "last_name": "cla​ude",
+    "last_at": 1790582400.0
+   }
+  }
+ ]
+}
