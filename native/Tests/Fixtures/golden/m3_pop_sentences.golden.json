@@ -2937,6 +2937,58 @@
    }
   },
   {
+   "name": "pure/spaces_at_100_159/stream",
+   "input": {
+    "buf": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc",
+    "force": false
+   },
+   "expected": {
+    "sentences": [
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    ],
+    "rest": "cccccccccccccccccccccccccccccc"
+   }
+  },
+  {
+   "name": "pure/spaces_at_100_159/force",
+   "input": {
+    "buf": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc",
+    "force": true
+   },
+   "expected": {
+    "sentences": [
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ],
+    "rest": ""
+   }
+  },
+  {
+   "name": "pure/spaces_at_100_160/stream",
+   "input": {
+    "buf": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc",
+    "force": false
+   },
+   "expected": {
+    "sentences": [
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    "rest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+   }
+  },
+  {
+   "name": "pure/spaces_at_100_160/force",
+   "input": {
+    "buf": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc",
+    "force": true
+   },
+   "expected": {
+    "sentences": [
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ],
+    "rest": ""
+   }
+  },
+  {
    "name": "pure/spaces_200/stream",
    "input": {
     "buf": "                                                                                                                                                                                                        ",
@@ -33948,6 +34000,792 @@
      "ok?!"
     ],
     "text": "ok?!"
+   }
+  },
+  {
+   "name": "chunked/spaces_at_100_160/whole",
+   "input": {
+    "chunks": [
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ]
+   },
+   "expected": {
+    "steps": [
+     [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ]
+    ],
+    "final": [
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ],
+    "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+   }
+  },
+  {
+   "name": "chunked/spaces_at_100_160/n2",
+   "input": {
+    "chunks": [
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     "aa",
+     " b",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     "bb",
+     " c",
+     "cc",
+     "cc",
+     "cc",
+     "cc",
+     "cc",
+     "cc",
+     "cc",
+     "cc",
+     "cc",
+     "cc",
+     "cc",
+     "cc",
+     "cc",
+     "cc",
+     "c"
+    ]
+   },
+   "expected": {
+    "steps": [
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     []
+    ],
+    "final": [
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ],
+    "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+   }
+  },
+  {
+   "name": "chunked/spaces_at_100_160/n3",
+   "input": {
+    "chunks": [
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "aaa",
+     "a b",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "bbb",
+     "b c",
+     "ccc",
+     "ccc",
+     "ccc",
+     "ccc",
+     "ccc",
+     "ccc",
+     "ccc",
+     "ccc",
+     "ccc",
+     "cc"
+    ]
+   },
+   "expected": {
+    "steps": [
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     []
+    ],
+    "final": [
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ],
+    "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+   }
+  },
+  {
+   "name": "chunked/spaces_at_100_160/n7",
+   "input": {
+    "chunks": [
+     "aaaaaaa",
+     "aaaaaaa",
+     "aaaaaaa",
+     "aaaaaaa",
+     "aaaaaaa",
+     "aaaaaaa",
+     "aaaaaaa",
+     "aaaaaaa",
+     "aaaaaaa",
+     "aaaaaaa",
+     "aaaaaaa",
+     "aaaaaaa",
+     "aaaaaaa",
+     "aaaaaaa",
+     "aa bbbb",
+     "bbbbbbb",
+     "bbbbbbb",
+     "bbbbbbb",
+     "bbbbbbb",
+     "bbbbbbb",
+     "bbbbbbb",
+     "bbbbbbb",
+     "bbbbbb ",
+     "ccccccc",
+     "ccccccc",
+     "ccccccc",
+     "ccccccc",
+     "cc"
+    ]
+   },
+   "expected": {
+    "steps": [
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ],
+     [],
+     [],
+     [],
+     [],
+     []
+    ],
+    "final": [
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ],
+    "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+   }
+  },
+  {
+   "name": "chunked/spaces_at_100_160/n16",
+   "input": {
+    "chunks": [
+     "aaaaaaaaaaaaaaaa",
+     "aaaaaaaaaaaaaaaa",
+     "aaaaaaaaaaaaaaaa",
+     "aaaaaaaaaaaaaaaa",
+     "aaaaaaaaaaaaaaaa",
+     "aaaaaaaaaaaaaaaa",
+     "aaaa bbbbbbbbbbb",
+     "bbbbbbbbbbbbbbbb",
+     "bbbbbbbbbbbbbbbb",
+     "bbbbbbbbbbbbbbbb",
+     " ccccccccccccccc",
+     "ccccccccccccccc"
+    ]
+   },
+   "expected": {
+    "steps": [
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ],
+     []
+    ],
+    "final": [
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ],
+    "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+   }
+  },
+  {
+   "name": "chunked/spaces_at_100_160/n50",
+   "input": {
+    "chunks": [
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     " bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+     "bbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ]
+   },
+   "expected": {
+    "steps": [
+     [],
+     [],
+     [],
+     [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ]
+    ],
+    "final": [
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ],
+    "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+   }
+  },
+  {
+   "name": "chunked/spaces_at_100_160/words_trail",
+   "input": {
+    "chunks": [
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ",
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb ",
+     "cccccccccccccccccccccccccccccc"
+    ]
+   },
+   "expected": {
+    "steps": [
+     [],
+     [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ],
+     []
+    ],
+    "final": [
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ],
+    "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+   }
+  },
+  {
+   "name": "chunked/spaces_at_100_160/words_lead",
+   "input": {
+    "chunks": [
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     " bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+     " cccccccccccccccccccccccccccccc"
+    ]
+   },
+   "expected": {
+    "steps": [
+     [],
+     [],
+     [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ]
+    ],
+    "final": [
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ],
+    "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+   }
+  },
+  {
+   "name": "chunked/spaces_at_100_160/empties",
+   "input": {
+    "chunks": [
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     "aaaaa",
+     "",
+     " bbbb",
+     "",
+     "bbbbb",
+     "",
+     "bbbbb",
+     "",
+     "bbbbb",
+     "",
+     "bbbbb",
+     "",
+     "bbbbb",
+     "",
+     "bbbbb",
+     "",
+     "bbbbb",
+     "",
+     "bbbbb",
+     "",
+     "bbbbb",
+     "",
+     "bbbbb",
+     "",
+     "bbbbb",
+     "",
+     " cccc",
+     "",
+     "ccccc",
+     "",
+     "ccccc",
+     "",
+     "ccccc",
+     "",
+     "ccccc",
+     "",
+     "ccccc",
+     "",
+     "c",
+     ""
+    ]
+   },
+   "expected": {
+    "steps": [
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     []
+    ],
+    "final": [
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ],
+    "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+   }
+  },
+  {
+   "name": "chunked/spaces_at_100_160/random",
+   "input": {
+    "chunks": [
+     "aaaaaaaaaaaaaaaaaaaaaaa",
+     "aa",
+     "aaaaaaaaaaa",
+     "aaaaaaaa",
+     "a",
+     "aaaaaaaaaaaaaaaaaaaaaaa",
+     "aaaaaaaaa",
+     "aaaaaaaaaaa",
+     "aaaaaaaaaaaa bb",
+     "bbbbbbbbbbb",
+     "bbbbbb",
+     "bbbbb",
+     "bbbbbbbbbbbbbbbbbbbbb",
+     "bbbbb",
+     "bbbbbbbbb ",
+     "cccccc",
+     "ccccccccccc",
+     "ccccccccccccc"
+    ]
+   },
+   "expected": {
+    "steps": [
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [],
+     [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+     ],
+     [],
+     [],
+     []
+    ],
+    "final": [
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
+    ],
+    "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccc"
    }
   }
  ]

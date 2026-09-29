@@ -151,6 +151,8 @@ def _texts():
     add("space_at_159", "a" * 159 + " " + "b" * 20)
     add("space_at_160", "a" * 160 + " " + "b" * 20)
     add("space_at_161", "a" * 161 + " " + "b" * 20)
+    add("spaces_at_100_159", "a" * 100 + " " + "b" * 58 + " " + "c" * 30)
+    add("spaces_at_100_160", "a" * 100 + " " + "b" * 59 + " " + "c" * 30)
     add("spaces_200", " " * 200)
     add("newlines_200", "\n" * 200)
     add("sentence_then_runon", "Short one. " + _runon(300))
@@ -186,7 +188,7 @@ _CHUNKED = ("empty", "space", "word_dot", "two", "two_dots_sp", "three_marks", "
             "runon_nl_200", "token_200", "lead_space_token", "spaces_200",
             "sentence_then_runon", "emoji_runon", "combining_runon", "crlf_runon",
             "long_sentences", "random_00", "random_01", "random_02", "random_03",
-            "random_04", "random_05")
+            "random_04", "random_05", "spaces_at_100_160")
 
 
 def _chunkings(label, text, seed):
