@@ -1,28 +1,22 @@
 import SwiftUI
 
-/// The menu-bar agent (plan: M00 §3.9). Launched by `Entry.main()`, not `@main`, so the
-/// headless flags never create an NSApplication. M0 only needs the menu to be observable;
-/// M4 grows it.
+/// The menu-bar agent (plan: M00 §3.9, M02-M04 §3.12). Launched by `Entry.main()`, not
+/// `@main`, so the headless flags never create an NSApplication. The menu opens the chat
+/// window; there is no Dock icon (`.accessory`, and `LSUIElement` in the bundle).
 struct JarvisSwiftUIApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        MenuBarExtra("JARVIS", systemImage: "circle.hexagongrid") {
-            JarvisMenu(model: appDelegate.model)
+        MenuBarExtra("JARVIS", systemImage: "circle.hexagongrid.fill") {
+            MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat)
         }
-    }
-}
+        .menuBarExtraStyle(.menu)
 
-private struct JarvisMenu: View {
-    let model: AppModel
-
-    var body: some View {
-        Text("State: \(model.stateRoot)")
-        Text("Lock: \(model.lockHolder)")
-        Divider()
-        Button("Quit JARVIS") {
-            NSApplication.shared.terminate(nil)
+        // Opened from the menu only: not at launch, and not restored at the next launch.
+        Window("JARVIS", id: ChatView.windowID) {
+            ChatView(model: appDelegate.chat)
         }
-        .keyboardShortcut("q")
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
     }
 }

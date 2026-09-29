@@ -1,6 +1,9 @@
 import AppKit
 import Observation
+import JarvisBrain
+import JarvisChat
 import JarvisCore
+import JarvisTools
 
 /// What the menu shows. Written only by AppDelegate, on the main actor.
 @MainActor
@@ -16,7 +19,11 @@ final class AppModel {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = AppModel()
+    /// The chat window's state. It sends nothing until the brain has started.
+    let chat = ChatViewModel()
     private var lock: InstanceLock?
+    /// Built once the lock is held and kept for the app's life (plan: M02-M04 §3.5, §3.12).
+    private var brain: BrainAssembly?
     private var sigterm: DispatchSourceSignal?
 
     func applicationWillFinishLaunching(_ notification: Notification) {
@@ -80,6 +87,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func lockAcquired(_ held: InstanceLock, paths: StatePaths) {
         lock = held
         model.lockHolder = Self.describe(InstanceLock.readHolder(at: paths.lockFile))
+        startBrain(lock: held, paths: paths)
+    }
+
+    /// Builds the brain once, on the state this lock guards. The chat is connected only after
+    /// `start()` has registered the built-in tools and started the MCP server, so no turn runs
+    /// before that. `run/` and `claude-cwd/` are the plan's, under Application Support (§3.6,
+    /// §3.7).
+    private func startBrain(lock: InstanceLock, paths: StatePaths) {
+        let research = UsageStore(paths: ResearchPaths(paths))
+        let store: StateStore
+        do {
+            store = try StateStore(root: paths.root.path(percentEncoded: false), lease: InstanceLockLease(lock))
+        } catch {
+            JarvisLog.log("cannot open the state store (\(error)) — chat is off.", category: .state)
+            return
+        }
+        let environment = ProcessInfo.processInfo.environment
+        let support = BrainAssembly.supportDirectory
+        let assembly = BrainAssembly(
+            core: CoreState(store: store, clock: SystemClock(), research: research, frontApp: WorkspaceFrontApp()),
+            research: research, config: ClaudeConfig(environment: environment), environment: environment,
+            runDirectory: support.appending(path: "run", directoryHint: .isDirectory),
+            claudeWorkingDirectory: support.appending(path: "claude-cwd", directoryHint: .isDirectory),
+            textAuthenticator: RefusingTextAuthenticator(),
+            // Python's is_online() arrives with M5's Net.isOnline. Until then an offline turn
+            // tries Claude, fails, and falls back to the local model.
+            online: { true })
+        brain = assembly
+        Task { @MainActor in
+            do {
+                try await assembly.start()
+            } catch {
+                JarvisLog.log("cannot start the brain (\(error)) — chat is off.", category: .brain)
+                return
+            }
+            self.chat.connect(assembly.coordinator, lastBackend: { await assembly.backend.last.name })
+        }
+    }
+
+    /// Python sets the policy again after its UI starts (jarvis.py `setActivationPolicy_(1)`
+    /// in the overlay setup), because a UI layer can flip it back to Regular. Called each time
+    /// the chat window appears.
+    static func reassertAccessoryPolicy() {
+        let policy = NSApplication.shared.activationPolicy()
+        guard policy != .accessory else { return }
+        NSApplication.shared.setActivationPolicy(.accessory)
+        JarvisLog.log("activation policy: \(describe(policy)) after the chat opened, set back to accessory")
     }
 
     private func exitHeld(_ holder: String) -> Never {
@@ -128,4 +182,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         while path.count > 1 && path.hasSuffix("/") { path.removeLast() }
         return (path as NSString).abbreviatingWithTildeInPath
     }
+}
+
+/// Stands in for the LocalAuthentication authenticator (plan §3.12 `LAConfirmAuthenticator`,
+/// the next batch). It refuses, so no typed confirmation is approved before that lands.
+private struct RefusingTextAuthenticator: ConfirmAuthenticator {
+    func authenticate(reason: String) async -> Bool { false }
 }
