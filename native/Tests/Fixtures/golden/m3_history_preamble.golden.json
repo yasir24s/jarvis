@@ -1,0 +1,2801 @@
+{
+ "schema": 1,
+ "suite": "m3_history_preamble",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "alt/0",
+   "input": {
+    "history": []
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "alt/1",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin turn 0"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "alt/2",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "Robin turn 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 1"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: Robin turn 0"
+   }
+  },
+  {
+   "name": "alt/3",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin turn 0"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 2"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin turn 0\nYou: Morgan turn 1"
+   }
+  },
+  {
+   "name": "alt/4",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "Robin turn 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 1"
+     },
+     {
+      "role": "assistant",
+      "content": "Sam turn 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin turn 3"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: Robin turn 0\nUser: Morgan turn 1\nYou: Sam turn 2"
+   }
+  },
+  {
+   "name": "alt/5",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin turn 0"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 2"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin turn 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 4"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin turn 0\nYou: Morgan turn 1\nUser: Sam turn 2\nYou: Robin turn 3"
+   }
+  },
+  {
+   "name": "alt/6",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "Robin turn 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 1"
+     },
+     {
+      "role": "assistant",
+      "content": "Sam turn 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin turn 3"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 4"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 5"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: Robin turn 0\nUser: Morgan turn 1\nYou: Sam turn 2\nUser: Robin turn 3\nYou: Morgan turn 4"
+   }
+  },
+  {
+   "name": "alt/7",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin turn 0"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 2"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin turn 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 4"
+     },
+     {
+      "role": "assistant",
+      "content": "Sam turn 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin turn 6"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin turn 0\nYou: Morgan turn 1\nUser: Sam turn 2\nYou: Robin turn 3\nUser: Morgan turn 4\nYou: Sam turn 5"
+   }
+  },
+  {
+   "name": "alt/8",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "Robin turn 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 1"
+     },
+     {
+      "role": "assistant",
+      "content": "Sam turn 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin turn 3"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 4"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 5"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin turn 6"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 7"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Morgan turn 1\nYou: Sam turn 2\nUser: Robin turn 3\nYou: Morgan turn 4\nUser: Sam turn 5\nYou: Robin turn 6"
+   }
+  },
+  {
+   "name": "alt/9",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin turn 0"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 2"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin turn 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 4"
+     },
+     {
+      "role": "assistant",
+      "content": "Sam turn 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin turn 6"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 7"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 8"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Sam turn 2\nYou: Robin turn 3\nUser: Morgan turn 4\nYou: Sam turn 5\nUser: Robin turn 6\nYou: Morgan turn 7"
+   }
+  },
+  {
+   "name": "alt/10",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "Robin turn 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 1"
+     },
+     {
+      "role": "assistant",
+      "content": "Sam turn 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin turn 3"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 4"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 5"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin turn 6"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 7"
+     },
+     {
+      "role": "assistant",
+      "content": "Sam turn 8"
+     },
+     {
+      "role": "user",
+      "content": "Robin turn 9"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin turn 3\nYou: Morgan turn 4\nUser: Sam turn 5\nYou: Robin turn 6\nUser: Morgan turn 7\nYou: Sam turn 8"
+   }
+  },
+  {
+   "name": "alt/11",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin turn 0"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 2"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin turn 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 4"
+     },
+     {
+      "role": "assistant",
+      "content": "Sam turn 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin turn 6"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 7"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 8"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin turn 9"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 10"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Morgan turn 4\nYou: Sam turn 5\nUser: Robin turn 6\nYou: Morgan turn 7\nUser: Sam turn 8\nYou: Robin turn 9"
+   }
+  },
+  {
+   "name": "alt/12",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "Robin turn 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 1"
+     },
+     {
+      "role": "assistant",
+      "content": "Sam turn 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin turn 3"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 4"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 5"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin turn 6"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 7"
+     },
+     {
+      "role": "assistant",
+      "content": "Sam turn 8"
+     },
+     {
+      "role": "user",
+      "content": "Robin turn 9"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 10"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 11"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Sam turn 5\nYou: Robin turn 6\nUser: Morgan turn 7\nYou: Sam turn 8\nUser: Robin turn 9\nYou: Morgan turn 10"
+   }
+  },
+  {
+   "name": "alt/13",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin turn 0"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 2"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin turn 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 4"
+     },
+     {
+      "role": "assistant",
+      "content": "Sam turn 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin turn 6"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan turn 7"
+     },
+     {
+      "role": "user",
+      "content": "Sam turn 8"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin turn 9"
+     },
+     {
+      "role": "user",
+      "content": "Morgan turn 10"
+     },
+     {
+      "role": "assistant",
+      "content": "Sam turn 11"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin got the last word."
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin turn 6\nYou: Morgan turn 7\nUser: Sam turn 8\nYou: Robin turn 9\nUser: Morgan turn 10\nYou: Sam turn 11"
+   }
+  },
+  {
+   "name": "padded/0",
+   "input": {
+    "history": []
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "padded/1",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 0\t "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "padded/2",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 0\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 1\t "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: Robin said:\n  line two 0"
+   }
+  },
+  {
+   "name": "padded/3",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 0\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 1\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 2\t "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin said:\n  line two 0\nYou: Morgan said:\n  line two 1"
+   }
+  },
+  {
+   "name": "padded/4",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 0\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 1\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Sam said:\n  line two 2\t "
+     },
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 3\t "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: Robin said:\n  line two 0\nUser: Morgan said:\n  line two 1\nYou: Sam said:\n  line two 2"
+   }
+  },
+  {
+   "name": "padded/5",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 0\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 1\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 2\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 3\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 4\t "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin said:\n  line two 0\nYou: Morgan said:\n  line two 1\nUser: Sam said:\n  line two 2\nYou: Robin said:\n  line two 3"
+   }
+  },
+  {
+   "name": "padded/6",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 0\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 1\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Sam said:\n  line two 2\t "
+     },
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 3\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 4\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 5\t "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: Robin said:\n  line two 0\nUser: Morgan said:\n  line two 1\nYou: Sam said:\n  line two 2\nUser: Robin said:\n  line two 3\nYou: Morgan said:\n  line two 4"
+   }
+  },
+  {
+   "name": "padded/7",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 0\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 1\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 2\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 3\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 4\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Sam said:\n  line two 5\t "
+     },
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 6\t "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin said:\n  line two 0\nYou: Morgan said:\n  line two 1\nUser: Sam said:\n  line two 2\nYou: Robin said:\n  line two 3\nUser: Morgan said:\n  line two 4\nYou: Sam said:\n  line two 5"
+   }
+  },
+  {
+   "name": "padded/8",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 0\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 1\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Sam said:\n  line two 2\t "
+     },
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 3\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 4\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 5\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 6\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 7\t "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Morgan said:\n  line two 1\nYou: Sam said:\n  line two 2\nUser: Robin said:\n  line two 3\nYou: Morgan said:\n  line two 4\nUser: Sam said:\n  line two 5\nYou: Robin said:\n  line two 6"
+   }
+  },
+  {
+   "name": "padded/9",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 0\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 1\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 2\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 3\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 4\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Sam said:\n  line two 5\t "
+     },
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 6\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 7\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 8\t "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Sam said:\n  line two 2\nYou: Robin said:\n  line two 3\nUser: Morgan said:\n  line two 4\nYou: Sam said:\n  line two 5\nUser: Robin said:\n  line two 6\nYou: Morgan said:\n  line two 7"
+   }
+  },
+  {
+   "name": "padded/10",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 0\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 1\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Sam said:\n  line two 2\t "
+     },
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 3\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 4\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 5\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 6\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 7\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Sam said:\n  line two 8\t "
+     },
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 9\t "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin said:\n  line two 3\nYou: Morgan said:\n  line two 4\nUser: Sam said:\n  line two 5\nYou: Robin said:\n  line two 6\nUser: Morgan said:\n  line two 7\nYou: Sam said:\n  line two 8"
+   }
+  },
+  {
+   "name": "padded/11",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 0\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 1\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 2\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 3\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 4\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Sam said:\n  line two 5\t "
+     },
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 6\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 7\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 8\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 9\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 10\t "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Morgan said:\n  line two 4\nYou: Sam said:\n  line two 5\nUser: Robin said:\n  line two 6\nYou: Morgan said:\n  line two 7\nUser: Sam said:\n  line two 8\nYou: Robin said:\n  line two 9"
+   }
+  },
+  {
+   "name": "padded/12",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 0\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 1\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Sam said:\n  line two 2\t "
+     },
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 3\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 4\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 5\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 6\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 7\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Sam said:\n  line two 8\t "
+     },
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 9\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 10\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 11\t "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Sam said:\n  line two 5\nYou: Robin said:\n  line two 6\nUser: Morgan said:\n  line two 7\nYou: Sam said:\n  line two 8\nUser: Robin said:\n  line two 9\nYou: Morgan said:\n  line two 10"
+   }
+  },
+  {
+   "name": "padded/13",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 0\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 1\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 2\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 3\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 4\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Sam said:\n  line two 5\t "
+     },
+     {
+      "role": "user",
+      "content": "  Robin said:\n  line two 6\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Morgan said:\n  line two 7\t "
+     },
+     {
+      "role": "user",
+      "content": "  Sam said:\n  line two 8\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Robin said:\n  line two 9\t "
+     },
+     {
+      "role": "user",
+      "content": "  Morgan said:\n  line two 10\t "
+     },
+     {
+      "role": "assistant",
+      "content": "  Sam said:\n  line two 11\t "
+     },
+     {
+      "role": "assistant",
+      "content": "Robin got the last word."
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin said:\n  line two 6\nYou: Morgan said:\n  line two 7\nUser: Sam said:\n  line two 8\nYou: Robin said:\n  line two 9\nUser: Morgan said:\n  line two 10\nYou: Sam said:\n  line two 11"
+   }
+  },
+  {
+   "name": "gaps/0",
+   "input": {
+    "history": []
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "gaps/1",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin 0"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "gaps/2",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "Robin 0"
+     },
+     {
+      "role": "user",
+      "content": ""
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: Robin 0"
+   }
+  },
+  {
+   "name": "gaps/3",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin 0"
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": "Sam 2"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin 0"
+   }
+  },
+  {
+   "name": "gaps/4",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "Robin 0"
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": "Sam 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin 3"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: Robin 0\nYou: Sam 2"
+   }
+  },
+  {
+   "name": "gaps/5",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin 0"
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": "Sam 2"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin 3"
+     },
+     {
+      "role": "user",
+      "content": "   "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin 0\nUser: Sam 2\nYou: Robin 3"
+   }
+  },
+  {
+   "name": "gaps/6",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "Robin 0"
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": "Sam 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin 3"
+     },
+     {
+      "role": "assistant",
+      "content": "   "
+     },
+     {
+      "role": "user",
+      "content": "Sam 5"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: Robin 0\nYou: Sam 2\nUser: Robin 3"
+   }
+  },
+  {
+   "name": "gaps/7",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin 0"
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": "Sam 2"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin 3"
+     },
+     {
+      "role": "user",
+      "content": "   "
+     },
+     {
+      "role": "assistant",
+      "content": "Sam 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin 6"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin 0\nUser: Sam 2\nYou: Robin 3\nYou: Sam 5"
+   }
+  },
+  {
+   "name": "gaps/8",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "Robin 0"
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": "Sam 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin 3"
+     },
+     {
+      "role": "assistant",
+      "content": "   "
+     },
+     {
+      "role": "user",
+      "content": "Sam 5"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin 6"
+     },
+     {
+      "role": "user",
+      "content": null
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: Sam 2\nUser: Robin 3\nUser: Sam 5\nYou: Robin 6"
+   }
+  },
+  {
+   "name": "gaps/9",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin 0"
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": "Sam 2"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin 3"
+     },
+     {
+      "role": "user",
+      "content": "   "
+     },
+     {
+      "role": "assistant",
+      "content": "Sam 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin 6"
+     },
+     {
+      "role": "assistant",
+      "content": null
+     },
+     {
+      "role": "user",
+      "content": "Sam 8"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Sam 2\nYou: Robin 3\nYou: Sam 5\nUser: Robin 6"
+   }
+  },
+  {
+   "name": "gaps/10",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "Robin 0"
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": "Sam 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin 3"
+     },
+     {
+      "role": "assistant",
+      "content": "   "
+     },
+     {
+      "role": "user",
+      "content": "Sam 5"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin 6"
+     },
+     {
+      "role": "user",
+      "content": null
+     },
+     {
+      "role": "assistant",
+      "content": "Sam 8"
+     },
+     {
+      "role": "user",
+      "content": "Robin 9"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin 3\nUser: Sam 5\nYou: Robin 6\nYou: Sam 8"
+   }
+  },
+  {
+   "name": "gaps/11",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin 0"
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": "Sam 2"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin 3"
+     },
+     {
+      "role": "user",
+      "content": "   "
+     },
+     {
+      "role": "assistant",
+      "content": "Sam 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin 6"
+     },
+     {
+      "role": "assistant",
+      "content": null
+     },
+     {
+      "role": "user",
+      "content": "Sam 8"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin 9"
+     },
+     {
+      "role": "user"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: Sam 5\nUser: Robin 6\nUser: Sam 8\nYou: Robin 9"
+   }
+  },
+  {
+   "name": "gaps/12",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "Robin 0"
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": "Sam 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin 3"
+     },
+     {
+      "role": "assistant",
+      "content": "   "
+     },
+     {
+      "role": "user",
+      "content": "Sam 5"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin 6"
+     },
+     {
+      "role": "user",
+      "content": null
+     },
+     {
+      "role": "assistant",
+      "content": "Sam 8"
+     },
+     {
+      "role": "user",
+      "content": "Robin 9"
+     },
+     {
+      "role": "assistant"
+     },
+     {
+      "role": "user",
+      "content": "Sam 11"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Sam 5\nYou: Robin 6\nYou: Sam 8\nUser: Robin 9"
+   }
+  },
+  {
+   "name": "gaps/13",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin 0"
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": "Sam 2"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin 3"
+     },
+     {
+      "role": "user",
+      "content": "   "
+     },
+     {
+      "role": "assistant",
+      "content": "Sam 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin 6"
+     },
+     {
+      "role": "assistant",
+      "content": null
+     },
+     {
+      "role": "user",
+      "content": "Sam 8"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin 9"
+     },
+     {
+      "role": "user"
+     },
+     {
+      "role": "assistant",
+      "content": "Sam 11"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin got the last word."
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin 6\nUser: Sam 8\nYou: Robin 9\nYou: Sam 11"
+   }
+  },
+  {
+   "name": "all_user/0",
+   "input": {
+    "history": []
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "all_user/1",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin asks 0"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "all_user/2",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin asks 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 1"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin asks 0"
+   }
+  },
+  {
+   "name": "all_user/3",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin asks 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 2"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin asks 0\nUser: Morgan asks 1"
+   }
+  },
+  {
+   "name": "all_user/4",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin asks 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 3"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin asks 0\nUser: Morgan asks 1\nUser: Sam asks 2"
+   }
+  },
+  {
+   "name": "all_user/5",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin asks 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 4"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin asks 0\nUser: Morgan asks 1\nUser: Sam asks 2\nUser: Robin asks 3"
+   }
+  },
+  {
+   "name": "all_user/6",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin asks 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 4"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 5"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin asks 0\nUser: Morgan asks 1\nUser: Sam asks 2\nUser: Robin asks 3\nUser: Morgan asks 4"
+   }
+  },
+  {
+   "name": "all_user/7",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin asks 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 4"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 6"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin asks 0\nUser: Morgan asks 1\nUser: Sam asks 2\nUser: Robin asks 3\nUser: Morgan asks 4\nUser: Sam asks 5"
+   }
+  },
+  {
+   "name": "all_user/8",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin asks 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 4"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 6"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 7"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Morgan asks 1\nUser: Sam asks 2\nUser: Robin asks 3\nUser: Morgan asks 4\nUser: Sam asks 5\nUser: Robin asks 6"
+   }
+  },
+  {
+   "name": "all_user/9",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin asks 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 4"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 6"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 7"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 8"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Sam asks 2\nUser: Robin asks 3\nUser: Morgan asks 4\nUser: Sam asks 5\nUser: Robin asks 6\nUser: Morgan asks 7"
+   }
+  },
+  {
+   "name": "all_user/10",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin asks 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 4"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 6"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 7"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 8"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 9"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin asks 3\nUser: Morgan asks 4\nUser: Sam asks 5\nUser: Robin asks 6\nUser: Morgan asks 7\nUser: Sam asks 8"
+   }
+  },
+  {
+   "name": "all_user/11",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin asks 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 4"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 6"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 7"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 8"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 9"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 10"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Morgan asks 4\nUser: Sam asks 5\nUser: Robin asks 6\nUser: Morgan asks 7\nUser: Sam asks 8\nUser: Robin asks 9"
+   }
+  },
+  {
+   "name": "all_user/12",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin asks 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 4"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 6"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 7"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 8"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 9"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 10"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 11"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Sam asks 5\nUser: Robin asks 6\nUser: Morgan asks 7\nUser: Sam asks 8\nUser: Robin asks 9\nUser: Morgan asks 10"
+   }
+  },
+  {
+   "name": "all_user/13",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin asks 0"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 1"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 2"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 3"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 4"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 5"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 6"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 7"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 8"
+     },
+     {
+      "role": "user",
+      "content": "Robin asks 9"
+     },
+     {
+      "role": "user",
+      "content": "Morgan asks 10"
+     },
+     {
+      "role": "user",
+      "content": "Sam asks 11"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin got the last word."
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin asks 6\nUser: Morgan asks 7\nUser: Sam asks 8\nUser: Robin asks 9\nUser: Morgan asks 10\nUser: Sam asks 11"
+   }
+  },
+  {
+   "name": "all_assistant/0",
+   "input": {
+    "history": []
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "all_assistant/1",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "reply 0"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "all_assistant/2",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "reply 0"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 1"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: reply 0"
+   }
+  },
+  {
+   "name": "all_assistant/3",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "reply 0"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 1"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 2"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: reply 0\nYou: reply 1"
+   }
+  },
+  {
+   "name": "all_assistant/4",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "reply 0"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 1"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 2"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 3"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: reply 0\nYou: reply 1\nYou: reply 2"
+   }
+  },
+  {
+   "name": "all_assistant/5",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "reply 0"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 1"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 2"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 3"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 4"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: reply 0\nYou: reply 1\nYou: reply 2\nYou: reply 3"
+   }
+  },
+  {
+   "name": "all_assistant/6",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "reply 0"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 1"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 2"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 3"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 4"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 5"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: reply 0\nYou: reply 1\nYou: reply 2\nYou: reply 3\nYou: reply 4"
+   }
+  },
+  {
+   "name": "all_assistant/7",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "reply 0"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 1"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 2"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 3"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 4"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 5"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 6"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: reply 0\nYou: reply 1\nYou: reply 2\nYou: reply 3\nYou: reply 4\nYou: reply 5"
+   }
+  },
+  {
+   "name": "all_assistant/8",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "reply 0"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 1"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 2"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 3"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 4"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 5"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 6"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 7"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: reply 1\nYou: reply 2\nYou: reply 3\nYou: reply 4\nYou: reply 5\nYou: reply 6"
+   }
+  },
+  {
+   "name": "all_assistant/9",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "reply 0"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 1"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 2"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 3"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 4"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 5"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 6"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 7"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 8"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: reply 2\nYou: reply 3\nYou: reply 4\nYou: reply 5\nYou: reply 6\nYou: reply 7"
+   }
+  },
+  {
+   "name": "all_assistant/10",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "reply 0"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 1"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 2"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 3"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 4"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 5"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 6"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 7"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 8"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 9"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: reply 3\nYou: reply 4\nYou: reply 5\nYou: reply 6\nYou: reply 7\nYou: reply 8"
+   }
+  },
+  {
+   "name": "all_assistant/11",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "reply 0"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 1"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 2"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 3"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 4"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 5"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 6"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 7"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 8"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 9"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 10"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: reply 4\nYou: reply 5\nYou: reply 6\nYou: reply 7\nYou: reply 8\nYou: reply 9"
+   }
+  },
+  {
+   "name": "all_assistant/12",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "reply 0"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 1"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 2"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 3"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 4"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 5"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 6"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 7"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 8"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 9"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 10"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 11"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: reply 5\nYou: reply 6\nYou: reply 7\nYou: reply 8\nYou: reply 9\nYou: reply 10"
+   }
+  },
+  {
+   "name": "all_assistant/13",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "reply 0"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 1"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 2"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 3"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 4"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 5"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 6"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 7"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 8"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 9"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 10"
+     },
+     {
+      "role": "assistant",
+      "content": "reply 11"
+     },
+     {
+      "role": "assistant",
+      "content": "Robin got the last word."
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: reply 6\nYou: reply 7\nYou: reply 8\nYou: reply 9\nYou: reply 10\nYou: reply 11"
+   }
+  },
+  {
+   "name": "all_empty/7",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": ""
+     }
+    ]
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "all_none/4",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": null
+     },
+     {
+      "role": "user",
+      "content": null
+     },
+     {
+      "role": "assistant",
+      "content": null
+     },
+     {
+      "role": "user",
+      "content": null
+     }
+    ]
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "all_missing/5",
+   "input": {
+    "history": [
+     {
+      "role": "user"
+     },
+     {
+      "role": "assistant"
+     },
+     {
+      "role": "user"
+     },
+     {
+      "role": "assistant"
+     },
+     {
+      "role": "user"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "only_last_nonempty/8",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": "last"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "only_first_nonempty/8",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": "first"
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": ""
+     }
+    ]
+   },
+   "expected": {
+    "preamble": ""
+   }
+  },
+  {
+   "name": "only_window_start/8",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": "second"
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": ""
+     },
+     {
+      "role": "assistant",
+      "content": ""
+     },
+     {
+      "role": "user",
+      "content": ""
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: second"
+   }
+  },
+  {
+   "name": "unicode_ws/6",
+   "input": {
+    "history": [
+     {
+      "role": "assistant",
+      "content": " Robin "
+     },
+     {
+      "role": "user",
+      "content": " Morgan "
+     },
+     {
+      "role": "assistant",
+      "content": " Sam "
+     },
+     {
+      "role": "user",
+      "content": " Robin "
+     },
+     {
+      "role": "assistant",
+      "content": " Morgan "
+     },
+     {
+      "role": "user",
+      "content": " Sam "
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nYou: Robin\nUser: Morgan\nYou: Sam\nUser: Robin\nYou: Morgan"
+   }
+  },
+  {
+   "name": "inner_blank_lines/3",
+   "input": {
+    "history": [
+     {
+      "role": "user",
+      "content": "Robin\n\n\nend"
+     },
+     {
+      "role": "assistant",
+      "content": "Morgan\n\n\nend"
+     },
+     {
+      "role": "user",
+      "content": "Sam\n\n\nend"
+     }
+    ]
+   },
+   "expected": {
+    "preamble": "\n\nRecent conversation:\nUser: Robin\n\n\nend\nYou: Morgan\n\n\nend"
+   }
+  }
+ ]
+}

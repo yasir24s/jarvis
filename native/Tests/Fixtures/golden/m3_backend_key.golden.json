@@ -1,0 +1,90 @@
+{
+ "schema": 1,
+ "suite": "m3_backend_key",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "claude",
+   "input": {
+    "name": "claude"
+   },
+   "expected": {
+    "key": "backend_claude"
+   }
+  },
+  {
+   "name": "claude (partial)",
+   "input": {
+    "name": "claude (partial)"
+   },
+   "expected": {
+    "key": "backend_claude_partial_"
+   }
+  },
+  {
+   "name": "claude (claude-opus-5-5)",
+   "input": {
+    "name": "claude (claude-opus-5-5)"
+   },
+   "expected": {
+    "key": "backend_claude_claude_opus_5_5_"
+   }
+  },
+  {
+   "name": "local (qwen2.5:3b)",
+   "input": {
+    "name": "local (qwen2.5:3b)"
+   },
+   "expected": {
+    "key": "backend_local_qwen2_5_3b_"
+   }
+  },
+  {
+   "name": "local (apple-foundation-model)",
+   "input": {
+    "name": "local (apple-foundation-model)"
+   },
+   "expected": {
+    "key": "backend_local_apple_foundation_model_"
+   }
+  },
+  {
+   "name": "Claude (Opus 5.5)",
+   "input": {
+    "name": "Claude (Opus 5.5)"
+   },
+   "expected": {
+    "key": "backend_claude_opus_5_5_"
+   }
+  },
+  {
+   "name": "local (llama3.2 über-modèle)",
+   "input": {
+    "name": "local (llama3.2 über-modèle)"
+   },
+   "expected": {
+    "key": "backend_local_llama3_2_über_modèle_"
+   }
+  },
+  {
+   "name": "__x__ -- y",
+   "input": {
+    "name": "__x__ -- y"
+   },
+   "expected": {
+    "key": "backend___x___y"
+   }
+  }
+ ]
+}

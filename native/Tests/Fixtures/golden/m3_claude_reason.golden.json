@@ -1,0 +1,1224 @@
+{
+ "schema": 1,
+ "suite": "m3_claude_reason",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "kw/0/credit",
+   "input": {
+    "message": "credit"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw_upper/0/credit",
+   "input": {
+    "message": "Error: CREDIT occurred"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw_embedded/0/credit",
+   "input": {
+    "message": "xxcredityy"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw/0/billing",
+   "input": {
+    "message": "billing"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw_upper/0/billing",
+   "input": {
+    "message": "Error: BILLING occurred"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw_embedded/0/billing",
+   "input": {
+    "message": "xxbillingyy"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw/0/quota",
+   "input": {
+    "message": "quota"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw_upper/0/quota",
+   "input": {
+    "message": "Error: QUOTA occurred"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw_embedded/0/quota",
+   "input": {
+    "message": "xxquotayy"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw/0/insufficient",
+   "input": {
+    "message": "insufficient"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw_upper/0/insufficient",
+   "input": {
+    "message": "Error: INSUFFICIENT occurred"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw_embedded/0/insufficient",
+   "input": {
+    "message": "xxinsufficientyy"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw/0/payment",
+   "input": {
+    "message": "payment"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw_upper/0/payment",
+   "input": {
+    "message": "Error: PAYMENT occurred"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw_embedded/0/payment",
+   "input": {
+    "message": "xxpaymentyy"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "kw/1/401",
+   "input": {
+    "message": "401"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw_upper/1/401",
+   "input": {
+    "message": "Error: 401 occurred"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw_embedded/1/401",
+   "input": {
+    "message": "xx401yy"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw/1/403",
+   "input": {
+    "message": "403"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw_upper/1/403",
+   "input": {
+    "message": "Error: 403 occurred"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw_embedded/1/403",
+   "input": {
+    "message": "xx403yy"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw/1/unauthor",
+   "input": {
+    "message": "unauthor"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw_upper/1/unauthor",
+   "input": {
+    "message": "Error: UNAUTHOR occurred"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw_embedded/1/unauthor",
+   "input": {
+    "message": "xxunauthoryy"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw/1/not signed",
+   "input": {
+    "message": "not signed"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw_upper/1/not signed",
+   "input": {
+    "message": "Error: NOT SIGNED occurred"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw_embedded/1/not signed",
+   "input": {
+    "message": "xxnot signedyy"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw/1/login",
+   "input": {
+    "message": "login"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw_upper/1/login",
+   "input": {
+    "message": "Error: LOGIN occurred"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw_embedded/1/login",
+   "input": {
+    "message": "xxloginyy"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "kw/2/429",
+   "input": {
+    "message": "429"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "kw_upper/2/429",
+   "input": {
+    "message": "Error: 429 occurred"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "kw_embedded/2/429",
+   "input": {
+    "message": "xx429yy"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "kw/2/rate",
+   "input": {
+    "message": "rate"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "kw_upper/2/rate",
+   "input": {
+    "message": "Error: RATE occurred"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "kw_embedded/2/rate",
+   "input": {
+    "message": "xxrateyy"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "kw/2/overload",
+   "input": {
+    "message": "overload"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "kw_upper/2/overload",
+   "input": {
+    "message": "Error: OVERLOAD occurred"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "kw_embedded/2/overload",
+   "input": {
+    "message": "xxoverloadyy"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "kw/3/timeout",
+   "input": {
+    "message": "timeout"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "kw_upper/3/timeout",
+   "input": {
+    "message": "Error: TIMEOUT occurred"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "kw_embedded/3/timeout",
+   "input": {
+    "message": "xxtimeoutyy"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "kw/3/timed out",
+   "input": {
+    "message": "timed out"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "kw_upper/3/timed out",
+   "input": {
+    "message": "Error: TIMED OUT occurred"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "kw_embedded/3/timed out",
+   "input": {
+    "message": "xxtimed outyy"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "kw/3/cancel",
+   "input": {
+    "message": "cancel"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "kw_upper/3/cancel",
+   "input": {
+    "message": "Error: CANCEL occurred"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "kw_embedded/3/cancel",
+   "input": {
+    "message": "xxcancelyy"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "kw/4/not found",
+   "input": {
+    "message": "not found"
+   },
+   "expected": {
+    "reason": "Claude Code CLI not found"
+   }
+  },
+  {
+   "name": "kw_upper/4/not found",
+   "input": {
+    "message": "Error: NOT FOUND occurred"
+   },
+   "expected": {
+    "reason": "Claude Code CLI not found"
+   }
+  },
+  {
+   "name": "kw_embedded/4/not found",
+   "input": {
+    "message": "xxnot foundyy"
+   },
+   "expected": {
+    "reason": "Claude Code CLI not found"
+   }
+  },
+  {
+   "name": "kw/4/clinotfound",
+   "input": {
+    "message": "clinotfound"
+   },
+   "expected": {
+    "reason": "Claude Code CLI not found"
+   }
+  },
+  {
+   "name": "kw_upper/4/clinotfound",
+   "input": {
+    "message": "Error: CLINOTFOUND occurred"
+   },
+   "expected": {
+    "reason": "Claude Code CLI not found"
+   }
+  },
+  {
+   "name": "kw_embedded/4/clinotfound",
+   "input": {
+    "message": "xxclinotfoundyy"
+   },
+   "expected": {
+    "reason": "Claude Code CLI not found"
+   }
+  },
+  {
+   "name": "kw/4/enoent",
+   "input": {
+    "message": "enoent"
+   },
+   "expected": {
+    "reason": "Claude Code CLI not found"
+   }
+  },
+  {
+   "name": "kw_upper/4/enoent",
+   "input": {
+    "message": "Error: ENOENT occurred"
+   },
+   "expected": {
+    "reason": "Claude Code CLI not found"
+   }
+  },
+  {
+   "name": "kw_embedded/4/enoent",
+   "input": {
+    "message": "xxenoentyy"
+   },
+   "expected": {
+    "reason": "Claude Code CLI not found"
+   }
+  },
+  {
+   "name": "kw/5/connection",
+   "input": {
+    "message": "connection"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw_upper/5/connection",
+   "input": {
+    "message": "Error: CONNECTION occurred"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw_embedded/5/connection",
+   "input": {
+    "message": "xxconnectionyy"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw/5/network",
+   "input": {
+    "message": "network"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw_upper/5/network",
+   "input": {
+    "message": "Error: NETWORK occurred"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw_embedded/5/network",
+   "input": {
+    "message": "xxnetworkyy"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw/5/resolve",
+   "input": {
+    "message": "resolve"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw_upper/5/resolve",
+   "input": {
+    "message": "Error: RESOLVE occurred"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw_embedded/5/resolve",
+   "input": {
+    "message": "xxresolveyy"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw/5/dns",
+   "input": {
+    "message": "dns"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw_upper/5/dns",
+   "input": {
+    "message": "Error: DNS occurred"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw_embedded/5/dns",
+   "input": {
+    "message": "xxdnsyy"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw/5/unreach",
+   "input": {
+    "message": "unreach"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw_upper/5/unreach",
+   "input": {
+    "message": "Error: UNREACH occurred"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "kw_embedded/5/unreach",
+   "input": {
+    "message": "xxunreachyy"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "collide/0_1",
+   "input": {
+    "message": "401 and then payment"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "collide/0_2",
+   "input": {
+    "message": "429 and then payment"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "collide/0_3",
+   "input": {
+    "message": "timeout and then payment"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "collide/0_4",
+   "input": {
+    "message": "not found and then payment"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "collide/0_5",
+   "input": {
+    "message": "connection and then payment"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "collide/1_0",
+   "input": {
+    "message": "credit and then login"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "collide/1_2",
+   "input": {
+    "message": "429 and then login"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "collide/1_3",
+   "input": {
+    "message": "timeout and then login"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "collide/1_4",
+   "input": {
+    "message": "not found and then login"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "collide/1_5",
+   "input": {
+    "message": "connection and then login"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "collide/2_0",
+   "input": {
+    "message": "credit and then overload"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "collide/2_1",
+   "input": {
+    "message": "401 and then overload"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "collide/2_3",
+   "input": {
+    "message": "timeout and then overload"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "collide/2_4",
+   "input": {
+    "message": "not found and then overload"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "collide/2_5",
+   "input": {
+    "message": "connection and then overload"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "collide/3_0",
+   "input": {
+    "message": "credit and then cancel"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "collide/3_1",
+   "input": {
+    "message": "401 and then cancel"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "collide/3_2",
+   "input": {
+    "message": "429 and then cancel"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "collide/3_4",
+   "input": {
+    "message": "not found and then cancel"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "collide/3_5",
+   "input": {
+    "message": "connection and then cancel"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "collide/4_0",
+   "input": {
+    "message": "credit and then enoent"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "collide/4_1",
+   "input": {
+    "message": "401 and then enoent"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "collide/4_2",
+   "input": {
+    "message": "429 and then enoent"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "collide/4_3",
+   "input": {
+    "message": "timeout and then enoent"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "collide/4_5",
+   "input": {
+    "message": "connection and then enoent"
+   },
+   "expected": {
+    "reason": "Claude Code CLI not found"
+   }
+  },
+  {
+   "name": "collide/5_0",
+   "input": {
+    "message": "credit and then unreach"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "collide/5_1",
+   "input": {
+    "message": "401 and then unreach"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "collide/5_2",
+   "input": {
+    "message": "429 and then unreach"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "collide/5_3",
+   "input": {
+    "message": "timeout and then unreach"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "collide/5_4",
+   "input": {
+    "message": "not found and then unreach"
+   },
+   "expected": {
+    "reason": "Claude Code CLI not found"
+   }
+  },
+  {
+   "name": "empty",
+   "input": {
+    "message": ""
+   },
+   "expected": {
+    "reason": "unavailable"
+   }
+  },
+  {
+   "name": "spaces",
+   "input": {
+    "message": "   "
+   },
+   "expected": {
+    "reason": "unavailable"
+   }
+  },
+  {
+   "name": "newline",
+   "input": {
+    "message": "\n"
+   },
+   "expected": {
+    "reason": "unavailable"
+   }
+  },
+  {
+   "name": "tab_nl",
+   "input": {
+    "message": "\t\n "
+   },
+   "expected": {
+    "reason": "unavailable"
+   }
+  },
+  {
+   "name": "unknown_short",
+   "input": {
+    "message": "Something odd happened"
+   },
+   "expected": {
+    "reason": "Something odd happened"
+   }
+  },
+  {
+   "name": "unknown_padded",
+   "input": {
+    "message": "   Something odd happened  \n"
+   },
+   "expected": {
+    "reason": "Something odd happened"
+   }
+  },
+  {
+   "name": "unknown_80",
+   "input": {
+    "message": "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu"
+   },
+   "expected": {
+    "reason": "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu"
+   }
+  },
+  {
+   "name": "unknown_81",
+   "input": {
+    "message": "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+   },
+   "expected": {
+    "reason": "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+   }
+  },
+  {
+   "name": "unknown_long",
+   "input": {
+    "message": "  Morgan saw an odd failure in the helper process; Morgan saw an odd failure in the helper process; Morgan saw an odd failure in the helper process; "
+   },
+   "expected": {
+    "reason": "Morgan saw an odd failure in the helper process; Morgan saw an odd failure in th"
+   }
+  },
+  {
+   "name": "unknown_long_astral",
+   "input": {
+    "message": "😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd "
+   },
+   "expected": {
+    "reason": "😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 odd 😀 "
+   }
+  },
+  {
+   "name": "unknown_long_combining",
+   "input": {
+    "message": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé"
+   },
+   "expected": {
+    "reason": "éééééééééééééééééééééééééééééééééééééééé"
+   }
+  },
+  {
+   "name": "trap_generate",
+   "input": {
+    "message": "Could not generate a reply"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "trap_accurate",
+   "input": {
+    "message": "The answer was not accurate"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "trap_moderate",
+   "input": {
+    "message": "moderate load"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "trap_cancelled",
+   "input": {
+    "message": "Task was Cancelled by Sam"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "trap_clinotfound",
+   "input": {
+    "message": "CLINotFoundError: Claude Code not installed"
+   },
+   "expected": {
+    "reason": "Claude Code CLI not found"
+   }
+  },
+  {
+   "name": "trap_enoent",
+   "input": {
+    "message": "spawn claude ENOENT"
+   },
+   "expected": {
+    "reason": "Claude Code CLI not found"
+   }
+  },
+  {
+   "name": "trap_http401",
+   "input": {
+    "message": "HTTP 401 Unauthorized"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "trap_14030",
+   "input": {
+    "message": "error id 14030"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "trap_overloaded",
+   "input": {
+    "message": "Error code: 529 overloaded_error"
+   },
+   "expected": {
+    "reason": "rate limited"
+   }
+  },
+  {
+   "name": "trap_refused",
+   "input": {
+    "message": "Connection refused"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "trap_resolve",
+   "input": {
+    "message": "getaddrinfo failed: could not resolve host"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "trap_unreachable",
+   "input": {
+    "message": "Network is unreachable"
+   },
+   "expected": {
+    "reason": "network unreachable"
+   }
+  },
+  {
+   "name": "trap_timed_out",
+   "input": {
+    "message": "Request timed out after 45000 ms"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "trap_timeouterror",
+   "input": {
+    "message": "TimeoutError"
+   },
+   "expected": {
+    "reason": "timed out"
+   }
+  },
+  {
+   "name": "trap_credit",
+   "input": {
+    "message": "Your credit balance is too low"
+   },
+   "expected": {
+    "reason": "no Agent SDK credit"
+   }
+  },
+  {
+   "name": "trap_login",
+   "input": {
+    "message": "Invalid API key. Please run /login"
+   },
+   "expected": {
+    "reason": "not signed in"
+   }
+  },
+  {
+   "name": "trap_exit1",
+   "input": {
+    "message": "Command failed with exit code 1"
+   },
+   "expected": {
+    "reason": "Command failed with exit code 1"
+   }
+  },
+  {
+   "name": "lower_dotted_i",
+   "input": {
+    "message": "İnsufficient funds for Robin"
+   },
+   "expected": {
+    "reason": "İnsufficient funds for Robin"
+   }
+  },
+  {
+   "name": "lower_fullwidth",
+   "input": {
+    "message": "ＲＡＴＥ exceeded"
+   },
+   "expected": {
+    "reason": "ＲＡＴＥ exceeded"
+   }
+  },
+  {
+   "name": "lower_sharp_s",
+   "input": {
+    "message": "STRAßE closed"
+   },
+   "expected": {
+    "reason": "STRAßE closed"
+   }
+  },
+  {
+   "name": "lower_kelvin",
+   "input": {
+    "message": "KK status"
+   },
+   "expected": {
+    "reason": "KK status"
+   }
+  }
+ ]
+}

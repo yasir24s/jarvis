@@ -1,0 +1,78 @@
+{
+ "schema": 1,
+ "suite": "m3_claude_env_path",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "unset",
+   "input": {
+    "PATH": null,
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:"
+   }
+  },
+  {
+   "name": "empty",
+   "input": {
+    "PATH": "",
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:"
+   }
+  },
+  {
+   "name": "system",
+   "input": {
+    "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+   }
+  },
+  {
+   "name": "has_local_bin",
+   "input": {
+    "PATH": "${JARVIS_HOME}/.local/bin:/usr/bin:/bin",
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin"
+   }
+  },
+  {
+   "name": "homebrew_twice",
+   "input": {
+    "PATH": "/opt/homebrew/bin:/usr/bin:/opt/homebrew/bin:/bin",
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:${JARVIS_HOME}/.local/bin:/opt/homebrew/bin:/usr/bin:/opt/homebrew/bin:/bin"
+   }
+  },
+  {
+   "name": "trailing_colon",
+   "input": {
+    "PATH": "/usr/bin:/bin:",
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin:"
+   }
+  }
+ ]
+}
