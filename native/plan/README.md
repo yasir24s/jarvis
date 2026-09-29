@@ -376,6 +376,28 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
   pre-commit hook would block them if they were added again. That commit's hard-coded repo path
   and account name were removed in `4cf4fb0`.
 
+## M3 build notes
+
+- **D-42. MCP socket permissions.** Plan §3.7 wraps `bind` in `umask(0o177)`. `umask` is
+  process-wide, so it raced a parallel `mkdtemp` in the test suite: the directory came out 0600
+  and creating a file in it failed. The socket is bound inside the run directory instead, which
+  is 0700 and ours, and is then set to 0600. Other users cannot reach it in between, because
+  they cannot search that directory; the handshake guards against this user's other processes.
+- MCP details (T3.3, merged at `42589d2`). `initialize` advertises `tools.listChanged:false`,
+  as §3.7 says (the recorded CLI session got `{}`). JSON-RPC is encoded with `PyJSON`, not
+  `JSONSerialization`, so each `inputSchema` keeps Python's key order. The 46 schemas come from
+  the Python-generated `m3_tool_schemas` fixture through `tools/gen_tool_catalog.py`, which
+  writes `Sources/JarvisTools/Catalog/ToolCatalog.swift`; nobody edits that file by hand.
+- Open for T3.5, the first live runs:
+  - The relay's parent-pid check assumes `claude` starts the relay directly, with no shell in
+    between. The first live run confirms it.
+  - A relay handshake that arrives before the driver has registered the `claude` pid is
+    rejected, not delayed. The driver registers the pid right after launch; if a live run
+    shows a race, the server should wait inside the 2 s handshake window.
+  - A-10 needs the gateway to run the taint check before a missing tool body gives the
+    unknown-tool reply, and to write the `BLOCKED` log lines and bump `taint_block` (plan §3.3
+    steps 2 to 4). GPT is making that change.
+
 ## Open user decisions
 
 - Write `shouldSpeakReply` (text chat, M02–M04 §3.12) and `speakLocally` (sensitive routing
