@@ -1,0 +1,7 @@
+<< {"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{"roots":{"listChanged":true},"elicitation":{}},"clientInfo":{"name":"claude-code","title":"Claude Code","version":"2.1.282","description":"Anthropic's agentic coding tool","websiteUrl":"https://claude.com/claude-code"}},"jsonrpc":"2.0","id":0}
+>> {"jsonrpc": "2.0", "id": 0, "result": {"protocolVersion": "2025-11-25", "capabilities": {"tools": {}}, "serverInfo": {"name": "jarvis", "version": "1.0.0"}}}
+<< {"jsonrpc":"2.0","method":"notifications/initialized"}
+<< {"method":"tools/list","jsonrpc":"2.0","id":1}
+>> {"jsonrpc": "2.0", "id": 1, "result": {"tools": [{"name": "ping", "description": "Returns a pong token.", "inputSchema": {"type": "object", "properties": {"note": {"type": "string"}}, "required": []}}]}}
+<< {"method":"tools/call","params":{"name":"ping","arguments":{},"_meta":{"claudecode/toolUseId":"toolu_01S7arozMBoL4HWvuapj8GLs","progressToken":2}},"jsonrpc":"2.0","id":2}
+>> {"jsonrpc": "2.0", "id": 2, "result": {"content": [{"type": "text", "text": "pong-from-tool"}]}}
