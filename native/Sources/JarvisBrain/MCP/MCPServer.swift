@@ -32,7 +32,7 @@ public actor MCPServer {
 
     /// `tools` is what tools/list serves and what tools/call accepts: the Python catalog unless a
     /// test passes its own.
-    public init(runDirectory: URL, registry: MCPTurnRegistry, gateway: ToolGateway = .shared,
+    public init(runDirectory: URL, registry: MCPTurnRegistry, gateway: ToolGateway,
                 tools: [ToolSchema] = ToolCatalog.tools,
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .brain) }) {
         self.runDirectory = runDirectory

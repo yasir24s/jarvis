@@ -385,7 +385,7 @@ struct MCPServerTests {
 
         // Anything else at the path is left alone.
         try Data("not a socket".utf8).write(to: URL(fileURLWithPath: socket))
-        let other = MCPServer(runDirectory: h.server.runDirectory, registry: h.registry, log: h.logs.sink)
+        let other = MCPServer(runDirectory: h.server.runDirectory, registry: h.registry, gateway: h.gateway, log: h.logs.sink)
         await #expect(throws: MCPSocketError.notOurSocket(socket)) { try await other.start() }
         #expect(try String(contentsOfFile: socket, encoding: .utf8) == "not a socket")
         await h.remove()
@@ -394,7 +394,8 @@ struct MCPServerTests {
     @Test func refusesASocketPathOverSunPath() async throws {
         let dir = try ShortTempDir()
         let run = dir.url.appending(path: String(repeating: "r", count: 100), directoryHint: .isDirectory)
-        let server = MCPServer(runDirectory: run, registry: MCPTurnRegistry(runDirectory: run), log: { _ in })
+        let server = MCPServer(runDirectory: run, registry: MCPTurnRegistry(runDirectory: run),
+                               gateway: ToolGateway(log: { _ in }), log: { _ in })
         #expect(MCPSocket.sunPathSize == 104)
         #expect(server.socketPath.utf8.count >= 104)
         await #expect(throws: MCPSocketError.pathTooLong(server.socketPath)) { try await server.start() }

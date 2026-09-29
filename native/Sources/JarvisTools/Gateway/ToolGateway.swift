@@ -2,8 +2,6 @@ import Foundation
 import JarvisCore
 
 public actor ToolGateway {
-    public static let shared = ToolGateway()
-
     private struct Handler: Sendable {
         let schema: ToolSchema
         let run: @Sendable (JSONObject, ToolRunContext) async throws -> ToolOutcome
@@ -14,6 +12,7 @@ public actor ToolGateway {
     private let log: @Sendable (String) -> Void
     private let research: (any ResearchCounting)?
 
+    /// Production callers supply their research counter; isolated tests may omit it.
     public init(confirmationGate: ConfirmationGate = .shared,
                 log: @escaping @Sendable (String) -> Void = {
                     JarvisLog.log($0, category: .tools)
@@ -89,14 +88,13 @@ public actor ToolGateway {
                                        isSudo: PyShellRisk.containsSudo(command))
             switch tier {
             case .block:
-                log("BLOCKED command: \(String(command.prefix(120)))")
+                log("BLOCKED command: \(Py.prefix(command, 120))")
                 let text = PyShellRisk.containsSudo(command) ? GuardStrings.sudoNotAllowed : GuardStrings.systemDamaging
                 return await result(text, name: name, origin: origin, outcome: .blockedGuard,
                                     error: false, turn: turn)
             case .confirm:
                 await turn.recordSources(for: name)
-                let trimmed = command.trimmingCharacters(in: .whitespacesAndNewlines)
-                let desc = "That will run: \(String(trimmed.prefix(100)))"
+                let desc = "That will run: \(Py.prefix(Py.strip(command), 100))"
                 let gateway = self
                 await confirmationGate.stash(desc: desc, action: {
                     await gateway.runConfirmed(name: name, args: args, turn: turn, origin: .confirmation,
