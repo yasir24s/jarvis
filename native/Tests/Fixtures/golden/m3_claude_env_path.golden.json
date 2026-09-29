@@ -127,6 +127,76 @@
      "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
     }
    }
+  },
+  {
+   "name": "dot_entry",
+   "input": {
+    "PATH": ".:/usr/bin:/bin",
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:.:/usr/bin:/bin",
+    "native": {
+     "divergence": "DEV-M3-03",
+     "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin"
+    }
+   }
+  },
+  {
+   "name": "relative_entry",
+   "input": {
+    "PATH": "/usr/bin:bin:/bin",
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:bin:/bin",
+    "native": {
+     "divergence": "DEV-M3-03",
+     "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin"
+    }
+   }
+  },
+  {
+   "name": "tilde_entry",
+   "input": {
+    "PATH": "~/bin:/usr/bin:/bin",
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:~/bin:/usr/bin:/bin",
+    "native": {
+     "divergence": "DEV-M3-03",
+     "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin"
+    }
+   }
+  },
+  {
+   "name": "only_relative",
+   "input": {
+    "PATH": ".:bin",
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:.:bin",
+    "native": {
+     "divergence": "DEV-M3-03",
+     "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    }
+   }
+  },
+  {
+   "name": "empty_and_relative",
+   "input": {
+    "PATH": "/usr/bin::./bin:/bin",
+    "HOME": "${JARVIS_HOME}"
+   },
+   "expected": {
+    "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin::./bin:/bin",
+    "native": {
+     "divergence": "DEV-M3-03",
+     "PATH": "/usr/local/bin:/opt/homebrew/bin:${JARVIS_HOME}/.local/bin:/usr/bin:/bin"
+    }
+   }
   }
  ]
 }

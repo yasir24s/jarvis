@@ -351,7 +351,8 @@ Merged on `main`:
   macOS security and orchestrator rules take precedence: native follows the plan, the
   difference is registered in DEVIATIONS.md, and tests assert the native value directly while
   Python's value stays recorded as a known issue. Cases so far: DEV-M3-01 (the child PATH
-  fallback of §3.6) and DEV-M3-02 (empty PATH fields dropped).
+  fallback of §3.6), DEV-M3-02 (empty PATH fields dropped) and DEV-M3-03 (relative PATH
+  fields dropped).
 
 M2 status: **accepted on 2026-09-29 at `52487e5`.** GPT built it in the Codex app (`894bf44`
 guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each commit.

@@ -467,7 +467,12 @@ def claude_env_path(ctx):
                ("trailing_colon", "/usr/bin:/bin:"),
                ("leading_colon", ":/usr/bin:/bin"),
                ("double_colon", "/usr/bin::/bin"),
-               ("only_colon", ":")]
+               ("only_colon", ":"),
+               ("dot_entry", ".:/usr/bin:/bin"),
+               ("relative_entry", "/usr/bin:bin:/bin"),
+               ("tilde_entry", "~/bin:/usr/bin:/bin"),
+               ("only_relative", ".:bin"),
+               ("empty_and_relative", "/usr/bin::./bin:/bin")]
     saved = os.environ.get("PATH")
     cases = []
     try:
@@ -477,14 +482,23 @@ def claude_env_path(ctx):
             else:
                 os.environ["PATH"] = value
             expected = {"PATH": J._claude_env()["PATH"]}
-            # Hand-specified native half: the child never gets an empty (current-directory)
-            # field. An inherited PATH keeps only its non-empty fields (DEV-M3-02); a PATH that
-            # is unset or empty starts from the system PATH (DEV-M3-01), as does one with no
-            # non-empty field left. The native value is Python's own rule applied to that base.
-            if not value or "" in value.split(":"):
-                base = ":".join(f for f in (value or "").split(":") if f) or NATIVE_FALLBACK_PATH
-                os.environ["PATH"] = base
-                divergence = "DEV-M3-01" if not value else "DEV-M3-02"
+            # Hand-specified native half: the child never gets an empty or relative field, since
+            # either makes command lookup search from the working directory. An inherited PATH
+            # keeps only its absolute fields (DEV-M3-02 empty, DEV-M3-03 relative); a PATH that is
+            # unset or empty starts from the system PATH (DEV-M3-01), as does one with no absolute
+            # field left. The marker names the strictest rule a case exercises. The native value
+            # is Python's own rule applied to the cleaned base.
+            fields = (value or "").split(":")
+            if not value:
+                divergence = "DEV-M3-01"
+            elif any(f and not f.startswith("/") for f in fields):
+                divergence = "DEV-M3-03"
+            elif "" in fields:
+                divergence = "DEV-M3-02"
+            else:
+                divergence = None
+            if divergence:
+                os.environ["PATH"] = ":".join(f for f in fields if f.startswith("/")) or NATIVE_FALLBACK_PATH
                 expected["native"] = {"divergence": divergence, "PATH": J._claude_env()["PATH"]}
             cases.append({"name": name, "input": {"PATH": value, "HOME": home}, "expected": expected})
     finally:
