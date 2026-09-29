@@ -15,6 +15,11 @@ import Foundation
 //
 // UsageStore (D1, D3), MetricsLog (D2, D4) and SnapshotBuilder (D5) own the file formats and
 // the deviations; this class only orders the calls. Cross-process exclusion is M0's guard.
+//
+// Decision D-36: a real repo's research/ is written only while the InstanceLock state lease is
+// held (UsageStore's rule, the same as StateStore's); otherwise a bump, check or snapshot is
+// refused and logged, and nothing is written. Decision D-37: `hourlyCheck(inputs:)` and
+// `snapshot(inputs:)` count corrections and history turns from CoreState's memory, not files.
 
 public final class ResearchLogger: ResearchCounting, Sendable {
     public let paths: ResearchPaths
@@ -24,16 +29,22 @@ public final class ResearchLogger: ResearchCounting, Sendable {
     private let queue = DispatchQueue(label: "com.jarvis.assistant.research", qos: .utility)
 
     /// `git` and `host` are SnapshotBuilder's (tests inject a recorder and a fixed host).
+    /// `lease` is the InstanceLock state lease (D-36): required for a real repo root, and
+    /// once given it must be held for any root.
     public init(paths: ResearchPaths, clock: ResearchClock, sources: any SnapshotSources,
                 runtime: @escaping @Sendable () -> RuntimeInfo,
+                lease: (any StateLease)? = nil,
                 git: @escaping GitProbe.Runner = GitProbe.run,
                 host: @escaping @Sendable () -> HostSample = { HostSample.current() }) {
         self.paths = paths
         self.clock = clock
-        self.store = UsageStore(paths: paths, clock: clock)
+        self.store = UsageStore(paths: paths, clock: clock, lease: lease)
         self.builder = SnapshotBuilder(paths: paths, clock: clock, sources: sources,
                                        runtime: runtime, git: git, host: host)
     }
+
+    /// D-36: false while research/ may not be written (the store's lease rule).
+    var mayWrite: Bool { store.mayWrite }
 
     /// `research_bump(key, n)`: non-blocking, FIFO on the private queue. Never throws: a
     /// failure is logged as Python logs it and nothing is written.
@@ -51,20 +62,50 @@ public final class ResearchLogger: ResearchCounting, Sendable {
         let now = clock.now()
         let day = clock.localDate(now)
         return queue.sync {
+            if let refused = refusal("Research check") { return refused }
             Self.apply(store, ResearchKey.aliveHours, by: 1, day: day, now: now)
             guard MetricsLog(paths: paths).lastDate() != day else { return .skippedAlreadyToday }
             return builder.snapshot()
         }
     }
 
+    /// `hourlyCheck()` with D-37: `inputs` (the app passes `CoreState.snapshotInputs`) is
+    /// awaited only when a row is due, as research_log_loop calls research_snapshot (and so
+    /// `_corrections_load`) only then, and its two counts go into the row.
+    public func hourlyCheck(inputs: () async -> CoreSnapshotInputs) async -> SnapshotOutcome {
+        let now = clock.now()
+        let day = clock.localDate(now)
+        let due: SnapshotOutcome? = queue.sync {
+            if let refused = refusal("Research check") { return refused }
+            Self.apply(store, ResearchKey.aliveHours, by: 1, day: day, now: now)
+            return MetricsLog(paths: paths).lastDate() != day ? nil : .skippedAlreadyToday
+        }
+        if let due { return due }
+        let counts = await inputs()
+        return snapshot(inputs: counts)
+    }
+
     /// `research_snapshot()` + the schema-2 blocks, after every bump already enqueued.
-    public func snapshot() -> SnapshotOutcome {
-        queue.sync { builder.snapshot() }
+    /// `inputs`: CoreState's in-memory corrections and history counts (D-37).
+    public func snapshot(inputs: CoreSnapshotInputs? = nil) -> SnapshotOutcome {
+        queue.sync {
+            if let refused = refusal("Research snapshot") { return refused }
+            return builder.snapshot(inputs: inputs)
+        }
     }
 
     /// Waits for every enqueued bump (tests and applicationWillTerminate).
     public func flush() {
         queue.sync {}
+    }
+
+    /// D-36: `.failed` (logged under `what`) when research/ may not be written now, else nil.
+    /// Checked on the queue, before anything is read or written.
+    private func refusal(_ what: String) -> SnapshotOutcome? {
+        guard !store.mayWrite else { return nil }
+        let why = UsageError.leaseNotHeld.description
+        JarvisLog.log("\(what): \(why)", category: .research)
+        return .failed(why)
     }
 
     private static func apply(_ store: UsageStore, _ key: String, by n: Int, day: String, now: Double) {

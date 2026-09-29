@@ -68,8 +68,11 @@ public struct SnapshotBuilder: Sendable {
     }
 
     /// The row research_snapshot builds at `now`, plus the schema-2 keys. Throws where Python
-    /// raises. `codeUnreadable` is set when D5 applied.
-    public func row(now: Double) throws(SnapshotSourceError) -> (row: JSONObject, date: String, codeUnreadable: Bool) {
+    /// raises. `codeUnreadable` is set when D5 applied. With `inputs` (decision D-37), the
+    /// corrections and history counts are CoreState's in-memory ones, as Python counts its
+    /// `_corr_cache` and `_history`; `sources`' two counts are then not asked (no file read).
+    public func row(now: Double, inputs: CoreSnapshotInputs? = nil)
+        throws(SnapshotSourceError) -> (row: JSONObject, date: String, codeUnreadable: Bool) {
         let day = clock.localDate(now)
         let (head, commits) = GitProbe.headAndCommits(repo: paths.here, timeout: 5, run: git)
         let code = Self.codeMeasure(paths.jarvisPy)
@@ -82,9 +85,9 @@ public struct SnapshotBuilder: Sendable {
         }
         let counts = JSONObject([
             .init(key: "profile_facts", value: .int(Int64(try sources.profileFactsCount()))),
-            .init(key: "corrections", value: .int(Int64(sources.correctionsCount()))),
+            .init(key: "corrections", value: .int(Int64(inputs?.correctionsCount ?? sources.correctionsCount()))),
             .init(key: "kb_topics", value: .int(Int64(try sources.kbTopicsCount()))),
-            .init(key: "history_turns", value: .int(Int64(sources.historyTurns()))),
+            .init(key: "history_turns", value: .int(Int64(inputs?.historyTurns ?? sources.historyTurns()))),
         ])
         let voiceprint = FileManager.default.fileExists(atPath: paths.voiceprint.path(percentEncoded: false))
         let native = PyLineCount.codeNative(paths.nativeSources)
@@ -117,10 +120,11 @@ public struct SnapshotBuilder: Sendable {
 
     /// `research_snapshot()`: builds the row at the clock's now and appends
     /// `json.dumps(row) + "\n"` to metrics.jsonl (MetricsLog: D4). `.failed` = no row.
-    public func snapshot() -> SnapshotOutcome {
+    /// `inputs`: as in `row(now:inputs:)` (D-37).
+    public func snapshot(inputs: CoreSnapshotInputs? = nil) -> SnapshotOutcome {
         let built: (row: JSONObject, date: String, codeUnreadable: Bool)
         do {
-            built = try row(now: clock.now())
+            built = try row(now: clock.now(), inputs: inputs)
         } catch {
             JarvisLog.log("Research snapshot: \(error)", category: .research)
             return .failed(error.detail)

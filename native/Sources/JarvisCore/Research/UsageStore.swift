@@ -18,6 +18,8 @@ import Synchronization
 //       Extension: a file that exists but cannot be read at all cannot be copied, so native
 //       refuses to write rather than replace it (Python would, if it were writable).
 //   D3  temp file in research/ + rename(2) (M0's AtomicFile), not truncate-in-place.
+// Decision D-36 (plan README): a real repo's research/ is written only while the InstanceLock
+// state lease is held, as StateStore requires for the state files.
 // Golden suite: m1b_bump (every step's bytes, from the real research_bump).
 
 public enum UsageError: Error, Sendable, Equatable, CustomStringConvertible {
@@ -28,6 +30,7 @@ public enum UsageError: Error, Sendable, Equatable, CustomStringConvertible {
     case unreadable(String)             // the file exists but its bytes cannot be read (D1 ext.)
     case quarantine(String)             // D1 copy failed: nothing is written
     case io(String)                     // makedirs / temp write / rename failed
+    case leaseNotHeld                   // D-36: real research/ root (or a given lease) without the held lease
 
     public var description: String {
         switch self {
@@ -38,6 +41,7 @@ public enum UsageError: Error, Sendable, Equatable, CustomStringConvertible {
         case let .unreadable(why): "usage.json exists but is unreadable: \(why)"
         case let .quarantine(why): "could not keep the unparseable usage.json: \(why)"
         case let .io(why): why
+        case .leaseNotHeld: "not written: the state lease is not held (D-36)"
         }
     }
 }
@@ -46,14 +50,30 @@ public final class UsageStore: ResearchCounting, Sendable {
     public let url: URL
     public let clock: ResearchClock
     private let lock = Mutex(())                  // the analogue of _research_lock
+    private let lease: (any StateLease)?
+    private let needsLease: Bool
 
-    public init(url: URL, clock: ResearchClock = ResearchClock()) {
+    /// D-36: the repo root holding `url`'s research/ folder is real state by StateStore's own
+    /// rule (it has jarvis.py and is not a test Sandbox), decided here once. Writing a real
+    /// root then needs `lease` held, and a lease that was given must be held for any root;
+    /// otherwise a bump is refused (`.leaseNotHeld`) before anything under the root is touched.
+    public init(url: URL, clock: ResearchClock = ResearchClock(), lease: (any StateLease)? = nil) {
         self.url = url
         self.clock = clock
+        self.lease = lease
+        let here = url.deletingLastPathComponent().deletingLastPathComponent()
+        self.needsLease = StateStore.isRealRepoRoot(here.path(percentEncoded: false))
     }
 
-    public convenience init(paths: ResearchPaths, clock: ResearchClock = ResearchClock()) {
-        self.init(url: paths.usage, clock: clock)
+    public convenience init(paths: ResearchPaths, clock: ResearchClock = ResearchClock(),
+                            lease: (any StateLease)? = nil) {
+        self.init(url: paths.usage, clock: clock, lease: lease)
+    }
+
+    /// D-36, as `StateStore.save` checks it: false when a lease is needed or was given and
+    /// is not held now. The ResearchLogger asks this before a snapshot writes metrics.jsonl.
+    var mayWrite: Bool {
+        !(needsLease || lease != nil) || lease?.isHeld == true
     }
 
     /// `ResearchCounting`: today's counter from the clock, synchronously, in call order.
@@ -89,6 +109,7 @@ public final class UsageStore: ResearchCounting, Sendable {
     private var path: String { url.path(percentEncoded: false) }
 
     private func locked(_ key: String, by n: Int, day: String, now: Double) throws(UsageError) {
+        guard mayWrite else { throw .leaseNotHeld }
         let dir = url.deletingLastPathComponent()
         do {
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
