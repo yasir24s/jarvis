@@ -33,11 +33,11 @@ struct BrainRouterWiringTests {
             harness = try CoreHarness(research: NullCounter())
             let logs = logs
             assembly = BrainAssembly(core: harness.core, research: research,
-                                     local: FakeLocalBrain(.reply("Local reply, sir.")),
                                      config: ClaudeConfig(environment: [:]), environment: [:],
                                      runDirectory: run,
                                      claudeWorkingDirectory: dir.url.appending(path: "claude-cwd", directoryHint: .isDirectory),
                                      claudeExecutable: URL(fileURLWithPath: "/nonexistent/claude"),
+                                     localBrain: { _ in FakeLocalBrain(.reply("Local reply, sir.")) },
                                      textAuthenticator: FakeAuthenticator(answer: false), online: { false },
                                      log: { logs.add($0, $1) })
         }

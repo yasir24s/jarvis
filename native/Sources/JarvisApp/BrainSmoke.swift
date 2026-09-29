@@ -29,7 +29,7 @@ import Synchronization
 ///
 /// `--force-local` turns Claude off (JARVIS_USE_CLAUDE=0). `--inject-taint-test` sends a fixed
 /// prompt asking for `echo hi` through run_command, as a pasted input, so the turn starts
-/// tainted. Until T3.6 merges, the local brain here is `UnavailableLocalBrain`.
+/// tainted. The local brain is the assembly's own `LocalBrain`.
 enum BrainSmoke {
     struct Options: Equatable {
         var text: String
@@ -132,7 +132,7 @@ enum BrainSmoke {
 
         let turnBox = TurnBox()
         let tap = StreamTap(stream: tapped == nil ? nil : stream, turn: turnBox)
-        let assembly = BrainAssembly(core: core, research: research, local: UnavailableLocalBrain(), config: config,
+        let assembly = BrainAssembly(core: core, research: research, config: config,
                                      environment: environment,
                                      runDirectory: scratch.appending(path: "run", directoryHint: .isDirectory),
                                      claudeWorkingDirectory: scratch.appending(path: "claude-cwd", directoryHint: .isDirectory),
@@ -276,18 +276,5 @@ private struct HeadlessFrontApp: FrontAppProviding {
 /// The smoke runs voice turns only; a text confirmation would be refused.
 private struct RefusingAuthenticator: ConfirmAuthenticator {
     func authenticate(reason: String) async -> Bool { false }
-}
-
-/// Stands in for T3.6's LocalBrain, which is not on this branch: it answers as LocalBrain does
-/// when the on-device model is unavailable.
-private struct UnavailableLocalBrain: LocalGenerating {
-    static let reply = "My local reasoning core had an error, sir."
-
-    func generate(system: String, user: String, channel: Channel, turn: TurnContext,
-                  sink: any ReplySink) async -> LocalOutcome {
-        JarvisLog.log("local model unavailable: LocalBrain (T3.6) is not in this build", category: .brain)
-        await sink.sentence(Self.reply)
-        return .failed(Self.reply)
-    }
 }
 #endif

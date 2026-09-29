@@ -16,7 +16,7 @@ struct BrainRouterTests {
     static let text = "what time is it"
     static let interactions = "bump \(ResearchKey.interactions)+1"
     static let channelText = "bump \(ResearchKey.channelText)+1"
-    static let localBackend = "backend \(BrainRouter.localBackend)"
+    static let localBackend = "backend \(LocalBrain.backendName)"
 
     struct Rig {
         let harness: CoreHarness

@@ -4,7 +4,8 @@ import JarvisTools
 
 /// Builds the brain from its parts (plan: M02-M04 §3.5-§3.11): one confirmation gate, a
 /// gateway that counts and logs, the MCP turn registry and server on the run directory, the
-/// Claude driver, the backend reporter, the router and the turn coordinator. `start()` creates
+/// Claude driver, the on-device brain on the same gateway, the backend reporter, the router
+/// and the turn coordinator. `start()` creates
 /// the run directory and starts the server; `stop()` stops it.
 public final class BrainAssembly: Sendable {
     /// `~/Library/Application Support/JARVIS/`, which holds `run/` and `claude-cwd/`
@@ -34,10 +35,13 @@ public final class BrainAssembly: Sendable {
     ///   - environment: the app's environment; the child env is built from it by
     ///     `ChildEnvironment`.
     ///   - claudeExecutable: overrides the PATH search (the smoke mode's stream tap).
+    ///   - localBrain: builds the on-device brain on this assembly's gateway; nil means
+    ///     `LocalBrain` (T3.6). Tests pass a fake.
     ///   - log: every log line of the parts, with its category. Tests pass their own.
-    public init(core: CoreState, research: any ResearchCounting, local: any LocalGenerating,
+    public init(core: CoreState, research: any ResearchCounting,
                 config: ClaudeConfig, environment: [String: String],
                 runDirectory: URL, claudeWorkingDirectory: URL, claudeExecutable: URL? = nil,
+                localBrain: ((ToolGateway) -> any LocalGenerating)? = nil,
                 textAuthenticator: any ConfirmAuthenticator, fastPath: any FastPathRouting = NoFastPath(),
                 online: @escaping @Sendable () async -> Bool,
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
@@ -56,6 +60,7 @@ public final class BrainAssembly: Sendable {
         driver = ClaudeDriver(config: config, executable: executable, bridge: registry,
                               workingDirectory: claudeWorkingDirectory, research: research, backend: backend,
                               parentEnvironment: environment, log: brainLog)
+        let local = localBrain?(gateway) ?? LocalBrain(gateway: gateway, log: brainLog)
         router = BrainRouter(core: core, config: config, claude: driver, local: local, backend: backend,
                              research: research, log: brainLog)
         coordinator = TurnCoordinator(brain: router, fastPath: fastPath, confirmations: confirmations,
