@@ -189,6 +189,14 @@ _HOME = os.path.expanduser("~")
 _SYS_ROOTS = ("/System", "/Library", "/usr", "/bin", "/sbin", "/etc", "/var", "/private", "/opt")
 def _in_home(p):
     return os.path.abspath(p).startswith(_HOME + os.sep)
+_PERSIST_FILES = (".zshrc", ".zprofile", ".zshenv", ".zlogin", ".bashrc", ".bash_profile", ".profile")
+_PERSIST_DIRS  = ("Library/LaunchAgents", ".ssh", "Library/Keychains", ".claude")
+def _persistence_path(p):
+    """Shell startup / LaunchAgent / credential target (symlinks resolved) → confirm even in home."""
+    a, h = os.path.realpath(p).lower(), os.path.realpath(_HOME)   # lower(): APFS is case-insensitive
+    files = [os.path.join(h, f).lower() for f in _PERSIST_FILES]
+    dirs  = [os.path.join(h, d).lower() for d in _PERSIST_DIRS]
+    return a in files or any(a == d or a.startswith(d + os.sep) for d in dirs)
 def _is_system_path(p):
     a = os.path.abspath(p)
     return a == "/" or a == _HOME or any(a == r or a.startswith(r + os.sep) for r in _SYS_ROOTS)
@@ -244,7 +252,9 @@ EXECUTOR_TOOLS  = {"run_command", "run_applescript", "run_powershell",
                    "send_message", "send_email", "type_text", "run_shortcut",
                    # Self-writing personality: an injected page must never get to
                    # redefine who JARVIS is or plant instructions in his prompt.
-                   "personality_note", "personality_rewrite"}
+                   "personality_note", "personality_rewrite",
+                   # File tools: an injected page must never plant code in ~/.zshrc or a LaunchAgent.
+                   "write_file", "delete_file", "move_file"}
 
 ```
 

@@ -29717,7 +29717,7 @@
   {
    "name": "plan_block/0067",
    "input": {
-    "script": "def _is_system_path(p):",
+    "script": "_PERSIST_FILES = (\".zshrc\", \".zprofile\", \".zshenv\", \".zlogin\", \".bashrc\", \".bash_profile\", \".profile\")",
     "source": "plan_block"
    },
    "expected": {
@@ -29727,7 +29727,7 @@
   {
    "name": "plan_block/0068",
    "input": {
-    "script": "    a = os.path.abspath(p)",
+    "script": "_PERSIST_DIRS  = (\"Library/LaunchAgents\", \".ssh\", \"Library/Keychains\", \".claude\")",
     "source": "plan_block"
    },
    "expected": {
@@ -29737,7 +29737,7 @@
   {
    "name": "plan_block/0069",
    "input": {
-    "script": "    return a == \"/\" or a == _HOME or any(a == r or a.startswith(r + os.sep) for r in _SYS_ROOTS)",
+    "script": "def _persistence_path(p):",
     "source": "plan_block"
    },
    "expected": {
@@ -29747,7 +29747,7 @@
   {
    "name": "plan_block/0070",
    "input": {
-    "script": "_AS_DENY = re.compile(r\"do\\s+shell\\s+script|administrator\\s+privileges|system\\s+events\",",
+    "script": "    \"\"\"Shell startup / LaunchAgent / credential target (symlinks resolved) → confirm even in home.\"\"\"",
     "source": "plan_block"
    },
    "expected": {
@@ -29757,7 +29757,7 @@
   {
    "name": "plan_block/0071",
    "input": {
-    "script": "                      re.IGNORECASE)",
+    "script": "    a, h = os.path.realpath(p).lower(), os.path.realpath(_HOME)   # lower(): APFS is case-insensitive",
     "source": "plan_block"
    },
    "expected": {
@@ -29767,7 +29767,7 @@
   {
    "name": "plan_block/0072",
    "input": {
-    "script": "def _dangerous_applescript(s):",
+    "script": "    files = [os.path.join(h, f).lower() for f in _PERSIST_FILES]",
     "source": "plan_block"
    },
    "expected": {
@@ -29777,7 +29777,7 @@
   {
    "name": "plan_block/0073",
    "input": {
-    "script": "    return bool(_AS_DENY.search(s or \"\"))",
+    "script": "    dirs  = [os.path.join(h, d).lower() for d in _PERSIST_DIRS]",
     "source": "plan_block"
    },
    "expected": {
@@ -29787,7 +29787,7 @@
   {
    "name": "plan_block/0074",
    "input": {
-    "script": "_SENSITIVE_PATHS = (\"/.ssh\", \"id_rsa\", \"id_ed25519\", \"/library/keychains\", \"keychain-db\",",
+    "script": "    return a in files or any(a == d or a.startswith(d + os.sep) for d in dirs)",
     "source": "plan_block"
    },
    "expected": {
@@ -29797,7 +29797,7 @@
   {
    "name": "plan_block/0075",
    "input": {
-    "script": "                    \"login.keychain\", \"/library/messages\", \".aws/credentials\",",
+    "script": "def _is_system_path(p):",
     "source": "plan_block"
    },
    "expected": {
@@ -29807,7 +29807,7 @@
   {
    "name": "plan_block/0076",
    "input": {
-    "script": "                    \".config/gh/hosts\", \"/cookies\", \".jarvis_config\", \"audd_key\",",
+    "script": "    a = os.path.abspath(p)",
     "source": "plan_block"
    },
    "expected": {
@@ -29817,7 +29817,7 @@
   {
    "name": "plan_block/0077",
    "input": {
-    "script": "                    \"voiceprint\", \"/com.apple.tcc\")",
+    "script": "    return a == \"/\" or a == _HOME or any(a == r or a.startswith(r + os.sep) for r in _SYS_ROOTS)",
     "source": "plan_block"
    },
    "expected": {
@@ -29827,7 +29827,7 @@
   {
    "name": "plan_block/0078",
    "input": {
-    "script": "def _sensitive_path(p):",
+    "script": "_AS_DENY = re.compile(r\"do\\s+shell\\s+script|administrator\\s+privileges|system\\s+events\",",
     "source": "plan_block"
    },
    "expected": {
@@ -29837,7 +29837,7 @@
   {
    "name": "plan_block/0079",
    "input": {
-    "script": "    p = (p or \"\").lower()",
+    "script": "                      re.IGNORECASE)",
     "source": "plan_block"
    },
    "expected": {
@@ -29847,7 +29847,7 @@
   {
    "name": "plan_block/0080",
    "input": {
-    "script": "    return any(s in p for s in _SENSITIVE_PATHS)",
+    "script": "def _dangerous_applescript(s):",
     "source": "plan_block"
    },
    "expected": {
@@ -29857,7 +29857,7 @@
   {
    "name": "plan_block/0081",
    "input": {
-    "script": "def _as_escape(s):",
+    "script": "    return bool(_AS_DENY.search(s or \"\"))",
     "source": "plan_block"
    },
    "expected": {
@@ -29867,7 +29867,7 @@
   {
    "name": "plan_block/0082",
    "input": {
-    "script": "    \"\"\"Escape a string for safe embedding inside an AppleScript double-quoted literal.\"\"\"",
+    "script": "_SENSITIVE_PATHS = (\"/.ssh\", \"id_rsa\", \"id_ed25519\", \"/library/keychains\", \"keychain-db\",",
     "source": "plan_block"
    },
    "expected": {
@@ -29877,7 +29877,7 @@
   {
    "name": "plan_block/0083",
    "input": {
-    "script": "    return (s or \"\").replace(\"\\\\\", \"\\\\\\\\\").replace('\"', '\\\\\"')",
+    "script": "                    \"login.keychain\", \"/library/messages\", \".aws/credentials\",",
     "source": "plan_block"
    },
    "expected": {
@@ -29887,7 +29887,7 @@
   {
    "name": "plan_block/0084",
    "input": {
-    "script": "def _run_command(command: str) -> str:",
+    "script": "                    \".config/gh/hosts\", \"/cookies\", \".jarvis_config\", \"audd_key\",",
     "source": "plan_block"
    },
    "expected": {
@@ -29897,7 +29897,7 @@
   {
    "name": "plan_block/0085",
    "input": {
-    "script": "    risk = _shell_risk(command)",
+    "script": "                    \"voiceprint\", \"/com.apple.tcc\")",
     "source": "plan_block"
    },
    "expected": {
@@ -29907,7 +29907,7 @@
   {
    "name": "plan_block/0086",
    "input": {
-    "script": "    if risk == \"block\":",
+    "script": "def _sensitive_path(p):",
     "source": "plan_block"
    },
    "expected": {
@@ -29917,7 +29917,7 @@
   {
    "name": "plan_block/0087",
    "input": {
-    "script": "        log(f\"BLOCKED command: {(command or '')[:120]}\")",
+    "script": "    p = (p or \"\").lower()",
     "source": "plan_block"
    },
    "expected": {
@@ -29927,7 +29927,7 @@
   {
    "name": "plan_block/0088",
    "input": {
-    "script": "        if re.search(r\"\\bsudo\\b\", command or \"\"):",
+    "script": "    return any(s in p for s in _SENSITIVE_PATHS)",
     "source": "plan_block"
    },
    "expected": {
@@ -29937,7 +29937,7 @@
   {
    "name": "plan_block/0089",
    "input": {
-    "script": "            return \"That sudo command isn't on my allowed list, sir, so I won't run it.\"",
+    "script": "def _as_escape(s):",
     "source": "plan_block"
    },
    "expected": {
@@ -29947,7 +29947,7 @@
   {
    "name": "plan_block/0090",
    "input": {
-    "script": "        return \"I won't run that, sir — it's system-damaging, so I've blocked it.\"",
+    "script": "    \"\"\"Escape a string for safe embedding inside an AppleScript double-quoted literal.\"\"\"",
     "source": "plan_block"
    },
    "expected": {
@@ -29957,7 +29957,7 @@
   {
    "name": "plan_block/0091",
    "input": {
-    "script": "    if risk == \"confirm\":",
+    "script": "    return (s or \"\").replace(\"\\\\\", \"\\\\\\\\\").replace('\"', '\\\\\"')",
     "source": "plan_block"
    },
    "expected": {
@@ -29967,7 +29967,7 @@
   {
    "name": "plan_block/0092",
    "input": {
-    "script": "        return _gate(f\"That will run: {(command or '').strip()[:100]}\", lambda: _exec_shell(command))",
+    "script": "def _run_command(command: str) -> str:",
     "source": "plan_block"
    },
    "expected": {
@@ -29977,7 +29977,7 @@
   {
    "name": "plan_block/0093",
    "input": {
-    "script": "    return _exec_shell(command)",
+    "script": "    risk = _shell_risk(command)",
     "source": "plan_block"
    },
    "expected": {
@@ -29987,7 +29987,7 @@
   {
    "name": "plan_block/0094",
    "input": {
-    "script": "        if name == \"personality_rewrite\": return personality_rewrite_tool(args.get(\"core\", \"\"))",
+    "script": "    if risk == \"block\":",
     "source": "plan_block"
    },
    "expected": {
@@ -29997,7 +29997,7 @@
   {
    "name": "plan_block/0095",
    "input": {
-    "script": "        if name == \"run_applescript\":",
+    "script": "        log(f\"BLOCKED command: {(command or '')[:120]}\")",
     "source": "plan_block"
    },
    "expected": {
@@ -30007,7 +30007,7 @@
   {
    "name": "plan_block/0096",
    "input": {
-    "script": "            s = args.get(\"script\", \"\")",
+    "script": "        if re.search(r\"\\bsudo\\b\", command or \"\"):",
     "source": "plan_block"
    },
    "expected": {
@@ -30017,7 +30017,7 @@
   {
    "name": "plan_block/0097",
    "input": {
-    "script": "            if _dangerous_applescript(s):",
+    "script": "            return \"That sudo command isn't on my allowed list, sir, so I won't run it.\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30027,7 +30027,7 @@
   {
    "name": "plan_block/0098",
    "input": {
-    "script": "                log(\"BLOCKED dangerous AppleScript from LLM\")",
+    "script": "        return \"I won't run that, sir — it's system-damaging, so I've blocked it.\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30037,7 +30037,7 @@
   {
    "name": "plan_block/0099",
    "input": {
-    "script": "                return \"I won't run that script, sir — it could shell out or automate unsafely.\"",
+    "script": "    if risk == \"confirm\":",
     "source": "plan_block"
    },
    "expected": {
@@ -30047,7 +30047,7 @@
   {
    "name": "plan_block/0100",
    "input": {
-    "script": "            return _run_applescript(s)",
+    "script": "        return _gate(f\"That will run: {(command or '').strip()[:100]}\", lambda: _exec_shell(command))",
     "source": "plan_block"
    },
    "expected": {
@@ -30057,7 +30057,7 @@
   {
    "name": "plan_block/0101",
    "input": {
-    "script": "UNTRUSTED_TOOLS = {\"web_search\", \"see_screen\", \"read_clipboard\", \"read_file\", \"get_messages\",",
+    "script": "    return _exec_shell(command)",
     "source": "plan_block"
    },
    "expected": {
@@ -30067,7 +30067,7 @@
   {
    "name": "plan_block/0102",
    "input": {
-    "script": "                   \"get_news\", \"summarize_page\"}",
+    "script": "        if name == \"personality_rewrite\": return personality_rewrite_tool(args.get(\"core\", \"\"))",
     "source": "plan_block"
    },
    "expected": {
@@ -30077,7 +30077,7 @@
   {
    "name": "plan_block/0103",
    "input": {
-    "script": "EXECUTOR_TOOLS  = {\"run_command\", \"run_applescript\", \"run_powershell\",",
+    "script": "        if name == \"run_applescript\":",
     "source": "plan_block"
    },
    "expected": {
@@ -30087,7 +30087,7 @@
   {
    "name": "plan_block/0104",
    "input": {
-    "script": "                   \"send_message\", \"send_email\", \"type_text\", \"run_shortcut\",",
+    "script": "            s = args.get(\"script\", \"\")",
     "source": "plan_block"
    },
    "expected": {
@@ -30097,7 +30097,7 @@
   {
    "name": "plan_block/0105",
    "input": {
-    "script": "                   # Self-writing personality: an injected page must never get to",
+    "script": "            if _dangerous_applescript(s):",
     "source": "plan_block"
    },
    "expected": {
@@ -30107,7 +30107,7 @@
   {
    "name": "plan_block/0106",
    "input": {
-    "script": "                   # redefine who JARVIS is or plant instructions in his prompt.",
+    "script": "                log(\"BLOCKED dangerous AppleScript from LLM\")",
     "source": "plan_block"
    },
    "expected": {
@@ -30117,7 +30117,7 @@
   {
    "name": "plan_block/0107",
    "input": {
-    "script": "                   \"personality_note\", \"personality_rewrite\"}",
+    "script": "                return \"I won't run that script, sir — it could shell out or automate unsafely.\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30127,7 +30127,7 @@
   {
    "name": "plan_block/0108",
    "input": {
-    "script": "                if tool_name in EXECUTOR_TOOLS and _claude_taint[\"tainted\"]:",
+    "script": "            return _run_applescript(s)",
     "source": "plan_block"
    },
    "expected": {
@@ -30137,7 +30137,7 @@
   {
    "name": "plan_block/0109",
    "input": {
-    "script": "                    log(f\"BLOCKED {tool_name} after untrusted-content ingestion (injection guard)\")",
+    "script": "UNTRUSTED_TOOLS = {\"web_search\", \"see_screen\", \"read_clipboard\", \"read_file\", \"get_messages\",",
     "source": "plan_block"
    },
    "expected": {
@@ -30147,7 +30147,7 @@
   {
    "name": "plan_block/0110",
    "input": {
-    "script": "                    return {\"content\": [{\"type\": \"text\", \"text\":",
+    "script": "                   \"get_news\", \"summarize_page\"}",
     "source": "plan_block"
    },
    "expected": {
@@ -30157,7 +30157,7 @@
   {
    "name": "plan_block/0111",
    "input": {
-    "script": "                        \"Blocked for safety: I won't run scripts, send messages or email, or \"",
+    "script": "EXECUTOR_TOOLS  = {\"run_command\", \"run_applescript\", \"run_powershell\",",
     "source": "plan_block"
    },
    "expected": {
@@ -30167,7 +30167,7 @@
   {
    "name": "plan_block/0112",
    "input": {
-    "script": "                        \"type keystrokes after reading external content in the same request.\"}],",
+    "script": "                   \"send_message\", \"send_email\", \"type_text\", \"run_shortcut\",",
     "source": "plan_block"
    },
    "expected": {
@@ -30177,7 +30177,7 @@
   {
    "name": "plan_block/0113",
    "input": {
-    "script": "                if name in EXECUTORS and tainted:",
+    "script": "                   # Self-writing personality: an injected page must never get to",
     "source": "plan_block"
    },
    "expected": {
@@ -30187,7 +30187,7 @@
   {
    "name": "plan_block/0114",
    "input": {
-    "script": "                    result = (\"Blocked for safety: I won't run scripts, send messages or email, \"",
+    "script": "                   # redefine who JARVIS is or plant instructions in his prompt.",
     "source": "plan_block"
    },
    "expected": {
@@ -30197,7 +30197,7 @@
   {
    "name": "plan_block/0115",
    "input": {
-    "script": "                              \"or type keystrokes after reading external content (web, screen, \"",
+    "script": "                   \"personality_note\", \"personality_rewrite\",",
     "source": "plan_block"
    },
    "expected": {
@@ -30207,7 +30207,7 @@
   {
    "name": "plan_block/0116",
    "input": {
-    "script": "                              \"clipboard, files) in the same request.\")",
+    "script": "                   # File tools: an injected page must never plant code in ~/.zshrc or a LaunchAgent.",
     "source": "plan_block"
    },
    "expected": {
@@ -30217,7 +30217,7 @@
   {
    "name": "plan_block/0117",
    "input": {
-    "script": "def _set_backend(name):",
+    "script": "                   \"write_file\", \"delete_file\", \"move_file\"}",
     "source": "plan_block"
    },
    "expected": {
@@ -30227,7 +30227,7 @@
   {
    "name": "plan_block/0118",
    "input": {
-    "script": "    LAST_BACKEND[\"name\"] = name",
+    "script": "                if tool_name in EXECUTOR_TOOLS and _claude_taint[\"tainted\"]:",
     "source": "plan_block"
    },
    "expected": {
@@ -30237,7 +30237,7 @@
   {
    "name": "plan_block/0119",
    "input": {
-    "script": "    LAST_BACKEND[\"at\"] = time.time()",
+    "script": "                    log(f\"BLOCKED {tool_name} after untrusted-content ingestion (injection guard)\")",
     "source": "plan_block"
    },
    "expected": {
@@ -30247,7 +30247,7 @@
   {
    "name": "plan_block/0120",
    "input": {
-    "script": "    log(f\"Backend: {name}\")",
+    "script": "                    return {\"content\": [{\"type\": \"text\", \"text\":",
     "source": "plan_block"
    },
    "expected": {
@@ -30257,7 +30257,7 @@
   {
    "name": "plan_block/0121",
    "input": {
-    "script": "    research_bump(\"backend_\" + re.sub(r\"\\W+\", \"_\", name.lower()))",
+    "script": "                        \"Blocked for safety: I won't run scripts, send messages or email, or \"",
     "source": "plan_block"
    },
    "expected": {
@@ -30267,7 +30267,7 @@
   {
    "name": "plan_block/0122",
    "input": {
-    "script": "def _backend_report() -> str:",
+    "script": "                        \"type keystrokes after reading external content in the same request.\"}],",
     "source": "plan_block"
    },
    "expected": {
@@ -30277,7 +30277,7 @@
   {
    "name": "plan_block/0123",
    "input": {
-    "script": "    name = LAST_BACKEND[\"name\"]",
+    "script": "                if name in EXECUTORS and tainted:",
     "source": "plan_block"
    },
    "expected": {
@@ -30287,7 +30287,7 @@
   {
    "name": "plan_block/0124",
    "input": {
-    "script": "    if \"claude\" in name.lower():",
+    "script": "                    result = (\"Blocked for safety: I won't run scripts, send messages or email, \"",
     "source": "plan_block"
    },
    "expected": {
@@ -30297,7 +30297,7 @@
   {
    "name": "plan_block/0125",
    "input": {
-    "script": "        return \"The last request was handled by Claude, through the Agent SDK, sir.\"",
+    "script": "                              \"or type keystrokes after reading external content (web, screen, \"",
     "source": "plan_block"
    },
    "expected": {
@@ -30307,7 +30307,7 @@
   {
    "name": "plan_block/0126",
    "input": {
-    "script": "    return f\"The last request was handled by the local model, sir — {MODEL}.\"",
+    "script": "                              \"clipboard, files) in the same request.\")",
     "source": "plan_block"
    },
    "expected": {
@@ -30317,7 +30317,7 @@
   {
    "name": "plan_block/0127",
    "input": {
-    "script": "def _claude_reason(e) -> str:",
+    "script": "def _set_backend(name):",
     "source": "plan_block"
    },
    "expected": {
@@ -30327,7 +30327,7 @@
   {
    "name": "plan_block/0128",
    "input": {
-    "script": "    \"\"\"Turn an SDK failure into a short spoken/logged reason for the fallback note.\"\"\"",
+    "script": "    LAST_BACKEND[\"name\"] = name",
     "source": "plan_block"
    },
    "expected": {
@@ -30337,7 +30337,7 @@
   {
    "name": "plan_block/0129",
    "input": {
-    "script": "    s = str(e).lower()",
+    "script": "    LAST_BACKEND[\"at\"] = time.time()",
     "source": "plan_block"
    },
    "expected": {
@@ -30347,7 +30347,7 @@
   {
    "name": "plan_block/0130",
    "input": {
-    "script": "    if any(k in s for k in (\"credit\", \"billing\", \"quota\", \"insufficient\", \"payment\")): return \"no Agent SDK credit\"",
+    "script": "    log(f\"Backend: {name}\")",
     "source": "plan_block"
    },
    "expected": {
@@ -30357,7 +30357,7 @@
   {
    "name": "plan_block/0131",
    "input": {
-    "script": "    if any(k in s for k in (\"401\", \"403\", \"unauthor\", \"not signed\", \"login\")):         return \"not signed in\"",
+    "script": "    research_bump(\"backend_\" + re.sub(r\"\\W+\", \"_\", name.lower()))",
     "source": "plan_block"
    },
    "expected": {
@@ -30367,7 +30367,7 @@
   {
    "name": "plan_block/0132",
    "input": {
-    "script": "    if any(k in s for k in (\"429\", \"rate\", \"overload\")):                               return \"rate limited\"",
+    "script": "def _backend_report() -> str:",
     "source": "plan_block"
    },
    "expected": {
@@ -30377,7 +30377,7 @@
   {
    "name": "plan_block/0133",
    "input": {
-    "script": "    if any(k in s for k in (\"timeout\", \"timed out\", \"cancel\")):                        return \"timed out\"",
+    "script": "    name = LAST_BACKEND[\"name\"]",
     "source": "plan_block"
    },
    "expected": {
@@ -30387,7 +30387,7 @@
   {
    "name": "plan_block/0134",
    "input": {
-    "script": "    if any(k in s for k in (\"not found\", \"clinotfound\", \"enoent\")):                    return \"Claude Code CLI not found\"",
+    "script": "    if \"claude\" in name.lower():",
     "source": "plan_block"
    },
    "expected": {
@@ -30397,7 +30397,7 @@
   {
    "name": "plan_block/0135",
    "input": {
-    "script": "    if any(k in s for k in (\"connection\", \"network\", \"resolve\", \"dns\", \"unreach\")):    return \"network unreachable\"",
+    "script": "        return \"The last request was handled by Claude, through the Agent SDK, sir.\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30407,7 +30407,7 @@
   {
    "name": "plan_block/0136",
    "input": {
-    "script": "    return (str(e).strip() or \"unavailable\")[:80]",
+    "script": "    return f\"The last request was handled by the local model, sir — {MODEL}.\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30417,7 +30417,7 @@
   {
    "name": "plan_block/0137",
    "input": {
-    "script": "_SENT_BOUNDARY = re.compile(r'[.!?]+\\s+')",
+    "script": "def _claude_reason(e) -> str:",
     "source": "plan_block"
    },
    "expected": {
@@ -30427,7 +30427,7 @@
   {
    "name": "plan_block/0138",
    "input": {
-    "script": "_SENT_MAX_CHARS = 160",
+    "script": "    \"\"\"Turn an SDK failure into a short spoken/logged reason for the fallback note.\"\"\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30437,7 +30437,7 @@
   {
    "name": "plan_block/0139",
    "input": {
-    "script": "def pop_sentences(buf: str, force: bool = False):",
+    "script": "    s = str(e).lower()",
     "source": "plan_block"
    },
    "expected": {
@@ -30447,7 +30447,7 @@
   {
    "name": "plan_block/0140",
    "input": {
-    "script": "    \"\"\"Split complete sentences off the front of buf. Returns (sentences, remainder).",
+    "script": "    if any(k in s for k in (\"credit\", \"billing\", \"quota\", \"insufficient\", \"payment\")): return \"no Agent SDK credit\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30457,7 +30457,7 @@
   {
    "name": "plan_block/0141",
    "input": {
-    "script": "    If force, also flush a trailing run-on fragment with no terminal punctuation.\"\"\"",
+    "script": "    if any(k in s for k in (\"401\", \"403\", \"unauthor\", \"not signed\", \"login\")):         return \"not signed in\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30467,7 +30467,7 @@
   {
    "name": "plan_block/0142",
    "input": {
-    "script": "    out, pos = [], 0",
+    "script": "    if any(k in s for k in (\"429\", \"rate\", \"overload\")):                               return \"rate limited\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30477,7 +30477,7 @@
   {
    "name": "plan_block/0143",
    "input": {
-    "script": "    for m in _SENT_BOUNDARY.finditer(buf):",
+    "script": "    if any(k in s for k in (\"timeout\", \"timed out\", \"cancel\")):                        return \"timed out\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30487,7 +30487,7 @@
   {
    "name": "plan_block/0144",
    "input": {
-    "script": "        out.append(buf[pos:m.end()].strip())",
+    "script": "    if any(k in s for k in (\"not found\", \"clinotfound\", \"enoent\")):                    return \"Claude Code CLI not found\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30497,7 +30497,7 @@
   {
    "name": "plan_block/0145",
    "input": {
-    "script": "        pos = m.end()",
+    "script": "    if any(k in s for k in (\"connection\", \"network\", \"resolve\", \"dns\", \"unreach\")):    return \"network unreachable\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30507,7 +30507,7 @@
   {
    "name": "plan_block/0146",
    "input": {
-    "script": "    rest = buf[pos:]",
+    "script": "    return (str(e).strip() or \"unavailable\")[:80]",
     "source": "plan_block"
    },
    "expected": {
@@ -30517,7 +30517,7 @@
   {
    "name": "plan_block/0147",
    "input": {
-    "script": "    if not force and len(rest) > _SENT_MAX_CHARS:",
+    "script": "_SENT_BOUNDARY = re.compile(r'[.!?]+\\s+')",
     "source": "plan_block"
    },
    "expected": {
@@ -30527,7 +30527,7 @@
   {
    "name": "plan_block/0148",
    "input": {
-    "script": "        cut = rest.rfind(\" \", 0, _SENT_MAX_CHARS)",
+    "script": "_SENT_MAX_CHARS = 160",
     "source": "plan_block"
    },
    "expected": {
@@ -30537,7 +30537,7 @@
   {
    "name": "plan_block/0149",
    "input": {
-    "script": "        if cut <= 0:",
+    "script": "def pop_sentences(buf: str, force: bool = False):",
     "source": "plan_block"
    },
    "expected": {
@@ -30547,7 +30547,7 @@
   {
    "name": "plan_block/0150",
    "input": {
-    "script": "            cut = _SENT_MAX_CHARS",
+    "script": "    \"\"\"Split complete sentences off the front of buf. Returns (sentences, remainder).",
     "source": "plan_block"
    },
    "expected": {
@@ -30557,7 +30557,7 @@
   {
    "name": "plan_block/0151",
    "input": {
-    "script": "        out.append(rest[:cut].strip())",
+    "script": "    If force, also flush a trailing run-on fragment with no terminal punctuation.\"\"\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30567,7 +30567,7 @@
   {
    "name": "plan_block/0152",
    "input": {
-    "script": "        rest = rest[cut:].lstrip()",
+    "script": "    out, pos = [], 0",
     "source": "plan_block"
    },
    "expected": {
@@ -30577,7 +30577,7 @@
   {
    "name": "plan_block/0153",
    "input": {
-    "script": "    if force and rest.strip():",
+    "script": "    for m in _SENT_BOUNDARY.finditer(buf):",
     "source": "plan_block"
    },
    "expected": {
@@ -30587,7 +30587,7 @@
   {
    "name": "plan_block/0154",
    "input": {
-    "script": "        out.append(rest.strip())",
+    "script": "        out.append(buf[pos:m.end()].strip())",
     "source": "plan_block"
    },
    "expected": {
@@ -30597,7 +30597,7 @@
   {
    "name": "plan_block/0155",
    "input": {
-    "script": "        rest = \"\"",
+    "script": "        pos = m.end()",
     "source": "plan_block"
    },
    "expected": {
@@ -30607,7 +30607,7 @@
   {
    "name": "plan_block/0156",
    "input": {
-    "script": "    return [s for s in out if s], rest",
+    "script": "    rest = buf[pos:]",
     "source": "plan_block"
    },
    "expected": {
@@ -30617,7 +30617,7 @@
   {
    "name": "plan_block/0157",
    "input": {
-    "script": "def _claude_history_preamble() -> str:",
+    "script": "    if not force and len(rest) > _SENT_MAX_CHARS:",
     "source": "plan_block"
    },
    "expected": {
@@ -30627,7 +30627,7 @@
   {
    "name": "plan_block/0158",
    "input": {
-    "script": "    \"\"\"A compact transcript of the last few turns, folded into the system prompt so",
+    "script": "        cut = rest.rfind(\" \", 0, _SENT_MAX_CHARS)",
     "source": "plan_block"
    },
    "expected": {
@@ -30637,7 +30637,7 @@
   {
    "name": "plan_block/0159",
    "input": {
-    "script": "    Claude gets the same conversational context the local path gets from _history.\"\"\"",
+    "script": "        if cut <= 0:",
     "source": "plan_block"
    },
    "expected": {
@@ -30647,7 +30647,7 @@
   {
    "name": "plan_block/0160",
    "input": {
-    "script": "    lines = []",
+    "script": "            cut = _SENT_MAX_CHARS",
     "source": "plan_block"
    },
    "expected": {
@@ -30657,7 +30657,7 @@
   {
    "name": "plan_block/0161",
    "input": {
-    "script": "    for m in _history[-7:-1]:   # recent turns, excluding the just-appended current message",
+    "script": "        out.append(rest[:cut].strip())",
     "source": "plan_block"
    },
    "expected": {
@@ -30667,7 +30667,7 @@
   {
    "name": "plan_block/0162",
    "input": {
-    "script": "        c = (m.get(\"content\") or \"\").strip()",
+    "script": "        rest = rest[cut:].lstrip()",
     "source": "plan_block"
    },
    "expected": {
@@ -30677,7 +30677,7 @@
   {
    "name": "plan_block/0163",
    "input": {
-    "script": "        if c:",
+    "script": "    if force and rest.strip():",
     "source": "plan_block"
    },
    "expected": {
@@ -30687,7 +30687,7 @@
   {
    "name": "plan_block/0164",
    "input": {
-    "script": "            lines.append((\"User: \" if m.get(\"role\") == \"user\" else \"You: \") + c)",
+    "script": "        out.append(rest.strip())",
     "source": "plan_block"
    },
    "expected": {
@@ -30697,7 +30697,7 @@
   {
    "name": "plan_block/0165",
    "input": {
-    "script": "    return (\"\\n\\nRecent conversation:\\n\" + \"\\n\".join(lines)) if lines else \"\"",
+    "script": "        rest = \"\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30707,7 +30707,7 @@
   {
    "name": "plan_block/0166",
    "input": {
-    "script": "env -i HOME=… USER=… LOGNAME=… TMPDIR=… LANG=en_US.UTF-8 \\",
+    "script": "    return [s for s in out if s], rest",
     "source": "plan_block"
    },
    "expected": {
@@ -30717,7 +30717,7 @@
   {
    "name": "plan_block/0167",
    "input": {
-    "script": "  PATH=\"$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin\" \\",
+    "script": "def _claude_history_preamble() -> str:",
     "source": "plan_block"
    },
    "expected": {
@@ -30727,7 +30727,7 @@
   {
    "name": "plan_block/0168",
    "input": {
-    "script": "  API_TIMEOUT_MS=45000 CLAUDE_CODE_MAX_RETRIES=1 \\",
+    "script": "    \"\"\"A compact transcript of the last few turns, folded into the system prompt so",
     "source": "plan_block"
    },
    "expected": {
@@ -30737,7 +30737,7 @@
   {
    "name": "plan_block/0169",
    "input": {
-    "script": "  claude -p --output-format stream-json --verbose --input-format stream-json \\",
+    "script": "    Claude gets the same conversational context the local path gets from _history.\"\"\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30747,7 +30747,7 @@
   {
    "name": "plan_block/0170",
    "input": {
-    "script": "    --include-partial-messages --system-prompt \"<sp>\" --tools \"\" --setting-sources= \\",
+    "script": "    lines = []",
     "source": "plan_block"
    },
    "expected": {
@@ -30757,7 +30757,7 @@
   {
    "name": "plan_block/0171",
    "input": {
-    "script": "    --strict-mcp-config --mcp-config <file.json> --allowedTools mcp__jarvis__ping \\",
+    "script": "    for m in _history[-7:-1]:   # recent turns, excluding the just-appended current message",
     "source": "plan_block"
    },
    "expected": {
@@ -30767,7 +30767,7 @@
   {
    "name": "plan_block/0172",
    "input": {
-    "script": "    --max-turns 3 --model claude-opus-5-5 --effort low --no-session-persistence \\",
+    "script": "        c = (m.get(\"content\") or \"\").strip()",
     "source": "plan_block"
    },
    "expected": {
@@ -30777,7 +30777,7 @@
   {
    "name": "plan_block/0173",
    "input": {
-    "script": "    --permission-prompts none",
+    "script": "        if c:",
     "source": "plan_block"
    },
    "expected": {
@@ -30787,7 +30787,7 @@
   {
    "name": "plan_block/0174",
    "input": {
-    "script": "stdin: {\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":\"<text>\"}}\\n   then EOF",
+    "script": "            lines.append((\"User: \" if m.get(\"role\") == \"user\" else \"You: \") + c)",
     "source": "plan_block"
    },
    "expected": {
@@ -30797,7 +30797,7 @@
   {
    "name": "plan_block/0175",
    "input": {
-    "script": "<< {\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-11-25\",\"capabilities\":{\"roots\":{\"listChanged\":true},\"elicitation\":{}},\"clientInfo\":{\"name\":\"claude-code\",\"title\":\"Claude Code\",\"version\":\"2.1.282\",…}},\"jsonrpc\":\"2.0\",\"id\":0}",
+    "script": "    return (\"\\n\\nRecent conversation:\\n\" + \"\\n\".join(lines)) if lines else \"\"",
     "source": "plan_block"
    },
    "expected": {
@@ -30807,7 +30807,7 @@
   {
    "name": "plan_block/0176",
    "input": {
-    "script": ">> {\"jsonrpc\":\"2.0\",\"id\":0,\"result\":{\"protocolVersion\":\"2025-11-25\",\"capabilities\":{\"tools\":{}},\"serverInfo\":{\"name\":\"jarvis\",\"version\":\"1.0.0\"}}}",
+    "script": "env -i HOME=… USER=… LOGNAME=… TMPDIR=… LANG=en_US.UTF-8 \\",
     "source": "plan_block"
    },
    "expected": {
@@ -30817,7 +30817,7 @@
   {
    "name": "plan_block/0177",
    "input": {
-    "script": "<< {\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}",
+    "script": "  PATH=\"$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin\" \\",
     "source": "plan_block"
    },
    "expected": {
@@ -30827,7 +30827,7 @@
   {
    "name": "plan_block/0178",
    "input": {
-    "script": "<< {\"method\":\"tools/list\",\"jsonrpc\":\"2.0\",\"id\":1}",
+    "script": "  API_TIMEOUT_MS=45000 CLAUDE_CODE_MAX_RETRIES=1 \\",
     "source": "plan_block"
    },
    "expected": {
@@ -30837,7 +30837,7 @@
   {
    "name": "plan_block/0179",
    "input": {
-    "script": ">> {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[{\"name\":\"ping\",\"description\":\"…\",\"inputSchema\":{\"type\":\"object\",\"properties\":{…},\"required\":[]}}]}}",
+    "script": "  claude -p --output-format stream-json --verbose --input-format stream-json \\",
     "source": "plan_block"
    },
    "expected": {
@@ -30847,7 +30847,7 @@
   {
    "name": "plan_block/0180",
    "input": {
-    "script": "<< {\"method\":\"tools/call\",\"params\":{\"name\":\"ping\",\"arguments\":{},\"_meta\":{\"claudecode/toolUseId\":\"toolu_…\",\"progressToken\":2}},\"jsonrpc\":\"2.0\",\"id\":2}",
+    "script": "    --include-partial-messages --system-prompt \"<sp>\" --tools \"\" --setting-sources= \\",
     "source": "plan_block"
    },
    "expected": {
@@ -30857,7 +30857,7 @@
   {
    "name": "plan_block/0181",
    "input": {
-    "script": ">> {\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"pong-from-tool\"}]}}",
+    "script": "    --strict-mcp-config --mcp-config <file.json> --allowedTools mcp__jarvis__ping \\",
     "source": "plan_block"
    },
    "expected": {
@@ -30867,7 +30867,7 @@
   {
    "name": "plan_block/0182",
    "input": {
-    "script": ".target(name: \"JarvisTools\", dependencies: [\"JarvisCore\"]),              // gateway + (M5/M6) tools",
+    "script": "    --max-turns 3 --model claude-opus-5-5 --effort low --no-session-persistence \\",
     "source": "plan_block"
    },
    "expected": {
@@ -30877,7 +30877,7 @@
   {
    "name": "plan_block/0183",
    "input": {
-    "script": ".target(name: \"JarvisBrain\", dependencies: [\"JarvisCore\", \"JarvisTools\"]),// Claude, MCP, FoundationModels",
+    "script": "    --permission-prompts none",
     "source": "plan_block"
    },
    "expected": {
@@ -30887,7 +30887,7 @@
   {
    "name": "plan_block/0184",
    "input": {
-    "script": ".executableTarget(name: \"JarvisApp\", dependencies: [\"JarvisCore\", \"JarvisTools\", \"JarvisBrain\"]),",
+    "script": "stdin: {\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":\"<text>\"}}\\n   then EOF",
     "source": "plan_block"
    },
    "expected": {
@@ -30897,7 +30897,7 @@
   {
    "name": "plan_block/0185",
    "input": {
-    "script": ".testTarget(name: \"JarvisToolsTests\", dependencies: [\"JarvisTools\"]),",
+    "script": "<< {\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-11-25\",\"capabilities\":{\"roots\":{\"listChanged\":true},\"elicitation\":{}},\"clientInfo\":{\"name\":\"claude-code\",\"title\":\"Claude Code\",\"version\":\"2.1.282\",…}},\"jsonrpc\":\"2.0\",\"id\":0}",
     "source": "plan_block"
    },
    "expected": {
@@ -30907,7 +30907,7 @@
   {
    "name": "plan_block/0186",
    "input": {
-    "script": ".testTarget(name: \"JarvisBrainTests\", dependencies: [\"JarvisBrain\"]),",
+    "script": ">> {\"jsonrpc\":\"2.0\",\"id\":0,\"result\":{\"protocolVersion\":\"2025-11-25\",\"capabilities\":{\"tools\":{}},\"serverInfo\":{\"name\":\"jarvis\",\"version\":\"1.0.0\"}}}",
     "source": "plan_block"
    },
    "expected": {
@@ -30917,7 +30917,7 @@
   {
    "name": "plan_block/0187",
    "input": {
-    "script": "public struct PyRegex: Sendable {",
+    "script": "<< {\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}",
     "source": "plan_block"
    },
    "expected": {
@@ -30927,7 +30927,7 @@
   {
    "name": "plan_block/0188",
    "input": {
-    "script": "    public init(_ pythonPattern: String, ignoreCase: Bool) throws   // compiles an ICU pattern",
+    "script": "<< {\"method\":\"tools/list\",\"jsonrpc\":\"2.0\",\"id\":1}",
     "source": "plan_block"
    },
    "expected": {
@@ -30937,7 +30937,7 @@
   {
    "name": "plan_block/0189",
    "input": {
-    "script": "    public func search(_ s: String) -> Bool                         // Python re.search",
+    "script": ">> {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[{\"name\":\"ping\",\"description\":\"…\",\"inputSchema\":{\"type\":\"object\",\"properties\":{…},\"required\":[]}}]}}",
     "source": "plan_block"
    },
    "expected": {
@@ -30947,7 +30947,7 @@
   {
    "name": "plan_block/0190",
    "input": {
-    "script": "    public func matchAtStart(_ s: String) -> Bool                   // Python re.match",
+    "script": "<< {\"method\":\"tools/call\",\"params\":{\"name\":\"ping\",\"arguments\":{},\"_meta\":{\"claudecode/toolUseId\":\"toolu_…\",\"progressToken\":2}},\"jsonrpc\":\"2.0\",\"id\":2}",
     "source": "plan_block"
    },
    "expected": {
@@ -30957,7 +30957,7 @@
   {
    "name": "plan_block/0191",
    "input": {
-    "script": "}",
+    "script": ">> {\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"pong-from-tool\"}]}}",
     "source": "plan_block"
    },
    "expected": {
@@ -30967,7 +30967,7 @@
   {
    "name": "plan_block/0192",
    "input": {
-    "script": "// ToolImpl.swift — M5/M6 conform their internal tool types to this.",
+    "script": ".target(name: \"JarvisTools\", dependencies: [\"JarvisCore\"]),              // gateway + (M5/M6) tools",
     "source": "plan_block"
    },
    "expected": {
@@ -30977,7 +30977,7 @@
   {
    "name": "plan_block/0193",
    "input": {
-    "script": "protocol ToolImpl: Sendable {",
+    "script": ".target(name: \"JarvisBrain\", dependencies: [\"JarvisCore\", \"JarvisTools\"]),// Claude, MCP, FoundationModels",
     "source": "plan_block"
    },
    "expected": {
@@ -30987,7 +30987,7 @@
   {
    "name": "plan_block/0194",
    "input": {
-    "script": "    static var name: String { get }",
+    "script": ".executableTarget(name: \"JarvisApp\", dependencies: [\"JarvisCore\", \"JarvisTools\", \"JarvisBrain\"]),",
     "source": "plan_block"
    },
    "expected": {
@@ -30997,7 +30997,7 @@
   {
    "name": "plan_block/0195",
    "input": {
-    "script": "    static var schema: ToolSchema { get }                 // Python TOOLS entry, verbatim JSON",
+    "script": ".testTarget(name: \"JarvisToolsTests\", dependencies: [\"JarvisTools\"]),",
     "source": "plan_block"
    },
    "expected": {
@@ -31007,7 +31007,7 @@
   {
    "name": "plan_block/0196",
    "input": {
-    "script": "    func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome",
+    "script": ".testTarget(name: \"JarvisBrainTests\", dependencies: [\"JarvisBrain\"]),",
     "source": "plan_block"
    },
    "expected": {
@@ -31017,7 +31017,7 @@
   {
    "name": "plan_block/0197",
    "input": {
-    "script": "public enum ToolOutcome: Sendable {",
+    "script": "public struct PyRegex: Sendable {",
     "source": "plan_block"
    },
    "expected": {
@@ -31027,7 +31027,7 @@
   {
    "name": "plan_block/0198",
    "input": {
-    "script": "    case text(String)",
+    "script": "    public init(_ pythonPattern: String, ignoreCase: Bool) throws   // compiles an ICU pattern",
     "source": "plan_block"
    },
    "expected": {
@@ -31037,7 +31037,7 @@
   {
    "name": "plan_block/0199",
    "input": {
-    "script": "    case needsConfirmation(desc: String, action: @Sendable () async throws -> String)",
+    "script": "    public func search(_ s: String) -> Bool                         // Python re.search",
     "source": "plan_block"
    },
    "expected": {
@@ -31047,7 +31047,7 @@
   {
    "name": "plan_block/0200",
    "input": {
-    "script": "// VerifiedShellCommand: the only input run_command's impl accepts; init is fileprivate to",
+    "script": "    public func matchAtStart(_ s: String) -> Bool                   // Python re.match",
     "source": "plan_block"
    },
    "expected": {
@@ -31057,7 +31057,7 @@
   {
    "name": "plan_block/0201",
    "input": {
-    "script": "// ToolGateway.swift, so no tool can execute an unverified command line.",
+    "script": "}",
     "source": "plan_block"
    },
    "expected": {
@@ -31067,7 +31067,7 @@
   {
    "name": "plan_block/0202",
    "input": {
-    "script": "public struct VerifiedShellCommand: Sendable { public let line: String; public let verdict: ShellVerdict }",
+    "script": "// ToolImpl.swift — M5/M6 conform their internal tool types to this.",
     "source": "plan_block"
    },
    "expected": {
@@ -31077,7 +31077,7 @@
   {
    "name": "plan_block/0203",
    "input": {
-    "script": "// ToolGateway.swift",
+    "script": "protocol ToolImpl: Sendable {",
     "source": "plan_block"
    },
    "expected": {
@@ -31087,7 +31087,7 @@
   {
    "name": "plan_block/0204",
    "input": {
-    "script": "public enum ToolOrigin: Sendable { case model(BackendKind), fastPath, confirmation, ui }",
+    "script": "    static var name: String { get }",
     "source": "plan_block"
    },
    "expected": {
@@ -31097,7 +31097,7 @@
   {
    "name": "plan_block/0205",
    "input": {
-    "script": "public enum BackendKind: String, Sendable { case claude, local }",
+    "script": "    static var schema: ToolSchema { get }                 // Python TOOLS entry, verbatim JSON",
     "source": "plan_block"
    },
    "expected": {
@@ -31107,7 +31107,7 @@
   {
    "name": "plan_block/0206",
    "input": {
-    "script": "public struct ToolCallResult: Sendable { public let text: String; public let isError: Bool; public let record: ToolRunRecord }",
+    "script": "    func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome",
     "source": "plan_block"
    },
    "expected": {
@@ -31117,7 +31117,7 @@
   {
    "name": "plan_block/0207",
    "input": {
-    "script": "public actor ToolGateway {",
+    "script": "public enum ToolOutcome: Sendable {",
     "source": "plan_block"
    },
    "expected": {
@@ -31127,7 +31127,7 @@
   {
    "name": "plan_block/0208",
    "input": {
-    "script": "    public static let shared: ToolGateway",
+    "script": "    case text(String)",
     "source": "plan_block"
    },
    "expected": {
@@ -31137,7 +31137,7 @@
   {
    "name": "plan_block/0209",
    "input": {
-    "script": "    public func toolList() -> [ToolSchema]                             // Python TOOLS order",
+    "script": "    case needsConfirmation(desc: String, action: @Sendable () async throws -> String)",
     "source": "plan_block"
    },
    "expected": {
@@ -31147,7 +31147,7 @@
   {
    "name": "plan_block/0210",
    "input": {
-    "script": "    public func call(_ name: String, _ args: JSONObject, turn: TurnContext, origin: ToolOrigin) async -> ToolCallResult",
+    "script": "// VerifiedShellCommand: the only input run_command's impl accepts; init is fileprivate to",
     "source": "plan_block"
    },
    "expected": {
@@ -31157,7 +31157,7 @@
   {
    "name": "plan_block/0211",
    "input": {
-    "script": "    public var onToolError: (@Sendable (String) async -> Void)?        // M1 wires emotion_event(\"task_fail\")",
+    "script": "// ToolGateway.swift, so no tool can execute an unverified command line.",
     "source": "plan_block"
    },
    "expected": {
@@ -31167,7 +31167,7 @@
   {
    "name": "plan_block/0212",
    "input": {
-    "script": "public enum Channel: String, Sendable { case voice, text }",
+    "script": "public struct VerifiedShellCommand: Sendable { public let line: String; public let verdict: ShellVerdict }",
     "source": "plan_block"
    },
    "expected": {
@@ -31177,7 +31177,7 @@
   {
    "name": "plan_block/0213",
    "input": {
-    "script": "public enum DataSource: String, Sendable, CaseIterable {",
+    "script": "// ToolGateway.swift",
     "source": "plan_block"
    },
    "expected": {
@@ -31187,7 +31187,7 @@
   {
    "name": "plan_block/0214",
    "input": {
-    "script": "    case messages, calendar, reminders, contacts, email, notes, files, clipboard, screen,",
+    "script": "public enum ToolOrigin: Sendable { case model(BackendKind), fastPath, confirmation, ui }",
     "source": "plan_block"
    },
    "expected": {
@@ -31197,7 +31197,7 @@
   {
    "name": "plan_block/0215",
    "input": {
-    "script": "         location, web, news, music, system, shortcuts, personality, alarms, apps, settings",
+    "script": "public enum BackendKind: String, Sendable { case claude, local }",
     "source": "plan_block"
    },
    "expected": {
@@ -31207,7 +31207,7 @@
   {
    "name": "plan_block/0216",
    "input": {
-    "script": "public struct ToolRunRecord: Sendable { let name: String; let origin: ToolOrigin; let outcome: Outcome",
+    "script": "public struct ToolCallResult: Sendable { public let text: String; public let isError: Bool; public let record: ToolRunRecord }",
     "source": "plan_block"
    },
    "expected": {
@@ -31217,7 +31217,7 @@
   {
    "name": "plan_block/0217",
    "input": {
-    "script": "    enum Outcome: Sendable { case ran, blockedTaint, blockedGuard, gated, failed, unknown } }",
+    "script": "public actor ToolGateway {",
     "source": "plan_block"
    },
    "expected": {
@@ -31227,7 +31227,7 @@
   {
    "name": "plan_block/0218",
    "input": {
-    "script": "public struct TurnSummary: Sendable {       // what M8 reads when choosing ElevenLabs vs Piper",
+    "script": "    public static let shared: ToolGateway",
     "source": "plan_block"
    },
    "expected": {
@@ -31237,7 +31237,7 @@
   {
    "name": "plan_block/0219",
    "input": {
-    "script": "    public let turnID: UUID; public let channel: Channel; public let tainted: Bool",
+    "script": "    public func toolList() -> [ToolSchema]                             // Python TOOLS order",
     "source": "plan_block"
    },
    "expected": {
@@ -31247,7 +31247,7 @@
   {
    "name": "plan_block/0220",
    "input": {
-    "script": "    public let taintedBy: [String]; public let dataSources: Set<DataSource>",
+    "script": "    public func call(_ name: String, _ args: JSONObject, turn: TurnContext, origin: ToolOrigin) async -> ToolCallResult",
     "source": "plan_block"
    },
    "expected": {
@@ -31257,7 +31257,7 @@
   {
    "name": "plan_block/0221",
    "input": {
-    "script": "    public let toolRuns: [ToolRunRecord]; public let startedPasteTainted: Bool",
+    "script": "    public var onToolError: (@Sendable (String) async -> Void)?        // M1 wires emotion_event(\"task_fail\")",
     "source": "plan_block"
    },
    "expected": {
@@ -31267,7 +31267,7 @@
   {
    "name": "plan_block/0222",
    "input": {
-    "script": "public actor TurnContext {",
+    "script": "public enum Channel: String, Sendable { case voice, text }",
     "source": "plan_block"
    },
    "expected": {
@@ -31277,7 +31277,7 @@
   {
    "name": "plan_block/0223",
    "input": {
-    "script": "    public init(channel: Channel, startTainted: Bool = false)",
+    "script": "public enum DataSource: String, Sendable, CaseIterable {",
     "source": "plan_block"
    },
    "expected": {
@@ -31287,7 +31287,7 @@
   {
    "name": "plan_block/0224",
    "input": {
-    "script": "    public let turnID: UUID",
+    "script": "    case messages, calendar, reminders, contacts, email, notes, files, clipboard, screen,",
     "source": "plan_block"
    },
    "expected": {
@@ -31297,7 +31297,7 @@
   {
    "name": "plan_block/0225",
    "input": {
-    "script": "    public var isOpen: Bool { get }",
+    "script": "         location, web, news, music, system, shortcuts, personality, alarms, apps, settings",
     "source": "plan_block"
    },
    "expected": {
@@ -31307,7 +31307,7 @@
   {
    "name": "plan_block/0226",
    "input": {
-    "script": "    public var tainted: Bool { get }",
+    "script": "public struct ToolRunRecord: Sendable { let name: String; let origin: ToolOrigin; let outcome: Outcome",
     "source": "plan_block"
    },
    "expected": {
@@ -31317,7 +31317,7 @@
   {
    "name": "plan_block/0227",
    "input": {
-    "script": "    public func markTainted(by tool: String)",
+    "script": "    enum Outcome: Sendable { case ran, blockedTaint, blockedGuard, gated, failed, unknown } }",
     "source": "plan_block"
    },
    "expected": {
@@ -31327,7 +31327,7 @@
   {
    "name": "plan_block/0228",
    "input": {
-    "script": "    public func recordSources(for tool: String)      // uses DataSourceMap",
+    "script": "public struct TurnSummary: Sendable {       // what M8 reads when choosing ElevenLabs vs Piper",
     "source": "plan_block"
    },
    "expected": {
@@ -31337,7 +31337,7 @@
   {
    "name": "plan_block/0229",
    "input": {
-    "script": "    public func record(_ r: ToolRunRecord)",
+    "script": "    public let turnID: UUID; public let channel: Channel; public let tainted: Bool",
     "source": "plan_block"
    },
    "expected": {
@@ -31347,7 +31347,7 @@
   {
    "name": "plan_block/0230",
    "input": {
-    "script": "    public func close()                              // revokes MCP token, flushes FIFO",
+    "script": "    public let taintedBy: [String]; public let dataSources: Set<DataSource>",
     "source": "plan_block"
    },
    "expected": {
@@ -31357,7 +31357,7 @@
   {
    "name": "plan_block/0231",
    "input": {
-    "script": "    public func summary() -> TurnSummary",
+    "script": "    public let toolRuns: [ToolRunRecord]; public let startedPasteTainted: Bool",
     "source": "plan_block"
    },
    "expected": {
@@ -31367,7 +31367,7 @@
   {
    "name": "plan_block/0232",
    "input": {
-    "script": "public actor ConfirmationGate {",
+    "script": "public actor TurnContext {",
     "source": "plan_block"
    },
    "expected": {
@@ -31377,7 +31377,7 @@
   {
    "name": "plan_block/0233",
    "input": {
-    "script": "    public static let shared: ConfirmationGate",
+    "script": "    public init(channel: Channel, startTainted: Bool = false)",
     "source": "plan_block"
    },
    "expected": {
@@ -31387,7 +31387,7 @@
   {
    "name": "plan_block/0234",
    "input": {
-    "script": "    public static let timeout: Duration = .seconds(25)",
+    "script": "    public let turnID: UUID",
     "source": "plan_block"
    },
    "expected": {
@@ -31397,7 +31397,7 @@
   {
    "name": "plan_block/0235",
    "input": {
-    "script": "    public struct Pending: Sendable { public let desc: String; public let deadline: ContinuousClock.Instant }",
+    "script": "    public var isOpen: Bool { get }",
     "source": "plan_block"
    },
    "expected": {
@@ -31407,7 +31407,7 @@
   {
    "name": "plan_block/0236",
    "input": {
-    "script": "    public var pending: Pending? { get }",
+    "script": "    public var tainted: Bool { get }",
     "source": "plan_block"
    },
    "expected": {
@@ -31417,7 +31417,7 @@
   {
    "name": "plan_block/0237",
    "input": {
-    "script": "    public nonisolated var updates: AsyncStream<Pending?> { get }       // chat card + HUD",
+    "script": "    public func markTainted(by tool: String)",
     "source": "plan_block"
    },
    "expected": {
@@ -31427,7 +31427,7 @@
   {
    "name": "plan_block/0238",
    "input": {
-    "script": "    func stash(desc: String, action: @escaping @Sendable () async throws -> String, turn: TurnContext) // internal: gateway only",
+    "script": "    public func recordSources(for tool: String)      // uses DataSourceMap",
     "source": "plan_block"
    },
    "expected": {
@@ -31437,7 +31437,7 @@
   {
    "name": "plan_block/0239",
    "input": {
-    "script": "    public func consume(_ input: String, via port: InputPort, runIn turn: TurnContext) async -> ConsumeResult",
+    "script": "    public func record(_ r: ToolRunRecord)",
     "source": "plan_block"
    },
    "expected": {
@@ -31447,7 +31447,7 @@
   {
    "name": "plan_block/0240",
    "input": {
-    "script": "public enum ConsumeResult: Sendable { case notHandled, handled(String) }",
+    "script": "    public func close()                              // revokes MCP token, flushes FIFO",
     "source": "plan_block"
    },
    "expected": {
@@ -31457,7 +31457,7 @@
   {
    "name": "plan_block/0241",
    "input": {
-    "script": "public struct InputPort: Sendable { /* init is internal; created only by TurnCoordinator */ let channel: Channel; let authenticator: ConfirmAuthenticator? }",
+    "script": "    public func summary() -> TurnSummary",
     "source": "plan_block"
    },
    "expected": {
@@ -31467,7 +31467,7 @@
   {
    "name": "plan_block/0242",
    "input": {
-    "script": "public protocol ConfirmAuthenticator: Sendable { func authenticate(reason: String) async -> Bool }",
+    "script": "public actor ConfirmationGate {",
     "source": "plan_block"
    },
    "expected": {
@@ -31477,7 +31477,7 @@
   {
    "name": "plan_block/0243",
    "input": {
-    "script": "public struct UserInput: Sendable { public let text: String; public let channel: Channel; public let pasted: Bool }",
+    "script": "    public static let shared: ConfirmationGate",
     "source": "plan_block"
    },
    "expected": {
@@ -31487,7 +31487,7 @@
   {
    "name": "plan_block/0244",
    "input": {
-    "script": "public actor TurnCoordinator {",
+    "script": "    public static let timeout: Duration = .seconds(25)",
     "source": "plan_block"
    },
    "expected": {
@@ -31497,7 +31497,7 @@
   {
    "name": "plan_block/0245",
    "input": {
-    "script": "    public init(gateway: ToolGateway, brain: BrainRouter, fastPath: FastPathRouting, history: HistoryStoring)",
+    "script": "    public struct Pending: Sendable { public let desc: String; public let deadline: ContinuousClock.Instant }",
     "source": "plan_block"
    },
    "expected": {
@@ -31507,7 +31507,7 @@
   {
    "name": "plan_block/0246",
    "input": {
-    "script": "    public func submit(_ input: UserInput, sink: ReplySink) async -> TurnOutcome   // .busy if a turn is running",
+    "script": "    public var pending: Pending? { get }",
     "source": "plan_block"
    },
    "expected": {
@@ -31517,7 +31517,7 @@
   {
    "name": "plan_block/0247",
    "input": {
-    "script": "<claude> -p --output-format stream-json --verbose --input-format stream-json",
+    "script": "    public nonisolated var updates: AsyncStream<Pending?> { get }       // chat card + HUD",
     "source": "plan_block"
    },
    "expected": {
@@ -31527,7 +31527,7 @@
   {
    "name": "plan_block/0248",
    "input": {
-    "script": "  --include-partial-messages                 # native addition: earlier speech; same text",
+    "script": "    func stash(desc: String, action: @escaping @Sendable () async throws -> String, turn: TurnContext) // internal: gateway only",
     "source": "plan_block"
    },
    "expected": {
@@ -31537,7 +31537,7 @@
   {
    "name": "plan_block/0249",
    "input": {
-    "script": "  --system-prompt <sys>                      # system_prompt",
+    "script": "    public func consume(_ input: String, via port: InputPort, runIn turn: TurnContext) async -> ConsumeResult",
     "source": "plan_block"
    },
    "expected": {
@@ -31547,7 +31547,7 @@
   {
    "name": "plan_block/0250",
    "input": {
-    "script": "  --tools \"\"                                 # tools=[]  (probe: init.tools had only MCP tools)",
+    "script": "public enum ConsumeResult: Sendable { case notHandled, handled(String) }",
     "source": "plan_block"
    },
    "expected": {
@@ -31557,7 +31557,7 @@
   {
    "name": "plan_block/0251",
    "input": {
-    "script": "  --setting-sources=                         # setting_sources=[]",
+    "script": "public struct InputPort: Sendable { /* init is internal; created only by TurnCoordinator */ let channel: Channel; let authenticator: ConfirmAuthenticator? }",
     "source": "plan_block"
    },
    "expected": {
@@ -31567,7 +31567,7 @@
   {
    "name": "plan_block/0252",
    "input": {
-    "script": "  --strict-mcp-config                        # native addition (stricter): only our server",
+    "script": "public protocol ConfirmAuthenticator: Sendable { func authenticate(reason: String) async -> Bool }",
     "source": "plan_block"
    },
    "expected": {
@@ -31577,7 +31577,7 @@
   {
    "name": "plan_block/0253",
    "input": {
-    "script": "  --mcp-config <run/turn-<uuid>.mcp.json>    # mcp_servers={\"jarvis\": ...}",
+    "script": "public struct UserInput: Sendable { public let text: String; public let channel: Channel; public let pasted: Bool }",
     "source": "plan_block"
    },
    "expected": {
@@ -31587,7 +31587,7 @@
   {
    "name": "plan_block/0254",
    "input": {
-    "script": "  --allowedTools <comma-joined 46 × mcp__jarvis__<name>, TOOLS order>   # allowed_tools",
+    "script": "public actor TurnCoordinator {",
     "source": "plan_block"
    },
    "expected": {
@@ -31597,7 +31597,7 @@
   {
    "name": "plan_block/0255",
    "input": {
-    "script": "  --max-turns <maxTurns>                     # max_turns",
+    "script": "    public init(gateway: ToolGateway, brain: BrainRouter, fastPath: FastPathRouting, history: HistoryStoring)",
     "source": "plan_block"
    },
    "expected": {
@@ -31607,7 +31607,7 @@
   {
    "name": "plan_block/0256",
    "input": {
-    "script": "  --model <model>                            # model",
+    "script": "    public func submit(_ input: UserInput, sink: ReplySink) async -> TurnOutcome   // .busy if a turn is running",
     "source": "plan_block"
    },
    "expected": {
@@ -31617,7 +31617,7 @@
   {
    "name": "plan_block/0257",
    "input": {
-    "script": "  --effort <effort>                          # effort (omit if empty, like `effort or None`)",
+    "script": "<claude> -p --output-format stream-json --verbose --input-format stream-json",
     "source": "plan_block"
    },
    "expected": {
@@ -31627,7 +31627,7 @@
   {
    "name": "plan_block/0258",
    "input": {
-    "script": "  --no-session-persistence                   # native addition: no transcripts on disk",
+    "script": "  --include-partial-messages                 # native addition: earlier speech; same text",
     "source": "plan_block"
    },
    "expected": {
@@ -31637,7 +31637,7 @@
   {
    "name": "plan_block/0259",
    "input": {
-    "script": "  --permission-prompts none                  # native addition: anything unapproved is denied",
+    "script": "  --system-prompt <sys>                      # system_prompt",
     "source": "plan_block"
    },
    "expected": {
@@ -31647,7 +31647,7 @@
   {
    "name": "plan_block/0260",
    "input": {
-    "script": "\\n\\nCHANNEL: TEXT CHAT. The user typed this message and will READ your reply on screen; it is not spoken aloud. The spoken-reply rules above about brevity and no markdown do not apply here: you may answer in a few short paragraphs, and you may use light Markdown (bold, italics, inline code, short bullet lists) when it genuinely helps. Still no emoji, still address the user as 'sir', still keep the JARVIS voice.",
+    "script": "  --tools \"\"                                 # tools=[]  (probe: init.tools had only MCP tools)",
     "source": "plan_block"
    },
    "expected": {
@@ -31657,7 +31657,7 @@
   {
    "name": "plan_block/0261",
    "input": {
-    "script": "public struct SpeakContext: Sendable {",
+    "script": "  --setting-sources=                         # setting_sources=[]",
     "source": "plan_block"
    },
    "expected": {
@@ -31667,7 +31667,7 @@
   {
    "name": "plan_block/0262",
    "input": {
-    "script": "    let chatWindowIsKey: Bool; let speakToggleOn: Bool; let userIdleSeconds: Double",
+    "script": "  --strict-mcp-config                        # native addition (stricter): only our server",
     "source": "plan_block"
    },
    "expected": {
@@ -31677,7 +31677,7 @@
   {
    "name": "plan_block/0263",
    "input": {
-    "script": "    let voiceConversationActive: Bool; let replyCharCount: Int",
+    "script": "  --mcp-config <run/turn-<uuid>.mcp.json>    # mcp_servers={\"jarvis\": ...}",
     "source": "plan_block"
    },
    "expected": {
@@ -31687,7 +31687,7 @@
   {
    "name": "plan_block/0264",
    "input": {
-    "script": "    let turn: TurnSummary            // dataSources/tainted — sensitive content awareness",
+    "script": "  --allowedTools <comma-joined 46 × mcp__jarvis__<name>, TOOLS order>   # allowed_tools",
     "source": "plan_block"
    },
    "expected": {
@@ -31697,7 +31697,7 @@
   {
    "name": "plan_block/0265",
    "input": {
-    "script": "    let ttsBackend: String           // \"elevenlabs\" | \"piper\" (M8)",
+    "script": "  --max-turns <maxTurns>                     # max_turns",
     "source": "plan_block"
    },
    "expected": {
@@ -31707,7 +31707,7 @@
   {
    "name": "plan_block/0266",
    "input": {
-    "script": "/// USER DECISION: return true to have JARVIS read this typed-channel reply aloud.",
+    "script": "  --model <model>                            # model",
     "source": "plan_block"
    },
    "expected": {
@@ -31717,7 +31717,7 @@
   {
    "name": "plan_block/0267",
    "input": {
-    "script": "public func shouldSpeakReply(channel: Channel, text: String, context: SpeakContext) -> Bool",
+    "script": "  --effort <effort>                          # effort (omit if empty, like `effort or None`)",
     "source": "plan_block"
    },
    "expected": {
@@ -31726,6 +31726,106 @@
   },
   {
    "name": "plan_block/0268",
+   "input": {
+    "script": "  --no-session-persistence                   # native addition: no transcripts on disk",
+    "source": "plan_block"
+   },
+   "expected": {
+    "dangerous": false
+   }
+  },
+  {
+   "name": "plan_block/0269",
+   "input": {
+    "script": "  --permission-prompts none                  # native addition: anything unapproved is denied",
+    "source": "plan_block"
+   },
+   "expected": {
+    "dangerous": false
+   }
+  },
+  {
+   "name": "plan_block/0270",
+   "input": {
+    "script": "\\n\\nCHANNEL: TEXT CHAT. The user typed this message and will READ your reply on screen; it is not spoken aloud. The spoken-reply rules above about brevity and no markdown do not apply here: you may answer in a few short paragraphs, and you may use light Markdown (bold, italics, inline code, short bullet lists) when it genuinely helps. Still no emoji, still address the user as 'sir', still keep the JARVIS voice.",
+    "source": "plan_block"
+   },
+   "expected": {
+    "dangerous": false
+   }
+  },
+  {
+   "name": "plan_block/0271",
+   "input": {
+    "script": "public struct SpeakContext: Sendable {",
+    "source": "plan_block"
+   },
+   "expected": {
+    "dangerous": false
+   }
+  },
+  {
+   "name": "plan_block/0272",
+   "input": {
+    "script": "    let chatWindowIsKey: Bool; let speakToggleOn: Bool; let userIdleSeconds: Double",
+    "source": "plan_block"
+   },
+   "expected": {
+    "dangerous": false
+   }
+  },
+  {
+   "name": "plan_block/0273",
+   "input": {
+    "script": "    let voiceConversationActive: Bool; let replyCharCount: Int",
+    "source": "plan_block"
+   },
+   "expected": {
+    "dangerous": false
+   }
+  },
+  {
+   "name": "plan_block/0274",
+   "input": {
+    "script": "    let turn: TurnSummary            // dataSources/tainted — sensitive content awareness",
+    "source": "plan_block"
+   },
+   "expected": {
+    "dangerous": false
+   }
+  },
+  {
+   "name": "plan_block/0275",
+   "input": {
+    "script": "    let ttsBackend: String           // \"elevenlabs\" | \"piper\" (M8)",
+    "source": "plan_block"
+   },
+   "expected": {
+    "dangerous": false
+   }
+  },
+  {
+   "name": "plan_block/0276",
+   "input": {
+    "script": "/// USER DECISION: return true to have JARVIS read this typed-channel reply aloud.",
+    "source": "plan_block"
+   },
+   "expected": {
+    "dangerous": false
+   }
+  },
+  {
+   "name": "plan_block/0277",
+   "input": {
+    "script": "public func shouldSpeakReply(channel: Channel, text: String, context: SpeakContext) -> Bool",
+    "source": "plan_block"
+   },
+   "expected": {
+    "dangerous": false
+   }
+  },
+  {
+   "name": "plan_block/0278",
    "input": {
     "script": "{\"generator\":\"golden_security.py\",\"fn\":\"_shell_risk\",\"jarvis_sha256\":\"<sha256>\",",
     "source": "plan_block"
