@@ -15,7 +15,9 @@ public protocol BackendReporting: Sendable {
 
 /// One Claude turn per `generate` call: open the turn's MCP files, run `claude` with
 /// `ClaudeInvocation`'s argv and `ChildEnvironment`'s env in the empty `claude-cwd`, write
-/// the one stdin line, then apply R1-R10 to the stream-json events as they arrive.
+/// the one stdin line, then apply R1-R10 to the stream-json events as they arrive. Model
+/// output that arrives before the init event stops the child with "no init event before
+/// content", so R1-R3 cannot be skipped.
 ///
 /// Where native differs from Python:
 /// - A timeout's error is "timeout after <ms> ms", so the fallback log line says "timed out".
@@ -72,6 +74,8 @@ public actor ClaudeDriver {
     private let parentEnvironment: [String: String]
     private let allowedTools: [String]
     private let timeout: Duration
+    private let timeoutWait: @Sendable (Duration) async throws -> Void
+    private let stopGrace: Duration
     private let log: @Sendable (String) -> Void
 
     /// The last finished turn's error (an R-rule's text), or nil if it succeeded.
@@ -89,11 +93,17 @@ public actor ClaudeDriver {
     ///     `~/Library/Application Support/JARVIS/claude-cwd/` and keeps it empty; it is
     ///     created with mode 0700 if missing.
     ///   - timeout: the wall timeout; nil means `wallTimeout(for: config)`.
+    ///   - timeoutWait: waits out the wall timeout, which fires when it returns; the default
+    ///     sleeps for it. Tests pass one that returns once their fake child is ready, so the
+    ///     timeout cannot race the child's start-up.
+    ///   - stopGrace: the wait between SIGTERM and SIGKILL (`ClaudeDriver.stopGrace`).
     ///   - log: where log lines go. Tests pass their own.
     public init(config: ClaudeConfig, executable: URL, bridge: any MCPTurnBridge, workingDirectory: URL,
                 research: any ResearchCounting, backend: any BackendReporting,
                 parentEnvironment: [String: String] = ProcessInfo.processInfo.environment,
                 allowedTools: [String] = ClaudeDriver.defaultAllowedTools, timeout: Duration? = nil,
+                timeoutWait: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) },
+                stopGrace: Duration = ClaudeDriver.stopGrace,
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .brain) }) {
         self.config = config
         self.executable = executable
@@ -104,6 +114,8 @@ public actor ClaudeDriver {
         self.parentEnvironment = parentEnvironment
         self.allowedTools = allowedTools
         self.timeout = timeout ?? Self.wallTimeout(for: config)
+        self.timeoutWait = timeoutWait
+        self.stopGrace = stopGrace
         self.log = log
     }
 
@@ -166,10 +178,10 @@ public actor ClaudeDriver {
         }
 
         let child = ClaudeChild(pid: process.processIdentifier)
-        let wall = timeout
+        let wall = timeout, wait = timeoutWait
         let timer = Task.detached {
             do {
-                try await Task.sleep(for: wall)
+                try await wait(wall)
                 input.yield(.timedOut)
             } catch {
                 // Cancelled: the turn ended first.
@@ -180,7 +192,7 @@ public actor ClaudeDriver {
         await bridge.setClaudePID(child.pid, for: files.turnID)
         Self.write(Self.stdinLine(user: user), to: stdin.fileHandleForWriting)
 
-        var watch = Watch()
+        var watch = Watch(grace: stopGrace)
         loop: for await signal in signals {
             switch signal {
             case .line(let text):
@@ -237,8 +249,12 @@ public actor ClaudeDriver {
 
     /// R1-R9 for one event. Returns an error that must stop the child (a guard trip).
     private func apply(_ event: ClaudeEvent, to s: inout TurnState, sink: any ReplySink) async -> String? {
+        if !s.initSeen && Self.needsInit(event) {
+            return "no init event before content"
+        }
         switch event {
         case let .initInfo(apiKeySource, tools, mcp, _):
+            s.initSeen = true
             if !Py.eq(apiKeySource, "none") {
                 return "subscription-only: apiKeySource=\(apiKeySource)"                     // R1
             }
@@ -368,6 +384,18 @@ public actor ClaudeDriver {
         }
     }
 
+    /// Model output of any kind (content, a tool result, a result or a stop). Arriving before
+    /// the init event it stops the child, so R1-R3 can never be skipped. Status, rate-limit,
+    /// fallback and unknown lines carry no output and may come first.
+    private static func needsInit(_ event: ClaudeEvent) -> Bool {
+        switch event {
+        case .messageStart, .textDelta, .blockText, .stopReason, .toolResult, .result:
+            true
+        case .initInfo, .status, .refusalFallback, .rateLimit, .unknown:
+            false
+        }
+    }
+
     /// Tool names compared code point by code point, as Python's `set` compares `str`.
     private static func scalarSet(_ names: [String]) -> Set<[Unicode.Scalar]> {
         Set(names.map { Array($0.unicodeScalars) })
@@ -389,6 +417,7 @@ private struct TurnState {
     var spoken: [String] = []
     var deltaSeen: Set<String> = []
     var retracted: Set<String> = []
+    var initSeen = false
     var resultSeen = false
     var error: String?
     var rateLimitStatus: String?
@@ -436,15 +465,20 @@ private struct TurnState {
 
 /// The child's side of one turn: which pipes are still open, how it exited, and the stop
 /// sequence. The stop sequence does not rely on SIGTERM being honoured: SIGTERM, then
-/// `ClaudeDriver.stopGrace`, then SIGKILL. The loop ends once claude itself has exited;
-/// the SIGKILL to its process group still follows the grace, for anything it started.
+/// `grace`, then SIGKILL. The loop ends once claude itself has exited; the SIGKILL to its
+/// process group still follows the grace, for anything it started.
 private struct Watch {
+    let grace: Duration
     var exit: ClaudeExit?
     var stdoutOpen = true
     var stderrOpen = true
     var stderrTail: [UInt8] = []
     var stopping = false
     var killed = false
+
+    init(grace: Duration) {
+        self.grace = grace
+    }
 
     /// SIGTERM to claude's process group (to claude alone while it runs, if it is not a
     /// group leader), and the timer for SIGKILL. Once.
@@ -455,21 +489,23 @@ private struct Watch {
         guard exit == nil || child.isGroupLeader else { return }
         log("Claude: stopping claude (\(why)): SIGTERM")
         child.send(SIGTERM)
-        let exited = exit != nil
+        let exited = exit != nil, grace = grace
         Task.detached {
             do {
-                try await Task.sleep(for: ClaudeDriver.stopGrace)
+                try await Task.sleep(for: grace)
             } catch {
                 return
             }
-            if child.isGroupLeader { child.send(SIGKILL) }
+            // Tell the loop first: an exit caused by this SIGKILL then always reaches the
+            // loop after `.stopDeadline`, so the loop logs the SIGKILL whenever one was needed.
             if !exited { input.yield(.stopDeadline) }
+            if child.isGroupLeader { child.send(SIGKILL) }
         }
     }
 
-    /// The grace is over and claude has not exited: the group already got SIGKILL; a child
-    /// that is not a group leader gets it now. Then one more grace. Returns false when there
-    /// is nothing left to wait for.
+    /// The grace is over and claude has not exited: SIGKILL (the timer sends the group's
+    /// right after telling the loop), then one more grace. Returns false when there is
+    /// nothing left to wait for.
     mutating func escalate(_ child: ClaudeChild, input: AsyncStream<ClaudeSignal>.Continuation,
                            log: @Sendable (String) -> Void) -> Bool {
         guard exit == nil else { return false }
@@ -477,17 +513,24 @@ private struct Watch {
             log("Claude: claude still running after SIGKILL; giving up on it")
             return false
         }
-        log("Claude: claude still running 2 s after SIGTERM: SIGKILL")
+        log("Claude: claude still running \(Self.seconds(grace)) after SIGTERM: SIGKILL")
         if !child.isGroupLeader { child.send(SIGKILL) }
         killed = true
+        let grace = grace
         Task.detached {
             do {
-                try await Task.sleep(for: ClaudeDriver.stopGrace)
+                try await Task.sleep(for: grace)
                 input.yield(.stopDeadline)
             } catch {
                 // Cancelled.
             }
         }
         return true
+    }
+
+    /// "2 s", or "0.5 s".
+    private static func seconds(_ d: Duration) -> String {
+        let (whole, atto) = d.components
+        return atto == 0 ? "\(whole) s" : "\(Double(whole) + Double(atto) / 1e18) s"
     }
 }

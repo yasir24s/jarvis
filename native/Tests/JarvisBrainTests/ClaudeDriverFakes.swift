@@ -77,6 +77,17 @@ final class BumpRecorder: ResearchCounting, Sendable {
     var bumps: [String] { state.withLock { $0 } }
 }
 
+/// When something happened, set once from any task.
+final class Stamp: Sendable {
+    private let state = Mutex<ContinuousClock.Instant?>(nil)
+
+    func mark() {
+        state.withLock { $0 = $0 ?? ContinuousClock.now }
+    }
+
+    var instant: ContinuousClock.Instant? { state.withLock { $0 } }
+}
+
 /// The driver's injected log function. Tests never use JarvisLog, which is process-global.
 final class LogRecorder: Sendable {
     private let state = Mutex<[String]>([])
@@ -209,6 +220,10 @@ enum Transcript {
 
     static func block(_ id: String, _ text: String) -> String {
         #"{"type":"assistant","message":{"model":"claude-opus-5-5","id":"\#(id)","type":"message","role":"assistant","content":[{"type":"text","text":\#(json(text))}]},"parent_tool_use_id":null}"#
+    }
+
+    static func toolResult(_ text: String) -> String {
+        #"{"type":"user","message":{"role":"user","content":[{"tool_use_id":"toolu_test","type":"tool_result","content":[{"type":"text","text":\#(json(text))}]}]},"parent_tool_use_id":null}"#
     }
 
     static func stop(_ reason: String) -> String {

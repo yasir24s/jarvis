@@ -31,8 +31,14 @@ struct ClaudeDriverTests {
         let config: ClaudeConfig
         let driver: ClaudeDriver
 
+        /// No timing races: the wall timeout fires only through a test's `timeoutWait`, and
+        /// the SIGTERM-to-SIGKILL grace is 30 s, far longer than a child dying of SIGTERM
+        /// takes, so SIGKILL can only come into a test that asks for it
+        /// (`timeoutSendsTermThenKill` uses the real 2 s).
         init(_ fake: FakeClaude, channel: Channel = .voice, config: ClaudeConfig = ClaudeConfig(environment: [:]),
-             timeout: Duration = .seconds(30), executable: URL? = nil, failOpen: Bool = false) {
+             timeout: Duration = .seconds(30),
+             timeoutWait: @escaping @Sendable (Duration) async throws -> Void = { _ in try await Task.sleep(for: .seconds(3600)) },
+             stopGrace: Duration = .seconds(30), executable: URL? = nil, failOpen: Bool = false) {
             self.fake = fake
             self.config = config
             bridge = FakeBridge(runDirectory: fake.runDirectory, failOpen: failOpen)
@@ -43,7 +49,8 @@ struct ClaudeDriverTests {
             driver = ClaudeDriver(config: config, executable: executable ?? fake.script, bridge: bridge,
                                   workingDirectory: fake.cwd, research: bumps, backend: backend,
                                   parentEnvironment: parent, allowedTools: ClaudeDriverTests.ping,
-                                  timeout: timeout, log: logs.function)
+                                  timeout: timeout, timeoutWait: timeoutWait, stopGrace: stopGrace,
+                                  log: logs.function)
         }
 
         func generate() async -> String? {
@@ -58,7 +65,7 @@ struct ClaudeDriverTests {
         }
     }
 
-    static func eventually(seconds: Double = 5, _ condition: () async -> Bool) async -> Bool {
+    static func eventually(seconds: Double = 30, _ condition: () async -> Bool) async -> Bool {
         let end = ContinuousClock.now + .seconds(seconds)
         while ContinuousClock.now < end {
             if await condition() { return true }
@@ -158,10 +165,8 @@ struct ClaudeDriverTests {
         lines[0] = lines[0].replacingOccurrences(of: edit.from, with: edit.to)
         let fake = try FakeClaude(transcript: lines, ending: .hang)
         defer { fake.remove() }
-        let run = Run(fake)                         // 30 s wall timeout: only the guard stops it fast
-        let start = ContinuousClock.now
+        let run = Run(fake)                         // no wall timeout: only the guard can stop it
         #expect(await run.generate() == nil)
-        #expect(ContinuousClock.now - start < .seconds(10))
         #expect(await run.driver.lastError == edit.error)
         #expect(await run.driver.lastExit == -SIGTERM)   // the child died of SIGTERM
         #expect(await !run.turn.isOpen)
@@ -171,6 +176,52 @@ struct ClaudeDriverTests {
         #expect(await run.backend.names.isEmpty)
         #expect(run.logs.lines == ["Claude: stopping claude (\(edit.error)): SIGTERM",
                                    Self.unavailable + ClaudeReason.reason(edit.error)])
+    }
+
+    // MARK: - Fail closed without init
+
+    struct EarlyLine: Sendable, CustomTestStringConvertible {
+        let name: String
+        let line: String
+        var testDescription: String { name }
+
+        static let all = [
+            EarlyLine(name: "message_start", line: Transcript.messageStart("msg_early")),
+            EarlyLine(name: "text delta", line: Transcript.delta("Hello there. ")),
+            EarlyLine(name: "assistant text block", line: Transcript.block("msg_early", "Hello there.")),
+            EarlyLine(name: "tool result", line: Transcript.toolResult("pong-from-tool")),
+            EarlyLine(name: "stop reason", line: Transcript.stop("end_turn")),
+            EarlyLine(name: "result", line: Transcript.result(text: "pong")),
+        ]
+    }
+
+    @Test(arguments: EarlyLine.all)
+    func outputBeforeInitStopsTheChild(_ early: EarlyLine) async throws {
+        let fake = try FakeClaude(transcript: [early.line] + Transcript.probe(), ending: .hang)
+        defer { fake.remove() }
+        let run = Run(fake)
+        let error = "no init event before content"
+        #expect(await run.generate() == nil)
+        #expect(await run.driver.lastError == error)
+        #expect(await run.driver.lastExit == -SIGTERM)
+        #expect(await !run.turn.isOpen)
+        #expect(await run.bridgeSawOneFullTurn())
+        #expect(await run.sink.sentences.isEmpty)
+        #expect(await run.sink.deltas.isEmpty)
+        #expect(await run.backend.names.isEmpty)
+        #expect(run.bumps.bumps.isEmpty)
+        #expect(run.logs.lines == ["Claude: stopping claude (\(error)): SIGTERM",
+                                   Self.unavailable + ClaudeReason.reason(error)])
+    }
+
+    @Test func statusAndRateLimitLinesMayComeBeforeInit() async throws {
+        let fake = try FakeClaude(transcript: [#"{"type":"system","subtype":"status","status":"requesting"}"#,
+                                               Transcript.rateLimit(status: "allowed", overage: false)]
+                                      + Transcript.probe(), ending: .exit(0))
+        defer { fake.remove() }
+        let run = Run(fake)
+        #expect(await run.generate() == "pong")
+        #expect(await run.driver.lastError == nil)
     }
 
     // MARK: - R8-R10
@@ -256,12 +307,18 @@ struct ClaudeDriverTests {
     @Test func timeoutSendsTermThenKill() async throws {
         let fake = try FakeClaude(transcript: [Transcript.initLine()], ending: .hangIgnoringTerm)
         defer { fake.remove() }
-        let run = Run(fake, timeout: .seconds(1))
-        let start = ContinuousClock.now
+        // The timeout fires only after the fake has written `stdin`, which it does after its
+        // first command, `trap '' TERM`: the SIGTERM cannot reach a shell that is still
+        // starting and kill it before it ignores SIGTERM.
+        let fired = Stamp()
+        let run = Run(fake, timeout: .seconds(1), timeoutWait: { _ in
+            while !fake.exists("stdin") { try await Task.sleep(for: .milliseconds(10)) }
+            fired.mark()
+        }, stopGrace: ClaudeDriver.stopGrace)
         #expect(await run.generate() == nil)
-        let elapsed = ContinuousClock.now - start
-        #expect(elapsed >= .seconds(3))             // 1 s timeout, then 2 s before SIGKILL
-        #expect(elapsed < .seconds(20))
+        let end = ContinuousClock.now
+        let firedAt = try #require(fired.instant)
+        #expect(end - firedAt >= ClaudeDriver.stopGrace)   // SIGKILL only after the 2 s grace
         #expect(await run.driver.lastError == "timeout after 1000 ms")
         #expect(run.logs.lines == ["Claude: stopping claude (timeout after 1000 ms): SIGTERM",
                                    "Claude: claude still running 2 s after SIGTERM: SIGKILL",
