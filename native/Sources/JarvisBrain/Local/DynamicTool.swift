@@ -51,7 +51,7 @@ public struct DynamicTool: Tool {
     public let description: String
     public let parameters: GenerationSchema
     public let turn: TurnContext
-    /// The catalog's parameters JSON, kept for the chars ÷ 3.5 estimate.
+    /// The catalog's parameters JSON, kept for the chars-per-token estimate.
     let parametersJSON: String
     private let gateway: ToolGateway
     private let budget: LocalCallBudget

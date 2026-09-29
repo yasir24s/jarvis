@@ -96,11 +96,11 @@ struct LocalBrainTests {
         #expect(await run.sink.sentences == ["Done, sir."])
     }
 
-    @Test("two retries, then Python's fixed reply")
+    @Test("two retries, then Python's fixed reply, as .emptyReply")
     func emptyThreeTimes() async {
         let run = Run(FakeLocalModel(attempts: [[], [.snapshot("")], [.snapshot(" \n ")], [.snapshot("unused")]]))
         let outcome = await run.generate()
-        #expect(outcome == .reply(LocalBrain.emptyReply))
+        #expect(outcome == .emptyReply(spoken: LocalBrain.emptyReply))
         #expect(run.model.seen.prompts.count == 3)
         #expect(run.model.seen.sessions == 1)
         #expect(run.logs.lines == ["Empty model response — retry 1.", "Empty model response — retry 2."])
@@ -119,12 +119,12 @@ struct LocalBrainTests {
         #expect(runs.allSatisfy { $0.origin == .model(.local) })
     }
 
-    @Test("more than ten tool calls: the eleventh does not run, and Python's stuck reply")
+    @Test("more than ten tool calls: the eleventh does not run, and Python's stuck reply, as .stuck")
     func stuck() async {
         let steps = Array(repeating: FakeStep.call("get_time", "{}"), count: 12) + [.snapshot("never")]
         let run = Run(FakeLocalModel(attempts: [steps]))
         let outcome = await run.generate()
-        #expect(outcome == .reply(LocalBrain.stuckReply))
+        #expect(outcome == .stuck(spoken: LocalBrain.stuckReply))
         #expect(await run.turn.summary().toolRuns.count == 10)
         #expect(await run.sink.sentences == [LocalBrain.stuckReply])
         #expect(await run.sink.deltas.isEmpty)
@@ -136,7 +136,7 @@ struct LocalBrainTests {
         let six = Array(repeating: FakeStep.call("get_time", "{}"), count: 6)
         let run = Run(FakeLocalModel(attempts: [six, six]))
         let outcome = await run.generate()
-        #expect(outcome == .reply(LocalBrain.stuckReply))
+        #expect(outcome == .stuck(spoken: LocalBrain.stuckReply))
         #expect(await run.turn.summary().toolRuns.count == 10)
     }
 

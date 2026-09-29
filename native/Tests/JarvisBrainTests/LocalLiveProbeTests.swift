@@ -29,7 +29,7 @@ struct LocalLiveProbeTests {
 
         // The tokenizer's counts for each candidate set, beside the brain's own selection.
         let counter = SystemTokenCounter(model: model)
-        print("PROBE tokenizer \(counter.estimates ? "chars/3.5 estimate" : "tokenCount(for:)")")
+        print("PROBE tokenizer \(counter.estimates ? LocalToolset.estimateNote : "tokenCount(for:)")")
         let tools = LocalToolsetTests.catalogTools()
         let core = LocalToolset.core22.compactMap { name in tools.first { $0.name == name } }
         func counted(_ body: () async throws -> Int) async -> String {

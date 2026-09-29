@@ -100,7 +100,7 @@ struct LocalToolsetTests {
         #expect(s.dropped == LocalToolset.core22.reversed())
     }
 
-    @Test("a tokenizer failure falls back to chars ÷ 3.5, and says so")
+    @Test("a tokenizer failure falls back to the chars-per-token estimate, and says so")
     func countFailure() async {
         let logs = LogRecorder()
         let tools = Self.catalogTools()
@@ -114,8 +114,10 @@ struct LocalToolsetTests {
         #expect(logs.lines.filter { $0.hasPrefix("Local model: token count failed") }.count == 2)
     }
 
-    @Test("the estimate is Python len() ÷ 3.5, rounded up")
+    @Test("the estimate is Python len() ÷ chars per token, rounded up: 2.07 for tools, 3.5 for instructions")
     func estimate() throws {
+        #expect(LocalToolset.toolCharsPerToken == 2.07)
+        #expect(LocalToolset.instructionCharsPerToken == 3.5)
         #expect(LocalToolset.estimate(instructions: "") == 0)
         #expect(LocalToolset.estimate(instructions: "abcdefg") == 2)
         #expect(LocalToolset.estimate(instructions: "abcdefgh") == 3)
@@ -125,7 +127,35 @@ struct LocalToolsetTests {
                                    budget: LocalCallBudget())
         let chars = schema.name.unicodeScalars.count + schema.description.unicodeScalars.count
             + schema.parametersJSON.unicodeScalars.count
-        #expect(LocalToolset.estimate(tools: [tool]) == Int((Double(chars) / 3.5).rounded(.up)))
+        #expect(LocalToolset.estimate(tools: [tool]) == Int((Double(chars) / 2.07).rounded(.up)))
+    }
+
+    /// The live probe's tokenizer counts (macOS 27.2, T3.6): all 46 tools 4,790 tokens, CORE-22
+    /// 2,430, and SYSTEM_PROMPT at 3,633 chars 963. The estimate is not below any of them.
+    @Test("the estimate does not undercount what the tokenizer measured")
+    func estimateCoversMeasurement() {
+        let tools = Self.catalogTools()
+        let core = LocalToolset.core22.compactMap { name in tools.first { $0.name == name } }
+        #expect(LocalToolset.estimate(tools: tools) >= 4790)
+        #expect(LocalToolset.estimate(tools: core) >= 2430)
+        #expect(LocalToolset.estimate(instructions: String(repeating: "a", count: 3633)) >= 963)
+    }
+
+    /// Below macOS 26.4 the context is 4096 and the counts are estimates. At 3.5 chars per
+    /// token for tools, CORE-22 (1,440) plus SYSTEM_PROMPT (1,017) came to 2,457 and was judged
+    /// to fit 0.6 × 4096 = 2,457.6, though the tokenizer counts 2,430 for CORE-22 alone.
+    @Test("below macOS 26.4, CORE-22 plus SYSTEM_PROMPT is not judged to fit 4096")
+    func estimatedCore22DoesNotFit4096() async {
+        let logs = LogRecorder()
+        // A 35-character changelog path, as long as the production one.
+        let prompt = SystemPrompt.base(changelogPath: "/private/tmp/jarvis-xy/CHANGELOG.md")
+        let s = await LocalToolset.select(from: Self.catalogTools(), instructions: prompt,
+                                          counter: EstimatingCounter(), log: logs.function)
+        #expect(s.estimated)
+        #expect(s.tier == .core22Trimmed)
+        #expect(!s.dropped.isEmpty)
+        #expect(Double(s.selectedToolTokens + s.instructionTokens) <= s.limit)
+        #expect(logs.lines.last?.hasSuffix("(estimated: tools chars/2.07, instructions chars/3.5)") == true)
     }
 
     // MARK: - DynamicTool

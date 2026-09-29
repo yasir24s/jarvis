@@ -11,7 +11,7 @@ import JarvisTools
 /// inject their own counts and context sizes.
 public protocol LocalTokenCounting: Sendable {
     var contextSize: Int { get async }
-    /// True when the counts are the chars ÷ 3.5 estimate rather than the model's tokenizer.
+    /// True when the counts are the chars-per-token estimate rather than the model's tokenizer.
     var estimates: Bool { get async }
     func tokenCount(tools: [DynamicTool]) async throws -> Int
     func tokenCount(instructions: String) async throws -> Int
@@ -57,8 +57,18 @@ public enum LocalToolset {
     /// Tools plus instructions may use this share of `contextSize`.
     public static let budgetFraction = 0.6
 
-    /// The rough token estimate below macOS 26.4, where `tokenCount(for:)` does not exist.
-    public static let charsPerToken = 3.5
+    /// Chars per token for the estimate below macOS 26.4, where `tokenCount(for:)` does not
+    /// exist. Measured by T3.6's live probe on macOS 27.2 with the real tokenizer: the tool
+    /// definitions ran 2.26 chars per token for all 46 (10,835 chars, 4,790 tokens) and 2.07
+    /// for CORE-22 (5,040 chars, 2,430 tokens), so tools use the lower figure and are never
+    /// counted below either measurement. At 3.5, CORE-22 plus SYSTEM_PROMPT (1,440 + 1,017)
+    /// was judged to fit 0.6 × 4096 = 2,457.6, though the tokenizer counts 2,430 for CORE-22
+    /// alone.
+    public static let toolCharsPerToken = 2.07
+
+    /// SYSTEM_PROMPT measured 3.77 chars per token (3,633 chars, 963 tokens), so 3.5 counts
+    /// instructions a little high, which errs toward fewer tools.
+    public static let instructionCharsPerToken = 3.5
 
     /// The turn's tools for `model`, measured with its tokenizer where the OS has one.
     /// The instructions are the full system prompt the session gets.
@@ -130,22 +140,27 @@ public enum LocalToolset {
         line += "; instructions \(s.instructionTokens) tokens; \(catalogCount) tools \(s.allToolTokens) tokens"
         line += "; offering \(s.tier.rawValue): \(s.tools.count) tools, \(s.selectedToolTokens) tokens"
         if !s.dropped.isEmpty { line += "; dropped \(s.dropped.joined(separator: ", "))" }
-        if s.estimated { line += " (chars/\(charsPerToken) estimate)" }
+        if s.estimated { line += " (\(estimateNote))" }
         return line
     }
 
-    /// Python-style `len()` (code points) ÷ 3.5, rounded up.
+    /// How estimated counts are labelled in the log.
+    static var estimateNote: String {
+        "estimated: tools chars/\(toolCharsPerToken), instructions chars/\(instructionCharsPerToken)"
+    }
+
+    /// Python-style `len()` (code points) ÷ `instructionCharsPerToken`, rounded up.
     public static func estimate(instructions: String) -> Int {
-        estimate(chars: instructions.unicodeScalars.count)
+        estimate(chars: instructions.unicodeScalars.count, perToken: instructionCharsPerToken)
     }
 
-    /// Each tool's name, description and parameters JSON, ÷ 3.5, rounded up.
+    /// Each tool's name, description and parameters JSON, ÷ `toolCharsPerToken`, rounded up.
     public static func estimate(tools: [DynamicTool]) -> Int {
-        estimate(chars: tools.reduce(0) { $0 + $1.estimateChars })
+        estimate(chars: tools.reduce(0) { $0 + $1.estimateChars }, perToken: toolCharsPerToken)
     }
 
-    static func estimate(chars: Int) -> Int {
-        Int((Double(chars) / charsPerToken).rounded(.up))
+    static func estimate(chars: Int, perToken: Double) -> Int {
+        Int((Double(chars) / perToken).rounded(.up))
     }
 
     /// A count, or nil (logged) if the tokenizer failed, so the caller falls back to the estimate.
@@ -154,7 +169,7 @@ public enum LocalToolset {
         do {
             return try await body()
         } catch {
-            log("Local model: token count failed, using the chars/\(charsPerToken) estimate: \(error)")
+            log("Local model: token count failed, using the estimate (\(estimateNote)): \(error)")
             return nil
         }
     }

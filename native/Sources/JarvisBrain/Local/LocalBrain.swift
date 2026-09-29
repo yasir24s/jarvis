@@ -13,6 +13,8 @@ import JarvisTools
 ///
 /// Every reply it returns also goes to `sink`: streamed text sentence by sentence as it
 /// pops, and the fixed replies as one sentence each, as Python's `say()` speaks them.
+/// BrainRouter does not speak them again. Each of Python's four endings has its own
+/// `LocalOutcome` case, so BrainRouter can do Python's history bookkeeping for it.
 ///
 /// Where native differs from Python:
 /// - An empty reply is retried in the same session, which already holds any tool results,
@@ -85,12 +87,12 @@ public actor LocalBrain: LocalGenerating {
                 log("Empty model response — retry \(retries).")
             }
             await sink.sentence(Self.emptyReply)
-            return .reply(Self.emptyReply)
+            return .emptyReply(spoken: Self.emptyReply)
         } catch {
             if budget.exceeded {
                 log("Local model: stopped after \(LocalCallBudget.limit) tool calls this turn")
                 await sink.sentence(Self.stuckReply)
-                return .reply(Self.stuckReply)
+                return .stuck(spoken: Self.stuckReply)
             }
             log("Brain error: \(Self.describe(error))")
             await sink.sentence(Self.errorReply)

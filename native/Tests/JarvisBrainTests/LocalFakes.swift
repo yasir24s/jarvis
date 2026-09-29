@@ -38,6 +38,21 @@ struct FakeCounter: LocalTokenCounting {
     }
 }
 
+/// What `SystemTokenCounter` does below macOS 26.4: the chars-per-token estimate, with the
+/// back-deployed `contextSize` of 4096.
+struct EstimatingCounter: LocalTokenCounting {
+    var contextSize = 4096
+    var estimates: Bool { true }
+
+    func tokenCount(tools: [DynamicTool]) async throws -> Int {
+        LocalToolset.estimate(tools: tools)
+    }
+
+    func tokenCount(instructions: String) async throws -> Int {
+        LocalToolset.estimate(instructions: instructions)
+    }
+}
+
 /// One step of a scripted response.
 enum FakeStep: Sendable {
     /// Yield this cumulative snapshot.
