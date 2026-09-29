@@ -1,0 +1,20 @@
+# Proposal for the native M2 effective sudo allowlist.
+# This file is data only; installation remains a separate, user-approved step.
+Cmnd_Alias JARVIS_SUDO = \
+    /usr/sbin/purge "", \
+    /usr/sbin/softwareupdate -l, \
+    /usr/sbin/softwareupdate --list, \
+    /usr/sbin/diskutil list, \
+    /usr/sbin/diskutil list *, \
+    /usr/sbin/diskutil info, \
+    /usr/sbin/diskutil info *, \
+    /usr/sbin/diskutil verifyVolume, \
+    /usr/sbin/diskutil verifyVolume *, \
+    /usr/bin/fdesetup status, \
+    /usr/bin/log show, \
+    /usr/bin/dscacheutil -flushcache, \
+    /usr/bin/dscacheutil -flushcache *, \
+    /usr/bin/killall -HUP mDNSResponder, \
+    /usr/bin/pmset, \
+    /sbin/shutdown -r now, \
+    /sbin/shutdown -h now
