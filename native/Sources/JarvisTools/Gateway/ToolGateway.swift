@@ -38,6 +38,13 @@ public actor ToolGateway {
 
     public func call(_ name: String, _ args: JSONObject, turn: TurnContext,
                      origin: ToolOrigin) async -> ToolCallResult {
+        await turn.enqueue { [self] in
+            await self.execute(name, args, turn: turn, origin: origin)
+        }
+    }
+
+    private func execute(_ name: String, _ args: JSONObject, turn: TurnContext,
+                         origin: ToolOrigin) async -> ToolCallResult {
         guard await turn.isOpen else {
             return await result("Turn closed.", name: name, origin: origin, outcome: .failed,
                                 error: true, turn: turn)

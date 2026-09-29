@@ -82,6 +82,20 @@ public struct TurnSummary: Sendable {
     public let startedPasteTainted: Bool
 }
 
+private actor TurnFIFO {
+    private var tail: Task<Void, Never>?
+
+    func enqueue<T: Sendable>(_ operation: @escaping @Sendable () async -> T) async -> T {
+        let predecessor = tail
+        let task = Task<T, Never> {
+            if let predecessor { await predecessor.value }
+            return await operation()
+        }
+        tail = Task { _ = await task.value }
+        return await task.value
+    }
+}
+
 public actor TurnContext {
     public let turnID: UUID
     public let channel: Channel
@@ -92,6 +106,7 @@ public actor TurnContext {
     private var taintSources: [String] = []
     private var touchedSources: Set<DataSource> = []
     private var records: [ToolRunRecord] = []
+    private let fifo = TurnFIFO()
 
     public init(channel: Channel, startTainted: Bool = false) {
         self.turnID = UUID()
@@ -103,6 +118,10 @@ public actor TurnContext {
 
     public var isOpen: Bool { open }
     public var tainted: Bool { isTainted }
+
+    func enqueue<T: Sendable>(_ operation: @escaping @Sendable () async -> T) async -> T {
+        await fifo.enqueue(operation)
+    }
 
     public func markTainted(by tool: String) {
         isTainted = true

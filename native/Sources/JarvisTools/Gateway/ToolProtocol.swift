@@ -1,23 +1,8 @@
 import Foundation
 import JarvisCore
 
-/// The JSON values accepted by native tool calls. Keeping this typed makes tool arguments
-/// Sendable across the gateway actor without exposing `Any` to the brain or UI targets.
-public enum JSONValue: Sendable, Equatable {
-    case null
-    case bool(Bool)
-    case number(Double)
-    case string(String)
-    case array([JSONValue])
-    case object([String: JSONValue])
-
-    public var stringValue: String? {
-        guard case .string(let value) = self else { return nil }
-        return value
-    }
-}
-
-public typealias JSONObject = [String: JSONValue]
+/// Tool arguments use JarvisCore's insertion-ordered JSON object so the gateway and
+/// JarvisBrain share one byte-exact representation.
 public typealias ToolArgs = JSONObject
 
 public struct ToolSchema: Sendable, Equatable {
