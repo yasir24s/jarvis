@@ -1,0 +1,8434 @@
+{
+ "schema": 1,
+ "suite": "m2_file_tiers",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "sandbox/000/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/Documents/notes.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/001/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/Desktop/todo.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/002/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/Downloads/report.pdf",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/003/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/Documents",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/004/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/Desktop",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/005/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/Downloads",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/006/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/Pictures",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/007/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/Documents/ideas.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/008/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/009/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "Which file, sir?",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/010/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/.zshrc",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/011/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/.zprofile",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/012/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/.zshenv",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/013/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/.zlogin",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/014/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/.bashrc",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/015/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/.bash_profile",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/016/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/.profile",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/017/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/Library/LaunchAgents",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/018/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/.ssh",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/019/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/Library/Keychains",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/020/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/.claude",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/021/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/Library/LaunchAgents/notes.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/022/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/.ssh/notes.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/023/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/Library/Keychains/notes.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/024/_write_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_write_file",
+    "args": [
+     "~/.claude/notes.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/025/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Documents/notes.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/026/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Documents/notes.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/027/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Desktop/todo.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/028/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Desktop/todo.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/029/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Downloads/report.pdf",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/030/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Downloads/report.pdf",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/031/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Documents",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/032/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Documents",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/033/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Desktop",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/034/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Desktop",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/035/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Downloads",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/036/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Downloads",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/037/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Pictures",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/038/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Pictures",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/039/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Documents/ideas.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Documents/ideas.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/040/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Documents/ideas.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Documents/ideas.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/041/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/042/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/043/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find , sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/044/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find , sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/045/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zshrc",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/046/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zshrc",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/047/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zprofile",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/048/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zprofile",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/049/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zshenv",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/050/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zshenv",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/051/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zlogin",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/052/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zlogin",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/053/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.bashrc",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/054/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.bashrc",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/055/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.bash_profile",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/056/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.bash_profile",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/057/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.profile",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/058/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.profile",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/059/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/LaunchAgents",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/060/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/LaunchAgents",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/061/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.ssh",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/062/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.ssh",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/063/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/Keychains",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/064/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/Keychains",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/065/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.claude",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/066/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.claude",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/067/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/LaunchAgents/notes.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Library/LaunchAgents/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/068/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/LaunchAgents/notes.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Library/LaunchAgents/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/069/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.ssh/notes.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/.ssh/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/070/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.ssh/notes.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/.ssh/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/071/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/Keychains/notes.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Library/Keychains/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/072/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/Keychains/notes.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Library/Keychains/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/073/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.claude/notes.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/.claude/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/074/_delete_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_delete_file",
+    "args": [
+     "~/.claude/notes.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/.claude/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/075/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Desktop"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/076/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Desktop/todo.txt"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/077/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Documents/ideas.txt"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/078/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/079/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.zshrc"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/080/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.zprofile"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/081/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.zshenv"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/082/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.zlogin"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/083/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.bashrc"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/084/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.bash_profile"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/085/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.profile"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/086/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Library/LaunchAgents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/087/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.ssh"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/088/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Library/Keychains"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/089/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.claude"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/090/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Library/LaunchAgents/notes.txt"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/091/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.ssh/notes.txt"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/092/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Library/Keychains/notes.txt"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/093/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.claude/notes.txt"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/094/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/.zshrc",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/095/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/.zprofile",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/096/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/.zshenv",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/097/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/.zlogin",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/098/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/.bashrc",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/099/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/.bash_profile",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/100/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/.profile",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/101/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Library/LaunchAgents",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/102/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/.ssh",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/103/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Library/Keychains",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/104/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/.claude",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/105/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/ideas.txt",
+     "~/Desktop"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Documents/ideas.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/106/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "",
+     "~/Desktop"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find , sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "sandbox/107/_move_file",
+   "input": {
+    "view": "sandbox",
+    "home": "${JARVIS_HOME}",
+    "fn": "_move_file",
+    "args": [
+     "~",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/000/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/Documents/notes.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "makedirs",
+      "/jarvis-golden-home/Documents"
+     ],
+     [
+      "open",
+      "/jarvis-golden-home/Documents/notes.txt",
+      "w"
+     ],
+     [
+      "write",
+      ""
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/001/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/Desktop/todo.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "makedirs",
+      "/jarvis-golden-home/Desktop"
+     ],
+     [
+      "open",
+      "/jarvis-golden-home/Desktop/todo.txt",
+      "w"
+     ],
+     [
+      "write",
+      ""
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/002/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/Downloads/report.pdf",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "makedirs",
+      "/jarvis-golden-home/Downloads"
+     ],
+     [
+      "open",
+      "/jarvis-golden-home/Downloads/report.pdf",
+      "w"
+     ],
+     [
+      "write",
+      ""
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/003/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/Documents",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "makedirs",
+      "/jarvis-golden-home"
+     ],
+     [
+      "open",
+      "/jarvis-golden-home/Documents",
+      "w"
+     ],
+     [
+      "write",
+      ""
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/004/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/Desktop",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "makedirs",
+      "/jarvis-golden-home"
+     ],
+     [
+      "open",
+      "/jarvis-golden-home/Desktop",
+      "w"
+     ],
+     [
+      "write",
+      ""
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/005/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/Downloads",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "makedirs",
+      "/jarvis-golden-home"
+     ],
+     [
+      "open",
+      "/jarvis-golden-home/Downloads",
+      "w"
+     ],
+     [
+      "write",
+      ""
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/006/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/Pictures",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "makedirs",
+      "/jarvis-golden-home"
+     ],
+     [
+      "open",
+      "/jarvis-golden-home/Pictures",
+      "w"
+     ],
+     [
+      "write",
+      ""
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/007/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/Documents/ideas.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "makedirs",
+      "/jarvis-golden-home/Documents"
+     ],
+     [
+      "open",
+      "/jarvis-golden-home/Documents/ideas.txt",
+      "w"
+     ],
+     [
+      "write",
+      ""
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/008/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't write to a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/009/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "Which file, sir?",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/010/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/.zshrc",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write .zshrc, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/011/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/.zprofile",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write .zprofile, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/012/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/.zshenv",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write .zshenv, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/013/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/.zlogin",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write .zlogin, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/014/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/.bashrc",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write .bashrc, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/015/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/.bash_profile",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write .bash_profile, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/016/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/.profile",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write .profile, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/017/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/Library/LaunchAgents",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write LaunchAgents, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/018/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/.ssh",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write .ssh, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/019/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/Library/Keychains",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write Keychains, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/020/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/.claude",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write .claude, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/021/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/Library/LaunchAgents/notes.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write notes.txt, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/022/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/.ssh/notes.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write notes.txt, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/023/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/Library/Keychains/notes.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write notes.txt, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/024/_write_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_write_file",
+    "args": [
+     "~/.claude/notes.txt",
+     ""
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will write notes.txt, a startup or credential file",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/025/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Documents/notes.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/Documents/notes.txt"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/026/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Documents/notes.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete notes.txt permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/027/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Desktop/todo.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/Desktop/todo.txt"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/028/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Desktop/todo.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete todo.txt permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/029/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Downloads/report.pdf",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/Downloads/report.pdf"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/030/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Downloads/report.pdf",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete report.pdf permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/031/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Documents",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/Documents"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/032/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Documents",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete Documents permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/033/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Desktop",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/Desktop"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/034/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Desktop",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete Desktop permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/035/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Downloads",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/Downloads"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/036/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Downloads",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete Downloads permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/037/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Pictures",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/Pictures"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/038/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Pictures",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete Pictures permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/039/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Documents/ideas.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Documents/ideas.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/040/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Documents/ideas.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Documents/ideas.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/041/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/042/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't delete that, sir — it's a protected system location.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/043/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find , sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/044/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find , sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/045/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zshrc",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/.zshrc"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/046/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zshrc",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete .zshrc permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/047/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zprofile",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/.zprofile"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/048/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zprofile",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete .zprofile permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/049/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zshenv",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/.zshenv"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/050/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zshenv",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete .zshenv permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/051/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zlogin",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/.zlogin"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/052/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.zlogin",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete .zlogin permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/053/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.bashrc",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/.bashrc"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/054/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.bashrc",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete .bashrc permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/055/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.bash_profile",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/.bash_profile"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/056/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.bash_profile",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete .bash_profile permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/057/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.profile",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/.profile"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/058/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.profile",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete .profile permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/059/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/LaunchAgents",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/Library/LaunchAgents"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/060/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/LaunchAgents",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete LaunchAgents permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/061/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.ssh",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/.ssh"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/062/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.ssh",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete .ssh permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/063/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/Keychains",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/Library/Keychains"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/064/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/Keychains",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete Keychains permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/065/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.claude",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "trash",
+      "/jarvis-golden-home/.claude"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/066/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.claude",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will delete .claude permanently (bypassing the Trash)",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/067/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/LaunchAgents/notes.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Library/LaunchAgents/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/068/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/LaunchAgents/notes.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Library/LaunchAgents/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/069/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.ssh/notes.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/.ssh/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/070/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.ssh/notes.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/.ssh/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/071/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/Keychains/notes.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Library/Keychains/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/072/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/Library/Keychains/notes.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Library/Keychains/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/073/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.claude/notes.txt",
+     false
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/.claude/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/074/_delete_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_delete_file",
+    "args": [
+     "~/.claude/notes.txt",
+     true
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/.claude/notes.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/075/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Desktop"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will overwrite Desktop",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/076/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Desktop/todo.txt"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will overwrite todo.txt",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/077/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Documents/ideas.txt"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "instant",
+    "reply": null,
+    "gate": null,
+    "acts": [
+     [
+      "move",
+      "/jarvis-golden-home/Documents/notes.txt",
+      "/jarvis-golden-home/Documents/ideas.txt"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "home/078/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/079/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.zshrc"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/080/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.zprofile"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/081/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.zshenv"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/082/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.zlogin"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/083/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.bashrc"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/084/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.bash_profile"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/085/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.profile"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/086/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Library/LaunchAgents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/087/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.ssh"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/088/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Library/Keychains"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/089/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.claude"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/090/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Library/LaunchAgents/notes.txt"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/091/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.ssh/notes.txt"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/092/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/Library/Keychains/notes.txt"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/093/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/notes.txt",
+     "~/.claude/notes.txt"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will move notes.txt into a startup or credential location",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/094/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/.zshrc",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will overwrite Documents",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/095/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/.zprofile",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will overwrite Documents",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/096/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/.zshenv",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will overwrite Documents",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/097/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/.zlogin",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will overwrite Documents",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/098/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/.bashrc",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will overwrite Documents",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/099/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/.bash_profile",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will overwrite Documents",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/100/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/.profile",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will overwrite Documents",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/101/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Library/LaunchAgents",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will overwrite Documents",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/102/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/.ssh",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will overwrite Documents",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/103/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Library/Keychains",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will overwrite Documents",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/104/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/.claude",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "confirm",
+    "reply": null,
+    "gate": "That will overwrite Documents",
+    "acts": []
+   }
+  },
+  {
+   "name": "home/105/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~/Documents/ideas.txt",
+     "~/Desktop"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find ~/Documents/ideas.txt, sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/106/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "",
+     "~/Desktop"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I can't find , sir.",
+    "gate": null,
+    "acts": []
+   }
+  },
+  {
+   "name": "home/107/_move_file",
+   "input": {
+    "view": "home",
+    "home": "/jarvis-golden-home",
+    "fn": "_move_file",
+    "args": [
+     "~",
+     "~/Documents"
+    ],
+    "tree": [
+     ".bash_profile",
+     ".bashrc",
+     ".claude/",
+     ".profile",
+     ".ssh/",
+     ".zlogin",
+     ".zprofile",
+     ".zshenv",
+     ".zshrc",
+     "Desktop/",
+     "Desktop/todo.txt",
+     "Documents/",
+     "Documents/notes.txt",
+     "Downloads/",
+     "Downloads/report.pdf",
+     "Library/Keychains/",
+     "Library/LaunchAgents/",
+     "Pictures/"
+    ]
+   },
+   "expected": {
+    "decision": "none",
+    "reply": "I won't move to or from a system location, sir.",
+    "gate": null,
+    "acts": []
+   }
+  }
+ ]
+}

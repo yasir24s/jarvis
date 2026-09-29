@@ -1,0 +1,617 @@
+{
+ "schema": 1,
+ "suite": "m2_taint",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "sets/untrusted",
+   "input": {
+    "set": "UNTRUSTED_TOOLS"
+   },
+   "expected": {
+    "members": [
+     "get_messages",
+     "get_news",
+     "read_clipboard",
+     "read_file",
+     "see_screen",
+     "summarize_page",
+     "web_search"
+    ]
+   }
+  },
+  {
+   "name": "sets/executor",
+   "input": {
+    "set": "EXECUTOR_TOOLS"
+   },
+   "expected": {
+    "members": [
+     "delete_file",
+     "move_file",
+     "personality_note",
+     "personality_rewrite",
+     "run_applescript",
+     "run_command",
+     "run_powershell",
+     "run_shortcut",
+     "send_email",
+     "send_message",
+     "type_text",
+     "write_file"
+    ]
+   }
+  },
+  {
+   "name": "tool/run_command",
+   "input": {
+    "tool": "run_command"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": true
+   }
+  },
+  {
+   "name": "tool/run_applescript",
+   "input": {
+    "tool": "run_applescript"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": true
+   }
+  },
+  {
+   "name": "tool/get_battery",
+   "input": {
+    "tool": "get_battery"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/get_time",
+   "input": {
+    "tool": "get_time"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/get_cpu_usage",
+   "input": {
+    "tool": "get_cpu_usage"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/get_wifi_status",
+   "input": {
+    "tool": "get_wifi_status"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/set_volume",
+   "input": {
+    "tool": "set_volume"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/music_now_playing",
+   "input": {
+    "tool": "music_now_playing"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/music_search",
+   "input": {
+    "tool": "music_search"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/music_play",
+   "input": {
+    "tool": "music_play"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/music_control",
+   "input": {
+    "tool": "music_control"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/web_search",
+   "input": {
+    "tool": "web_search"
+   },
+   "expected": {
+    "untrusted": true,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/search_files",
+   "input": {
+    "tool": "search_files"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/read_file",
+   "input": {
+    "tool": "read_file"
+   },
+   "expected": {
+    "untrusted": true,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/delete_file",
+   "input": {
+    "tool": "delete_file"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": true
+   }
+  },
+  {
+   "name": "tool/move_file",
+   "input": {
+    "tool": "move_file"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": true
+   }
+  },
+  {
+   "name": "tool/write_file",
+   "input": {
+    "tool": "write_file"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": true
+   }
+  },
+  {
+   "name": "tool/get_weather",
+   "input": {
+    "tool": "get_weather"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/get_location",
+   "input": {
+    "tool": "get_location"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/set_reminder",
+   "input": {
+    "tool": "set_reminder"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/get_messages",
+   "input": {
+    "tool": "get_messages"
+   },
+   "expected": {
+    "untrusted": true,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/get_calendar",
+   "input": {
+    "tool": "get_calendar"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/see_screen",
+   "input": {
+    "tool": "see_screen"
+   },
+   "expected": {
+    "untrusted": true,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/read_clipboard",
+   "input": {
+    "tool": "read_clipboard"
+   },
+   "expected": {
+    "untrusted": true,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/make_note",
+   "input": {
+    "tool": "make_note"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/set_alarm",
+   "input": {
+    "tool": "set_alarm"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/find_song_by_lyrics",
+   "input": {
+    "tool": "find_song_by_lyrics"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/notify",
+   "input": {
+    "tool": "notify"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/send_message",
+   "input": {
+    "tool": "send_message"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": true
+   }
+  },
+  {
+   "name": "tool/send_email",
+   "input": {
+    "tool": "send_email"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": true
+   }
+  },
+  {
+   "name": "tool/find_contact",
+   "input": {
+    "tool": "find_contact"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/create_event",
+   "input": {
+    "tool": "create_event"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/get_news",
+   "input": {
+    "tool": "get_news"
+   },
+   "expected": {
+    "untrusted": true,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/run_diagnostics",
+   "input": {
+    "tool": "run_diagnostics"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/set_brightness",
+   "input": {
+    "tool": "set_brightness"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/type_text",
+   "input": {
+    "tool": "type_text"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": true
+   }
+  },
+  {
+   "name": "tool/take_screenshot",
+   "input": {
+    "tool": "take_screenshot"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/run_shortcut",
+   "input": {
+    "tool": "run_shortcut"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": true
+   }
+  },
+  {
+   "name": "tool/list_shortcuts",
+   "input": {
+    "tool": "list_shortcuts"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/summarize_page",
+   "input": {
+    "tool": "summarize_page"
+   },
+   "expected": {
+    "untrusted": true,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/find_apps",
+   "input": {
+    "tool": "find_apps"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/find_files",
+   "input": {
+    "tool": "find_files"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/open_settings",
+   "input": {
+    "tool": "open_settings"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/system_control",
+   "input": {
+    "tool": "system_control"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": false
+   }
+  },
+  {
+   "name": "tool/personality_note",
+   "input": {
+    "tool": "personality_note"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": true
+   }
+  },
+  {
+   "name": "tool/personality_rewrite",
+   "input": {
+    "tool": "personality_rewrite"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": true
+   }
+  },
+  {
+   "name": "tool/run_powershell",
+   "input": {
+    "tool": "run_powershell"
+   },
+   "expected": {
+    "untrusted": false,
+    "executor": true
+   }
+  },
+  {
+   "name": "refusal/run_command/sudo",
+   "input": {
+    "site": "run_command/sudo",
+    "how": "source"
+   },
+   "expected": {
+    "text": "That sudo command isn't on my allowed list, sir, so I won't run it."
+   }
+  },
+  {
+   "name": "refusal/run_command/block",
+   "input": {
+    "site": "run_command/block",
+    "how": "source"
+   },
+   "expected": {
+    "text": "I won't run that, sir — it's system-damaging, so I've blocked it."
+   }
+  },
+  {
+   "name": "refusal/injection/claude",
+   "input": {
+    "site": "injection/claude",
+    "how": "source"
+   },
+   "expected": {
+    "text": "Blocked for safety: I won't run scripts, send messages or email, or type keystrokes after reading external content in the same request."
+   }
+  },
+  {
+   "name": "refusal/injection/local",
+   "input": {
+    "site": "injection/local",
+    "how": "source"
+   },
+   "expected": {
+    "text": "Blocked for safety: I won't run scripts, send messages or email, or type keystrokes after reading external content (web, screen, clipboard, files) in the same request."
+   }
+  },
+  {
+   "name": "refusal/run_applescript/block",
+   "input": {
+    "site": "run_applescript/block",
+    "how": "source"
+   },
+   "expected": {
+    "text": "I won't run that script, sir — it could shell out or automate unsafely."
+   }
+  },
+  {
+   "name": "refusal/run_powershell/block",
+   "input": {
+    "site": "run_powershell/block",
+    "how": "source"
+   },
+   "expected": {
+    "text": "I won't run that script, sir — it looks potentially destructive, so I've blocked it."
+   }
+  },
+  {
+   "name": "runtime/run_command/sudo",
+   "input": {
+    "site": "run_command/sudo",
+    "cmd": "sudo /usr/sbin/purge \"\""
+   },
+   "expected": {
+    "text": "That sudo command isn't on my allowed list, sir, so I won't run it."
+   }
+  },
+  {
+   "name": "runtime/run_command/block",
+   "input": {
+    "site": "run_command/block",
+    "cmd": "\\b(csrutil|spctl|tccutil|softwareupdate\\s+-i)\\b"
+   },
+   "expected": {
+    "text": "I won't run that, sir — it's system-damaging, so I've blocked it."
+   }
+  },
+  {
+   "name": "runtime/run_applescript/block",
+   "input": {
+    "site": "run_applescript/block",
+    "script": "tell application \"System Events\" to get name of first application process whose frontmost is true"
+   },
+   "expected": {
+    "text": "I won't run that script, sir — it could shell out or automate unsafely."
+   }
+  }
+ ]
+}
