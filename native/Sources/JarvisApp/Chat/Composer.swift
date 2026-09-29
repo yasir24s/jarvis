@@ -4,9 +4,8 @@ import SwiftUI
 
 /// The chat composer (plan: M02-M04 §3.12): an `NSTextView` whose paste and drag-and-drop
 /// call `onPaste`, so the next input is `pasted: true` (X-8). Return sends and Shift+Return
-/// adds a newline (`ComposerReturn`). While an input method is composing, Return confirms
-/// the composition and sends nothing, because the text view only issues `insertNewline:`
-/// once no text is marked.
+/// adds a newline (`ComposerReturn`). Both are handled at `insertNewline:` in `doCommandBy`
+/// rather than in `keyDown`, so keys an input method takes never reach them.
 struct Composer: NSViewRepresentable {
     @Binding var text: String
     let onPaste: () -> Void
