@@ -1,6 +1,6 @@
 import Foundation
 
-public struct ShellVerdict: Sendable {
+public struct ShellVerdict: Sendable, Equatable {
     public let tier: RiskTier
     public let pythonTier: RiskTier
     public let reasons: [String]
@@ -19,6 +19,15 @@ public enum ShellPolicy {
     private static let keychain = try! PyRegex(#"\bsecurity\s+(find-generic-password|find-internet-password|dump-keychain|export)\b"#, ignoreCase: true)
 
     public static func verdict(_ cmd: String, sudo allowlist: SudoAllowlist = .python) -> ShellVerdict {
+        let pythonTier = PyShellRisk.classify(cmd)
+        return ShellVerdict(tier: pythonTier, pythonTier: pythonTier,
+                            reasons: pythonTier == .ok ? [] : ["python:\(pythonTier.rawValue)"],
+                            isSudo: PyShellRisk.containsSudo(cmd))
+    }
+
+    /// Deferred native hardening: kept available for the later gated milestone, but not
+    /// exposed by the M2 default because M2's guard must be Python-exact.
+    public static func strictVerdict(_ cmd: String, sudo allowlist: SudoAllowlist = .python) -> ShellVerdict {
         let pythonTier = PyShellRisk.classify(cmd)
         var tier = pythonTier
         var reasons: [String] = pythonTier == .ok ? [] : ["python:\(pythonTier.rawValue)"]

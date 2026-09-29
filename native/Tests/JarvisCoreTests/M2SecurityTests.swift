@@ -22,6 +22,20 @@ struct M2SecurityTests {
     @Test
     func ruleListsMatchPythonGoldenData() throws {
         for c in try Golden.cases("m2_rules") {
+            if c.name.hasPrefix("set/") {
+                let expected = (c.expected.array("members") ?? []).compactMap(\.stringValue).sorted()
+                let actual: [String]
+                switch c.name {
+                case "set/_PERSIST_FILES": actual = PathPolicy.persistenceFiles
+                case "set/_PERSIST_DIRS": actual = PathPolicy.persistenceDirectories
+                case "set/_SYS_ROOTS": actual = PathPolicy.systemRoots
+                default: continue
+                }
+                #expect(actual.sorted() == expected, "\(c.name)")
+                let expectedCount = try #require(c.expected.int("count"))
+                #expect(Int64(actual.count) == expectedCount, "\(c.name)")
+                continue
+            }
             guard c.name.hasPrefix("object/") else { continue }
             let list = try #require(c.input.string("list"))
             let expectedPattern = try #require(c.expected.string("pattern"))
@@ -56,14 +70,20 @@ struct M2SecurityTests {
     }
 
     @Test
-    func nativeShellPolicyIsAtLeastAsStrictAndClosesChains() {
+    func defaultShellPolicyMatchesPython() {
         #expect(ShellPolicy.verdict("echo hi").tier == .ok)
         #expect(ShellPolicy.verdict("rm ~/file").tier == .confirm)
-        #expect(ShellPolicy.verdict("echo ok; rm ~/file").tier == .confirm)
-        #expect(ShellPolicy.verdict("echo ok; sudo definitely-not-allowed").tier == .block)
-        #expect(ShellPolicy.verdict("security find-generic-password -s jarvis").tier == .block)
-        #expect(ShellPolicy.verdict("echo 'unterminated").tier == .block)
+        #expect(ShellPolicy.verdict("echo ok; sudo definitely-not-allowed").tier == PyShellRisk.classify("echo ok; sudo definitely-not-allowed"))
+        #expect(ShellPolicy.verdict("security find-generic-password -s jarvis").tier == PyShellRisk.classify("security find-generic-password -s jarvis"))
+        #expect(ShellPolicy.verdict("echo 'unterminated").tier == PyShellRisk.classify("echo 'unterminated"))
         #expect(ShellPolicy.verdict("sudo pmset -g", sudo: .python).tier == .confirm)
+    }
+
+    @Test
+    func strictNativePolicyIsExplicitlyDeferred() {
+        #expect(ShellPolicy.strictVerdict("echo ok; sudo definitely-not-allowed").tier == .block)
+        #expect(ShellPolicy.strictVerdict("security find-generic-password -s jarvis").tier == .block)
+        #expect(ShellPolicy.strictVerdict("echo 'unterminated").tier == .block)
     }
 
     @Test
@@ -134,11 +154,15 @@ struct M2SecurityTests {
     }
 
     @Test
-    func effectiveSudoersRemovesPeriodic() {
-        let file = URL(fileURLWithPath: "/Users/yasir24s/jarvis/native/Resources/sudoers/jarvis")
-        let allowlist = SudoAllowlist.effective(sudoersFile: file)
-        #expect(allowlist.allows("sudo pmset -g"))
-        #expect(!allowlist.allows("sudo periodic daily"))
+    func pythonSudoAllowlistRemainsTheDefault() {
+        let file = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent() // JarvisCoreTests
+            .deletingLastPathComponent() // Tests
+            .deletingLastPathComponent() // native
+            .appendingPathComponent("Resources/sudoers/jarvis")
+        #expect(FileManager.default.fileExists(atPath: file.path))
+        #expect(SudoAllowlist.python.allows("sudo pmset -g"))
+        #expect(SudoAllowlist.python.allows("sudo periodic daily"))
     }
 
     private struct TestProbe: FileProbe {

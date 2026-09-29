@@ -19,9 +19,16 @@ let package = Package(
         // State primitives + (from M1) persona, emotions, prompt, dataset, security, routing.
         .target(name: "JarvisCore"),
 
+        // M2 security choke point. Tool bodies are registered here by later milestones;
+        // callers can only execute them through ToolGateway.call(...).
+        .target(
+            name: "JarvisTools",
+            dependencies: ["JarvisCore"]
+        ),
+
         .executableTarget(
             name: "JarvisApp",
-            dependencies: ["JarvisCore"]
+            dependencies: ["JarvisCore", "JarvisTools"]
         ),
 
         // Sandbox + golden-fixture loader shared by every test target. Foundation only —
@@ -37,6 +44,11 @@ let package = Package(
         .testTarget(
             name: "JarvisCoreTests",
             dependencies: ["JarvisCore", "JarvisTestSupport"]
+        ),
+
+        .testTarget(
+            name: "JarvisToolsTests",
+            dependencies: ["JarvisTools"]
         ),
     ]
 )

@@ -38,7 +38,7 @@ public struct SudoAllowlist: Sendable {
             let cleaned = part.replacingOccurrences(of: "\\", with: "")
             for entry in cleaned.split(separator: ",") {
                 let value = entry.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !value.isEmpty && !value.contains("ALL=") && !value.hasPrefix("yasir24s ") {
+                if !value.isEmpty && !value.contains("ALL=") {
                     entries.append(value)
                 }
             }

@@ -7,6 +7,8 @@ public enum SwiftGuard {
     }
 
     public static func shellVerdict(_ command: String, sudo: SudoAllowlist = .python) -> ShellVerdict {
+        // M2's public/default contract is Python parity. Native hardening is retained in
+        // ShellPolicy.strictVerdict for the later gated milestone.
         ShellPolicy.verdict(command, sudo: sudo)
     }
 
