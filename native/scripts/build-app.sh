@@ -19,6 +19,16 @@ JOBS="${JOBS:-2}"                                   # 8 GB machine: cap compiler
 # DEBUG-only modes (M3's --brain-smoke). With no argument the build is release, as before.
 CONFIGURATION=release
 if [[ "${1:-}" == "--debug" ]]; then CONFIGURATION=debug; fi
+# The dataset's build channel (M01b §3.6, T10), written to Info.plist as JARVISBuildChannel: dev
+# unless JARVIS_BUILD_CHANNEL=release, so a mislabel can only hide release data. Separate from
+# the Swift configuration above, but a --debug build is never labelled release.
+CHANNEL="${JARVIS_BUILD_CHANNEL:-dev}"
+if [[ "$CHANNEL" != dev && "$CHANNEL" != release ]]; then
+    echo "error: JARVIS_BUILD_CHANNEL must be dev or release" >&2; exit 1
+fi
+if [[ "$CONFIGURATION" == debug && "$CHANNEL" == release ]]; then
+    echo "error: a --debug build is always the dev channel" >&2; exit 1
+fi
 
 swift build -c "$CONFIGURATION" --package-path "$NATIVE" --product JARVIS -j "$JOBS" \
     -Xlinker -rpath -Xlinker @executable_path/../Frameworks \
@@ -30,6 +40,12 @@ rm -rf "$STAGE"; mkdir -p "$STAGE/Contents/MacOS" "$STAGE/Contents/Resources" "$
 cp "$BIN" "$STAGE/Contents/MacOS/JARVIS"
 cp "$NATIVE/Resources/Info.plist" "$STAGE/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(git -C "$REPO" rev-list --count HEAD)" "$STAGE/Contents/Info.plist"
+# The code that runs, for the dataset's runtime block (RuntimeInfo): the commit, and whether the
+# tree differed from it (any tracked change or untracked file; .build/ and dist/ are ignored).
+COMMIT="$(git -C "$REPO" rev-parse --short HEAD)"
+if [[ -n "$(git -C "$REPO" status --porcelain)" ]]; then DIRTY=true; else DIRTY=false; fi
+/usr/libexec/PlistBuddy -c "Add :JARVISBuildChannel string $CHANNEL" -c "Add :JARVISGitCommit string $COMMIT" \
+    -c "Add :JARVISGitDirty bool $DIRTY" "$STAGE/Contents/Info.plist"
 printf 'APPL????' > "$STAGE/Contents/PkgInfo"
 if otool -L "$BIN" | grep -q libonnxruntime; then   # only once M10 links ORT
     cp "$ORT_LIB/libonnxruntime.1.26.0.dylib" "$STAGE/Contents/Frameworks/libonnxruntime.1.dylib"
