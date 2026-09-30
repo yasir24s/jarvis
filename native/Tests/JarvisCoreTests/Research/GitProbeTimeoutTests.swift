@@ -43,20 +43,22 @@ struct GitProbeTimeoutTests {
         let script = "/bin/sleep 30 & child=$!; printf '%s %s\\n' \"$$\" \"$child\" > \"$1\"; echo x"
             + (leaderWaits ? "; wait" : "")
         let timeout = 0.3
-        let start = ContinuousClock.now
+        // Awake time only: the suspending clock stops while the Mac sleeps, so a closed lid
+        // cannot use the bounds up.
+        let start = SuspendingClock.now
         let result = GitProbe.run(["/bin/sh", "-c", script, "git-probe-test", idsFile.path], timeout)
         #expect(result == nil)
         #expect(start.duration(to: .now) < .seconds(timeout + 2))
         let ids = try Self.readIDs(idsFile)
         #expect(ids.group != getpgrp())
         // Allow launchd to reap the orphan after SIGKILL; no long-lived child remains.
-        let reapedBy = ContinuousClock.now.advanced(by: .seconds(2))
-        while kill(ids.child, 0) == 0 && ContinuousClock.now < reapedBy { usleep(10_000) }
+        let reapedBy = SuspendingClock.now.advanced(by: .seconds(2))
+        while kill(ids.child, 0) == 0 && SuspendingClock.now < reapedBy { usleep(10_000) }
         #expect(kill(ids.child, 0) == -1 && errno == ESRCH, "fixture sleep child was not reaped")
     }
 
     @Test func earlyEOFDoesNotAllowTheChildToOutliveTheDeadline() {
-        let start = ContinuousClock.now
+        let start = SuspendingClock.now
         #expect(GitProbe.run(["/bin/sh", "-c", "exec 1>&-; exec /bin/sleep 30"], 0.2) == nil)
         #expect(start.duration(to: .now) < .seconds(2.2))
     }

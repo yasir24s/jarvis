@@ -141,12 +141,14 @@ struct RelayTests {
     @Test func aSilentOrWrongReplyExitsOne() async throws {
         let p = try Plumbing()
         let (relaySocket, app) = try socketPair()
-        let start = ContinuousClock.now
+        // Awake time only, like the relay's 2 s handshake deadline (DispatchTime uptime, which
+        // does not count system sleep): a closed lid cannot push `waited` past 5 s.
+        let start = SuspendingClock.now
         let status = await offPool {
             MCPRelay.run(socket: relaySocket, token: "abc", input: p.stdinRead, output: p.stdoutWrite,
                          diagnostics: p.stderrWrite)
         }
-        let waited = ContinuousClock.now - start
+        let waited = SuspendingClock.now - start
         #expect(status == 1)
         #expect(waited >= .milliseconds(1900) && waited < .seconds(5), "gave up after \(waited)")
         #expect(p.diagnostics().contains("handshake failed: no reply within 2000 ms"))

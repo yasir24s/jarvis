@@ -80,7 +80,9 @@ struct NetTests {
         let probe = Probe(results: [], onStart: { signal.yield(); signal.finish() })
         let task = Task { await Net.connect(probe, timeout: 30) }
         for await _ in started { break }
-        let start = ContinuousClock.now
+        // Awake time only: the suspending clock stops while the Mac sleeps, so a closed lid
+        // cannot use the bound up.
+        let start = SuspendingClock.now
         task.cancel()
         #expect(await !task.value)
         // Well below the 30 s deadline, with ample room for a loaded test host.
@@ -90,7 +92,7 @@ struct NetTests {
 
     @Test func cancellationBeforeContinuationInstallationIsSafe() async {
         let probe = Probe(results: [])
-        let start = ContinuousClock.now
+        let start = SuspendingClock.now
         let task = Task {
             withUnsafeCurrentTask { $0?.cancel() }
             return await Net.connect(probe, timeout: 30)

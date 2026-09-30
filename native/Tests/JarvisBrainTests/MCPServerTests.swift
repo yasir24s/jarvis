@@ -324,10 +324,12 @@ struct MCPServerTests {
         let h = try MCPHarness()
         let (_, _, token) = try await h.openTurn()
         let end = try h.connect()
-        let start = ContinuousClock.now
+        // Awake time only, like the server's 2 s window (a DispatchTime deadline, which does not
+        // count system sleep): a closed lid cannot push `waited` past 5 s, or cut it below 1.9 s.
+        let start = SuspendingClock.now
         end.send(#"{"jarvis_relay":1,"#)   // never finished
         #expect(await end.closed(seconds: 6))
-        let waited = ContinuousClock.now - start
+        let waited = SuspendingClock.now - start
         #expect(waited >= .milliseconds(1900) && waited < .seconds(5), "closed after \(waited)")
         #expect(await h.logs.waitFor("relay rejected: no handshake line within 2 s"))
         end.close()

@@ -163,7 +163,9 @@ struct LocalBrainTests {
     func cancelled() async throws {
         let run = Run(FakeLocalModel(attempts: [[.hang]]))
         let task = Task { await run.generate() }
-        let clock = ContinuousClock()
+        // Awake time only: the suspending clock stops while the Mac sleeps, so a closed lid
+        // cannot use the bound up.
+        let clock = SuspendingClock()
         let deadline = clock.now + .seconds(5)
         while run.model.seen.prompts.isEmpty, clock.now < deadline {
             try await Task.sleep(for: .milliseconds(10))
@@ -180,7 +182,7 @@ struct LocalBrainTests {
     func cancelledAfterText() async throws {
         let run = Run(FakeLocalModel(attempts: [[.snapshot("Half a reply, sir."), .hang]]))
         let task = Task { await run.generate() }
-        let clock = ContinuousClock()
+        let clock = SuspendingClock()
         let deadline = clock.now + .seconds(5)
         while await run.sink.deltas.isEmpty, clock.now < deadline {
             try await Task.sleep(for: .milliseconds(10))
@@ -218,7 +220,7 @@ struct LocalBrainTests {
         let model = FakeLocalModel(attempts: [[.snapshot("One, sir.")]])
         let run = Run(model)
         _ = await run.generate()
-        let clock = ContinuousClock()
+        let clock = SuspendingClock()
         let deadline = clock.now + .seconds(2)
         while model.seen.lastSessionAlive, clock.now < deadline {
             try await Task.sleep(for: .milliseconds(10))

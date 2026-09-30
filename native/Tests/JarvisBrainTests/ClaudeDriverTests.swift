@@ -65,9 +65,11 @@ struct ClaudeDriverTests {
         }
     }
 
+    /// Polls `condition` every 20 ms for `seconds` of awake time. The deadline is on the
+    /// suspending clock, so a Mac asleep with its lid closed does not use the bound up.
     static func eventually(seconds: Double = 30, _ condition: () async -> Bool) async -> Bool {
-        let end = ContinuousClock.now + .seconds(seconds)
-        while ContinuousClock.now < end {
+        let end = SuspendingClock.now + .seconds(seconds)
+        while SuspendingClock.now < end {
             if await condition() { return true }
             try? await Task.sleep(for: .milliseconds(20))
         }
