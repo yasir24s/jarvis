@@ -43,16 +43,24 @@ public actor ToolGateway {
         }
     }
 
+    /// `live`, when supplied, is re-checked after the FIFO wait: a caller whose turn is revoked
+    /// while this call waits its turn is blocked before any guard, handler or side effect runs.
+    /// Passing nil keeps the pre-M5 behaviour exactly.
     public func call(_ name: String, _ args: JSONObject, turn: TurnContext,
-                     origin: ToolOrigin) async -> ToolCallResult {
+                     origin: ToolOrigin, live: (@Sendable () async -> Bool)? = nil) async -> ToolCallResult {
         await turn.enqueue { [self] in
-            await self.execute(name, args, turn: turn, origin: origin)
+            await self.execute(name, args, turn: turn, origin: origin, live: live)
         }
     }
 
     private func execute(_ name: String, _ args: JSONObject, turn: TurnContext,
-                         origin: ToolOrigin) async -> ToolCallResult {
+                         origin: ToolOrigin, live: (@Sendable () async -> Bool)?) async -> ToolCallResult {
         guard await turn.isOpen else {
+            return await result("Turn closed.", name: name, origin: origin, outcome: .failed,
+                                error: true, turn: turn)
+        }
+        if let live, await live() == false {
+            log("BLOCKED \(name): turn revoked")
             return await result("Turn closed.", name: name, origin: origin, outcome: .failed,
                                 error: true, turn: turn)
         }

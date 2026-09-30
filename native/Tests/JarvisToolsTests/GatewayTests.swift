@@ -238,10 +238,76 @@ struct ToolGatewayTests {
         #expect(second == .notHandled)
     }
 
+    // Revocation check: a call whose turn is revoked while it waits behind another call in the
+    // FIFO is blocked before its body runs. The barrier holds call A in flight (so A owns the
+    // FIFO tail); B is enqueued only once A has entered, so B is provably queued behind A; the
+    // live flag is flipped to false before B runs; releasing A lets B dequeue and refuse. No
+    // wall-clock waits: ordering is a continuation handshake, not a sleep.
+    @Test
+    func revokedCallDoesNotRunBodyEvenWhenQueued() async {
+        let barrier = Barrier()
+        let ran = Flag()
+        let live = LiveFlag(initial: true)
+        let gateway = ToolGateway()
+        await gateway.register(BarrierTool(barrier: barrier))
+        await gateway.register(FlagCommandTool(ran: ran))
+        let turn = TurnContext(channel: .voice)
+
+        let a = Task { await gateway.call("get_time", JSONObject(), turn: turn, origin: .model(.local)) }
+        await barrier.waitEntered()                     // A now holds the FIFO tail
+        live.set(false)                                 // revoke before B is even queued
+        let b = Task {
+            await gateway.call("run_command", Self.args(("command", .string("echo hi"))),
+                               turn: turn, origin: .model(.local), live: { live.get() })
+        }
+        await barrier.release()                         // release A; B dequeues next
+
+        _ = await a.value
+        let result = await b.value
+        #expect(result.text == "Turn closed.")
+        #expect(result.isError)
+        #expect(result.record.outcome == ToolRunRecord.Outcome.failed)
+        #expect(ran.value == false)                     // the body never ran
+    }
+
+    // A live check that stays true does not change behaviour: the body runs.
+    @Test
+    func liveCheckTrueRunsBodyNormally() async {
+        let ran = Flag()
+        let gateway = ToolGateway()
+        await gateway.register(FlagCommandTool(ran: ran))
+        let turn = TurnContext(channel: .voice)
+        let result = await gateway.call("run_command", Self.args(("command", .string("echo hi"))),
+                                        turn: turn, origin: .model(.local), live: { true })
+        #expect(result.text == "ran")
+        #expect(result.record.outcome == ToolRunRecord.Outcome.ran)
+        #expect(ran.value)
+    }
+
     private struct CommandTool: ToolImpl {
         static let name = "run_command"
         static let schema = ToolSchema(name: name)
         func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome { .text("ran") }
+    }
+
+    private struct BarrierTool: ToolImpl {
+        static let name = "get_time"
+        static let schema = ToolSchema(name: name)
+        let barrier: Barrier
+        func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome {
+            await barrier.enter()
+            return .text("time")
+        }
+    }
+
+    private struct FlagCommandTool: ToolImpl {
+        static let name = "run_command"
+        static let schema = ToolSchema(name: name)
+        let ran: Flag
+        func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome {
+            ran.trip()
+            return .text("ran")
+        }
     }
 
     private struct ReadTool: ToolImpl {
@@ -293,4 +359,49 @@ private final class RecordingCounter: ResearchCounting {
     func bump(_ key: String, by n: Int) {
         bumpsStorage.withLock { $0.append("\(key)+\(n)") }
     }
+}
+
+/// A two-way barrier with no wall-clock waits. The tool body calls `enter()`, which signals the
+/// test (unblocking `waitEntered()`) and then blocks until the test calls `release()`. This lets
+/// the test prove call A is in flight — and so owns the FIFO tail — before it enqueues call B.
+private actor Barrier {
+    private var enteredWaiter: CheckedContinuation<Void, Never>?
+    private var entered = false
+    private var releaseWaiter: CheckedContinuation<Void, Never>?
+    private var released = false
+
+    /// Called by the tool body: announce entry, then wait to be released.
+    func enter() async {
+        entered = true
+        if let w = enteredWaiter { enteredWaiter = nil; w.resume() }
+        if released { return }
+        await withCheckedContinuation { releaseWaiter = $0 }
+    }
+
+    /// Called by the test: return once the body has entered.
+    func waitEntered() async {
+        if entered { return }
+        await withCheckedContinuation { enteredWaiter = $0 }
+    }
+
+    /// Called by the test: let the body return.
+    func release() {
+        released = true
+        if let w = releaseWaiter { releaseWaiter = nil; w.resume() }
+    }
+}
+
+/// A write-once flag a tool body trips when it runs.
+private final class Flag: Sendable {
+    private let flag = Mutex(false)
+    var value: Bool { flag.withLock { $0 } }
+    func trip() { flag.withLock { $0 = true } }
+}
+
+/// The liveness the revocation check reads; the test flips it to false mid-flight.
+private final class LiveFlag: Sendable {
+    private let flag: Mutex<Bool>
+    init(initial: Bool) { flag = Mutex(initial) }
+    func get() -> Bool { flag.withLock { $0 } }
+    func set(_ value: Bool) { flag.withLock { $0 = value } }
 }
