@@ -6,7 +6,7 @@ import JarvisTools
 import Synchronization
 import Testing
 
-/// The speak policy stub, the "Speak replies" toggle and the hook that asks the policy (plan
+/// The speak policy, the "Speak replies" toggle and the hook that asks the policy (plan
 /// §3.12, T4.4). Nothing here speaks: there is no speaker before M8.
 @Suite("M4 speak policy and toggle (plan 3.12)", .timeLimit(.minutes(1)))
 @MainActor
@@ -70,15 +70,39 @@ struct SpeakPolicyTests {
 
     @Test("an empty reply, or one over the limit, is not read aloud")
     func length() async {
+        #expect(SpeakRules.replyLimit == 600)
         #expect(!shouldSpeakReply(channel: .text, text: "", context: await Self.direct(chars: 0)))
-        #expect(shouldSpeakReply(channel: .text, text: "x", context: await Self.direct(chars: SpeakRules.replyLimit)))
-        #expect(!shouldSpeakReply(channel: .text, text: "x", context: await Self.direct(chars: SpeakRules.replyLimit + 1)))
+        for count in [1, 599, 600, 601] {
+            let text = String(repeating: "x", count: count)
+            #expect(shouldSpeakReply(channel: .text, text: text, context: await Self.direct(chars: count))
+                    == (count <= 600))
+        }
+    }
+
+    @Test("blank text and stale length metadata cannot enable speech")
+    func actualTextIsChecked() async {
+        for text in ["", " \t\n", "\u{00A0}\u{2003}", String(repeating: "x", count: 601)] {
+            #expect(!shouldSpeakReply(channel: .text, text: text, context: await Self.direct(chars: 1)))
+        }
+        for count in [-1, 0, 601] {
+            #expect(!shouldSpeakReply(channel: .text, text: "Done.", context: await Self.direct(chars: count)))
+        }
+    }
+
+    @Test("length uses Unicode scalars, not bytes or grapheme clusters")
+    func unicodeLength() async {
+        let emoji = String(repeating: "\u{1F600}", count: 600)
+        #expect(shouldSpeakReply(channel: .text, text: emoji, context: await Self.direct(chars: 600)))
+        let combining = String(repeating: "e\u{0301}", count: 301)
+        #expect(combining.count == 301 && combining.unicodeScalars.count == 602)
+        #expect(!shouldSpeakReply(channel: .text, text: combining, context: await Self.direct(chars: 301)))
     }
 
     @Test("a cloud voice never reads out personal content; a local voice may")
     func personalContent() async {
         let text = "You have two new messages, sir."
-        for tool in ["get_messages", "read_clipboard", "see_screen", "read_file", "get_calendar"] {
+        for tool in ["get_messages", "read_clipboard", "see_screen", "read_file", "get_calendar",
+                     "set_reminder", "find_contact", "send_email", "make_note", "get_location"] {
             #expect(!shouldSpeakReply(channel: .text, text: text, context: await Self.direct(backend: "elevenlabs", tools: [tool])))
             #expect(shouldSpeakReply(channel: .text, text: text, context: await Self.direct(backend: "piper", tools: [tool])))
         }
@@ -132,7 +156,7 @@ struct SpeakPolicyTests {
         var logged: [String] = []
         let context = try await Self.context(toggle: true)
         let said = SpeakReplies.replyFinished(Self.reply, context: context, research: research, speaker: nil,
-                                              log: { logged.append($0) }, policy: { _, _, _ in true })
+                                              log: { logged.append($0) })
         #expect(said)
         #expect(research.counts.isEmpty)
         #expect(logged == ["speak policy: yes, but typed replies are not spoken until M8"])
@@ -144,8 +168,7 @@ struct SpeakPolicyTests {
         var spoken: [(String, UUID)] = []
         let context = try await Self.context(toggle: true)
         let said = SpeakReplies.replyFinished(Self.reply, context: context, research: research,
-                                              speaker: { spoken.append(($0, $1.turnID)) }, log: { _ in },
-                                              policy: { channel, _, _ in channel == .text })
+                                              speaker: { spoken.append(($0, $1.turnID)) }, log: { _ in })
         #expect(said)
         #expect(research.counts == ["text_reply_spoken": 1])
         #expect(spoken.map(\.0) == [Self.reply.text])
