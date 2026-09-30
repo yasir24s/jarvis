@@ -49,15 +49,19 @@ struct JarvisLogTests {
         let s = try Sandbox()
         defer { s.remove() }
         JarvisLog.configure(file: s.paths.logFile, mirrorToStdout: false)
+        defer { JarvisLog.configure(file: nil, mirrorToStdout: false) }
         let fds = openDescriptors(for: s.paths.logFile)
         try #require(fds.count == 1)
         #expect(fcntl(fds[0], F_GETFD) & FD_CLOEXEC == FD_CLOEXEC)
         #expect(fcntl(fds[0], F_GETFL) & O_APPEND == O_APPEND)
         #expect(fcntl(fds[0], F_GETFL) & O_ACCMODE == O_WRONLY)
+        JarvisLog.log("before detach")
         JarvisLog.configure(file: nil, mirrorToStdout: false)
         #expect(openDescriptors(for: s.paths.logFile) == [], "reconfigure must close the old fd")
+        // Other suites may have logged while attached; detaching must freeze the file.
+        let detached = try s.read("logs/jarvis.log")
         JarvisLog.log("after detach")
-        #expect(try s.read("logs/jarvis.log") == "")
+        #expect(try s.read("logs/jarvis.log") == detached)
     }
 
     @Test func concurrentLinesNeverInterleave() async throws {
@@ -66,17 +70,27 @@ struct JarvisLogTests {
         JarvisLog.configure(file: s.paths.logFile, mirrorToStdout: false)
         defer { JarvisLog.configure(file: nil, mirrorToStdout: false) }
         let payload = String(repeating: "x", count: 900)
+        let marker = "concurrent-log-\(UUID().uuidString)"
         await withTaskGroup(of: Void.self) { group in
             for t in 0..<8 {
                 group.addTask {
-                    for i in 0..<200 { JarvisLog.log("t\(t) i\(i) \(payload)", category: .state) }
+                    for i in 0..<200 { JarvisLog.log("\(marker) t\(t) i\(i) \(payload)", category: .state) }
                 }
+            }
+            // Other suites share this sink even though this suite is serialized.
+            group.addTask {
+                for i in 0..<200 { JarvisLog.log("unrelated log writer \(i)") }
             }
         }
         let lines = try s.read("logs/jarvis.log").split(separator: "\n", omittingEmptySubsequences: false)
-        #expect(lines.count == 8 * 200 + 1 && lines.last == "")
-        let body = lines.dropLast()
-        #expect(body.allSatisfy { $0.hasPrefix("[JARVIS] t") && $0.hasSuffix(" " + payload) })
-        #expect(Set(body).count == 8 * 200)
+        #expect(lines.last == "")
+        // Use contains, not hasPrefix: interleaving that damages a marked line's
+        // prefix must remain visible and fail the exact-content comparison.
+        let body = lines.filter { $0.contains(marker) }.map(String.init)
+        let expected = Set((0..<8).flatMap { t in
+            (0..<200).map { i in "[JARVIS] \(marker) t\(t) i\(i) \(payload)" }
+        })
+        #expect(body.count == 8 * 200)
+        #expect(Set(body) == expected)
     }
 }

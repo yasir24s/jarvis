@@ -74,13 +74,40 @@ private final class Child {
 
     var pid: Int32 { process.processIdentifier }
 
-    /// Blocks until the child prints a full line (or closes stdout).
-    func readLine() -> String {
+    enum ReadError: Error, Equatable {
+        case timedOut
+        case system(Int32)
+    }
+
+    /// A silent child or an unterminated line fails the test instead of hanging it.
+    func readLine(timeout: Double = 30) throws -> String {
+        let fd = stdout.fileHandleForReading.fileDescriptor
+        let flags = fcntl(fd, F_GETFL)
+        guard flags >= 0, fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0 else {
+            throw ReadError.system(errno)
+        }
+        defer { _ = fcntl(fd, F_SETFL, flags) }
+        let deadline = DispatchTime.now() + timeout
         var data = Data()
+        var buffer = [UInt8](repeating: 0, count: 4096)
         while !data.contains(0x0A) {
-            let chunk = stdout.fileHandleForReading.availableData
-            if chunk.isEmpty { break }
-            data.append(chunk)
+            let now = DispatchTime.now().uptimeNanoseconds
+            guard now < deadline.uptimeNanoseconds else { throw ReadError.timedOut }
+            let remaining = deadline.uptimeNanoseconds - now
+            let millis = Int32(min(UInt64(Int32.max), (remaining + 999_999) / 1_000_000))
+            var event = pollfd(fd: fd, events: Int16(POLLIN), revents: 0)
+            let ready = poll(&event, 1, millis)
+            if ready < 0 && errno == EINTR { continue }
+            if ready == 0 { throw ReadError.timedOut }
+            guard ready > 0 else { throw ReadError.system(errno) }
+            guard event.revents & Int16(POLLNVAL | POLLERR) == 0 else { throw ReadError.system(EIO) }
+            let count = Darwin.read(fd, &buffer, buffer.count)
+            if count == 0 { break }
+            if count < 0 {
+                if errno == EAGAIN || errno == EINTR { continue }
+                throw ReadError.system(errno)
+            }
+            data.append(contentsOf: buffer.prefix(count))
         }
         return String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -139,6 +166,29 @@ private final class Calls: Sendable {
 
 @Suite("InstanceLock", .timeLimit(.minutes(1)))
 struct InstanceLockTests {
+    @Test(arguments: ["", "printf partial;"])
+    func childReadLineHasADeadline(_ prefix: String) throws {
+        let child = try Child("/bin/sh", ["-c", "\(prefix) exec /bin/sleep 30"])
+        defer { child.kill() }
+        let start = SuspendingClock.now
+        #expect(throws: Child.ReadError.timedOut) { try child.readLine(timeout: 0.1) }
+        #expect(start.duration(to: .now) < .seconds(2))
+    }
+
+    @Test func childReadLineReturnsBeforeEOF() throws {
+        let child = try Child("/bin/sh", ["-c", "printf 'ready\\n'; exec /bin/sleep 30"])
+        defer { child.kill() }
+        #expect(try child.readLine(timeout: 10) == "ready")
+        #expect(child.process.isRunning)
+    }
+
+    @Test func childReadLinePreservesPartialLineAtEOF() throws {
+        let child = try Child("/bin/sh", ["-c", "printf '  ready  '"])
+        defer { child.kill() }
+        #expect(try child.readLine(timeout: 10) == "ready")
+        #expect(child.finish() == 0)
+    }
+
     @Test func twoOpensInOneProcessConflict() throws {
         let s = try Sandbox()
         defer { s.remove() }
@@ -275,7 +325,7 @@ struct InstanceLockTests {
         defer { s.remove() }
         let python = try Child(frameworkPython, ["-c", pythonLockScript, s.paths.lockFile.path(percentEncoded: false), "hold"])
         defer { python.kill() }
-        try #require(python.readLine() == "locked")
+        try #require(try python.readLine() == "locked")
 
         guard case .held(let holder) = InstanceLock.tryAcquire(at: s.paths.lockFile, repoRoot: s.root) else {
             Issue.record("Swift acquired a lock Python holds")
@@ -304,7 +354,7 @@ struct InstanceLockTests {
         defer { s.remove() }
         let python = try Child(frameworkPython, ["-c", pythonLockScript, s.paths.lockFile.path(percentEncoded: false), "hold"])
         defer { python.kill() }
-        try #require(python.readLine() == "locked")
+        try #require(try python.readLine() == "locked")
         guard case .held = InstanceLock.tryAcquire(at: s.paths.lockFile, repoRoot: s.root) else {
             Issue.record("Swift acquired a lock Python holds")
             return
@@ -321,7 +371,7 @@ struct InstanceLockTests {
         let script = s.paths.jarvisPy.path(percentEncoded: false)
         let python = try Child(frameworkPython, ["-c", "import sys; print('up', flush=True); sys.stdin.read()", script])
         defer { python.kill() }
-        try #require(python.readLine() == "up")
+        try #require(try python.readLine() == "up")
         #expect(InstanceLock.foreignJarvisProcesses(repoRoot: s.root) == [python.pid])
         guard case .foreignProcess(let pids) = InstanceLock.tryAcquire(at: s.paths.lockFile, repoRoot: s.root) else {
             Issue.record("expected .foreignProcess")
