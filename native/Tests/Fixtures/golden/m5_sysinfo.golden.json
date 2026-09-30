@@ -1,0 +1,1175 @@
+{
+ "schema": 1,
+ "suite": "m5_sysinfo",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "battery/discharging_70",
+   "input": {
+    "tool": "get_battery",
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Battery at 70 percent, on battery."
+   }
+  },
+  {
+   "name": "battery/charging_45",
+   "input": {
+    "tool": "get_battery",
+    "battery": {
+     "percent": 45,
+     "state": "charging"
+    },
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Battery at 45 percent, charging."
+   }
+  },
+  {
+   "name": "battery/charged_100",
+   "input": {
+    "tool": "get_battery",
+    "battery": {
+     "percent": 100,
+     "state": "charged"
+    },
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Battery at 100 percent, fully charged."
+   }
+  },
+  {
+   "name": "battery/ac_attached_80",
+   "input": {
+    "tool": "get_battery",
+    "battery": {
+     "percent": 80,
+     "state": "AC attached"
+    },
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Battery at 80 percent, AC."
+   }
+  },
+  {
+   "name": "battery/finishing_95",
+   "input": {
+    "tool": "get_battery",
+    "battery": {
+     "percent": 95,
+     "state": "finishing charge"
+    },
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Battery at 95 percent, finishing."
+   }
+  },
+  {
+   "name": "battery/discharging_0",
+   "input": {
+    "tool": "get_battery",
+    "battery": {
+     "percent": 0,
+     "state": "discharging"
+    },
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Battery at 0 percent, on battery."
+   }
+  },
+  {
+   "name": "battery/discharging_5",
+   "input": {
+    "tool": "get_battery",
+    "battery": {
+     "percent": 5,
+     "state": "discharging"
+    },
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Battery at 5 percent, on battery."
+   }
+  },
+  {
+   "name": "battery/no_battery",
+   "input": {
+    "tool": "get_battery",
+    "battery": null,
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "No information."
+   }
+  },
+  {
+   "name": "cpu/two_decimals",
+   "input": {
+    "tool": "get_cpu_usage",
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "CPU user load 18.97 percent."
+   }
+  },
+  {
+   "name": "cpu/low",
+   "input": {
+    "tool": "get_cpu_usage",
+    "cpu": "0.52",
+    "cpu_value": 0.52,
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "CPU user load 0.52 percent."
+   }
+  },
+  {
+   "name": "cpu/high",
+   "input": {
+    "tool": "get_cpu_usage",
+    "cpu": "99.99",
+    "cpu_value": 99.99,
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "CPU user load 99.99 percent."
+   }
+  },
+  {
+   "name": "cpu/whole_hundredths_zero",
+   "input": {
+    "tool": "get_cpu_usage",
+    "cpu": "16.0",
+    "cpu_value": 16.0,
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "CPU user load 16.0 percent.",
+    "deviation": "DEV-M5-01",
+    "native_text": "CPU user load 16.00 percent."
+   }
+  },
+  {
+   "name": "cpu/unpadded_08",
+   "input": {
+    "tool": "get_cpu_usage",
+    "cpu": "4.8",
+    "cpu_value": 4.08,
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "CPU user load 4.8 percent.",
+    "deviation": "DEV-M5-01",
+    "native_text": "CPU user load 4.08 percent."
+   }
+  },
+  {
+   "name": "cpu/unpadded_07_two_digit",
+   "input": {
+    "tool": "get_cpu_usage",
+    "cpu": "10.7",
+    "cpu_value": 10.07,
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "CPU user load 10.7 percent.",
+    "deviation": "DEV-M5-01",
+    "native_text": "CPU user load 10.07 percent."
+   }
+  },
+  {
+   "name": "cpu/padded_30",
+   "input": {
+    "tool": "get_cpu_usage",
+    "cpu": "12.30",
+    "cpu_value": 12.3,
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "CPU user load 12.30 percent."
+   }
+  },
+  {
+   "name": "cpu/full_load",
+   "input": {
+    "tool": "get_cpu_usage",
+    "cpu": "100.0",
+    "cpu_value": 100.0,
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "CPU user load 100.0 percent.",
+    "deviation": "DEV-M5-01",
+    "native_text": "CPU user load 100.00 percent."
+   }
+  },
+  {
+   "name": "cpu/unavailable",
+   "input": {
+    "tool": "get_cpu_usage",
+    "cpu": null,
+    "cpu_value": null,
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "CPU info unavailable."
+   }
+  },
+  {
+   "name": "wifi/associated",
+   "input": {
+    "tool": "get_wifi_status",
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "wifi/not_associated",
+   "input": {
+    "tool": "get_wifi_status",
+    "wifi": "You are not associated with an AirPort network.\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "You are not associated with an AirPort network."
+   }
+  },
+  {
+   "name": "wifi/empty",
+   "input": {
+    "tool": "get_wifi_status",
+    "wifi": "",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Wi-Fi status unknown."
+   }
+  },
+  {
+   "name": "wifi/whitespace",
+   "input": {
+    "tool": "get_wifi_status",
+    "wifi": "  \n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Wi-Fi status unknown."
+   }
+  },
+  {
+   "name": "wifi/unicode_ssid",
+   "input": {
+    "tool": "get_wifi_status",
+    "wifi": "Current Wi-Fi Network: Café 5G\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Current Wi-Fi Network: Café 5G"
+   }
+  },
+  {
+   "name": "diagnostics/laptop",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/desktop_no_battery",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": null,
+    "cycle": null,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. No information. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/cpu_unavailable",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": null,
+    "cpu_value": null,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU info unavailable. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/cpu_unpadded",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "4.8",
+    "cpu_value": 4.08,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 4.8 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net",
+    "deviation": "DEV-M5-01",
+    "native_text": "Diagnostics complete. CPU user load 4.08 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/wifi_empty",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Wi-Fi status unknown."
+   }
+  },
+  {
+   "name": "diagnostics/wifi_not_associated",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "You are not associated with an AirPort network.\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. You are not associated with an AirPort network."
+   }
+  },
+  {
+   "name": "diagnostics/memory_fails",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": null,
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/disk_fails",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": null,
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/boot_fails",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": null,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/ps_header_only",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/ps_empty",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": "",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/ps_one_field",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 12.0\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/ps_spaces_in_name",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 99.5 /Applications/Google Chrome.app/Contents/MacOS/Google Chrome\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, Google Chrome at 100 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/ps_half_to_even",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n  2.5 /usr/sbin/cfprefsd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, cfprefsd at 2 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/ps_zero",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n  0.0 launchd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, launchd at 0 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/uptime_1h",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790578810,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 1 hour. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/uptime_0h",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790582356,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 0 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/uptime_1d_1h",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790492415,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 1 day 1 hour. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/uptime_2d_0h",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790409614,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 0 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/uptime_1d_2h",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790488798,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 1 day 2 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/uptime_future_boot",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790582445,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime -1 days 23 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/memory_16g_round",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 17179869184,
+     "page": 16384,
+     "free_count": 265420,
+     "speculative": 3276,
+     "inactive": 65536
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 11.0 of 16 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/memory_all_free",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 524288,
+     "speculative": 0,
+     "inactive": 0
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 0.0 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/memory_page_4k",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 4096,
+     "free_count": 400000,
+     "speculative": 1000,
+     "inactive": 300000
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.3 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/disk_half_gib",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 536870912,
+     "total": 1610612736
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 0 gigabytes free of 2. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/disk_two_and_half",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 2684354560,
+     "total": 3758096384
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 2 gigabytes free of 4. Battery at 70 percent, on battery. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/cycle_absent_battery_present",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 70,
+     "state": "discharging"
+    },
+    "cycle": null,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 70 percent, on battery. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/charging",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": {
+     "memsize": 8589934592,
+     "page": 16384,
+     "free_count": 12216,
+     "speculative": 2146,
+     "inactive": 124383
+    },
+    "disk": {
+     "free": 123456789012,
+     "total": 494384795648
+    },
+    "battery": {
+     "percent": 45,
+     "state": "charging"
+    },
+    "cycle": 187,
+    "boot": 1790341866,
+    "cpu": "18.97",
+    "cpu_value": 18.97,
+    "wifi": "Current Wi-Fi Network: Home Net\n",
+    "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  8.1 /usr/libexec/logd\n",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU user load 18.97 percent. Memory, 5.9 of 8 gigabytes in use. Disk, 115 gigabytes free of 460. Battery at 45 percent, charging. Battery cycle count 187. Uptime 2 days 18 hours. Heaviest process, WindowServer at 40 percent. Current Wi-Fi Network: Home Net"
+   }
+  },
+  {
+   "name": "diagnostics/everything_fails",
+   "input": {
+    "tool": "run_diagnostics",
+    "memory": null,
+    "disk": null,
+    "battery": null,
+    "cycle": null,
+    "boot": null,
+    "cpu": null,
+    "cpu_value": null,
+    "wifi": "",
+    "ps": "",
+    "now": 1790582415
+   },
+   "expected": {
+    "text": "Diagnostics complete. CPU info unavailable. No information. Wi-Fi status unknown."
+   }
+  }
+ ]
+}
