@@ -1236,7 +1236,10 @@ checks observed and a commit on the milestone branch.
   repo source-of-truth design.
 - **R-4.** The per-launch token is a same-uid secret that lives in a 0600 file. It binds a
   connection to a turn; it does not stop same-uid malware. The uid, ppid and executable
-  path checks are the real boundary.
+  path checks are the real boundary. Codex's review of 2026-09-30 qualifies that: the checks
+  identify the connecting process when it connects. A same-uid process that rewrites a
+  turn's MCP config before Claude reads it, or replaces the socket path, can still feed or
+  capture traffic, so same-uid malware stays out of scope (README D-44).
 - **R-5.** Python's Claude taint could race with parallel calls. Native serializes (X-6),
   so the native result can differ from Python on those edge cases.
 - **R-6.** Taint does not carry across turns in either implementation. A reply that

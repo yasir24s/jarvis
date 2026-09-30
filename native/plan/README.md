@@ -424,6 +424,33 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
   window. This supersedes the plan's LSUIElement agent app and `.accessory` policy (M02-M04 §1
   and §3.12) and A-12's "no Dock icon": A-12 now checks that the Dock icon is present. The HUD
   panel must never change the activation policy. Registered as DEV-M4-01.
+- **D-44. Two hard gates before M5's side-effecting tools** (user, 2026-09-30). No M5 tool that
+  changes anything gets a body until both are merged and validated. The first is X-1, the
+  chained-command sudo fix that D-38 deferred out of M2: every shell segment classified and
+  sudo checked per segment, built with harmless test cases only, as the first M5 task. The
+  second is the four findings of Codex's MCP review of 2026-09-30
+  (`reviews/2026-09-30-codex-mcp-review.md`), each fixed with a focused test:
+  1. Authenticated traffic has no byte limit or backpressure: MCPServer's line buffer after
+     the handshake, MCPConnection's unbounded event stream, and the relay's pumps.
+  2. Connections are admitted without a cap before authentication, and a serve task can
+     start after stop().
+  3. Closing a turn does not stop tool work already admitted: closeTurn and
+     TurnContext.close only refuse later requests.
+  4. Malformed JSON-RPC envelopes still reach tools: there is no `jsonrpc: "2.0"` check, and
+     an invalid id becomes null.
+
+  The review's same-user notes fall under R-4, the accepted same-user malware limitation: a
+  process running as the same user could rewrite a turn's MCP config before Claude reads it,
+  and the relay does not authenticate the server.
+- **D-45. The online check probes port 443** (user, 2026-09-30). This network blocks outbound
+  TCP to port 53, so Python's `is_online` read offline and every turn went to the on-device
+  model, which answered "what time is it" with a guessed time. Native keeps Python's hosts,
+  order and 1.2 s timeout, on port 443, the port Claude itself uses. Registered as DEV-M4-02.
+- **D-46. Native writes the real dataset from 2026-09-30** (user, 2026-09-30). The M4 at-screen
+  checks run the debug app against the real `~/jarvis` root with the user present, as D-39
+  requires. The `native-dev-writes` annotation went into `research/annotations.jsonl` first,
+  under the instance lock. From that day the dataset has native rows (`runtime.impl` swift,
+  `runtime.build` dev), and `gap-2026-08-21` closes on 2026-09-29 by its own rule.
 
 ## Open user decisions
 
