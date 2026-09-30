@@ -1,0 +1,1481 @@
+{
+ "schema": 1,
+ "suite": "p1_dismiss",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "literals",
+   "input": {},
+   "expected": {
+    "contained": [
+     "thank you",
+     "thanks jarvis",
+     "thats all",
+     "that's all",
+     "that will be all",
+     "goodbye jarvis",
+     "dismissed",
+     "stand down",
+     "go to sleep"
+    ],
+    "exact": [
+     "goodbye",
+     "bye jarvis",
+     "thanks",
+     "that is all"
+    ]
+   }
+  },
+  {
+   "name": "alone/thank you",
+   "input": {
+    "t": "thank you"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "padded/thank you",
+   "input": {
+    "t": "  thank you \n"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "capitalised/thank you",
+   "input": {
+    "t": "Thank you"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "upper/thank you",
+   "input": {
+    "t": "THANK YOU"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "embedded/thank you",
+   "input": {
+    "t": "well thank you then"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "before/thank you",
+   "input": {
+    "t": "ok thank you"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "after/thank you",
+   "input": {
+    "t": "thank you now"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "full_stop/thank you",
+   "input": {
+    "t": "thank you."
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "addressed/thank you",
+   "input": {
+    "t": "thank you, jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "doubled_space/thank you",
+   "input": {
+    "t": "thank  you"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "alone/thanks jarvis",
+   "input": {
+    "t": "thanks jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "padded/thanks jarvis",
+   "input": {
+    "t": "  thanks jarvis \n"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "capitalised/thanks jarvis",
+   "input": {
+    "t": "Thanks jarvis"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "upper/thanks jarvis",
+   "input": {
+    "t": "THANKS JARVIS"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "embedded/thanks jarvis",
+   "input": {
+    "t": "well thanks jarvis then"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "before/thanks jarvis",
+   "input": {
+    "t": "ok thanks jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "after/thanks jarvis",
+   "input": {
+    "t": "thanks jarvis now"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "full_stop/thanks jarvis",
+   "input": {
+    "t": "thanks jarvis."
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "addressed/thanks jarvis",
+   "input": {
+    "t": "thanks jarvis, jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "doubled_space/thanks jarvis",
+   "input": {
+    "t": "thanks  jarvis"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "alone/thats all",
+   "input": {
+    "t": "thats all"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "padded/thats all",
+   "input": {
+    "t": "  thats all \n"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "capitalised/thats all",
+   "input": {
+    "t": "Thats all"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "upper/thats all",
+   "input": {
+    "t": "THATS ALL"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "embedded/thats all",
+   "input": {
+    "t": "well thats all then"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "before/thats all",
+   "input": {
+    "t": "ok thats all"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "after/thats all",
+   "input": {
+    "t": "thats all now"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "full_stop/thats all",
+   "input": {
+    "t": "thats all."
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "addressed/thats all",
+   "input": {
+    "t": "thats all, jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "doubled_space/thats all",
+   "input": {
+    "t": "thats  all"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "alone/that's all",
+   "input": {
+    "t": "that's all"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "padded/that's all",
+   "input": {
+    "t": "  that's all \n"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "capitalised/that's all",
+   "input": {
+    "t": "That's all"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "upper/that's all",
+   "input": {
+    "t": "THAT'S ALL"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "embedded/that's all",
+   "input": {
+    "t": "well that's all then"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "before/that's all",
+   "input": {
+    "t": "ok that's all"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "after/that's all",
+   "input": {
+    "t": "that's all now"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "full_stop/that's all",
+   "input": {
+    "t": "that's all."
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "addressed/that's all",
+   "input": {
+    "t": "that's all, jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "doubled_space/that's all",
+   "input": {
+    "t": "that's  all"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "alone/that will be all",
+   "input": {
+    "t": "that will be all"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "padded/that will be all",
+   "input": {
+    "t": "  that will be all \n"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "capitalised/that will be all",
+   "input": {
+    "t": "That will be all"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "upper/that will be all",
+   "input": {
+    "t": "THAT WILL BE ALL"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "embedded/that will be all",
+   "input": {
+    "t": "well that will be all then"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "before/that will be all",
+   "input": {
+    "t": "ok that will be all"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "after/that will be all",
+   "input": {
+    "t": "that will be all now"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "full_stop/that will be all",
+   "input": {
+    "t": "that will be all."
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "addressed/that will be all",
+   "input": {
+    "t": "that will be all, jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "doubled_space/that will be all",
+   "input": {
+    "t": "that  will  be  all"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "alone/goodbye jarvis",
+   "input": {
+    "t": "goodbye jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "padded/goodbye jarvis",
+   "input": {
+    "t": "  goodbye jarvis \n"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "capitalised/goodbye jarvis",
+   "input": {
+    "t": "Goodbye jarvis"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "upper/goodbye jarvis",
+   "input": {
+    "t": "GOODBYE JARVIS"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "embedded/goodbye jarvis",
+   "input": {
+    "t": "well goodbye jarvis then"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "before/goodbye jarvis",
+   "input": {
+    "t": "ok goodbye jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "after/goodbye jarvis",
+   "input": {
+    "t": "goodbye jarvis now"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "full_stop/goodbye jarvis",
+   "input": {
+    "t": "goodbye jarvis."
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "addressed/goodbye jarvis",
+   "input": {
+    "t": "goodbye jarvis, jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "doubled_space/goodbye jarvis",
+   "input": {
+    "t": "goodbye  jarvis"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "alone/dismissed",
+   "input": {
+    "t": "dismissed"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "padded/dismissed",
+   "input": {
+    "t": "  dismissed \n"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "capitalised/dismissed",
+   "input": {
+    "t": "Dismissed"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "upper/dismissed",
+   "input": {
+    "t": "DISMISSED"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "embedded/dismissed",
+   "input": {
+    "t": "well dismissed then"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "before/dismissed",
+   "input": {
+    "t": "ok dismissed"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "after/dismissed",
+   "input": {
+    "t": "dismissed now"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "full_stop/dismissed",
+   "input": {
+    "t": "dismissed."
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "addressed/dismissed",
+   "input": {
+    "t": "dismissed, jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "doubled_space/dismissed",
+   "input": {
+    "t": "dismissed"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "alone/stand down",
+   "input": {
+    "t": "stand down"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "padded/stand down",
+   "input": {
+    "t": "  stand down \n"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "capitalised/stand down",
+   "input": {
+    "t": "Stand down"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "upper/stand down",
+   "input": {
+    "t": "STAND DOWN"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "embedded/stand down",
+   "input": {
+    "t": "well stand down then"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "before/stand down",
+   "input": {
+    "t": "ok stand down"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "after/stand down",
+   "input": {
+    "t": "stand down now"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "full_stop/stand down",
+   "input": {
+    "t": "stand down."
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "addressed/stand down",
+   "input": {
+    "t": "stand down, jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "doubled_space/stand down",
+   "input": {
+    "t": "stand  down"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "alone/go to sleep",
+   "input": {
+    "t": "go to sleep"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "padded/go to sleep",
+   "input": {
+    "t": "  go to sleep \n"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "capitalised/go to sleep",
+   "input": {
+    "t": "Go to sleep"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "upper/go to sleep",
+   "input": {
+    "t": "GO TO SLEEP"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "embedded/go to sleep",
+   "input": {
+    "t": "well go to sleep then"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "before/go to sleep",
+   "input": {
+    "t": "ok go to sleep"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "after/go to sleep",
+   "input": {
+    "t": "go to sleep now"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "full_stop/go to sleep",
+   "input": {
+    "t": "go to sleep."
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "addressed/go to sleep",
+   "input": {
+    "t": "go to sleep, jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "doubled_space/go to sleep",
+   "input": {
+    "t": "go  to  sleep"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "alone/goodbye",
+   "input": {
+    "t": "goodbye"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "padded/goodbye",
+   "input": {
+    "t": "  goodbye \n"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "capitalised/goodbye",
+   "input": {
+    "t": "Goodbye"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "upper/goodbye",
+   "input": {
+    "t": "GOODBYE"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "embedded/goodbye",
+   "input": {
+    "t": "well goodbye then"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "before/goodbye",
+   "input": {
+    "t": "ok goodbye"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "after/goodbye",
+   "input": {
+    "t": "goodbye now"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "full_stop/goodbye",
+   "input": {
+    "t": "goodbye."
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "addressed/goodbye",
+   "input": {
+    "t": "goodbye, jarvis"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "doubled_space/goodbye",
+   "input": {
+    "t": "goodbye"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "alone/bye jarvis",
+   "input": {
+    "t": "bye jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "padded/bye jarvis",
+   "input": {
+    "t": "  bye jarvis \n"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "capitalised/bye jarvis",
+   "input": {
+    "t": "Bye jarvis"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "upper/bye jarvis",
+   "input": {
+    "t": "BYE JARVIS"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "embedded/bye jarvis",
+   "input": {
+    "t": "well bye jarvis then"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "before/bye jarvis",
+   "input": {
+    "t": "ok bye jarvis"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "after/bye jarvis",
+   "input": {
+    "t": "bye jarvis now"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "full_stop/bye jarvis",
+   "input": {
+    "t": "bye jarvis."
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "addressed/bye jarvis",
+   "input": {
+    "t": "bye jarvis, jarvis"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "doubled_space/bye jarvis",
+   "input": {
+    "t": "bye  jarvis"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "alone/thanks",
+   "input": {
+    "t": "thanks"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "padded/thanks",
+   "input": {
+    "t": "  thanks \n"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "capitalised/thanks",
+   "input": {
+    "t": "Thanks"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "upper/thanks",
+   "input": {
+    "t": "THANKS"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "embedded/thanks",
+   "input": {
+    "t": "well thanks then"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "before/thanks",
+   "input": {
+    "t": "ok thanks"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "after/thanks",
+   "input": {
+    "t": "thanks now"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "full_stop/thanks",
+   "input": {
+    "t": "thanks."
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "addressed/thanks",
+   "input": {
+    "t": "thanks, jarvis"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "doubled_space/thanks",
+   "input": {
+    "t": "thanks"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "alone/that is all",
+   "input": {
+    "t": "that is all"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "padded/that is all",
+   "input": {
+    "t": "  that is all \n"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "capitalised/that is all",
+   "input": {
+    "t": "That is all"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "upper/that is all",
+   "input": {
+    "t": "THAT IS ALL"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "embedded/that is all",
+   "input": {
+    "t": "well that is all then"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "before/that is all",
+   "input": {
+    "t": "ok that is all"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "after/that is all",
+   "input": {
+    "t": "that is all now"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "full_stop/that is all",
+   "input": {
+    "t": "that is all."
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "addressed/that is all",
+   "input": {
+    "t": "that is all, jarvis"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "doubled_space/that is all",
+   "input": {
+    "t": "that  is  all"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "none",
+   "input": {
+    "t": null
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "empty",
+   "input": {
+    "t": ""
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "spaces",
+   "input": {
+    "t": "   "
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "newline",
+   "input": {
+    "t": "\n"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "nbsp_padded",
+   "input": {
+    "t": " thanks "
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "ideographic_padded",
+   "input": {
+    "t": "　goodbye　"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "zwsp_prefix",
+   "input": {
+    "t": "​thanks"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "tab_inside",
+   "input": {
+    "t": "thank\tyou"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "curly_apostrophe",
+   "input": {
+    "t": "that’s all"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "thankyou",
+   "input": {
+    "t": "thankyou"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "bye",
+   "input": {
+    "t": "bye"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "thanks_bang",
+   "input": {
+    "t": "thanks!"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "goodbye_full_stop",
+   "input": {
+    "t": "goodbye."
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "goodbye_upper",
+   "input": {
+    "t": "Goodbye"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "thanks_jarvis_upper",
+   "input": {
+    "t": "Thanks JARVIS"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "thats_all_jarvis",
+   "input": {
+    "t": "that's all jarvis"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "not_dismissed",
+   "input": {
+    "t": "you are not dismissed"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "undismissed",
+   "input": {
+    "t": "undismissed"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "sleepy",
+   "input": {
+    "t": "go to sleepy mode"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "downstairs",
+   "input": {
+    "t": "stand downstairs"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "thanks_open",
+   "input": {
+    "t": "thanks, now open safari"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "thank_you_open",
+   "input": {
+    "t": "thank you, now open safari"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "thanks_jarvis_open",
+   "input": {
+    "t": "thanks jarvis open safari"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "thank_you_for",
+   "input": {
+    "t": "thank you for the help"
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "thanks_robin",
+   "input": {
+    "t": "thanks robin"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "that_is_all_for_now",
+   "input": {
+    "t": "that is all for now"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "is_that_all",
+   "input": {
+    "t": "is that all"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "bye_jarvis_upper",
+   "input": {
+    "t": "Bye Jarvis"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  },
+  {
+   "name": "goodbye_jarvis_full_stop",
+   "input": {
+    "t": "goodbye jarvis."
+   },
+   "expected": {
+    "dismiss": true
+   }
+  },
+  {
+   "name": "combining_acute",
+   "input": {
+    "t": "thankś"
+   },
+   "expected": {
+    "dismiss": false
+   }
+  }
+ ]
+}

@@ -91,6 +91,33 @@ struct PersonalityScheduleTests {
         #expect(entered.all == [Self.t0 + 120])
     }
 
+    /// A dismissal's distillation runs only while the schedule runs, in the background (the
+    /// call returns while it is still going), and stop() cancels one in flight.
+    @Test func conversationEndedDistillsOnlyWhileRunning() async throws {
+        let clock = ManualClock(Self.t0)
+        let sleeper = VirtualSleeper(clock: clock, budget: 0)
+        let entered = Passes(), cancelled = Passes()
+        let schedule = PersonalitySchedule(consolidate: {}, distill: {
+            entered.add(clock.now())
+            do {
+                try await Task.sleep(for: .seconds(60), clock: .suspending)
+            } catch {
+                cancelled.add(clock.now())
+            }
+        }, clock: clock, sleep: { try await sleeper.sleep($0) }, log: { _ in })
+
+        schedule.conversationEnded()                      // before start(): nothing
+        schedule.start()
+        schedule.conversationEnded()                      // returns at once
+        #expect(cancelled.all.isEmpty)
+        try await until("the distillation to start") { entered.all.count == 1 }
+        schedule.stop()
+        try await until("the distillation to see the cancellation") { cancelled.all.count == 1 }
+        schedule.conversationEnded()                      // after stop(): nothing
+        try await Task.sleep(for: .milliseconds(20))
+        #expect(entered.all.count == 1)
+    }
+
     /// Through CoreState: the first pass consolidates a due file (one writer call, one
     /// personality_consolidations bump); the later passes find it not due and call nothing.
     @Test func passesRunCoreStatesConsolidation() async throws {

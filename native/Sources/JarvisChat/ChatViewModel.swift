@@ -327,7 +327,7 @@ public final class ChatViewModel: ReplySink {
                 draft = ComposerDraft(text: sent.text + draft.text, pasted: sent.pasted || draft.pasted)
             }
             busy = outcome == .busy
-        case .confirmation(let reply), .fastPath(let reply), .reply(let reply):
+        case .confirmation(let reply), .fastPath(let reply), .dismissed(let reply), .reply(let reply):
             guard let turn, let index = messages.lastIndex(where: { $0.id == turn.id }) else { return }
             let text = ReplyText.finished(reply: reply, shown: turn.shownText)
             if text.isEmpty {

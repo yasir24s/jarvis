@@ -27,6 +27,8 @@ public enum TurnOutcome: Sendable, Equatable {
     case confirmation(String)
     /// The fast path answered.
     case fastPath(String)
+    /// A typed dismissal ended the conversation; this is JARVIS's answer to it.
+    case dismissed(String)
     /// The brain answered.
     case reply(String)
 }
@@ -44,9 +46,9 @@ public struct NoFastPath: FastPathRouting {
 }
 
 /// jarvis.py `handle_one` (plan: M02-M04 §3.5): one turn at a time across every channel.
-/// Each turn: trim (empty: nothing happens), then a pending confirmation, then the fast path,
-/// then the brain. The coordinator is the only place that builds an `InputPort`, so the model
-/// can never confirm its own action.
+/// Each turn: trim (empty: nothing happens), then a pending confirmation, then on the text
+/// channel a dismissal (P1), then the fast path, then the brain. The coordinator is the only
+/// place that builds an `InputPort`, so the model can never confirm its own action.
 public actor TurnCoordinator {
     private let brain: BrainRouter
     private let fastPath: any FastPathRouting
@@ -54,6 +56,7 @@ public actor TurnCoordinator {
     private let textPort: InputPort
     private let online: @Sendable () async -> Bool
     private let onTurnStart: (@Sendable (TurnContext) -> Void)?
+    private let onConversationEnded: (@Sendable () -> Void)?
     private var running = false
 
     /// - Parameters:
@@ -61,16 +64,20 @@ public actor TurnCoordinator {
     ///   - textAuthenticator: what a text-channel confirmation must pass (M4: LocalAuthentication).
     ///   - online: Python's `is_online()`, asked only when a turn reaches the brain.
     ///   - onTurnStart: sees each turn's context as it is made (tests, the smoke mode).
+    ///   - onConversationEnded: called after a dismissal's reply has gone to the sink. It must
+    ///     return at once (the app's starts the distillation in the background).
     public init(brain: BrainRouter, fastPath: any FastPathRouting = NoFastPath(),
                 confirmations: ConfirmationGate, textAuthenticator: any ConfirmAuthenticator,
                 online: @escaping @Sendable () async -> Bool,
-                onTurnStart: (@Sendable (TurnContext) -> Void)? = nil) {
+                onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
+                onConversationEnded: (@Sendable () -> Void)? = nil) {
         self.brain = brain
         self.fastPath = fastPath
         self.confirmations = confirmations
         self.textPort = .text(authenticator: textAuthenticator)
         self.online = online
         self.onTurnStart = onTurnStart
+        self.onConversationEnded = onConversationEnded
     }
 
     /// Runs one turn, or returns `.busy` at once if one is already running. A confirmation
@@ -96,6 +103,13 @@ public actor TurnCoordinator {
         if case .handled(let result) = await confirmations.consume(text, via: port, runIn: turn) {
             if !result.isEmpty { await sink.sentence(result) }
             return .confirmation(result)
+        }
+        // P1: a typed message that is a dismissal as a whole ends the conversation. Python's
+        // voice loop answers it without handle_one, so no brain call and no interaction count.
+        if input.channel == .text, Dismissal.isTextDismissal(text) {
+            await sink.sentence(Dismissal.reply)
+            onConversationEnded?()
+            return .dismissed(Dismissal.reply)
         }
         if let reply = await fastPath.route(text, turn: turn) {
             if !reply.isEmpty { await sink.sentence(reply) }
