@@ -8,6 +8,10 @@ struct ChatView: View {
     static let windowID = "chat"
 
     @Bindable var model: ChatViewModel
+    /// Hands the app this window's opener each time the window appears, so the Dock icon can
+    /// reopen it (D-43).
+    var onAppear: (OpenWindowAction) -> Void = { _ in }
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(spacing: 0) {
@@ -47,7 +51,7 @@ struct ChatView: View {
         }
         .frame(minWidth: 420, minHeight: 360)
         .onAppear {
-            AppDelegate.reassertAccessoryPolicy()
+            onAppear(openWindow)
         }
     }
 }

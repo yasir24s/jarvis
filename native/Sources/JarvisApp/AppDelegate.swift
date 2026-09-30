@@ -13,9 +13,10 @@ final class AppModel {
     var lockHolder = "—"
 }
 
-/// App lifecycle (plan: M00 §3.9, §3.5). Startup order: accessory policy → state root →
+/// App lifecycle (plan: M00 §3.9, §3.5; D-43). Startup order: regular policy → state root →
 /// logging → banner → policy read-back → lock → (from M1) subsystems. Nothing reads or writes
-/// state before the lock is held.
+/// state before the lock is held. Closing the chat window leaves JARVIS running; Quit (the app
+/// menu, the menu-bar item or Cmd-Q) stops the brain before the app exits.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = AppModel()
@@ -25,16 +26,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Built once the lock is held and kept for the app's life (plan: M02-M04 §3.5, §3.12).
     private var brain: BrainAssembly?
     private var sigterm: DispatchSourceSignal?
+    /// Opens the chat window. Set by the window each time it appears, for the Dock icon.
+    var openChat: (() -> Void)?
 
     func applicationWillFinishLaunching(_ notification: Notification) {
-        // Agent app from the first instant (LSUIElement also says so); main thread by isolation.
-        NSApplication.shared.setActivationPolicy(.accessory)
+        // A regular app with a Dock icon (D-43); main thread by isolation.
+        // M13's HUD is a non-activating NSPanel and must never change this policy.
+        NSApplication.shared.setActivationPolicy(.regular)
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Re-assert: Python's lesson (jarvis.py:5431-5433) is that a UI layer can flip the
-        // policy back to Regular after launch. M4/M13 re-assert after showing any window.
-        NSApplication.shared.setActivationPolicy(.accessory)
         installSIGTERMHandler()
 
         let paths: StatePaths
@@ -50,10 +51,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Log the policy only after reading it back — the log line is the evidence.
         let policy = NSApplication.shared.activationPolicy()
-        if policy == .accessory {
-            JarvisLog.log("activation policy: accessory")
+        if policy == .regular {
+            JarvisLog.log("activation policy: regular")
         } else {
-            JarvisLog.log("activation policy: \(Self.describe(policy)) (expected accessory)")
+            JarvisLog.log("activation policy: \(Self.describe(policy)) (expected regular)")
         }
 
         model.stateRoot = Self.abbreviate(paths.root)
@@ -77,6 +78,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .foreignProcess(let pids):
             exitHeld("python \(pids[0]), pre-patch")
         }
+    }
+
+    /// Closing the chat window leaves JARVIS running (D-43).
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
+    /// The Dock icon with the chat window closed opens it again (D-43). The window hands over
+    /// its opener the first time it appears; until then this is left to SwiftUI.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag {
+            openChat?()
+        }
+        return true
+    }
+
+    /// Quit stops the brain first: the MCP server closes its socket. The app exits once that
+    /// is done.
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let brain else { return .terminateNow }
+        self.brain = nil
+        Task { @MainActor in
+            await brain.stop()
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -139,16 +166,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { await TestConfirmation.stash(on: brain.confirmations) }
     }
     #endif
-
-    /// Python sets the policy again after its UI starts (jarvis.py `setActivationPolicy_(1)`
-    /// in the overlay setup), because a UI layer can flip it back to Regular. Called each time
-    /// the chat window appears.
-    static func reassertAccessoryPolicy() {
-        let policy = NSApplication.shared.activationPolicy()
-        guard policy != .accessory else { return }
-        NSApplication.shared.setActivationPolicy(.accessory)
-        JarvisLog.log("activation policy: \(describe(policy)) after the chat opened, set back to accessory")
-    }
 
     private func exitHeld(_ holder: String) -> Never {
         JarvisLog.log("Another JARVIS (\(holder)) holds .jarvis.lock — exiting.", category: .lock)
