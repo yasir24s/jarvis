@@ -375,7 +375,7 @@ public actor ClaudeDriver {
 
     /// Writes the stdin line and closes stdin, off the actor, so a child that never reads
     /// cannot block the turn. EPIPE from a child that already exited is ignored.
-    private static func write(_ line: String, to handle: FileHandle) {
+    static func write(_ line: String, to handle: FileHandle) {
         _ = fcntl(handle.fileDescriptor, F_SETNOSIGPIPE, 1)
         let data = Data(line.utf8)
         DispatchQueue.global(qos: .userInitiated).async {
@@ -387,7 +387,7 @@ public actor ClaudeDriver {
     /// Model output of any kind (content, a tool result, a result or a stop). Arriving before
     /// the init event it stops the child, so R1-R3 can never be skipped. Status, rate-limit,
     /// fallback and unknown lines carry no output and may come first.
-    private static func needsInit(_ event: ClaudeEvent) -> Bool {
+    static func needsInit(_ event: ClaudeEvent) -> Bool {
         switch event {
         case .messageStart, .textDelta, .blockText, .stopReason, .toolResult, .result:
             true
@@ -467,7 +467,7 @@ private struct TurnState {
 /// sequence. The stop sequence does not rely on SIGTERM being honoured: SIGTERM, then
 /// `grace`, then SIGKILL. The loop ends once claude itself has exited; the SIGKILL to its
 /// process group still follows the grace, for anything it started.
-private struct Watch {
+struct Watch {
     let grace: Duration
     var exit: ClaudeExit?
     var stdoutOpen = true

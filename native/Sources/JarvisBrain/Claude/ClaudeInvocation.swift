@@ -40,11 +40,39 @@ public struct ClaudeInvocation: Sendable, Equatable {
             a += ["--effort", config.effort]
         }
         a += ["--no-session-persistence", "--permission-prompts", "none"]
-        for arg in a where Self.forbiddenFlags.contains(where: { Py.eq(arg, $0) || Py.startsWith(arg, $0 + "=") }) {
-            throw .forbiddenFlag(arg)
-        }
+        try Self.refuseForbiddenFlags(a)
         self.executable = executable
         self.arguments = a
+    }
+
+    /// argv for a one-shot call with no tools and no MCP server (the persona writer): the
+    /// turn's flags in the turn's order without `--mcp-config` and `--allowedTools`, and one
+    /// turn. `--tools ""` and `--strict-mcp-config` stay, so neither a built-in tool nor any
+    /// other MCP configuration loads; the partial messages stay because R6's refusal stop
+    /// reason arrives in them.
+    public init(oneShot executable: URL, systemPrompt: String, config: ClaudeConfig) throws(ClaudeInvocationError) {
+        var a = ["-p", "--output-format", "stream-json", "--verbose", "--input-format", "stream-json",
+                 "--include-partial-messages",
+                 "--system-prompt", systemPrompt,
+                 "--tools", "",
+                 "--setting-sources=",
+                 "--strict-mcp-config",
+                 "--max-turns", "1",
+                 "--model", config.model]
+        if !config.effort.isEmpty {
+            a += ["--effort", config.effort]
+        }
+        a += ["--no-session-persistence", "--permission-prompts", "none"]
+        try Self.refuseForbiddenFlags(a)
+        self.executable = executable
+        self.arguments = a
+    }
+
+    /// Throws for any argument equal to a forbidden flag or starting with `<flag>=`.
+    private static func refuseForbiddenFlags(_ a: [String]) throws(ClaudeInvocationError) {
+        for arg in a where forbiddenFlags.contains(where: { Py.eq(arg, $0) || Py.startsWith(arg, $0 + "=") }) {
+            throw .forbiddenFlag(arg)
+        }
     }
 
     /// `<directory>/turn-<uuid>.mcp.json`, the uuid lowercased.
