@@ -200,6 +200,14 @@ Method: `plan/M00-foundation-and-M15-cutover.md` §3.10. Footprint = phys_footpr
 | Configuration | Py own | Py tree+helpers | Py daemons | Native own | Native tree+helpers | Native daemons | Py RSS | Native RSS | Sys delta Py / Native | Date |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Idle, listening for wake word | | | | | | | | | | |
-| Mid-conversation (Claude backend) | | | | | | | | | | |
+| Mid-conversation (Claude backend) | | | | not sampled | not sampled | none | | app 52,816 KB; claude 238,832 KB; relay 8,752 KB (medians; peaks 67,600 / 255,072 / 10,480) | | 2026-09-30 |
 | Offline fallback answering | | | | | | | | | | |
-| Text chat only, window open | | | | | | | | | | |
+| Text chat only, window open | | | | 42 (31 at launch) | 42 (no helper between turns) | none | | 19,904 KB | | 2026-09-30 |
+
+M4 A-14, 2026-09-30: debug build at 548ef3c on the 8 GB Mac14,7, real root, text chat only
+(voice off). Idle: five samples a second apart, after one Claude turn. Turn: 13 samples 0.5 s
+apart over a 7 s "what time is it" turn on the Claude backend. The footprint was not sampled
+during the turn, so that row gives RSS only. RSS runs below the footprint here because macOS
+compresses pages under memory pressure on this Mac, so compare footprints. The claude CLI and
+the relay exit with each turn: nothing stays resident between turns. Python JARVIS has not run
+since 2026-08-20, so its columns stay empty.
