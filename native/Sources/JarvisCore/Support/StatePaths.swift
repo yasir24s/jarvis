@@ -62,6 +62,11 @@ public struct StatePaths: Sendable, Equatable {
     public var logFile: URL { file("logs/jarvis.log") }             // LOG_FILE
     public var lockFile: URL { file(".jarvis.lock") }               // new in native
     public var jarvisPy: URL { file("jarvis.py") }                  // read by the research snapshot
+    public var memoryDir: URL {                                     // new in native (D-51)
+        root.appending(path: "memory", directoryHint: .isDirectory)
+    }
+    public var memoryArchive: URL { file(MemoryFile.archive.rawValue) } // new in native (D-51)
+    public var memoryFacts: URL { file(MemoryFile.facts.rawValue) }     // new in native (D-51)
 
     private static let appBundleID = "com.jarvis.assistant"
 

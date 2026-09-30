@@ -27,6 +27,13 @@ public enum StateFile: String, CaseIterable, Sendable {
     }
 }
 
+/// One native-only memory file (D-51). Python never reads or writes these, and `memory/` is
+/// git-ignored and in the pre-commit denylist: it holds the user's own conversations.
+public enum MemoryFile: String, CaseIterable, Sendable {
+    case archive = "memory/archive.jsonl"      // append-only, one JSON object per message
+    case facts = "memory/facts.json"           // compiled facts, written atomically
+}
+
 public enum StateStoreError: Error, Sendable, Equatable {
     case realStateNeedsLease
     case leaseLost
@@ -109,6 +116,64 @@ public final class StateStore: Sendable {
             return true
         } catch {
             JarvisLog.log("state: \(f.rawValue) save failed: \(error)", category: .state)
+            return false
+        }
+    }
+
+    // MARK: - Native-only memory files (D-51)
+
+    /// `root/memory/<name>`.
+    public func path(_ f: MemoryFile) -> String {
+        StateStore.join(root, f.rawValue)
+    }
+
+    /// The file's bytes; nil if it is missing or unreadable.
+    public func read(_ f: MemoryFile) -> Data? {
+        AtomicFile.read(path(f))
+    }
+
+    /// Appends `line + "\n"` in one O_APPEND write, creating `memory/` (0o700) first. False,
+    /// logged by file name only, when the lease is needed or given and not held, or on failure.
+    @discardableResult
+    public func appendLine(_ line: String, to f: MemoryFile) -> Bool {
+        guard memoryWriteAllowed(f) else { return false }
+        do {
+            try AtomicFile.appendLine(line, to: path(f))
+            return true
+        } catch {
+            JarvisLog.log("state: \(f.rawValue) append failed: \(error)", category: .state)
+            return false
+        }
+    }
+
+    /// Writes `data` atomically (temp file, fsync, rename), as `save` does, under the same
+    /// lease rule. False, logged by file name only, on refusal or failure.
+    @discardableResult
+    public func write(_ data: Data, to f: MemoryFile) -> Bool {
+        guard memoryWriteAllowed(f) else { return false }
+        do {
+            try AtomicFile.write(data, to: path(f))
+            return true
+        } catch {
+            JarvisLog.log("state: \(f.rawValue) write failed: \(error)", category: .state)
+            return false
+        }
+    }
+
+    /// The lease check `save` makes, then `memory/` created owner-only. Nothing under `root`
+    /// is touched when the lease is missing.
+    private func memoryWriteAllowed(_ f: MemoryFile) -> Bool {
+        if (needsLease || lease != nil) && lease?.isHeld != true {
+            JarvisLog.log("state: \(f.rawValue) not written: \(StateStoreError.leaseLost)", category: .state)
+            return false
+        }
+        let dir = StateStore.join(root, "memory")
+        do {
+            try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true,
+                                                    attributes: [.posixPermissions: 0o700])
+            return true
+        } catch {
+            JarvisLog.log("state: memory/ not created: \(error)", category: .state)
             return false
         }
     }

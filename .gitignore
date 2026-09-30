@@ -15,6 +15,9 @@ alarms.json
 history.json
 corrections.json
 logs/
+# Native long-term memory (D-51): the user's conversations and facts. Anchored, as
+# /research/ is: with core.ignorecase=true an unanchored memory/ also matches native/**/Memory/
+/memory/
 # Signing material — never commit (keychain password + identity hash)
 .signing/
 *.boot.log
