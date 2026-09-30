@@ -28,7 +28,9 @@ enum SchedulerFixtures {
 /// Virtual time for the scheduler: a sleep advances the ManualClock by what it asks for and
 /// returns at once, so an hour passes in microseconds. After `budget` sleeps have returned,
 /// the next one parks until its task is cancelled (the scheduler's stop()), for at most a
-/// minute of real time: no scheduler loop outlives its test for longer than that.
+/// minute of awake time: no scheduler loop outlives its test for longer than that. The bound
+/// is on the SuspendingClock. The ContinuousClock keeps counting while the Mac sleeps, so a
+/// closed lid could expire the bound before the test had run the stop() it was waiting on.
 final class VirtualSleeper: Sendable {
     private struct State {
         var asked: [Duration] = []
@@ -63,7 +65,7 @@ final class VirtualSleeper: Sendable {
             state.withLock { $0.parked = true }
             defer { state.withLock { $0.released = true } }
             do {
-                try await Task.sleep(for: .seconds(60))
+                try await Task.sleep(for: .seconds(60), clock: .suspending)
             } catch {
                 state.withLock { $0.cancelled = true }
                 throw error
@@ -109,13 +111,14 @@ func runUntilParked(_ scheduler: ResearchScheduler, _ sleeper: VirtualSleeper) a
     #expect(sleeper.sawCancellation, "stop() ended the parked sleep")
 }
 
-/// Polls `done` (1 ms apart, real time) until it holds; a test failure after `seconds`, never
-/// a hang. Every wait on the scheduler in these suites goes through here.
+/// Polls `done` (1 ms apart) until it holds; a test failure after `seconds` of awake time
+/// (SuspendingClock, as VirtualSleeper's bound), never a hang. Every wait on the scheduler in
+/// these suites goes through here.
 @MainActor
 func until(_ what: String, within seconds: Int64 = 60, _ done: () -> Bool) async throws {
-    let deadline = ContinuousClock.now.advanced(by: .seconds(seconds))
+    let deadline = SuspendingClock.now.advanced(by: .seconds(seconds))
     while !done() {
-        guard ContinuousClock.now < deadline else {
+        guard SuspendingClock.now < deadline else {
             Issue.record("timed out after \(seconds) s waiting for \(what)")
             throw CancellationError()
         }
