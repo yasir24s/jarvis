@@ -26,6 +26,8 @@ public actor MCPTurnRegistry: MCPTurnBridge {
         let files: MCPTurnFiles
         var claudePID: Int32?
         var bound = false
+        /// The bound connection and its serve task, which `closeTurn` ends.
+        var serving: MCPServeHandle?
     }
 
     private var entries: [UUID: Entry] = [:]
@@ -75,10 +77,13 @@ public actor MCPTurnRegistry: MCPTurnBridge {
         entries[turnID]?.claudePID = pid
     }
 
+    /// Forgets the token and deletes both files. The turn's bound connection is closed and its
+    /// serve task cancelled (Codex review finding 3); the TurnContext itself stays open.
     public func closeTurn(_ turnID: UUID) async {
         guard let entry = entries.removeValue(forKey: turnID) else { return }
         unlink(entry.files.tokenPath.path(percentEncoded: false))
         unlink(entry.files.configPath.path(percentEncoded: false))
+        entry.serving?.revoke()
     }
 
     /// True while the turn is registered: after `openTurn`, before `closeTurn`.
@@ -99,8 +104,9 @@ public actor MCPTurnRegistry: MCPTurnBridge {
 
     /// The token half of the handshake: the token must match an open turn (compared in constant
     /// time against every entry), the relay's parent must be that turn's claude, and no earlier
-    /// connection may have bound it. Only a connection that passes binds the turn.
-    func claim(token presented: [UInt8], parentPID: pid_t?) -> Claim {
+    /// connection may have bound it. Only a connection that passes binds the turn, and the turn
+    /// keeps its `serving` handle for `closeTurn`.
+    func claim(token presented: [UInt8], parentPID: pid_t?, serving: MCPServeHandle) -> Claim {
         var match: UUID?
         for (id, entry) in entries where Self.constantTimeEqual(presented, entry.token) {
             match = id
@@ -112,6 +118,7 @@ public actor MCPTurnRegistry: MCPTurnBridge {
         }
         guard !entry.bound else { return .rejected("second connection for turn \(id)") }
         entry.bound = true
+        entry.serving = serving
         entries[id] = entry
         return .bound(Binding(turn: entry.turn, turnID: id))
     }

@@ -212,6 +212,38 @@ struct MCPHarness {
     }
 }
 
+/// Opens once; every waiter before and after goes on.
+actor TestGate {
+    private var isOpen = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func wait() async {
+        if isOpen { return }
+        await withCheckedContinuation { waiters.append($0) }
+    }
+
+    func open() {
+        isOpen = true
+        for waiter in waiters { waiter.resume() }
+        waiters.removeAll()
+    }
+}
+
+/// An inert tool that holds its call until the test opens `release`, so the serve loop sits
+/// inside one tools/call. `entered` gets a value as each call starts.
+struct ParkedTool: ToolImpl {
+    static let name = "park"
+    static let schema = ToolSchema(name: "park")
+    let entered: AsyncStream<Void>.Continuation
+    let release: TestGate
+
+    func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome {
+        entered.yield()
+        await release.wait()
+        return .text("done")
+    }
+}
+
 /// Parses a JSON line, or fails the test.
 func json(_ line: String?) throws -> JSONValue {
     let line = try #require(line)

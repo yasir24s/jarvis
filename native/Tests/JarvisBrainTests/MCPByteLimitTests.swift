@@ -13,38 +13,6 @@ import Testing
 struct MCPByteLimitTests {
     static let small = MCPServer.Limits(lineBytes: 1024, inboundBytes: 16 << 10, outboundBytes: 64 << 10)
 
-    /// Opens once; every waiter before and after goes on.
-    actor Gate {
-        private var isOpen = false
-        private var waiters: [CheckedContinuation<Void, Never>] = []
-
-        func wait() async {
-            if isOpen { return }
-            await withCheckedContinuation { waiters.append($0) }
-        }
-
-        func open() {
-            isOpen = true
-            for waiter in waiters { waiter.resume() }
-            waiters.removeAll()
-        }
-    }
-
-    /// An inert tool that holds its call until the test opens `release`, so the serve loop sits
-    /// inside one tools/call.
-    struct Parked: ToolImpl {
-        static let name = "park"
-        static let schema = ToolSchema(name: "park")
-        let entered: AsyncStream<Void>.Continuation
-        let release: Gate
-
-        func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome {
-            entered.yield()
-            await release.wait()
-            return .text("done")
-        }
-    }
-
     @Test func aLineOverTheCapDisconnectsWithALogLine() async throws {
         let h = try MCPHarness(limits: Self.small)
         let (_, _, token) = try await h.openTurn()
@@ -76,10 +44,10 @@ struct MCPByteLimitTests {
 
     @Test func inputPiledUpBehindAParkedCallDisconnectsAtTheBudget() async throws {
         let gateway = ToolGateway(confirmationGate: ConfirmationGate())
-        let release = Gate()
+        let release = TestGate()
         let (entered, enteredContinuation) = AsyncStream.makeStream(of: Void.self)
-        await gateway.register(Parked(entered: enteredContinuation, release: release))
-        let h = try MCPHarness(tools: [Parked.schema], gateway: gateway, limits: Self.small)
+        await gateway.register(ParkedTool(entered: enteredContinuation, release: release))
+        let h = try MCPHarness(tools: [ParkedTool.schema], gateway: gateway, limits: Self.small)
         let (_, _, token) = try await h.openTurn()
         let end = try await h.bound(token: token)
         end.send(#"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"park","arguments":{}}}"# + "\n")

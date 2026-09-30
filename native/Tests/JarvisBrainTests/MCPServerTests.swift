@@ -197,19 +197,44 @@ struct MCPServerTests {
         await h.remove()
     }
 
-    @Test func requestsAfterCloseTurnAreTurnClosed() async throws {
+    /// Codex review finding 3: closeTurn closes the turn's bound connection, so an idle relay does
+    /// not outlive its turn. A request sent after it gets no reply and runs nothing.
+    @Test func closeTurnDropsTheIdleBoundConnection() async throws {
         let h = try MCPHarness()
         let (turn, files, token) = try await h.openTurn()
         let end = try await h.bound(token: token)
         end.send(#"{"jsonrpc":"2.0","id":1,"method":"ping"}"# + "\n")
         #expect(try json(await end.line()).objectValue?["result"] == .object(JSONObject()))
         await h.registry.closeTurn(files.turnID)
+        #expect(await end.closed(), "the bound connection outlived its turn")
+        #expect(await h.logs.waitFor("mcp: relay closed: turn \(files.turnID) closed"))
         #expect(await turn.isOpen)   // closeTurn ends the MCP side only
         end.send(#"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_time","arguments":{}}}"# + "\n")
-        let reply = try json(await end.line())
-        #expect(reply.objectValue?["error"]?.objectValue?["code"] == .int(-32000))
-        #expect(reply.objectValue?["error"]?.objectValue?["message"] == .string("Turn closed"))
+        #expect(await end.line(seconds: 0.3) == nil)
         #expect(await turn.summary().toolRuns.isEmpty)
+        end.close()
+        await h.remove()
+    }
+
+    /// The same while a call is parked in its tool: the connection closes at closeTurn, before the
+    /// call returns, and the call's reply goes nowhere.
+    @Test func closeTurnClosesTheConnectionUnderAParkedCall() async throws {
+        let gateway = ToolGateway(confirmationGate: ConfirmationGate())
+        let release = TestGate()
+        let (entered, enteredContinuation) = AsyncStream.makeStream(of: Void.self)
+        await gateway.register(ParkedTool(entered: enteredContinuation, release: release))
+        let h = try MCPHarness(tools: [ParkedTool.schema], gateway: gateway)
+        let (turn, files, token) = try await h.openTurn()
+        let end = try await h.bound(token: token)
+        end.send(#"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"park","arguments":{}}}"# + "\n")
+        var calls = entered.makeAsyncIterator()
+        _ = await calls.next()
+        await h.registry.closeTurn(files.turnID)
+        #expect(await end.closed(), "the connection outlived its turn while a call was parked")
+        await release.open()
+        #expect(await h.logs.waitFor("mcp: relay closed: turn \(files.turnID) closed"))
+        #expect(await end.line(seconds: 0.1) == nil, "the parked call's reply was delivered")
+        #expect(await turn.isOpen)
         end.close()
         await h.remove()
     }

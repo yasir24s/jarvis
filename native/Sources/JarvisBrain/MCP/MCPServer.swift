@@ -120,7 +120,8 @@ public actor MCPServer {
                     admission.discard(ticket)
                     continue
                 }
-                Task { await self.serve(ticket) }
+                let handle = MCPServeHandle()
+                handle.attach(Task { await self.serve(ticket, handle) })
             }
         }
         log("mcp: listening on \(socketPath)")
@@ -151,16 +152,21 @@ public actor MCPServer {
             log(Self.refusal(decision))
             return
         }
-        await serve(ticket)
+        // Its own task, so that closeTurn can cancel it; cancelling the caller cancels it too.
+        let handle = MCPServeHandle()
+        let task = Task { await self.serve(ticket, handle) }
+        handle.attach(task)
+        await withTaskCancellationHandler { await task.value } onCancel: { task.cancel() }
     }
 
     /// Serves an admitted descriptor, once claimed. Nothing to claim means `stop()` ran first
-    /// and has closed it.
-    private func serve(_ ticket: MCPAdmission.Ticket) async {
+    /// and has closed it. `handle` is what closeTurn revokes once the connection is bound.
+    private func serve(_ ticket: MCPAdmission.Ticket, _ handle: MCPServeHandle) async {
         guard let fd = admission.claim(ticket) else { return }
         let peer = MCPPeer(connection: fd)
         let connection = MCPConnection(fd: fd, queue: queue, handshakeWindow: Self.handshakeWindow,
                                        inboundLimit: limits.inboundBytes, outboundLimit: limits.outboundBytes)
+        handle.attach(connection)
         let key = nextConnection
         nextConnection += 1
         connections[key] = connection
@@ -179,6 +185,7 @@ public actor MCPServer {
         var lines = LineBuffer()
         var bound: MCPTurnRegistry.Binding?
         for await event in connection.events {
+            if handle.isRevoked { break }
             if let reason = connection.overrun {
                 drop(connection, reason)
                 return
@@ -198,6 +205,7 @@ public actor MCPServer {
                 lines.append(data)
                 while true {
                     if let binding = bound {
+                        if handle.isRevoked { break }
                         if let reason = connection.overrun {
                             drop(connection, reason)
                             return
@@ -227,7 +235,7 @@ public actor MCPServer {
                         reject(connection, "handshake line over \(Self.handshakeMaxBytes) bytes")
                         return
                     }
-                    switch await handshake(line, peer: peer) {
+                    switch await handshake(line, peer: peer, serving: handle) {
                     case .rejected(let reason):
                         reject(connection, reason)
                         return
@@ -238,6 +246,11 @@ public actor MCPServer {
                     }
                 }
             }
+        }
+        // Only a revoked binding or a cancelled serve task gets here.
+        connection.abort()
+        if let binding = bound, handle.isRevoked {
+            log("mcp: relay closed: turn \(binding.turnID) closed")
         }
     }
 
@@ -256,13 +269,14 @@ public actor MCPServer {
     }
 
     /// `{"jarvis_relay":1,"token":"<hex>"}` naming an open turn whose claude is the peer's parent.
-    private func handshake(_ line: [UInt8], peer: MCPPeer) async -> MCPTurnRegistry.Claim {
+    private func handshake(_ line: [UInt8], peer: MCPPeer,
+                           serving: MCPServeHandle) async -> MCPTurnRegistry.Claim {
         guard let hello = (try? PyJSON.loads(Data(line)))?.objectValue,
               hello["jarvis_relay"] == .int(1),
               let token = hello["token"]?.stringValue else {
             return .rejected("malformed handshake line")
         }
-        let claim = await registry.claim(token: Array(token.utf8), parentPID: peer.parentPID)
+        let claim = await registry.claim(token: Array(token.utf8), parentPID: peer.parentPID, serving: serving)
         if case .bound(let binding) = claim, !(await binding.turn.isOpen) {
             return .rejected("turn \(binding.turnID) is closed")
         }
