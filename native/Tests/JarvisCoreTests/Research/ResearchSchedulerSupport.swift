@@ -27,10 +27,11 @@ enum SchedulerFixtures {
 
 /// Virtual time for the scheduler: a sleep advances the ManualClock by what it asks for and
 /// returns at once, so an hour passes in microseconds. After `budget` sleeps have returned,
-/// the next one parks until its task is cancelled (the scheduler's stop()), for at most a
-/// minute of awake time: no scheduler loop outlives its test for longer than that. The bound
-/// is on the SuspendingClock. The ContinuousClock keeps counting while the Mac sleeps, so a
-/// closed lid could expire the bound before the test had run the stop() it was waiting on.
+/// the next one parks until its task is cancelled (the scheduler's stop()). The park has no
+/// time limit of its own: a timer there raced the test's stop(), and lost both to a sleeping
+/// Mac (a ContinuousClock bound) and, on the suspending clock, to a load average near 37.
+/// `until()` bounds the test instead. If stop() never cancels, the wait for `released` fails
+/// the test, and the parked task idles until the test process exits.
 final class VirtualSleeper: Sendable {
     private struct State {
         var asked: [Duration] = []
@@ -65,12 +66,12 @@ final class VirtualSleeper: Sendable {
             state.withLock { $0.parked = true }
             defer { state.withLock { $0.released = true } }
             do {
-                try await Task.sleep(for: .seconds(60), clock: .suspending)
+                // Only cancellation ends this: Task.sleep throws at once when stop() cancels.
+                while true { try await Task.sleep(for: .milliseconds(10)) }
             } catch {
                 state.withLock { $0.cancelled = true }
                 throw error
             }
-            throw CancellationError()
         }
         try Task.checkCancellation()
         clock.advance(Double(d.components.seconds) + Double(d.components.attoseconds) / 1e18)
