@@ -27,11 +27,17 @@ struct ConfirmationCardTests {
 
     @Test("a stashed confirmation shows on the card with its description and 25 s to go")
     func cardShowsThePendingConfirmation() async throws {
+        // The gate's deadline is on the continuous clock, which counts through system sleep, so
+        // the check brackets the stash instead of reading the clock after it.
+        let before = ContinuousClock.now
         let (model, gate, _) = try await Self.rig(FakeTextAuthenticator(answer: true))
+        let after = ContinuousClock.now
         let pending = try #require(model.pending)
         #expect(pending.desc == Self.desc)
         #expect(await gate.pending == pending)
-        #expect(TextConfirmation.secondsLeft(until: pending.deadline, now: .now) == 25)
+        #expect(before.advanced(by: .seconds(25)) <= pending.deadline)
+        #expect(pending.deadline <= after.advanced(by: .seconds(25)))
+        #expect(TextConfirmation.secondsLeft(until: pending.deadline, now: pending.deadline.advanced(by: .seconds(-25))) == 25)
     }
 
     @Test("the countdown rounds up and stops at 0")

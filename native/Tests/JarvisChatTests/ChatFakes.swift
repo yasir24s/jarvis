@@ -169,12 +169,13 @@ func confirmingCoordinator(_ gate: ConfirmationGate, authenticator: any TextConf
     }
 }
 
-/// Waits a millisecond at a time, for 2 s at most, until `condition` holds.
+/// Waits a millisecond at a time, 2000 times at most, until `condition` holds. The sleeps are
+/// on the suspending clock, so a Mac asleep with its lid closed does not use the bound up.
 @MainActor
 func eventually(_ condition: () -> Bool) async -> Bool {
     for _ in 0..<2000 {
         if condition() { return true }
-        try? await Task.sleep(for: .milliseconds(1))
+        try? await Task.sleep(for: .milliseconds(1), clock: .suspending)
     }
     return condition()
 }
