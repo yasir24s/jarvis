@@ -470,6 +470,21 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
   text. It now says JARVIS stays exactly as the persona describes: one or two crisp sentences
   by default, longer and with light Markdown only when the user asks for detail or the answer
   needs it. The voice prompt is unchanged and byte-identical to Python's.
+- **D-50. The self-updating personality comes first** (user, 2026-09-30). Python updates
+  `personality.json` four ways; native ran only the first (learning from the user's own words).
+  P1 adds the rest:
+  - `personality_note` and `personality_rewrite` get bodies now. They are exempt from D-44:
+    they change only JARVIS's own personality file, and `TaintPolicy` already blocks both in a
+    tainted turn.
+  - The consolidation pass runs on Python's proactive-loop schedule (120 s after start, then
+    hourly, with Python's 10-note, 7-day rule).
+  - A conversation ends when the user dismisses JARVIS ("that's all, JARVIS"), spoken or
+    typed. He replies "Always a pleasure, sir." and distils the conversation into a note.
+    Typed dismissals must be the whole message, so "thanks, now open Safari" still reaches
+    the brain.
+  - The on-device model and Claude write the notes together: the local model drafts, Claude
+    improves the draft when it is available, and the result must pass the same validator.
+    Everything is saved on the Mac.
 
 ## Open user decisions
 
