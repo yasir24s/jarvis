@@ -99,8 +99,8 @@ private struct ConfirmationCard: View {
 }
 
 /// One transcript row. User text and streaming text are plain; a finished assistant row is
-/// markdown. An assistant row with no text yet shows a spinner. A system row is the app's
-/// own note, small and centred.
+/// markdown. A row fed by a retracted message (R6) is plain and struck through. An assistant
+/// row with no text yet shows a spinner. A system row is the app's own note, small and centred.
 private struct MessageRow: View {
     let message: ChatMessage
 
@@ -113,7 +113,11 @@ private struct MessageRow: View {
                 .frame(maxWidth: .infinity, alignment: .trailing)
         case .assistant:
             Group {
-                if message.rendersMarkdown {
+                if message.retracted {
+                    Text(verbatim: message.text)
+                        .strikethrough()
+                        .foregroundStyle(.secondary)
+                } else if message.rendersMarkdown {
                     MarkdownText(text: message.text)
                 } else if message.text.isEmpty {
                     ProgressView()

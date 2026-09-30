@@ -172,6 +172,25 @@ public final class ChatViewModel: ReplySink {
         }
     }
 
+    /// R6 (plan §3.6): the model retracted a message after a refusal. `ReplySink` carries no
+    /// message boundaries, so everything the live row has shown since the turn began, or since
+    /// the last retraction, is taken as that message's: it stays as a finished row, struck
+    /// through, and what follows streams into a new live row. Emitted sentences still stand,
+    /// since the turn's reply, which includes them, finishes the new row. A retraction with
+    /// nothing shown changes nothing.
+    public func retracted(messageID: String) async {
+        guard let turn = live, let index = messages.lastIndex(where: { $0.id == turn.id }) else { return }
+        let shown = Py.strip(turn.shownText)
+        guard !shown.isEmpty else { return }
+        turn.flush?.cancel()
+        messages[index].text = shown
+        messages[index].phase = .finished
+        messages[index].retracted = true
+        let next = ChatMessage(role: .assistant, text: "", phase: .streaming)
+        messages.append(next)
+        live = LiveReply(id: next.id, userID: turn.userID, turn: turn.turn, coalescer: DeltaCoalescer(minimumGap: minimumGap))
+    }
+
     public func sentence(_ text: String) async {
         guard var turn = live else { return }
         turn.sentences.append(text)

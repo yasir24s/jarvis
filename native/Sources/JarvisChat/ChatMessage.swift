@@ -22,16 +22,21 @@ public struct ChatMessage: Identifiable, Sendable, Equatable {
     public let role: Role
     public internal(set) var text: String
     public internal(set) var phase: Phase
+    /// An assistant row fed by a message the model retracted after a refusal (R6): it is shown
+    /// struck through, as plain text.
+    public internal(set) var retracted: Bool
 
-    public init(id: UUID = UUID(), role: Role, text: String, phase: Phase) {
+    public init(id: UUID = UUID(), role: Role, text: String, phase: Phase, retracted: Bool = false) {
         self.id = id
         self.role = role
         self.text = text
         self.phase = phase
+        self.retracted = retracted
     }
 
-    /// Only finished assistant rows are markdown. User text and streaming text stay plain.
+    /// Only finished assistant rows are markdown. User text, streaming text and retracted rows
+    /// stay plain.
     public var rendersMarkdown: Bool {
-        role == .assistant && phase == .finished
+        role == .assistant && phase == .finished && !retracted
     }
 }

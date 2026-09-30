@@ -179,7 +179,7 @@ struct ChatViewModelTests {
         #expect(!model.responding)
     }
 
-    @Test("Claude's nil path: a retracted message, then the local model's reply, leaves only the reply")
+    @Test("Claude's nil path: the retracted message's row is struck through, then the local model's reply follows")
     func retractedClaudeThenLocalReply() async throws {
         let fake = FakeCoordinator { _, sink in
             await sink.delta("I can't help with")
@@ -191,8 +191,10 @@ struct ChatViewModelTests {
         let model = ChatViewModel(submitter: fake, minimumGap: .zero)
         model.draft.text = "what time is it"
         await model.send()?.value
-        #expect(model.messages.map(\.text) == ["what time is it", "It is three o'clock, sir."])
+        #expect(model.messages.map(\.text) == ["what time is it", "I can't help with", "It is three o'clock, sir."])
+        #expect(model.messages.map(\.retracted) == [false, true, false])
         #expect(model.messages.allSatisfy { $0.phase == .finished })
+        #expect(!model.messages[1].rendersMarkdown)
     }
 
     @Test("a turn that returns nothing keeps the user row and leaves no empty assistant row")
