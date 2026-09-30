@@ -21,15 +21,69 @@ struct ToolGatewayTests {
         #expect(summary.dataSources == Set(DataSource.allCases))
     }
 
+    // X-1: the run_command pre-guard uses ShellPolicy.strictVerdict, so a chain whose second
+    // sudo is not allowlisted is blocked even though Python (and the M2 default) only confirm it.
     @Test
-    func gatewayUsesPythonExactShellVerdicts() async {
+    func gatewayBlocksChainedDisallowedSudo() async {
+        let logs = RecordingLog()
+        let gateway = ToolGateway(confirmationGate: ConfirmationGate(), log: logs.sink)
+        await gateway.register(CommandTool())
+        let turn = TurnContext(channel: .voice)
+        let cmd = "sudo pmset -g; sudo killall Finder"
+        let result = await gateway.call("run_command", Self.args(("command", .string(cmd))),
+                                        turn: turn, origin: .model(.local))
+        #expect(result.text == GuardStrings.sudoNotAllowed)
+        #expect(result.record.outcome == ToolRunRecord.Outcome.blockedGuard)
+        #expect(logs.all == ["BLOCKED command: \(cmd)"])
+    }
+
+    // X-1: a dangerous command hidden in a substitution inside double quotes is blocked; the
+    // M2/Python whole-line classifier only confirms it (\brm\b). Native segments the $().
+    @Test
+    func gatewayBlocksDangerousSubstitution() async {
         let gateway = ToolGateway(confirmationGate: ConfirmationGate())
         await gateway.register(CommandTool())
         let turn = TurnContext(channel: .voice)
-        let result = await gateway.call("run_command", Self.args(("command", .string("sudo pmset -g; sudo killall Finder"))),
+        let result = await gateway.call("run_command", Self.args(("command", .string(#"foo "$(rm -rf /)""#))),
                                         turn: turn, origin: .model(.local))
-        #expect(result.text == "That will run: sudo pmset -g; sudo killall Finder, sir — say 'confirm' to proceed.")
+        #expect(result.text == GuardStrings.systemDamaging)
+        #expect(result.record.outcome == ToolRunRecord.Outcome.blockedGuard)
+    }
+
+    // X-4: a Keychain secret read is blocked; Python classifies it ok.
+    @Test
+    func gatewayBlocksKeychainSecretRead() async {
+        let gateway = ToolGateway(confirmationGate: ConfirmationGate())
+        await gateway.register(CommandTool())
+        let turn = TurnContext(channel: .voice)
+        let result = await gateway.call("run_command", Self.args(("command", .string("security find-generic-password -s jarvis"))),
+                                        turn: turn, origin: .model(.local))
+        #expect(result.text == GuardStrings.systemDamaging)
+        #expect(result.record.outcome == ToolRunRecord.Outcome.blockedGuard)
+    }
+
+    // An allowlisted single sudo still only confirms (the strict policy does not over-block it).
+    @Test
+    func gatewayStillConfirmsAllowlistedSudo() async {
+        let gateway = ToolGateway(confirmationGate: ConfirmationGate())
+        await gateway.register(CommandTool())
+        let turn = TurnContext(channel: .voice)
+        let result = await gateway.call("run_command", Self.args(("command", .string("sudo pmset -g"))),
+                                        turn: turn, origin: .model(.local))
+        #expect(result.text == "That will run: sudo pmset -g, sir — say 'confirm' to proceed.")
         #expect(result.record.outcome == ToolRunRecord.Outcome.gated)
+    }
+
+    // A benign chain stays ok and reaches the (test) body.
+    @Test
+    func gatewayRunsBenignChain() async {
+        let gateway = ToolGateway(confirmationGate: ConfirmationGate())
+        await gateway.register(CommandTool())
+        let turn = TurnContext(channel: .voice)
+        let result = await gateway.call("run_command", Self.args(("command", .string("echo hi && ls -la"))),
+                                        turn: turn, origin: .model(.local))
+        #expect(result.text == "ran")
+        #expect(result.record.outcome == ToolRunRecord.Outcome.ran)
     }
 
     @Test

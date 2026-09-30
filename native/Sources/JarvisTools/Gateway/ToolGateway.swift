@@ -82,14 +82,16 @@ public actor ToolGateway {
         var verified: VerifiedShellCommand?
         if name == "run_command" {
             let command = args["command"]?.stringValue ?? ""
-            let tier = PyShellRisk.classify(command)
-            let verdict = ShellVerdict(tier: tier, pythonTier: tier,
-                                       reasons: tier == .ok ? [] : ["python:\(tier.rawValue)"],
-                                       isSudo: PyShellRisk.containsSudo(command))
-            switch tier {
+            let verdict = ShellPolicy.strictVerdict(command, sudo: .python)
+            switch verdict.tier {
             case .block:
                 log("BLOCKED command: \(Py.prefix(command, 120))")
-                let text = PyShellRisk.containsSudo(command) ? GuardStrings.sudoNotAllowed : GuardStrings.systemDamaging
+                // Preserve Python's refusal when it already blocks. New parse failures
+                // fail closed even if the line also contains an unallowlisted sudo.
+                let sudoBlocked = verdict.pythonTier == .block ? verdict.isSudo
+                    : !verdict.reasons.contains(where: { $0.hasPrefix("parse:") })
+                        && verdict.reasons.contains("sudo-not-allowlisted")
+                let text = sudoBlocked ? GuardStrings.sudoNotAllowed : GuardStrings.systemDamaging
                 return await result(text, name: name, origin: origin, outcome: .blockedGuard,
                                     error: false, turn: turn)
             case .confirm:

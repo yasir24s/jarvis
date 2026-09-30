@@ -25,8 +25,8 @@ public enum ShellPolicy {
                             isSudo: PyShellRisk.containsSudo(cmd))
     }
 
-    /// Deferred native hardening: kept available for the later gated milestone, but not
-    /// exposed by the M2 default because M2's guard must be Python-exact.
+    /// M5 X-1/X-4 gateway policy. The M2 `verdict` stays Python-exact; this policy can
+    /// only raise its tier, using the Python sudo allowlist unless explicitly supplied.
     public static func strictVerdict(_ cmd: String, sudo allowlist: SudoAllowlist = .python) -> ShellVerdict {
         let pythonTier = PyShellRisk.classify(cmd)
         var tier = pythonTier

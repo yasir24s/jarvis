@@ -14,22 +14,27 @@ public enum ShellParseError: Error, Sendable, Equatable {
     case unbalancedQuote
     case unbalancedSubstitution
     case tooDeep
+    case danglingEscape
 }
 
 public enum ShellSegmenter {
     public static func segments(_ line: String) -> Result<[ShellSegment], ShellParseError> {
-        parse(line, depth: 0)
+        var index = 0
+        do { return .success(try parse(Array(line), index: &index, depth: 0, closing: nil)) }
+        catch let error as ShellParseError { return .failure(error) }
+        catch { return .failure(.unbalancedSubstitution) }
     }
 
-    private static func parse(_ line: String, depth: Int) -> Result<[ShellSegment], ShellParseError> {
-        guard depth <= 8 else { return .failure(.tooDeep) }
-        let chars = Array(line)
+    /// Each substitution gets a fresh quote context: outer double quotes do not quote
+    /// the command inside $(). Keep original text for the Python-compatible regexes.
+    private static func parse(_ chars: [Character], index: inout Int, depth: Int,
+                              closing: Character?) throws -> [ShellSegment] {
+        guard depth <= 8 else { throw ShellParseError.tooDeep }
         var pieces: [ShellSegment] = []
         var nested: [ShellSegment] = []
         var buffer = ""
         var quote: Character?
-        var escaped = false
-        var index = 0
+        var parentheses = 0
 
         func flush() {
             let text = buffer.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -39,85 +44,50 @@ public enum ShellSegmenter {
 
         while index < chars.count {
             let c = chars[index]
-            if escaped {
+            if quote == "'" {
                 buffer.append(c)
-                escaped = false
+                if c == "'" { quote = nil }
                 index += 1
                 continue
             }
             if c == "\\" {
                 buffer.append(c)
-                escaped = true
                 index += 1
+                guard index < chars.count else { throw ShellParseError.danglingEscape }
+                // In double quotes, backslash only escapes these shell characters.
+                if quote == nil || ["$", "`", "\"", "\\", "\n"].contains(chars[index]) {
+                    buffer.append(chars[index])
+                    index += 1
+                }
                 continue
             }
-            if let active = quote {
+            if quote == nil, c == closing, parentheses == 0 {
+                flush()
+                index += 1
+                return pieces + nested
+            }
+
+            let startsSubstitution = index + 1 < chars.count && chars[index + 1] == "("
+                && (c == "$" || (quote == nil && (c == "<" || c == ">")))
+            if c == "`" || startsSubstitution {
+                let start = index
+                index += c == "`" ? 1 : 2
+                nested += try parse(chars, index: &index, depth: depth + 1,
+                                    closing: c == "`" ? "`" : ")")
+                buffer += String(chars[start..<index])
+                continue
+            }
+            if c == "\"" || (quote == nil && c == "'") {
+                quote = quote == c ? nil : c
                 buffer.append(c)
-                if c == active { quote = nil }
                 index += 1
                 continue
             }
-            if c == "'" || c == "\"" {
-                quote = c
-                buffer.append(c)
-                index += 1
-                continue
+            if quote == nil, closing == ")" {
+                if c == "(" { parentheses += 1 }
+                if c == ")" { parentheses -= 1 }
             }
-
-            if c == "`" {
-                guard let close = chars[(index + 1)...].firstIndex(of: "`") else {
-                    return .failure(.unbalancedSubstitution)
-                }
-                let body = String(chars[(index + 1)..<close])
-                switch parse(body, depth: depth + 1) {
-                case .failure(let error): return .failure(error)
-                case .success(let values): nested.append(contentsOf: values)
-                }
-                buffer += String(chars[index...close])
-                index = close + 1
-                continue
-            }
-
-            let startsSubstitution = c == "$" && index + 1 < chars.count && chars[index + 1] == "("
-                || (c == "<" || c == ">") && index + 1 < chars.count && chars[index + 1] == "("
-            if startsSubstitution {
-                let open = c == "$" ? index + 1 : index
-                var cursor = open + 1
-                var level = 1
-                var innerQuote: Character?
-                var innerEscaped = false
-                while cursor < chars.count {
-                    let inner = chars[cursor]
-                    if innerEscaped { innerEscaped = false; cursor += 1; continue }
-                    if inner == "\\" { innerEscaped = true; cursor += 1; continue }
-                    if let q = innerQuote {
-                        if inner == q { innerQuote = nil }
-                        cursor += 1
-                        continue
-                    }
-                    if inner == "'" || inner == "\"" { innerQuote = inner; cursor += 1; continue }
-                    if inner == "(" { level += 1 }
-                    if inner == ")" {
-                        level -= 1
-                        if level == 0 { break }
-                    }
-                    cursor += 1
-                }
-                guard cursor < chars.count, level == 0 else {
-                    return .failure(.unbalancedSubstitution)
-                }
-                let bodyStart = open + 1
-                let body = String(chars[bodyStart..<cursor])
-                switch parse(body, depth: depth + 1) {
-                case .failure(let error): return .failure(error)
-                case .success(let values): nested.append(contentsOf: values)
-                }
-                buffer += String(chars[index...cursor])
-                index = cursor + 1
-                continue
-            }
-
-            if c == ";" || c == "\n" || c == "&" || c == "|" {
+            if quote == nil && (c == ";" || c == "\n" || c == "&" || c == "|") {
                 flush()
                 if (c == "&" || c == "|") && index + 1 < chars.count && chars[index + 1] == c {
                     index += 2
@@ -130,9 +100,9 @@ public enum ShellSegmenter {
             index += 1
         }
 
-        if quote != nil { return .failure(.unbalancedQuote) }
-        if escaped { buffer.append("\\") }
+        if quote != nil { throw ShellParseError.unbalancedQuote }
+        if closing != nil { throw ShellParseError.unbalancedSubstitution }
         flush()
-        return .success(pieces + nested)
+        return pieces + nested
     }
 }

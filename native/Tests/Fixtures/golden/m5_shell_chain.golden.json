@@ -1,0 +1,260 @@
+{
+ "schema": 1,
+ "suite": "m5_shell_chain",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "chain_sudo_allowed_then_blocked",
+   "input": {
+    "cmd": "sudo pmset -g; sudo killall Finder"
+   },
+   "expected": {
+    "python": "confirm",
+    "native": "block",
+    "deviation": "X-1"
+   }
+  },
+  {
+   "name": "chain_sudo_allowed_and_blocked",
+   "input": {
+    "cmd": "sudo pmset -g && sudo killall Finder"
+   },
+   "expected": {
+    "python": "confirm",
+    "native": "block",
+    "deviation": "X-1"
+   }
+  },
+  {
+   "name": "chain_sudo_allowed_pipe_blocked",
+   "input": {
+    "cmd": "sudo pmset -g | sudo killall Finder"
+   },
+   "expected": {
+    "python": "confirm",
+    "native": "block",
+    "deviation": "X-1"
+   }
+  },
+  {
+   "name": "sudo_pmset_allowed",
+   "input": {
+    "cmd": "sudo pmset -g"
+   },
+   "expected": {
+    "python": "confirm",
+    "native": "confirm",
+    "deviation": null
+   }
+  },
+  {
+   "name": "sudo_killall_blocked",
+   "input": {
+    "cmd": "sudo killall Finder"
+   },
+   "expected": {
+    "python": "block",
+    "native": "block",
+    "deviation": null
+   }
+  },
+  {
+   "name": "subst_dollar_rm_root",
+   "input": {
+    "cmd": "foo $(rm -rf /)"
+   },
+   "expected": {
+    "python": "confirm",
+    "native": "block",
+    "deviation": "X-1"
+   }
+  },
+  {
+   "name": "subst_dquoted_rm_root",
+   "input": {
+    "cmd": "foo \"$(rm -rf /)\""
+   },
+   "expected": {
+    "python": "confirm",
+    "native": "block",
+    "deviation": "X-1"
+   }
+  },
+  {
+   "name": "subst_backtick_rm_root",
+   "input": {
+    "cmd": "foo `rm -rf /`"
+   },
+   "expected": {
+    "python": "confirm",
+    "native": "block",
+    "deviation": "X-1"
+   }
+  },
+  {
+   "name": "subst_procsub_rm_root",
+   "input": {
+    "cmd": "diff <(rm -rf /) b"
+   },
+   "expected": {
+    "python": "confirm",
+    "native": "block",
+    "deviation": "X-1"
+   }
+  },
+  {
+   "name": "subst_allowed_sudo_hides_bad_sudo",
+   "input": {
+    "cmd": "sudo pmset -g \"$(sudo rm -rf /)\""
+   },
+   "expected": {
+    "python": "confirm",
+    "native": "block",
+    "deviation": "X-1"
+   }
+  },
+  {
+   "name": "squoted_subst_inert",
+   "input": {
+    "cmd": "echo '$(rm -rf /)'"
+   },
+   "expected": {
+    "python": "confirm",
+    "native": "confirm",
+    "deviation": null
+   }
+  },
+  {
+   "name": "unbalanced_quote",
+   "input": {
+    "cmd": "echo 'unterminated"
+   },
+   "expected": {
+    "python": "ok",
+    "native": "block",
+    "deviation": "X-1"
+   }
+  },
+  {
+   "name": "keychain_find_generic",
+   "input": {
+    "cmd": "security find-generic-password -s jarvis"
+   },
+   "expected": {
+    "python": "ok",
+    "native": "block",
+    "deviation": "X-4"
+   }
+  },
+  {
+   "name": "keychain_find_internet",
+   "input": {
+    "cmd": "security find-internet-password -s example.com"
+   },
+   "expected": {
+    "python": "ok",
+    "native": "block",
+    "deviation": "X-4"
+   }
+  },
+  {
+   "name": "keychain_dump",
+   "input": {
+    "cmd": "security dump-keychain"
+   },
+   "expected": {
+    "python": "ok",
+    "native": "block",
+    "deviation": "X-4"
+   }
+  },
+  {
+   "name": "keychain_export",
+   "input": {
+    "cmd": "security export -k login.keychain -p -o out.p12"
+   },
+   "expected": {
+    "python": "ok",
+    "native": "block",
+    "deviation": "X-4"
+   }
+  },
+  {
+   "name": "keychain_in_chain",
+   "input": {
+    "cmd": "echo hi; security dump-keychain"
+   },
+   "expected": {
+    "python": "ok",
+    "native": "block",
+    "deviation": "X-4"
+   }
+  },
+  {
+   "name": "benign_and",
+   "input": {
+    "cmd": "echo hi && ls -la"
+   },
+   "expected": {
+    "python": "ok",
+    "native": "ok",
+    "deviation": null
+   }
+  },
+  {
+   "name": "benign_semicolon",
+   "input": {
+    "cmd": "cd /tmp; ls"
+   },
+   "expected": {
+    "python": "ok",
+    "native": "ok",
+    "deviation": null
+   }
+  },
+  {
+   "name": "benign_pipe",
+   "input": {
+    "cmd": "git status | grep modified"
+   },
+   "expected": {
+    "python": "ok",
+    "native": "ok",
+    "deviation": null
+   }
+  },
+  {
+   "name": "benign_open_chain",
+   "input": {
+    "cmd": "open -a Safari && open -a Music"
+   },
+   "expected": {
+    "python": "ok",
+    "native": "ok",
+    "deviation": null
+   }
+  },
+  {
+   "name": "benign_subshell",
+   "input": {
+    "cmd": "(cd /tmp && ls)"
+   },
+   "expected": {
+    "python": "ok",
+    "native": "ok",
+    "deviation": null
+   }
+  }
+ ]
+}
