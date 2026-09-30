@@ -1,5 +1,5 @@
+import Darwin
 import Foundation
-import Synchronization
 
 // The git half of research_snapshot (jarvis.py 2481–2487, plan: M01b §2.2, §3.2):
 //     head    = subprocess.run(["git", "-C", HERE, "rev-parse", "--short", "HEAD"],
@@ -32,8 +32,8 @@ public enum GitProbe {
     }
 
     /// The real runner: `/usr/bin/env <arguments>` (PATH lookup, like Python's execvp), stdout
-    /// captured, stderr discarded, killed with SIGKILL at the deadline (Python's
-    /// `subprocess.run` timeout does `kill()` then raises).
+    /// captured, stderr discarded. The deadline covers both child exit and pipe EOF.
+    /// A timeout kills the child's process group, including inherited pipe writers.
     public static let run: Runner = { arguments, timeout in
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/env")
@@ -46,20 +46,47 @@ public enum GitProbe {
         p.terminationHandler = { _ in exited.signal() }
         do { try p.run() } catch { return nil }
         let reader = pipe.fileHandleForReading
-        let output = Mutex<Data?>(nil)
-        let drained = DispatchSemaphore(value: 0)
-        DispatchQueue.global(qos: .utility).async {
-            let data = reader.readDataToEndOfFile()
-            output.withLock { $0 = data }
-            drained.signal()
-        }
-        if exited.wait(timeout: .now() + timeout) == .timedOut {
-            kill(p.processIdentifier, SIGKILL)
-            exited.wait()
+        defer { try? reader.close() }
+        let deadline = DispatchTime.now() + timeout
+
+        func fail() -> String? {
+            // Foundation Process launches a new process group. The leader may already
+            // have exited while one of its children still owns stdout's write end.
+            let pid = p.processIdentifier
+            if pid > 1 {
+                kill(-pid, SIGKILL)
+                if p.isRunning { kill(pid, SIGKILL) }
+            }
+            // Never use waitUntilExit here: its run-loop wait can hang on task threads.
+            _ = exited.wait(timeout: .now() + 1)
             return nil
         }
-        drained.wait()
-        guard let data = output.withLock({ $0 }) else { return nil }
-        return String(validating: data, as: UTF8.self)
+
+        // Drain on this thread with bounded, nonblocking reads. A background
+        // readDataToEndOfFile could remain stuck even after its caller timed out.
+        let fd = reader.fileDescriptor
+        let flags = fcntl(fd, F_GETFL)
+        guard flags >= 0, fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0 else { return fail() }
+        var output = Data()
+        var buffer = [UInt8](repeating: 0, count: 16_384)
+        while true {
+            let now = DispatchTime.now().uptimeNanoseconds
+            guard now < deadline.uptimeNanoseconds else { return fail() }
+            let remaining = deadline.uptimeNanoseconds - now
+            let millis = Int32(min(UInt64(Int32.max), (remaining + 999_999) / 1_000_000))
+            var event = pollfd(fd: fd, events: Int16(POLLIN), revents: 0)
+            let ready = poll(&event, 1, millis)
+            if ready < 0 && errno == EINTR { continue }
+            guard ready > 0, event.revents & Int16(POLLNVAL | POLLERR) == 0 else { return fail() }
+            let count = Darwin.read(fd, &buffer, buffer.count)
+            if count == 0 { break } // POLLHUP still allows buffered bytes to be read first.
+            if count < 0 {
+                if errno == EAGAIN || errno == EINTR { continue }
+                return fail()
+            }
+            output.append(contentsOf: buffer.prefix(count))
+        }
+        guard exited.wait(timeout: deadline) == .success else { return fail() }
+        return String(validating: output, as: UTF8.self)
     }
 }
