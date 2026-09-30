@@ -41,12 +41,48 @@ struct SpeakPolicyTests {
         return try #require(result)
     }
 
-    @Test("the stub never speaks, whatever the context", arguments: [false, true])
-    func stubReturnsFalse(toggle: Bool) async throws {
+    /// A context made directly, for the cases `SpeakReplies.context` does not produce: a voice
+    /// conversation, a given length, another voice, and data sources from the named tools.
+    static func direct(toggle: Bool = true, voice: Bool = false, chars: Int = 30,
+                       backend: String = SpeakReplies.noTTSBackend, tools: [String] = []) async -> SpeakContext {
+        let turn = TurnContext(channel: .text)
+        for tool in tools { await turn.recordSources(for: tool) }
+        return SpeakContext(chatWindowIsKey: false, speakToggleOn: toggle, userIdleSeconds: 0,
+                            voiceConversationActive: voice, replyCharCount: chars,
+                            turn: await turn.summary(), ttsBackend: backend)
+    }
+
+    @Test("the toggle is consent: off never speaks; on speaks whatever the focus and idle time")
+    func toggleDecides() async throws {
         for (key, idle, tainted) in [(false, 0.0, false), (true, 0.0, false), (false, 3600.0, true), (true, 3600.0, true)] {
-            let context = try await Self.context(toggle: toggle, windowIsKey: key, idle: idle, tainted: tainted)
-            #expect(!shouldSpeakReply(channel: .text, text: Self.reply.text, context: context))
+            let off = try await Self.context(toggle: false, windowIsKey: key, idle: idle, tainted: tainted)
+            #expect(!shouldSpeakReply(channel: .text, text: Self.reply.text, context: off))
+            let on = try await Self.context(toggle: true, windowIsKey: key, idle: idle, tainted: tainted)
+            #expect(shouldSpeakReply(channel: .text, text: Self.reply.text, context: on))
         }
+    }
+
+    @Test("only typed replies, and never over a voice conversation")
+    func channelAndVoiceLoop() async {
+        #expect(!shouldSpeakReply(channel: .voice, text: "Done, sir.", context: await Self.direct()))
+        #expect(!shouldSpeakReply(channel: .text, text: "Done, sir.", context: await Self.direct(voice: true)))
+    }
+
+    @Test("an empty reply, or one over the limit, is not read aloud")
+    func length() async {
+        #expect(!shouldSpeakReply(channel: .text, text: "", context: await Self.direct(chars: 0)))
+        #expect(shouldSpeakReply(channel: .text, text: "x", context: await Self.direct(chars: SpeakRules.replyLimit)))
+        #expect(!shouldSpeakReply(channel: .text, text: "x", context: await Self.direct(chars: SpeakRules.replyLimit + 1)))
+    }
+
+    @Test("a cloud voice never reads out personal content; a local voice may")
+    func personalContent() async {
+        let text = "You have two new messages, sir."
+        for tool in ["get_messages", "read_clipboard", "see_screen", "read_file", "get_calendar"] {
+            #expect(!shouldSpeakReply(channel: .text, text: text, context: await Self.direct(backend: "elevenlabs", tools: [tool])))
+            #expect(shouldSpeakReply(channel: .text, text: text, context: await Self.direct(backend: "piper", tools: [tool])))
+        }
+        #expect(shouldSpeakReply(channel: .text, text: text, context: await Self.direct(backend: "elevenlabs", tools: ["get_news"])))
     }
 
     @Test("the toggle is off at first, and persists across launches")
@@ -78,12 +114,12 @@ struct SpeakPolicyTests {
         #expect(context.ttsBackend == SpeakReplies.noTTSBackend)
     }
 
-    @Test("the stub's no: nothing is spoken, counted or logged")
-    func stubSaysNo() async throws {
+    @Test("the policy's no: nothing is spoken, counted or logged")
+    func policySaysNo() async throws {
         let research = ResearchRecorder()
         var spoken: [String] = []
         var logged: [String] = []
-        let context = try await Self.context(toggle: true)
+        let context = try await Self.context(toggle: false)
         let said = SpeakReplies.replyFinished(Self.reply, context: context, research: research,
                                               speaker: { text, _ in spoken.append(text) }, log: { logged.append($0) })
         #expect(!said)
