@@ -130,6 +130,17 @@ func offPool<T: Sendable>(_ work: @escaping @Sendable () -> T) async -> T {
     }
 }
 
+/// Polls `condition` every 20 ms for up to `seconds` of awake time. The deadline is on the
+/// suspending clock, so a Mac asleep with its lid closed does not use the wait up.
+func eventually(seconds: Double = 5, _ condition: () async -> Bool) async -> Bool {
+    let deadline = SuspendingClock.now.advanced(by: .seconds(seconds))
+    while SuspendingClock.now < deadline {
+        if await condition() { return true }
+        try? await Task.sleep(for: .milliseconds(20))
+    }
+    return await condition()
+}
+
 /// A connected AF_UNIX stream pair, both ends close-on-exec with SO_NOSIGPIPE.
 func socketPair() throws -> (Int32, Int32) {
     var fds: [Int32] = [0, 0]

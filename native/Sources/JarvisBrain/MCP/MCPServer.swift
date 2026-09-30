@@ -14,6 +14,9 @@ public actor MCPServer {
     /// `handshakeMaxBytes` long.
     public static let handshakeWindow: DispatchTimeInterval = .seconds(2)
     public static let handshakeMaxBytes = 4096
+    /// Live connections, handshaking ones included (Codex review finding 2). A turn needs one
+    /// relay, so 4 is headroom, and one past it is closed at accept, before any check or task.
+    public static let maxConnections = 4
 
     public nonisolated let runDirectory: URL
     public nonisolated let socketPath: String
@@ -29,6 +32,14 @@ public actor MCPServer {
     private var listener: DispatchSourceRead?
     private var connections: [Int: MCPConnection] = [:]
     private var nextConnection = 0
+    private let admission = MCPAdmission(limit: MCPServer.maxConnections)
+
+    /// Connections holding an admission slot: accepted and waiting for a serve task, or being
+    /// served. Never more than `maxConnections`.
+    nonisolated var liveConnections: Int { admission.live }
+
+    /// Accepted descriptors no serve task has claimed yet; `stop()` closes them.
+    nonisolated var unclaimedConnections: Int { admission.waiting }
 
     /// `tools` is what tools/list serves and what tools/call accepts: the Python catalog unless a
     /// test passes its own.
@@ -49,10 +60,24 @@ public actor MCPServer {
         guard listener == nil else { return }
         try MCPSocket.prepareRunDirectory(runDirectory)
         let fd = try MCPSocket.listen(at: socketPath)
-        let (accepted, continuation) = AsyncStream.makeStream(of: Int32.self)
+        admission.reopen()
+        // Admission already holds the handoff to `maxConnections` tickets; the buffer bound makes
+        // that explicit, and a ticket it will not take is closed rather than queued.
+        let (accepted, continuation) = AsyncStream.makeStream(
+            of: MCPAdmission.Ticket.self, bufferingPolicy: .bufferingOldest(Self.maxConnections))
         let source = DispatchSource.makeReadSource(fileDescriptor: fd, queue: queue)
+        let admission = admission
+        let log = log
         source.setEventHandler {
-            while let connection = MCPSocket.accept(fd) { continuation.yield(connection) }
+            while let connection = MCPSocket.accept(fd) {
+                let decision = admission.admit(connection)
+                guard case .admitted(let ticket) = decision else {
+                    log(Self.refusal(decision))
+                    continue
+                }
+                if case .enqueued = continuation.yield(ticket) { continue }
+                admission.discard(ticket)
+            }
         }
         source.setCancelHandler {
             close(fd)
@@ -61,12 +86,12 @@ public actor MCPServer {
         listener = source
         source.resume()
         Task { [weak self] in
-            for await connection in accepted {
+            for await ticket in accepted {
                 guard let self else {
-                    close(connection)
+                    admission.discard(ticket)
                     continue
                 }
-                Task { await self.serve(connection: connection) }
+                Task { await self.serve(ticket) }
             }
         }
         log("mcp: listening on \(socketPath)")
@@ -80,19 +105,39 @@ public actor MCPServer {
             unlink(socketPath)
             log("mcp: stopped")
         }
+        // Closes accepted descriptors no serve task has claimed; a serve task that starts later
+        // finds nothing to claim and registers nothing.
+        admission.stop()
         for connection in connections.values { connection.abort() }
         connections.removeAll()
     }
 
-    /// Serves one connected socket until it closes: the handshake, then JSON-RPC. Every accepted
-    /// connection lands here; tests hand it one end of a socketpair. Takes ownership of `fd`.
+    /// Serves one connected socket until it closes: the handshake, then JSON-RPC. Tests hand it
+    /// one end of a socketpair; accepted connections come in through `serve(_:)`. Takes
+    /// ownership of `fd`. With `maxConnections` live, or after `stop()`, `fd` is closed at once
+    /// and nothing is registered.
     public func serve(connection fd: Int32) async {
+        let decision = admission.admit(fd)
+        guard case .admitted(let ticket) = decision else {
+            log(Self.refusal(decision))
+            return
+        }
+        await serve(ticket)
+    }
+
+    /// Serves an admitted descriptor, once claimed. Nothing to claim means `stop()` ran first
+    /// and has closed it.
+    private func serve(_ ticket: MCPAdmission.Ticket) async {
+        guard let fd = admission.claim(ticket) else { return }
         let peer = MCPPeer(connection: fd)
         let connection = MCPConnection(fd: fd, queue: queue, handshakeWindow: Self.handshakeWindow)
         let key = nextConnection
         nextConnection += 1
         connections[key] = connection
-        defer { connections[key] = nil }
+        defer {
+            connections[key] = nil
+            admission.release()
+        }
 
         if let reason = peerProblem(peer) {
             reject(connection, reason)
@@ -175,6 +220,12 @@ public actor MCPServer {
     private func reject(_ connection: MCPConnection, _ reason: String) {
         log("relay rejected: \(reason)")
         connection.abort()
+    }
+
+    /// The log line for a descriptor admission has closed.
+    private static func refusal(_ decision: MCPAdmission.Decision) -> String {
+        decision == .stopped ? "mcp: connection closed: the server has stopped"
+            : "mcp: connection refused: \(maxConnections) already live"
     }
 
     // MARK: - JSON-RPC
