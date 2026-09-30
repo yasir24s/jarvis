@@ -8,7 +8,7 @@ struct NetTests {
     @Test func firstSuccessStopsImmediately() async {
         let calls = Calls(results: [true])
         #expect(await Net.isOnline(connector: calls.connector))
-        #expect(await calls.requests == [Request(host: "1.1.1.1", port: 53, timeout: 1.2)])
+        #expect(await calls.requests == [Request(host: "1.1.1.1", port: 443, timeout: 1.2)])
     }
 
     @Test func firstFailureTriesSecondHostWithItsOwnTimeout() async {
@@ -21,6 +21,17 @@ struct NetTests {
         let calls = Calls(results: [false, false])
         #expect(await !Net.isOnline(connector: calls.connector))
         #expect(await calls.requests == Self.bothRequests)
+    }
+
+    /// DEV-M4-02: native probes port 443; Python's is_online (jarvis.py 521-528) probes 53.
+    @Test func probesPort443WherePythonProbes53() async {
+        let calls = Calls(results: [false, false])
+        _ = await Net.isOnline(connector: calls.connector)
+        let ports = await calls.requests.map(\.port)
+        #expect(ports == [443, 443])
+        withKnownIssue("DEV-M4-02: Python's is_online connects to port 53") {
+            #expect(ports == [53, 53])
+        }
     }
 
     @Test func alreadyCancelledDoesNotProbe() async {
@@ -98,8 +109,8 @@ struct NetTests {
     }
 
     private static let bothRequests = [
-        Request(host: "1.1.1.1", port: 53, timeout: 1.2),
-        Request(host: "8.8.8.8", port: 53, timeout: 1.2),
+        Request(host: "1.1.1.1", port: 443, timeout: 1.2),
+        Request(host: "8.8.8.8", port: 443, timeout: 1.2),
     ]
 
     private struct Request: Equatable, Sendable {

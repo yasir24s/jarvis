@@ -6,19 +6,25 @@ public enum Net {
     /// A connector must finish within `timeout` seconds and close its connection.
     public typealias Connector = @Sendable (_ host: String, _ port: UInt16, _ timeout: TimeInterval) async -> Bool
 
-    /// Matches Python's is_online: try the two numeric hosts in order, without DNS.
-    /// Reachability of these endpoints does not guarantee the Claude service is available.
+    /// Python's is_online with one change: try the two numeric hosts in order, without DNS,
+    /// on `probePort`. Reachability of these endpoints does not guarantee the Claude service
+    /// is available.
     public static func isOnline() async -> Bool {
         await isOnline { host, port, timeout in
             await connect(NetworkProbe(host: host, port: port), timeout: timeout)
         }
     }
 
+    /// DEV-M4-02: Python connects to port 53. Networks that block outbound TCP to 53 then
+    /// read as offline while 443, the port Claude itself uses, is open, and every turn goes
+    /// to the local model.
+    public static let probePort: UInt16 = 443
+
     /// Injection point for offline tests and callers with their own transport.
     public static func isOnline(connector: Connector) async -> Bool {
         for host in ["1.1.1.1", "8.8.8.8"] {
             guard !Task.isCancelled else { return false }
-            let connected = await connector(host, 53, 1.2)
+            let connected = await connector(host, probePort, 1.2)
             guard !Task.isCancelled else { return false }
             if connected { return true }
         }
