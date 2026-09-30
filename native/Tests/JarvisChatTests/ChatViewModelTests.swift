@@ -119,7 +119,7 @@ struct ChatViewModelTests {
     @Test("the next send that runs clears the busy line")
     func busyClearsOnTheNextSend() async throws {
         let outcomes = Outcomes([.busy, .reply("It is three o'clock, sir.")])
-        let fake = FakeCoordinator { _, _ in await outcomes.next() }
+        let fake = FakeCoordinator(outcomes)
         let model = ChatViewModel(submitter: fake)
         model.draft.text = "what time is it"
         await model.send()?.value
@@ -247,18 +247,67 @@ struct ChatViewModelTests {
         #expect(model.backendLine == "Last backend: \(LocalBrain.backendName)")
     }
 
-    @Test("the speak hook sees each finished reply once, and nothing for a refused submit")
+    @Test("the speak hook sees each finished reply once, with its turn, and nothing for a refused submit")
     func speakHookSeesFinishedReplies() async throws {
         let outcomes = Outcomes([.reply("It is three o'clock, sir."), .busy])
-        let fake = FakeCoordinator { _, _ in await outcomes.next() }
+        let fake = FakeCoordinator(outcomes)
         let model = ChatViewModel(submitter: fake)
         var seen: [ChatMessage] = []
-        model.onReplyFinished = { seen.append($0) }
+        var turns: [TurnSummary] = []
+        model.onReplyFinished = { message, turn in
+            seen.append(message)
+            turns.append(turn)
+        }
         model.draft.text = "what time is it"
         await model.send()?.value
         model.draft.text = "and the date"
         await model.send()?.value
         #expect(seen.map(\.text) == ["It is three o'clock, sir."])
         #expect(seen.allSatisfy { $0.role == .assistant && $0.phase == .finished })
+        var taken: [UUID] = []
+        for turn in await fake.turns { taken.append(await turn.turnID) }
+        #expect(taken.count == 1)
+        #expect(turns.map(\.turnID) == taken)
+        #expect(turns.map(\.channel) == [.text])
+    }
+
+    @Test("a submit the coordinator refuses as .busy shows no row, even while it is being refused")
+    func busyNeverShowsARow() async throws {
+        let model = ChatViewModel()
+        let rowsWhileRefused = Snapshot<[String]>()
+        let fake = FakeCoordinator(refusing: { _ in
+            await rowsWhileRefused.set(await model.messages.map(\.text))
+            return .busy
+        }) { _, _ in .reply("never sent") }
+        model.connect(fake, lastBackend: nil)
+        model.draft.text = "what time is it"
+        await model.send()?.value
+        #expect(await rowsWhileRefused.value == [])
+        #expect(model.messages.isEmpty)
+        #expect(model.busy)
+        #expect(model.draft.text == "what time is it")
+        #expect(await fake.turns.isEmpty)
+    }
+
+    @Test("the rows appear once the coordinator takes the turn, before anything streams")
+    func rowsAppearWhenTheTurnIsTaken() async throws {
+        let gate = Gate()
+        let model = ChatViewModel()
+        let fake = FakeCoordinator { _, _ in
+            await gate.park()
+            return .reply("Done, sir.")
+        }
+        model.connect(fake, lastBackend: nil)
+        model.draft.text = "what time is it"
+        let turn = try #require(model.send())
+        #expect(model.messages.isEmpty)
+        #expect(model.responding)
+        #expect(model.draft == ComposerDraft())
+        await gate.waitUntilParked()
+        #expect(model.messages.map(\.text) == ["what time is it", ""])
+        #expect(model.messages.map(\.phase) == [.finished, .streaming])
+        await gate.open()
+        await turn.value
+        #expect(model.messages.map(\.text) == ["what time is it", "Done, sir."])
     }
 }

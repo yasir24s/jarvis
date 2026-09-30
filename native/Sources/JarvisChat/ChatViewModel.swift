@@ -6,7 +6,10 @@ import Observation
 
 /// What the chat sends its turns to: `TurnCoordinator` in the app, a fake in tests.
 public protocol TurnSubmitting: Sendable {
-    func submit(_ input: UserInput, sink: any ReplySink) async -> TurnOutcome
+    /// `accepted` gets the turn's context once the turn is taken, before anything reaches
+    /// `sink`. A submit refused as `.busy` or `.empty` never calls it.
+    func submit(_ input: UserInput, sink: any ReplySink,
+                accepted: (@Sendable (TurnContext) async -> Void)?) async -> TurnOutcome
 }
 
 extension TurnCoordinator: TurnSubmitting {}
@@ -39,9 +42,10 @@ public final class ChatViewModel: ReplySink {
     /// pending, and cleared at its deadline, since the gate says nothing when one goes stale.
     public private(set) var pending: PendingConfirmation?
 
-    /// The Speak-replies hook (plan §3.12 `SpeakPolicy`, the next batch). It is called with
-    /// each finished assistant row. Nothing sets it in this batch, so no typed reply is spoken.
-    @ObservationIgnored public var onReplyFinished: ((ChatMessage) -> Void)?
+    /// The speak policy's hook (plan §3.12 `SpeakPolicy`): each finished assistant row of a
+    /// turn, with that turn's summary (its data sources and taint). Rows made here without a
+    /// turn (the card's "Cancelled.", the "can't verify" refusal) never come here.
+    @ObservationIgnored public var onReplyFinished: ((ChatMessage, TurnSummary) -> Void)?
 
     @ObservationIgnored private var submitter: (any TurnSubmitting)?
     @ObservationIgnored private var backendName: (@Sendable () async -> String)?
@@ -97,8 +101,9 @@ public final class ChatViewModel: ReplySink {
 
     /// Sends the draft as one text turn. Returns the running turn, or nil when nothing was
     /// sent: the draft is empty after trimming, a turn from this window is still running, or
-    /// the brain has not started. If the coordinator answers `.busy` the rows are withdrawn,
-    /// the draft comes back with its paste flag, and `busy` is set (D-10).
+    /// the brain has not started. The rows are added only once the coordinator takes the turn.
+    /// If it answers `.busy` instead, no row appears, the draft comes back with its paste
+    /// flag, and `busy` is set (D-10).
     ///
     /// A typed affirmation while the card shows, on a Mac whose owner check cannot run, is
     /// refused here (plan §3.4): the user row and the refusal are added, nothing is sent, and
@@ -176,24 +181,31 @@ public final class ChatViewModel: ReplySink {
 
     // MARK: - Private
 
-    /// Starts one text turn: the user row, the live assistant row, then the coordinator.
-    /// `restoring` is what a refused turn gives back to the composer: the sent draft, or nil
-    /// for the card's Confirm button.
+    /// Starts one text turn. Its rows are added once the coordinator takes it (`accept`), so a
+    /// submit refused as `.busy` shows nothing. `restoring` is what a refused turn gives back to
+    /// the composer: the sent draft, or nil for the card's Confirm button.
     private func start(_ input: UserInput, shown: String, restoring sent: ComposerDraft?,
                        via submitter: any TurnSubmitting) -> Task<Void, Never> {
-        let user = ChatMessage(role: .user, text: shown, phase: .finished)
-        let reply = ChatMessage(role: .assistant, text: "", phase: .streaming)
-        messages.append(user)
-        messages.append(reply)
         responding = true
-        live = LiveReply(id: reply.id, coalescer: DeltaCoalescer(minimumGap: minimumGap))
         return Task {
-            let outcome = await submitter.submit(input, sink: self)
-            self.finish(outcome, restoring: sent, userID: user.id)
+            let outcome = await submitter.submit(input, sink: self, accepted: { @MainActor turn in
+                self.accept(shown, turn: turn)
+            })
+            let summary = await self.live?.turn.summary()
+            self.finish(outcome, restoring: sent, summary: summary)
             if outcome != .busy, outcome != .empty, let backendName = self.backendName {
                 self.lastBackend = await backendName()
             }
         }
+    }
+
+    /// The coordinator took the turn: the user row, then the live assistant row.
+    private func accept(_ shown: String, turn: TurnContext) {
+        let user = ChatMessage(role: .user, text: shown, phase: .finished)
+        let reply = ChatMessage(role: .assistant, text: "", phase: .streaming)
+        messages.append(user)
+        messages.append(reply)
+        live = LiveReply(id: reply.id, userID: user.id, turn: turn, coalescer: DeltaCoalescer(minimumGap: minimumGap))
     }
 
     /// True when `text` would confirm the card's confirmation but the owner check cannot run.
@@ -225,6 +237,8 @@ public final class ChatViewModel: ReplySink {
     /// The live assistant row of the running turn.
     private struct LiveReply {
         let id: UUID
+        let userID: UUID
+        let turn: TurnContext
         var coalescer: DeltaCoalescer
         var sentences: [String] = []
         var flush: Task<Void, Never>?
@@ -261,21 +275,24 @@ public final class ChatViewModel: ReplySink {
         messages[index].text = text
     }
 
-    private func finish(_ outcome: TurnOutcome, restoring sent: ComposerDraft?, userID: UUID) {
-        guard let turn = live else { return }
-        turn.flush?.cancel()
+    private func finish(_ outcome: TurnOutcome, restoring sent: ComposerDraft?, summary: TurnSummary?) {
+        let turn = live
+        turn?.flush?.cancel()
         live = nil
         responding = false
         switch outcome {
         case .busy, .empty:
-            // Refused, not queued (D-10): the rows go and the draft comes back, paste flag too.
-            messages.removeAll { $0.id == userID || $0.id == turn.id }
+            // Refused, not queued (D-10). The coordinator refuses before it takes a turn, so
+            // there are no rows to take back; the draft comes back, paste flag too.
+            if let turn {
+                messages.removeAll { $0.id == turn.userID || $0.id == turn.id }
+            }
             if let sent {
                 draft = ComposerDraft(text: sent.text + draft.text, pasted: sent.pasted || draft.pasted)
             }
             busy = outcome == .busy
         case .confirmation(let reply), .fastPath(let reply), .reply(let reply):
-            guard let index = messages.lastIndex(where: { $0.id == turn.id }) else { return }
+            guard let turn, let index = messages.lastIndex(where: { $0.id == turn.id }) else { return }
             let text = ReplyText.finished(reply: reply, shown: turn.shownText)
             if text.isEmpty {
                 messages.remove(at: index)
@@ -283,7 +300,9 @@ public final class ChatViewModel: ReplySink {
             }
             messages[index].text = text
             messages[index].phase = .finished
-            onReplyFinished?(messages[index])
+            if let summary {
+                onReplyFinished?(messages[index], summary)
+            }
         }
     }
 }

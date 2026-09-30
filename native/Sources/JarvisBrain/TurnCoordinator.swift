@@ -75,8 +75,12 @@ public actor TurnCoordinator {
 
     /// Runs one turn, or returns `.busy` at once if one is already running. A confirmation
     /// or fast-path result goes to `sink` as one sentence, as Python speaks it; the brains
-    /// send their own replies.
-    public func submit(_ input: UserInput, sink: any ReplySink) async -> TurnOutcome {
+    /// send their own replies. `accepted` is called with the turn's context once the turn is
+    /// taken, before any of it runs and before anything reaches `sink`; a submit refused as
+    /// `.empty` or `.busy` never calls it. The chat adds its rows there, so a refused submit
+    /// shows none.
+    public func submit(_ input: UserInput, sink: any ReplySink,
+                       accepted: (@Sendable (TurnContext) async -> Void)? = nil) async -> TurnOutcome {
         let text = Py.strip(input.text)
         guard !text.isEmpty else { return .empty }
         guard !running else { return .busy }
@@ -86,6 +90,7 @@ public actor TurnCoordinator {
         let turn = TurnContext(channel: input.channel, startTainted: input.pasted)
         defer { await turn.close() }
         onTurnStart?(turn)
+        await accepted?(turn)
 
         let port: InputPort = input.channel == .text ? textPort : .voice
         if case .handled(let result) = await confirmations.consume(text, via: port, runIn: turn) {

@@ -5,25 +5,47 @@ import JarvisTools
 import Synchronization
 
 /// A coordinator stand-in: it records every input and runs a script that plays the brain's
-/// side of the turn against the sink it was given.
+/// side of the turn against the sink it was given. Like `TurnCoordinator`, it decides `.busy`
+/// and `.empty` before it takes a turn, so `accepted` is called only for a turn that runs.
 actor FakeCoordinator: TurnSubmitting {
     typealias Script = @Sendable (UserInput, any ReplySink) async -> TurnOutcome
+    /// Asked before a turn is taken: `.busy` or `.empty` refuses it, nil runs it.
+    typealias Refusal = @Sendable (UserInput) async -> TurnOutcome?
 
     private(set) var inputs: [UserInput] = []
+    /// The context of each turn taken, in order.
+    private(set) var turns: [TurnContext] = []
+    private let refusal: Refusal
     private let script: Script
 
-    init(_ script: @escaping Script) {
+    init(refusing refusal: @escaping Refusal = { _ in nil }, _ script: @escaping Script) {
+        self.refusal = refusal
         self.script = script
     }
 
-    /// Answers every turn with `outcome` and sends nothing to the sink.
+    /// Answers every turn with `outcome` and sends nothing to the sink. `.busy` and `.empty`
+    /// refuse the turn before it is taken.
     init(answering outcome: TurnOutcome) {
-        self.init { _, _ in outcome }
+        let refused = Outcomes.isRefusal(outcome) ? outcome : nil
+        self.init(refusing: { _ in refused }) { _, _ in outcome }
     }
 
-    func submit(_ input: UserInput, sink: any ReplySink) async -> TurnOutcome {
+    /// Hands out `outcomes` one per turn. A `.busy` or `.empty` one refuses its turn before it
+    /// is taken.
+    init(_ outcomes: Outcomes) {
+        self.init(refusing: { _ in await outcomes.refusal() }) { _, _ in await outcomes.next() }
+    }
+
+    func submit(_ input: UserInput, sink: any ReplySink,
+                accepted: (@Sendable (TurnContext) async -> Void)?) async -> TurnOutcome {
         inputs.append(input)
-        return await script(input, sink)
+        if let refused = await refusal(input) { return refused }
+        let turn = TurnContext(channel: input.channel, startTainted: input.pasted)
+        turns.append(turn)
+        await accepted?(turn)
+        let outcome = await script(input, sink)
+        await turn.close()
+        return outcome
     }
 }
 
@@ -35,8 +57,27 @@ actor Outcomes {
         queue = outcomes
     }
 
+    static func isRefusal(_ outcome: TurnOutcome) -> Bool {
+        outcome == .busy || outcome == .empty
+    }
+
     func next() -> TurnOutcome {
         queue.removeFirst()
+    }
+
+    /// Takes the next outcome if it refuses the turn.
+    func refusal() -> TurnOutcome? {
+        guard let first = queue.first, Self.isRefusal(first) else { return nil }
+        return queue.removeFirst()
+    }
+}
+
+/// One value, set from any task.
+actor Snapshot<Value: Sendable> {
+    private(set) var value: Value?
+
+    func set(_ newValue: Value) {
+        value = newValue
     }
 }
 
