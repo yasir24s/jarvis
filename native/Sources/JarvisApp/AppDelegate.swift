@@ -127,7 +127,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Builds the brain once, on the state this lock guards. The chat is connected only after
     /// `start()` has registered the built-in tools and started the MCP server, so no turn runs
     /// before that. `run/` and `claude-cwd/` are the plan's, under Application Support (§3.6,
-    /// §3.7).
+    /// §3.7), with a suffix of their own for any root but the default one (`RunFolders`).
     private func startBrain(lock: InstanceLock, paths: StatePaths) {
         // One lease over the held lock for every writer of this root (D-36): the state store
         // and the app's one UsageStore, which everything that bumps is handed.
@@ -142,6 +142,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         let environment = ProcessInfo.processInfo.environment
+        let folders = RunFolders(stateRoot: paths.root, defaultRoot: Self.defaultRoot(environment))
+        JarvisLog.log("run folders: \(folders.run.lastPathComponent), \(folders.claudeWorkingDirectory.lastPathComponent)",
+                      category: .brain)
         let config = ClaudeConfig(environment: environment)
         let core = CoreState(store: store, clock: SystemClock(), research: research, frontApp: WorkspaceFrontApp())
         let scheduler = AppResearch.scheduler(
@@ -149,7 +152,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             runtime: AppResearch.runtime(processStarted: Self.processStarted, claudeEnabled: config.enabled))
         scheduler.start()
         self.research = scheduler
-        let support = BrainAssembly.supportDirectory
         // The owner check a typed confirmation must pass (plan §3.4), counted as it runs.
         let authenticator = CountingTextAuthenticator(LAConfirmAuthenticator(), research: research)
         // Each finished typed reply goes to the user's speak policy (plan §3.12). No speaker
@@ -164,8 +166,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         let assembly = BrainAssembly(
             core: core, research: research, config: config, environment: environment,
-            runDirectory: support.appending(path: "run", directoryHint: .isDirectory),
-            claudeWorkingDirectory: support.appending(path: "claude-cwd", directoryHint: .isDirectory),
+            runDirectory: folders.run, claudeWorkingDirectory: folders.claudeWorkingDirectory,
             textAuthenticator: authenticator,
             // Python's is_online(): asked only when a turn reaches the brain.
             online: { await Net.isOnline() })
@@ -214,6 +215,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         source.resume()
         sigterm = source
+    }
+
+    /// The root `StatePaths.live` picks without JARVIS_HOME (the repo around the app bundle), or
+    /// nil when that is not a JARVIS repo.
+    private static func defaultRoot(_ environment: [String: String]) -> URL? {
+        var environment = environment
+        environment["JARVIS_HOME"] = nil
+        return try? StatePaths.live(environment: environment).root
     }
 
     /// When this process started, as unix time: the snapshot's `runtime.process_started`.
