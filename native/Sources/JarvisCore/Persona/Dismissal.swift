@@ -21,7 +21,7 @@ public enum Dismissal {
     /// `is_dismiss`'s `t in (...)` tuple, in source order.
     public static let exact = ["goodbye", "bye jarvis", "thanks", "that is all"]
 
-    /// The words of address the text rule drops from the end of a message, one at most.
+    /// The words of address the text rule sets aside, at most one at each end of a message.
     public static let address = ["jarvis", "sir"]
 
     /// `is_dismiss(t)`; nil is Python's None (`(t or "")`).
@@ -31,15 +31,25 @@ public enum Dismissal {
     }
 
     /// The text rule: the message is lowercased, its punctuation (Unicode P*) dropped and its
-    /// whitespace collapsed. It dismisses when the result, or the result less one trailing
-    /// "jarvis" or "sir", is one of `is_dismiss`'s phrases treated the same way.
+    /// whitespace collapsed. It dismisses when the result is one of `is_dismiss`'s phrases
+    /// treated the same way, once one leading and one trailing word of address are set aside:
+    /// "that's all, JARVIS" and "Jarvis, that's all" both dismiss.
     public static func isTextDismissal(_ text: String) -> Bool {
-        let words = normalized(text)
+        var words = normalized(text)
         if isPhrase(words) { return true }
-        guard words.count > 1, let last = words.last, address.contains(where: { Py.eq(last, $0) }) else {
-            return false
+        if words.count > 1, let first = words.first, isAddress(first) {
+            words.removeFirst()
+            if isPhrase(words) { return true }
         }
-        return isPhrase(Array(words.dropLast()))
+        if words.count > 1, let last = words.last, isAddress(last) {
+            words.removeLast()
+            if isPhrase(words) { return true }
+        }
+        return false
+    }
+
+    static func isAddress(_ word: String) -> Bool {
+        address.contains { Py.eq(word, $0) }
     }
 
     /// Every phrase of `contained` and `exact`, normalized as a message is.

@@ -46,6 +46,8 @@ struct TextDismissalTests {
         "stand down", "Stand down, JARVIS.", "Go to sleep.", "go to sleep jarvis", "That is all.",
         "  that is all, sir  ", "that\u{2019}s all", "that’s all, Jarvis", "thanks jarvis, sir",
         "Thanks\u{00A0}JARVIS", "thanks... jarvis", "(thanks)", "good-bye",
+        // A leading word of address is set aside too.
+        "jarvis thanks", "Jarvis, that's all", "sir, that will be all", "Jarvis, that's all, sir.",
     ])
     func wholeMessageDismissals(_ text: String) {
         #expect(Dismissal.isTextDismissal(text), "\(text)")
@@ -54,9 +56,9 @@ struct TextDismissalTests {
     @Test(arguments: [
         "thanks, now open Safari", "thank you for the help", "Thanks JARVIS, what time is it?",
         "that's all for now", "is that all?", "don't go to sleep", "you are not dismissed", "undismissed",
-        "goodbye for now", "thanks Robin", "jarvis", "sir", "jarvis thanks", "Jarvis, that's all",
+        "goodbye for now", "thanks Robin", "jarvis", "sir", "Jarvis, thanks, now open Safari",
         "thank you sir jarvis sir", "bye", "thankyou", "stand downstairs", "",
-        "   ", "!!!", "thanks 🙏", "open Safari", "sir, that will be all",
+        "   ", "!!!", "thanks 🙏", "open Safari", "jarvis jarvis that's all",
     ])
     func everythingElseReachesTheBrain(_ text: String) {
         #expect(!Dismissal.isTextDismissal(text), "\(text)")
