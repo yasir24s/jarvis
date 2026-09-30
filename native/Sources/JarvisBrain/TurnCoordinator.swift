@@ -57,6 +57,7 @@ public actor TurnCoordinator {
     private let online: @Sendable () async -> Bool
     private let onTurnStart: (@Sendable (TurnContext) -> Void)?
     private let onConversationEnded: (@Sendable () -> Void)?
+    private let archive: (any ExchangeArchiving)?
     private var running = false
 
     /// - Parameters:
@@ -66,11 +67,15 @@ public actor TurnCoordinator {
     ///   - onTurnStart: sees each turn's context as it is made (tests, the smoke mode).
     ///   - onConversationEnded: called after a dismissal's reply has gone to the sink. It must
     ///     return at once (the app's starts the distillation in the background).
+    ///   - archive: given every accepted turn's message and reply (D-51 P2), after the reply
+    ///     has gone to the sink, so it never delays it; a dismissal is archived before
+    ///     `onConversationEnded`. A turn refused as `.empty` or `.busy` is not archived.
     public init(brain: BrainRouter, fastPath: any FastPathRouting = NoFastPath(),
                 confirmations: ConfirmationGate, textAuthenticator: any ConfirmAuthenticator,
                 online: @escaping @Sendable () async -> Bool,
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
-                onConversationEnded: (@Sendable () -> Void)? = nil) {
+                onConversationEnded: (@Sendable () -> Void)? = nil,
+                archive: (any ExchangeArchiving)? = nil) {
         self.brain = brain
         self.fastPath = fastPath
         self.confirmations = confirmations
@@ -78,6 +83,7 @@ public actor TurnCoordinator {
         self.online = online
         self.onTurnStart = onTurnStart
         self.onConversationEnded = onConversationEnded
+        self.archive = archive
     }
 
     /// Runs one turn, or returns `.busy` at once if one is already running. A confirmation
@@ -102,20 +108,25 @@ public actor TurnCoordinator {
         let port: InputPort = input.channel == .text ? textPort : .voice
         if case .handled(let result) = await confirmations.consume(text, via: port, runIn: turn) {
             if !result.isEmpty { await sink.sentence(result) }
+            archive?.record(user: text, reply: result, channel: input.channel)
             return .confirmation(result)
         }
         // P1: a typed message that is a dismissal as a whole ends the conversation. Python's
         // voice loop answers it without handle_one, so no brain call and no interaction count.
         if input.channel == .text, Dismissal.isTextDismissal(text) {
             await sink.sentence(Dismissal.reply)
+            archive?.record(user: text, reply: Dismissal.reply, channel: input.channel)
             onConversationEnded?()
             return .dismissed(Dismissal.reply)
         }
         if let reply = await fastPath.route(text, turn: turn) {
             if !reply.isEmpty { await sink.sentence(reply) }
+            archive?.record(user: text, reply: reply, channel: input.channel)
             return .fastPath(reply)
         }
         let isOnline = await online()
-        return .reply(await brain.process(text, online: isOnline, channel: input.channel, turn: turn, sink: sink))
+        let reply = await brain.process(text, online: isOnline, channel: input.channel, turn: turn, sink: sink)
+        archive?.record(user: text, reply: reply, channel: input.channel)          // the brain sent it
+        return .reply(reply)
     }
 }
