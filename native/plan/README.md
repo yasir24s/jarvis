@@ -451,11 +451,25 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
   requires. The `native-dev-writes` annotation went into `research/annotations.jsonl` first,
   under the instance lock. From that day the dataset has native rows (`runtime.impl` swift,
   `runtime.build` dev), and `gap-2026-08-21` closes on 2026-09-29 by its own rule.
+- **D-47. M4 signed off; the order after it** (user, 2026-09-30). A-12, A-13 and A-14 passed at
+  the screen, with the app icon and window reopen checked too. Next comes M5: X-1 first (the
+  standing rule), then the read-only awareness tools (diagnostics, battery, CPU, wifi,
+  clipboard, screen, files, "what's new"), then the MCP gate and the tools with side effects.
+  After M5: voice out (M8) and the HUD (M13) together, with a Show HUD menu item that brings the
+  overlay back after its idle hide. Then media analysis, a new milestone.
+- **D-48. Voice and media directions** (user, 2026-09-30). The voice is chosen by a spike on
+  this 8 GB Mac: Kokoro-82M with a built-in British male voice (`bm_george`, `bm_lewis`), or
+  F5-TTS cloning from a reference clip, measured for RAM and time to first audio. Piper
+  (Python's voice) and macOS speech stay as fallbacks. Media analysis is a blend: Apple's
+  on-device frameworks (Vision, Speech, SoundAnalysis, AVFoundation) by default, with the image
+  itself sent to Claude through the MCP server when a turn needs deeper understanding. Media
+  is untrusted content, so it taints the turn.
 
 ## Open user decisions
 
-- Write `shouldSpeakReply` (text chat, M02–M04 §3.12) and `speakLocally` (sensitive routing
-  to Piper, M08 §3.2). The user writes both.
+- `speakLocally` (sensitive routing to a local voice, M08 §3.2). `shouldSpeakReply` was
+  drafted in 986a890 at the user's request; Codex polishes it.
+- X-4 (`security` secret-reading subcommands blocked in shell commands): decide at M5 start.
 - Any download or brew install (webrtc VAD source, espeak-ng): only if the spikes fail, and
   only with approval.
 - Deleting or renaming the `~/jarvis-swift` prototype (T0.2 only unregisters it).
