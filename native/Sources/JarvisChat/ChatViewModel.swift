@@ -16,6 +16,8 @@ extension TurnCoordinator: TurnSubmitting {}
 /// the live row as plain text, at 30 Hz or less (`DeltaCoalescer`). On a path that sends no
 /// deltas (a confirmation, the fast path, the local model's fixed replies) each sentence
 /// advances the row instead. When the turn ends the row is finished and renders as markdown.
+/// It also holds the confirmation card's state (plan §3.4): the gate's pending confirmation,
+/// its Confirm and Cancel buttons, and the refusal when the owner check cannot run.
 @MainActor
 @Observable
 public final class ChatViewModel: ReplySink {
@@ -33,6 +35,9 @@ public final class ChatViewModel: ReplySink {
     public var draft = ComposerDraft()
     /// `BackendReporter.last.name` read after this window's latest turn; nil before the first.
     public private(set) var lastBackend: String?
+    /// The confirmation the card shows, from `ConfirmationGate.updates`: nil when none is
+    /// pending, and cleared at its deadline, since the gate says nothing when one goes stale.
+    public private(set) var pending: PendingConfirmation?
 
     /// The Speak-replies hook (plan §3.12 `SpeakPolicy`, the next batch). It is called with
     /// each finished assistant row. Nothing sets it in this batch, so no typed reply is spoken.
@@ -41,6 +46,10 @@ public final class ChatViewModel: ReplySink {
     @ObservationIgnored private var submitter: (any TurnSubmitting)?
     @ObservationIgnored private var backendName: (@Sendable () async -> String)?
     @ObservationIgnored private var live: LiveReply?
+    @ObservationIgnored private var confirmations: ConfirmationGate?
+    @ObservationIgnored private var authenticator: (any TextConfirmAuthenticator)?
+    @ObservationIgnored private var watcher: Task<Void, Never>?
+    @ObservationIgnored private var expiry: Task<Void, Never>?
     private let minimumGap: Duration
 
     /// - Parameters:
@@ -70,28 +79,74 @@ public final class ChatViewModel: ReplySink {
         draft.notePaste()
     }
 
+    /// Shows `gate`'s pending confirmation on the card from now on (plan §3.4, §3.12).
+    /// `authenticator` is the one the coordinator's text port asks: its `canAuthenticate`
+    /// decides the "can't verify" refusal here, before anything is sent.
+    public func watchConfirmations(_ gate: ConfirmationGate, authenticator: any TextConfirmAuthenticator) {
+        confirmations = gate
+        self.authenticator = authenticator
+        watcher?.cancel()
+        let updates = gate.updates
+        watcher = Task { [weak self] in
+            for await value in updates {
+                guard let self else { return }
+                self.show(value)
+            }
+        }
+    }
+
     /// Sends the draft as one text turn. Returns the running turn, or nil when nothing was
     /// sent: the draft is empty after trimming, a turn from this window is still running, or
     /// the brain has not started. If the coordinator answers `.busy` the rows are withdrawn,
     /// the draft comes back with its paste flag, and `busy` is set (D-10).
+    ///
+    /// A typed affirmation while the card shows, on a Mac whose owner check cannot run, is
+    /// refused here (plan §3.4): the user row and the refusal are added, nothing is sent, and
+    /// the confirmation stays pending until its deadline, for the voice channel.
     @discardableResult
     public func send() -> Task<Void, Never>? {
         guard !responding, let submitter, let input = draft.input else { return nil }
         let sent = draft
         draft = ComposerDraft()
         busy = false
-        let user = ChatMessage(role: .user, text: Py.strip(sent.text), phase: .finished)
-        let reply = ChatMessage(role: .assistant, text: "", phase: .streaming)
-        messages.append(user)
-        messages.append(reply)
-        responding = true
-        live = LiveReply(id: reply.id, coalescer: DeltaCoalescer(minimumGap: minimumGap))
+        let shown = Py.strip(sent.text)
+        if refusesConfirmation(input.text, now: .now) {
+            addLocalReply(to: shown, TextConfirmation.cannotVerify)
+            return nil
+        }
+        return start(input, shown: shown, restoring: sent, via: submitter)
+    }
+
+    /// The card's Confirm button (plan §3.4): the same as typing "confirm", with the draft left
+    /// alone. A card past its deadline sends nothing and goes (the gate would take "confirm" as
+    /// a new command). Returns the running turn, or nil when nothing was sent.
+    @discardableResult
+    public func confirmPending(now: ContinuousClock.Instant = .now) -> Task<Void, Never>? {
+        guard let pending, !responding, let submitter else { return nil }
+        guard !TextConfirmation.isStale(pending, now: now) else {
+            show(nil)
+            return nil
+        }
+        busy = false
+        let input = UserInput(text: TextConfirmation.confirmInput, channel: .text)
+        if refusesConfirmation(input.text, now: now) {
+            addLocalReply(to: input.text, TextConfirmation.cannotVerify)
+            return nil
+        }
+        return start(input, shown: input.text, restoring: nil, via: submitter)
+    }
+
+    /// The card's Cancel button (plan §3.4): the gate is handed "cancel", which clears its slot
+    /// without an owner check, then a local "Cancelled." row is added. Nothing goes to the
+    /// brain. Returns the task that does it, or nil when no card shows.
+    @discardableResult
+    public func cancelPending() -> Task<Void, Never>? {
+        guard pending != nil, let confirmations, let authenticator else { return nil }
+        show(nil)
         return Task {
-            let outcome = await submitter.submit(input, sink: self)
-            self.finish(outcome, sent: sent, userID: user.id)
-            if outcome != .busy, outcome != .empty, let backendName = self.backendName {
-                self.lastBackend = await backendName()
-            }
+            _ = await confirmations.consume(TextConfirmation.cancelInput, via: .text(authenticator: authenticator),
+                                            runIn: TurnContext(channel: .text))
+            self.messages.append(ChatMessage(role: .system, text: TextConfirmation.cancelled, phase: .finished))
         }
     }
 
@@ -120,6 +175,52 @@ public final class ChatViewModel: ReplySink {
     }
 
     // MARK: - Private
+
+    /// Starts one text turn: the user row, the live assistant row, then the coordinator.
+    /// `restoring` is what a refused turn gives back to the composer: the sent draft, or nil
+    /// for the card's Confirm button.
+    private func start(_ input: UserInput, shown: String, restoring sent: ComposerDraft?,
+                       via submitter: any TurnSubmitting) -> Task<Void, Never> {
+        let user = ChatMessage(role: .user, text: shown, phase: .finished)
+        let reply = ChatMessage(role: .assistant, text: "", phase: .streaming)
+        messages.append(user)
+        messages.append(reply)
+        responding = true
+        live = LiveReply(id: reply.id, coalescer: DeltaCoalescer(minimumGap: minimumGap))
+        return Task {
+            let outcome = await submitter.submit(input, sink: self)
+            self.finish(outcome, restoring: sent, userID: user.id)
+            if outcome != .busy, outcome != .empty, let backendName = self.backendName {
+                self.lastBackend = await backendName()
+            }
+        }
+    }
+
+    /// True when `text` would confirm the card's confirmation but the owner check cannot run.
+    private func refusesConfirmation(_ text: String, now: ContinuousClock.Instant) -> Bool {
+        guard let pending, !TextConfirmation.isStale(pending, now: now), Affirmation.matches(text),
+              let authenticator else { return false }
+        return !authenticator.canAuthenticate()
+    }
+
+    /// A user row and JARVIS's answer to it, made here: nothing was sent to the coordinator.
+    private func addLocalReply(to shown: String, _ reply: String) {
+        messages.append(ChatMessage(role: .user, text: shown, phase: .finished))
+        messages.append(ChatMessage(role: .assistant, text: reply, phase: .finished))
+    }
+
+    /// The card shows `value` until the gate replaces or clears it, or its deadline passes.
+    private func show(_ value: PendingConfirmation?) {
+        expiry?.cancel()
+        expiry = nil
+        pending = value
+        guard let value else { return }
+        expiry = Task { [weak self] in
+            try? await Task.sleep(until: value.deadline, clock: .continuous)
+            guard !Task.isCancelled, let self, self.pending == value else { return }
+            self.pending = nil
+        }
+    }
 
     /// The live assistant row of the running turn.
     private struct LiveReply {
@@ -160,7 +261,7 @@ public final class ChatViewModel: ReplySink {
         messages[index].text = text
     }
 
-    private func finish(_ outcome: TurnOutcome, sent: ComposerDraft, userID: UUID) {
+    private func finish(_ outcome: TurnOutcome, restoring sent: ComposerDraft?, userID: UUID) {
         guard let turn = live else { return }
         turn.flush?.cancel()
         live = nil
@@ -169,7 +270,9 @@ public final class ChatViewModel: ReplySink {
         case .busy, .empty:
             // Refused, not queued (D-10): the rows go and the draft comes back, paste flag too.
             messages.removeAll { $0.id == userID || $0.id == turn.id }
-            draft = ComposerDraft(text: sent.text + draft.text, pasted: sent.pasted || draft.pasted)
+            if let sent {
+                draft = ComposerDraft(text: sent.text + draft.text, pasted: sent.pasted || draft.pasted)
+            }
             busy = outcome == .busy
         case .confirmation(let reply), .fastPath(let reply), .reply(let reply):
             guard let index = messages.lastIndex(where: { $0.id == turn.id }) else { return }

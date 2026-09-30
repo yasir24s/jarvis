@@ -1,8 +1,9 @@
 import JarvisChat
+import JarvisTools
 import SwiftUI
 
-/// The chat window (plan: M02-M04 §3.12): the transcript and the composer. The confirmation
-/// card belongs to the next batch.
+/// The chat window (plan: M02-M04 §3.12): the transcript, the confirmation card while one is
+/// pending, and the composer.
 struct ChatView: View {
     static let windowID = "chat"
 
@@ -27,6 +28,11 @@ struct ChatView: View {
                 }
             }
             Divider()
+            if let pending = model.pending {
+                ConfirmationCard(pending: pending, enabled: model.isConnected && !model.responding,
+                                 onConfirm: { _ = model.confirmPending() },
+                                 onCancel: { _ = model.cancelPending() })
+            }
             if model.busy {
                 Text(ChatViewModel.busyNotice)
                     .font(.callout)
@@ -46,8 +52,44 @@ struct ChatView: View {
     }
 }
 
+/// The pending confirmation (plan §3.4, §3.12): what it will do, the seconds left of its 25,
+/// and Confirm and Cancel. Confirm is the same as typing "confirm", so the system sheet
+/// follows; Cancel sends nothing to the brain. Neither has a keyboard shortcut: Return belongs
+/// to the composer.
+private struct ConfirmationCard: View {
+    let pending: PendingConfirmation
+    let enabled: Bool
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Label {
+                Text(verbatim: pending.desc)
+                    .textSelection(.enabled)
+            } icon: {
+                Image(systemName: "checkmark.shield")
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            TimelineView(.periodic(from: .now, by: 1)) { _ in
+                Text("\(TextConfirmation.secondsLeft(until: pending.deadline, now: .now)) s")
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+            Button("Cancel", role: .cancel, action: onCancel)
+            Button("Confirm", action: onConfirm)
+        }
+        .disabled(!enabled)
+        .padding(10)
+        .background(.orange.opacity(0.12), in: .rect(cornerRadius: 8))
+        .padding(.horizontal, 8)
+        .padding(.top, 8)
+    }
+}
+
 /// One transcript row. User text and streaming text are plain; a finished assistant row is
-/// markdown. An assistant row with no text yet shows a spinner.
+/// markdown. An assistant row with no text yet shows a spinner. A system row is the app's
+/// own note, small and centred.
 private struct MessageRow: View {
     let message: ChatMessage
 
@@ -70,6 +112,11 @@ private struct MessageRow: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+        case .system:
+            Text(verbatim: message.text)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 }

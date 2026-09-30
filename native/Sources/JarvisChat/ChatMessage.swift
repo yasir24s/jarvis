@@ -5,10 +5,14 @@ public struct ChatMessage: Identifiable, Sendable, Equatable {
     public enum Role: Sendable, Equatable {
         case user
         case assistant
+        /// The app's own notes in the transcript, such as the card's "Cancelled.": never sent
+        /// to the brain and never spoken.
+        case system
     }
 
     /// An assistant row is `streaming` while its turn runs and shows plain text; once the turn
-    /// ends it is `finished` and renders through `MarkdownText`. A user row is always finished.
+    /// ends it is `finished` and renders through `MarkdownText`. User and system rows are always
+    /// finished.
     public enum Phase: Sendable, Equatable {
         case streaming
         case finished

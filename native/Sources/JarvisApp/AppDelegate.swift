@@ -105,12 +105,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         let environment = ProcessInfo.processInfo.environment
         let support = BrainAssembly.supportDirectory
+        // The owner check a typed confirmation must pass (plan §3.4), counted as it runs.
+        let authenticator = CountingTextAuthenticator(LAConfirmAuthenticator(), research: research)
         let assembly = BrainAssembly(
             core: CoreState(store: store, clock: SystemClock(), research: research, frontApp: WorkspaceFrontApp()),
             research: research, config: ClaudeConfig(environment: environment), environment: environment,
             runDirectory: support.appending(path: "run", directoryHint: .isDirectory),
             claudeWorkingDirectory: support.appending(path: "claude-cwd", directoryHint: .isDirectory),
-            textAuthenticator: RefusingTextAuthenticator(),
+            textAuthenticator: authenticator,
             // Python's is_online() arrives with M5's Net.isOnline. Until then an offline turn
             // tries Claude, fails, and falls back to the local model.
             online: { true })
@@ -123,6 +125,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
             self.chat.connect(assembly.coordinator, lastBackend: { await assembly.backend.last.name })
+            self.chat.watchConfirmations(assembly.confirmations, authenticator: authenticator)
         }
     }
 
@@ -182,10 +185,4 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         while path.count > 1 && path.hasSuffix("/") { path.removeLast() }
         return (path as NSString).abbreviatingWithTildeInPath
     }
-}
-
-/// Stands in for the LocalAuthentication authenticator (plan §3.12 `LAConfirmAuthenticator`,
-/// the next batch). It refuses, so no typed confirmation is approved before that lands.
-private struct RefusingTextAuthenticator: ConfirmAuthenticator {
-    func authenticate(reason: String) async -> Bool { false }
 }
