@@ -310,7 +310,12 @@ struct SnapshotSchema2Tests {
             return
         }
         #expect(!os.isEmpty && !build.isEmpty && !hw.isEmpty)
-        #expect(ram > 0 && fp > 0 && peak >= fp)
+        try #require(ram > 0 && fp > 0 && peak > 0)
+        // The row's peak is sampled before its footprint inside proc_pid_rusage.
+        // Compare against a later peak, as in A6, rather than assume an atomic pair.
+        let later = try #require(MemoryFootprint.current())
+        #expect(later.peak >= UInt64(fp))
+        #expect(later.peak >= UInt64(peak))
     }
 
     /// dev unless Info.plist JARVISBuildChannel is exactly "release" (§3.3, §3.6).
@@ -392,10 +397,18 @@ struct MemoryFootprintTests {
     @Test func footprintMatchesTaskInfo() throws {
         let m = try #require(MemoryFootprint.current())
         let ref = try #require(Self.taskVMFootprint())
+        // XNU gather_rusage_info reads the V4 lifetime peak before V0 fill_task_rusage
+        // reads the footprint. Concurrent allocations can make that one pair peak < live.
+        // Read the peak again AFTER the footprint; keep the strict inequality and the
+        // original back-to-back task_info comparison, without tolerance or retries.
+        // https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/kern_resource.c
+        let later = try #require(MemoryFootprint.current())
         #expect(m.footprint > 0)
-        #expect(m.peak >= m.footprint)
+        #expect(m.peak > 0)
+        #expect(later.peak >= m.footprint)
+        #expect(later.peak >= m.peak)
         let diff = Double(m.footprint > ref ? m.footprint - ref : ref - m.footprint)
         #expect(diff <= 0.10 * Double(ref), "proc_pid_rusage \(m.footprint) vs task_info \(ref)")
-        print("A6 footprint=\(m.footprint) peak=\(m.peak) task_info=\(ref)")
+        print("A6 footprint=\(m.footprint) peak=\(m.peak) later_peak=\(later.peak) task_info=\(ref)")
     }
 }
