@@ -9,14 +9,16 @@ import Testing
 /// stdout, and a socketpair (or the real socket) for the app. The app binary is never launched.
 @Suite("RelayTests")
 struct RelayTests {
-    /// Exactly `count` bytes from `fd`, or nil on EOF or timeout.
+    /// Exactly `count` bytes from `fd`, or nil on EOF or after `seconds` of awake time (the
+    /// suspending clock, so a Mac asleep with its lid closed does not use the wait up).
     static func read(_ fd: Int32, count: Int, seconds: Double = 5) async -> [UInt8]? {
         await offPool {
-            let deadline = Date().addingTimeInterval(seconds)
+            let deadline = SuspendingClock.now.advanced(by: .seconds(seconds))
             var bytes: [UInt8] = []
             while bytes.count < count {
                 var pfd = pollfd(fd: fd, events: Int16(POLLIN), revents: 0)
-                guard poll(&pfd, 1, Int32(max(0, deadline.timeIntervalSinceNow) * 1000)) > 0 else { return nil }
+                let ms = Int32(max(0, SuspendingClock.now.duration(to: deadline) / .milliseconds(1)))
+                guard poll(&pfd, 1, ms) > 0 else { return nil }
                 var chunk = [UInt8](repeating: 0, count: count - bytes.count)
                 let n = chunk.withUnsafeMutableBytes { Darwin.read(fd, $0.baseAddress, $0.count) }
                 guard n > 0 else { return nil }

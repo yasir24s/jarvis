@@ -35,10 +35,11 @@ final class LogLines: Sendable {
     var all: [String] { lines.withLock { $0 } }
     var sink: @Sendable (String) -> Void { { [self] line in lines.withLock { $0.append(line) } } }
 
-    /// Waits up to `seconds` for a line containing `text`.
+    /// Waits up to `seconds` of awake time for a line containing `text`. The deadline is on the
+    /// suspending clock, so a Mac asleep with its lid closed does not use the wait up.
     func waitFor(_ text: String, seconds: Double = 5) async -> Bool {
-        let deadline = Date().addingTimeInterval(seconds)
-        while Date() < deadline {
+        let deadline = SuspendingClock.now.advanced(by: .seconds(seconds))
+        while SuspendingClock.now < deadline {
             if all.contains(where: { $0.contains(text) }) { return true }
             try? await Task.sleep(for: .milliseconds(20))
         }
@@ -82,7 +83,7 @@ final class TestEnd: Sendable {
 
     private func blockingLine(seconds: Double) -> String? {
         buffer.withLock { bytes in
-            let deadline = Date().addingTimeInterval(seconds)
+            let deadline = SuspendingClock.now.advanced(by: .seconds(seconds))
             while true {
                 if let end = bytes.firstIndex(of: 0x0A) {
                     let line = Array(bytes[..<end])
@@ -97,7 +98,7 @@ final class TestEnd: Sendable {
 
     private func blockingEOF(seconds: Double) -> Bool {
         buffer.withLock { bytes in
-            let deadline = Date().addingTimeInterval(seconds)
+            let deadline = SuspendingClock.now.advanced(by: .seconds(seconds))
             while true {
                 guard let chunk = readChunk(until: deadline) else { return false }
                 if chunk.isEmpty { return true }
@@ -106,10 +107,11 @@ final class TestEnd: Sendable {
         }
     }
 
-    /// Bytes read before `deadline`: empty at EOF (or on a read error), nil on timeout.
-    private func readChunk(until deadline: Date) -> [UInt8]? {
+    /// Bytes read before `deadline`: empty at EOF (or on a read error), nil on timeout. The
+    /// deadline is awake time, on the suspending clock, so a closed lid does not use it up.
+    private func readChunk(until deadline: SuspendingClock.Instant) -> [UInt8]? {
         while true {
-            let ms = Int32(max(0, deadline.timeIntervalSinceNow) * 1000)
+            let ms = Int32(max(0, SuspendingClock.now.duration(to: deadline) / .milliseconds(1)))
             var pfd = pollfd(fd: fd, events: Int16(POLLIN), revents: 0)
             let ready = poll(&pfd, 1, ms)
             if ready < 0, errno == EINTR { continue }
