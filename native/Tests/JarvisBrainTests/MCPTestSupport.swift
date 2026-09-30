@@ -1,6 +1,6 @@
 import Darwin
 import Foundation
-import JarvisBrain
+@testable import JarvisBrain
 import JarvisCore
 import JarvisTools
 import Synchronization
@@ -167,14 +167,16 @@ struct MCPHarness {
     let server: MCPServer
     let logs = LogLines()
 
-    init(tools: [ToolSchema] = ToolCatalog.tools, gateway: ToolGateway = ToolGateway(confirmationGate: ConfirmationGate())) throws {
+    init(tools: [ToolSchema] = ToolCatalog.tools, gateway: ToolGateway = ToolGateway(confirmationGate: ConfirmationGate()),
+         limits: MCPServer.Limits = MCPServer.Limits()) throws {
         dir = try ShortTempDir()
         let run = dir.url.appending(path: "run", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: run, withIntermediateDirectories: false,
                                                 attributes: [.posixPermissions: 0o700])
         registry = MCPTurnRegistry(runDirectory: run, relayCommand: "/opt/jarvis-test/JARVIS")
         self.gateway = gateway
-        server = MCPServer(runDirectory: run, registry: registry, gateway: gateway, tools: tools, log: logs.sink)
+        server = MCPServer(runDirectory: run, registry: registry, gateway: gateway, tools: tools, limits: limits,
+                           log: logs.sink)
     }
 
     /// Opens a turn whose "claude" is this process's parent: in tests both ends of the socket

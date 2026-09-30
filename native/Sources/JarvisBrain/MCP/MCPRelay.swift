@@ -11,6 +11,10 @@ import Synchronization
 public enum MCPRelay {
     /// How long the relay waits for `{"jarvis_relay_ok":1}`, in milliseconds.
     public static let handshakeTimeoutMS: Int32 = 2000
+    /// Bytes read from one side and not yet written to the other (Codex review finding 1). MCP
+    /// lines are KBs and the server closes at 4 MiB of unread replies, so a side this far
+    /// behind is stuck, and the relay exits 1 instead of holding more.
+    public static let maxBacklogBytes = 4 << 20
 
     /// Reads the token file (no symlinks, at most 4 KB), trimmed. Nil if it cannot be read or is empty.
     public static func readToken(at path: String) -> String? {
@@ -69,14 +73,24 @@ public enum MCPRelay {
             return 1
         }
         if !reply.rest.isEmpty, !writeAll(output, reply.rest) { return 1 }
-        return pump(input: input, output: output, socket: socket)
+        return pump(input: input, output: output, socket: socket, diagnostics: diagnostics)
     }
 
     /// Copies input to socket and socket to output, through a DispatchIO channel per
     /// descriptor, until either side reaches EOF; what is already queued for the other side
-    /// is written first. Returns 0 after EOF, 1 after a read or write error. The descriptors
-    /// stay open; the caller owns them.
-    public static func pump(input: Int32, output: Int32, socket: Int32) -> Int32 {
+    /// is written first. Returns 0 after EOF, 1 after a read or write error or once more than
+    /// `maxBacklogBytes` wait for one side (said on `diagnostics`). The descriptors stay open;
+    /// the caller owns them.
+    public static func pump(input: Int32, output: Int32, socket: Int32,
+                            diagnostics: Int32 = STDERR_FILENO) -> Int32 {
+        pumpReport(input: input, output: output, socket: socket, backlogLimit: maxBacklogBytes,
+                   diagnostics: diagnostics).status
+    }
+
+    /// `pump` with its backlog limit given, reporting the most bytes each direction ever held:
+    /// `[to the socket, to the output]`.
+    static func pumpReport(input: Int32, output: Int32, socket: Int32, backlogLimit: Int,
+                           diagnostics: Int32) -> (status: Int32, peakBacklog: [Int]) {
         let queue = DispatchQueue(label: "com.jarvis.mcp.relay")
         let released = DispatchGroup()
         let finished = DispatchSemaphore(value: 0)
@@ -95,10 +109,17 @@ public enum MCPRelay {
         func forward(_ source: DispatchIO, to sink: DispatchIO, direction: Int) {
             source.read(offset: 0, length: Int.max, queue: queue) { done, data, error in
                 if let data, !data.isEmpty {
-                    state.queued(direction)
+                    let count = data.count
+                    guard state.queued(direction, bytes: count, limit: backlogLimit) else {
+                        if state.finish(1) {
+                            say("over \(backlogLimit) bytes waiting for \(direction == 0 ? "the app" : "claude")",
+                                to: diagnostics)
+                        }
+                        return
+                    }
                     sink.write(offset: 0, data: data, queue: queue) { writeDone, _, writeError in
                         guard writeDone else { return }
-                        if writeError != 0 { state.finish(1) } else { state.written(direction) }
+                        if writeError != 0 { state.finish(1) } else { state.written(direction, bytes: count) }
                     }
                 }
                 if done {
@@ -112,7 +133,7 @@ public enum MCPRelay {
         finished.wait()
         for io in [fromInput, throughSocket, toOutput] { io.close(flags: .stop) }
         released.wait()
-        return state.status
+        return (state.status, state.peaks)
     }
 
     // MARK: - Pieces
@@ -162,11 +183,14 @@ public enum MCPRelay {
     }
 }
 
-/// Bookkeeping for `pump`: writes still queued per direction, which directions reached EOF,
-/// and the first outcome. The first outcome signals `finished`, exactly once.
+/// Bookkeeping for `pump`: writes still queued per direction and the bytes they hold, which
+/// directions reached EOF, and the first outcome. The first outcome signals `finished`,
+/// exactly once.
 private final class PumpState: Sendable {
     private struct Counts {
         var queued = [0, 0]
+        var bytes = [0, 0]
+        var peak = [0, 0]
         var eof = [false, false]
         var status: Int32?
     }
@@ -179,14 +203,24 @@ private final class PumpState: Sendable {
     }
 
     var status: Int32 { counts.withLock { $0.status ?? 0 } }
+    var peaks: [Int] { counts.withLock { $0.peak } }
 
-    func queued(_ direction: Int) {
-        counts.withLock { $0.queued[direction] += 1 }
+    /// Counts a write of `bytes` one way. False, with nothing counted, when that would put
+    /// more than `limit` bytes in flight that way.
+    func queued(_ direction: Int, bytes: Int, limit: Int) -> Bool {
+        counts.withLock { c -> Bool in
+            guard c.bytes[direction] + bytes <= limit else { return false }
+            c.queued[direction] += 1
+            c.bytes[direction] += bytes
+            c.peak[direction] = max(c.peak[direction], c.bytes[direction])
+            return true
+        }
     }
 
-    func written(_ direction: Int) {
+    func written(_ direction: Int, bytes: Int) {
         let drained = counts.withLock { c -> Bool in
             c.queued[direction] -= 1
+            c.bytes[direction] -= bytes
             return c.eof[direction] && c.queued[direction] == 0
         }
         if drained { finish(0) }
@@ -200,12 +234,15 @@ private final class PumpState: Sendable {
         if drained { finish(0) }
     }
 
-    func finish(_ status: Int32) {
+    /// True for the first outcome only.
+    @discardableResult
+    func finish(_ status: Int32) -> Bool {
         let first = counts.withLock { c -> Bool in
             guard c.status == nil else { return false }
             c.status = status
             return true
         }
         if first { finished.signal() }
+        return first
     }
 }

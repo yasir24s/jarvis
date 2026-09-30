@@ -17,6 +17,22 @@ public actor MCPServer {
     /// Live connections, handshaking ones included (Codex review finding 2). A turn needs one
     /// relay, so 4 is headroom, and one past it is closed at accept, before any check or task.
     public static let maxConnections = 4
+    /// The longest line a bound relay may send (Codex review finding 1). A tools/call is a few
+    /// KB, so 1 MiB is far past any real request and still small on an 8 GB Mac.
+    public static let maxLineBytes = 1 << 20
+    /// Bytes read from one connection and not yet taken by the server: four maximum-length lines
+    /// waiting behind a slow tool call. Past it the connection is closed.
+    public static let maxInboundBytes = 4 << 20
+    /// Reply bytes queued for one connection and not yet written. tools/list, the longest fixed
+    /// reply, is about 13 KB, so only a relay that has stopped reading gets here; it is closed.
+    public static let maxOutboundBytes = 4 << 20
+
+    /// The byte limits every connection gets. Tests pass small ones.
+    struct Limits: Sendable {
+        var lineBytes = MCPServer.maxLineBytes
+        var inboundBytes = MCPServer.maxInboundBytes
+        var outboundBytes = MCPServer.maxOutboundBytes
+    }
 
     public nonisolated let runDirectory: URL
     public nonisolated let socketPath: String
@@ -24,6 +40,7 @@ public actor MCPServer {
     private let registry: MCPTurnRegistry
     private let gateway: ToolGateway
     private let rpc: MCPJSONRPC
+    private let limits: Limits
     private let log: @Sendable (String) -> Void
     /// The relay is this same binary, so a peer must be running this path.
     private let ownExecutablePath: String?
@@ -41,16 +58,28 @@ public actor MCPServer {
     /// Accepted descriptors no serve task has claimed yet; `stop()` closes them.
     nonisolated var unclaimedConnections: Int { admission.waiting }
 
+    /// The most bytes any ended connection ever had read and not yet taken, and queued and not
+    /// yet written. Never more than `limits`.
+    private(set) var peakInboundBytes = 0
+    private(set) var peakOutboundBytes = 0
+
     /// `tools` is what tools/list serves and what tools/call accepts: the Python catalog unless a
     /// test passes its own.
     public init(runDirectory: URL, registry: MCPTurnRegistry, gateway: ToolGateway,
                 tools: [ToolSchema] = ToolCatalog.tools,
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .brain) }) {
+        self.init(runDirectory: runDirectory, registry: registry, gateway: gateway, tools: tools,
+                  limits: Limits(), log: log)
+    }
+
+    init(runDirectory: URL, registry: MCPTurnRegistry, gateway: ToolGateway, tools: [ToolSchema],
+         limits: Limits, log: @escaping @Sendable (String) -> Void) {
         self.runDirectory = runDirectory
         self.socketPath = MCPSocket.socketPath(in: runDirectory)
         self.registry = registry
         self.gateway = gateway
         self.rpc = MCPJSONRPC(tools: tools)
+        self.limits = limits
         self.log = log
         self.ownExecutablePath = MCPPeer.executablePath(of: getpid())
     }
@@ -130,13 +159,17 @@ public actor MCPServer {
     private func serve(_ ticket: MCPAdmission.Ticket) async {
         guard let fd = admission.claim(ticket) else { return }
         let peer = MCPPeer(connection: fd)
-        let connection = MCPConnection(fd: fd, queue: queue, handshakeWindow: Self.handshakeWindow)
+        let connection = MCPConnection(fd: fd, queue: queue, handshakeWindow: Self.handshakeWindow,
+                                       inboundLimit: limits.inboundBytes, outboundLimit: limits.outboundBytes)
         let key = nextConnection
         nextConnection += 1
         connections[key] = connection
         defer {
             connections[key] = nil
             admission.release()
+            let peaks = connection.peaks
+            peakInboundBytes = max(peakInboundBytes, peaks.inbound)
+            peakOutboundBytes = max(peakOutboundBytes, peaks.outbound)
         }
 
         if let reason = peerProblem(peer) {
@@ -146,6 +179,10 @@ public actor MCPServer {
         var lines = LineBuffer()
         var bound: MCPTurnRegistry.Binding?
         for await event in connection.events {
+            if let reason = connection.overrun {
+                drop(connection, reason)
+                return
+            }
             switch event {
             case .deadline:
                 if bound == nil {
@@ -157,10 +194,25 @@ public actor MCPServer {
                 connection.finish()
                 return
             case .data(let data):
+                connection.took(data.count)
                 lines.append(data)
                 while true {
                     if let binding = bound {
-                        guard let line = lines.nextLine() else { break }
+                        if let reason = connection.overrun {
+                            drop(connection, reason)
+                            return
+                        }
+                        guard let line = lines.nextLine() else {
+                            if lines.pendingCount > limits.lineBytes {
+                                drop(connection, "line over \(limits.lineBytes) bytes")
+                                return
+                            }
+                            break
+                        }
+                        guard line.count <= limits.lineBytes else {
+                            drop(connection, "line over \(limits.lineBytes) bytes")
+                            return
+                        }
                         if let reply = await respond(to: line, binding) { connection.send(reply) }
                         continue
                     }
@@ -219,6 +271,12 @@ public actor MCPServer {
 
     private func reject(_ connection: MCPConnection, _ reason: String) {
         log("relay rejected: \(reason)")
+        connection.abort()
+    }
+
+    /// Closes a connection that broke a byte limit.
+    private func drop(_ connection: MCPConnection, _ reason: String) {
+        log("mcp: relay disconnected: \(reason)")
         connection.abort()
     }
 
