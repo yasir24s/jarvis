@@ -30,6 +30,8 @@ public final class ResearchLogger: ResearchCounting, Sendable {
     public let store: UsageStore
     private let builder: SnapshotBuilder
     private let queue = DispatchQueue(label: "com.jarvis.assistant.research", qos: .utility)
+    /// The logger's and its snapshots' log lines (JarvisLog by default; tests pass a recorder).
+    let log: @Sendable (String) -> Void
 
     /// The app's wiring: `store` is the process's one UsageStore over `paths.usage`, and it
     /// carries the InstanceLock state lease (D-36). `git` and `host` are SnapshotBuilder's
@@ -37,15 +39,17 @@ public final class ResearchLogger: ResearchCounting, Sendable {
     public init(paths: ResearchPaths, clock: ResearchClock, sources: any SnapshotSources,
                 runtime: @escaping @Sendable () -> RuntimeInfo, store: UsageStore,
                 git: @escaping GitProbe.Runner = GitProbe.run,
-                host: @escaping @Sendable () -> HostSample = { HostSample.current() }) {
+                host: @escaping @Sendable () -> HostSample = { HostSample.current() },
+                log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .research) }) {
         precondition(store.url.standardizedFileURL.path(percentEncoded: false)
                      == paths.usage.standardizedFileURL.path(percentEncoded: false),
                      "ResearchLogger: the UsageStore must be over paths.usage")
         self.paths = paths
         self.clock = clock
         self.store = store
+        self.log = log
         self.builder = SnapshotBuilder(paths: paths, clock: clock, sources: sources,
-                                       runtime: runtime, git: git, host: host)
+                                       runtime: runtime, git: git, host: host, log: log)
     }
 
     /// A logger with a UsageStore of its own over `paths.usage`, for tests and tools that
@@ -55,9 +59,11 @@ public final class ResearchLogger: ResearchCounting, Sendable {
                             runtime: @escaping @Sendable () -> RuntimeInfo,
                             lease: (any StateLease)? = nil,
                             git: @escaping GitProbe.Runner = GitProbe.run,
-                            host: @escaping @Sendable () -> HostSample = { HostSample.current() }) {
+                            host: @escaping @Sendable () -> HostSample = { HostSample.current() },
+                            log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .research) }) {
         self.init(paths: paths, clock: clock, sources: sources, runtime: runtime,
-                  store: UsageStore(paths: paths, clock: clock, lease: lease), git: git, host: host)
+                  store: UsageStore(paths: paths, clock: clock, lease: lease, log: log),
+                  git: git, host: host, log: log)
     }
 
     /// D-36: false while research/ may not be written (the store's lease rule).
@@ -68,8 +74,8 @@ public final class ResearchLogger: ResearchCounting, Sendable {
     public func bump(_ key: String, by n: Int = 1) {
         let now = clock.now()
         let day = clock.localDate(now)
-        queue.async { [store] in
-            Self.apply(store, key, by: n, day: day, now: now)
+        queue.async { [store, log] in
+            Self.apply(store, key, by: n, day: day, now: now, log: log)
         }
     }
 
@@ -80,7 +86,7 @@ public final class ResearchLogger: ResearchCounting, Sendable {
         let day = clock.localDate(now)
         return queue.sync {
             if let refused = refusal("Research check") { return refused }
-            Self.apply(store, ResearchKey.aliveHours, by: 1, day: day, now: now)
+            Self.apply(store, ResearchKey.aliveHours, by: 1, day: day, now: now, log: log)
             guard MetricsLog(paths: paths).lastDate() != day else { return .skippedAlreadyToday }
             return builder.snapshot()
         }
@@ -94,7 +100,7 @@ public final class ResearchLogger: ResearchCounting, Sendable {
         let day = clock.localDate(now)
         let due: SnapshotOutcome? = queue.sync {
             if let refused = refusal("Research check") { return refused }
-            Self.apply(store, ResearchKey.aliveHours, by: 1, day: day, now: now)
+            Self.apply(store, ResearchKey.aliveHours, by: 1, day: day, now: now, log: log)
             return MetricsLog(paths: paths).lastDate() != day ? nil : .skippedAlreadyToday
         }
         if let due { return due }
@@ -121,15 +127,16 @@ public final class ResearchLogger: ResearchCounting, Sendable {
     private func refusal(_ what: String) -> SnapshotOutcome? {
         guard !store.mayWrite else { return nil }
         let why = UsageError.leaseNotHeld.description
-        JarvisLog.log("\(what): \(why)", category: .research)
+        log("\(what): \(why)")
         return .failed(why)
     }
 
-    private static func apply(_ store: UsageStore, _ key: String, by n: Int, day: String, now: Double) {
+    private static func apply(_ store: UsageStore, _ key: String, by n: Int, day: String, now: Double,
+                              log: @Sendable (String) -> Void) {
         do {
             try store.bump(key, by: n, day: day, now: now)
         } catch {
-            JarvisLog.log("Research bump: \(error)", category: .research)
+            log("Research bump: \(error)")
         }
     }
 }

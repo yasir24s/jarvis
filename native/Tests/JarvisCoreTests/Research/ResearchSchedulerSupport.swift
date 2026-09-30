@@ -27,12 +27,14 @@ enum SchedulerFixtures {
 
 /// Virtual time for the scheduler: a sleep advances the ManualClock by what it asks for and
 /// returns at once, so an hour passes in microseconds. After `budget` sleeps have returned,
-/// the next one parks until its task is cancelled (the scheduler's stop()).
+/// the next one parks until its task is cancelled (the scheduler's stop()), for at most a
+/// minute of real time: no scheduler loop outlives its test for longer than that.
 final class VirtualSleeper: Sendable {
     private struct State {
         var asked: [Duration] = []
         var parked = false
         var cancelled = false
+        var released = false
     }
 
     let clock: ManualClock
@@ -47,7 +49,10 @@ final class VirtualSleeper: Sendable {
     /// Every duration asked for, in order, the parked one included.
     var asked: [Duration] { state.withLock { $0.asked } }
     var isParked: Bool { state.withLock { $0.parked } }
+    /// The parked sleep ended because its task was cancelled.
     var sawCancellation: Bool { state.withLock { $0.cancelled } }
+    /// The parked sleep has thrown, so the scheduler's loop is over and writes nothing more.
+    var released: Bool { state.withLock { $0.released } }
 
     func sleep(_ d: Duration) async throws {
         let n = state.withLock { s in
@@ -56,8 +61,9 @@ final class VirtualSleeper: Sendable {
         }
         guard n <= budget else {
             state.withLock { $0.parked = true }
+            defer { state.withLock { $0.released = true } }
             do {
-                try await Task.sleep(for: .seconds(600))          // real time: only stop() ends it
+                try await Task.sleep(for: .seconds(60))
             } catch {
                 state.withLock { $0.cancelled = true }
                 throw error
@@ -91,9 +97,22 @@ struct BlankFrontApp: FrontAppProviding {
     func frontmostAppName() async -> String { "" }
 }
 
-/// Polls `done` (1 ms apart, real time) until it holds; a test failure after `seconds`.
+/// Runs the scheduler until its loop parks in `sleeper`, then stops it and waits until the
+/// loop is over. Both waits are bounded, and the scheduler is stopped on a failure too.
 @MainActor
-func until(_ what: String, within seconds: Int64 = 30, _ done: () -> Bool) async throws {
+func runUntilParked(_ scheduler: ResearchScheduler, _ sleeper: VirtualSleeper) async throws {
+    scheduler.start()
+    defer { scheduler.stop() }
+    try await until("the scheduler to use its \(sleeper.budget) sleeps") { sleeper.isParked }
+    scheduler.stop()
+    try await until("the scheduler's loop to end after stop()") { sleeper.released }
+    #expect(sleeper.sawCancellation, "stop() ended the parked sleep")
+}
+
+/// Polls `done` (1 ms apart, real time) until it holds; a test failure after `seconds`, never
+/// a hang. Every wait on the scheduler in these suites goes through here.
+@MainActor
+func until(_ what: String, within seconds: Int64 = 60, _ done: () -> Bool) async throws {
     let deadline = ContinuousClock.now.advanced(by: .seconds(seconds))
     while !done() {
         guard ContinuousClock.now < deadline else {
@@ -170,7 +189,10 @@ final class SchedulerRig {
     let logger: ResearchLogger
     let core: CoreState
     let sleeper: VirtualSleeper
+    /// The scheduler's log.
     let lines = LogLines()
+    /// The store's, logger's and snapshots' log: nothing here writes the process-global JarvisLog.
+    let researchLog = LogLines()
     let inputCalls = CallCount()
     let scheduler: ResearchScheduler
 
@@ -181,11 +203,13 @@ final class SchedulerRig {
         paths = ResearchPaths(here: root)
         clock = ManualClock(ts)
         let rclock = ResearchClock(clock, timeZone: schedulerLondon)
-        store = UsageStore(paths: paths, clock: rclock, lease: researchLease)
+        let research = researchLog
+        store = UsageStore(paths: paths, clock: rclock, lease: researchLease, log: { research.record($0) })
         logger = ResearchLogger(paths: paths, clock: rclock,
                                 sources: FileSnapshotSources(here: root, historyTurns: { 0 }),
                                 runtime: { SchedulerFixtures.runtime(build) }, store: store,
-                                git: { _, _ in "" }, host: { SchedulerFixtures.host })
+                                git: { _, _ in "" }, host: { SchedulerFixtures.host },
+                                log: { research.record($0) })
         let state = try StateStore(root: root.path(percentEncoded: false), lease: stateLease, clock: clock)
         core = CoreState(store: state, clock: clock, research: store, frontApp: BlankFrontApp())
         sleeper = VirtualSleeper(clock: clock, budget: budget)
@@ -201,11 +225,9 @@ final class SchedulerRig {
     }
 
     /// Starts the scheduler, waits until every budgeted sleep has returned (so every check has
-    /// run and logged), then stops it and waits for the loop to end.
+    /// run and logged), then stops it and waits for the loop to end. Both waits are bounded.
     func runUntilParked() async throws {
-        scheduler.start()
-        try await until("the scheduler to use its \(sleeper.budget) sleeps") { sleeper.isParked }
-        await scheduler.stopAndWait()
+        try await JarvisCoreTests.runUntilParked(scheduler, sleeper)
     }
 
     /// usage.json's root object (empty when there is no file).

@@ -43,13 +43,33 @@ private final class Child {
     let process = Process()
     let stdin = Pipe()
     let stdout = Pipe()
+    /// Left by the termination handler. Not `waitUntilExit()`: it waits on the run loop of the
+    /// thread it is called on, and an async test that resumes on another cooperative thread
+    /// after an `await` can wait there forever (a full run hung in `kill()`, 2026-09-30).
+    private let exited = DispatchGroup()
 
     init(_ executable: String, _ arguments: [String]) throws {
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = arguments
         process.standardInput = stdin
         process.standardOutput = stdout
-        try process.run()
+        exited.enter()
+        process.terminationHandler = { [exited] _ in exited.leave() }
+        do {
+            try process.run()
+        } catch {
+            exited.leave()
+            throw error
+        }
+    }
+
+    /// Waits at most `seconds` for the child to exit: a recorded failure, never a hang.
+    private func waitForExit(_ seconds: Double = 30) -> Bool {
+        guard exited.wait(timeout: .now() + seconds) == .success else {
+            Issue.record("child \(pid) did not exit within \(Int(seconds)) s")
+            return false
+        }
+        return true
     }
 
     var pid: Int32 { process.processIdentifier }
@@ -67,13 +87,16 @@ private final class Child {
 
     func finish() -> Int32 {
         try? stdin.fileHandleForWriting.close()
-        process.waitUntilExit()
+        guard waitForExit() else {
+            kill()
+            return -1
+        }
         return process.terminationStatus
     }
 
     func kill() {
         if process.isRunning { Darwin.kill(pid, SIGKILL) }
-        process.waitUntilExit()
+        _ = waitForExit()
     }
 }
 

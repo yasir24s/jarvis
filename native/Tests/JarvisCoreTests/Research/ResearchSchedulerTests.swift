@@ -184,9 +184,7 @@ struct ResearchSchedulerTests {
         defer { box.remove() }
         let rig = try SchedulerRig(root: box.root, at: schedulerMorning, budget: 1)
         rig.scheduler.start()
-        rig.scheduler.start()
-        try await until("the first check") { rig.sleeper.isParked }
-        await rig.scheduler.stopAndWait()
+        try await runUntilParked(rig.scheduler, rig.sleeper)     // starts it again: a no-op
         rig.scheduler.stop()
 
         #expect(rig.sleeper.sawCancellation)
@@ -207,10 +205,11 @@ struct ResearchSchedulerTests {
         let rig = try SchedulerRig(root: box.root, at: schedulerMorning, budget: 12)
         #expect(rig.scheduler.store === rig.store)
         #expect(rig.logger.store === rig.store)
-        let store = rig.store, logger = rig.logger
+        let store = rig.store, logger = rig.logger, appDone = CallCount()
         // Other threads bump the same instance while the scheduler runs: directly, as CoreState's
-        // counter does, and through the logger's queue, as the scheduler's own bumps go.
-        let app = Task.detached {
+        // counter does, and through the logger's queue, as the scheduler's own bumps go. On GCD
+        // threads, so no cooperative thread blocks, and the wait for them is bounded.
+        DispatchQueue.global().async {
             DispatchQueue.concurrentPerform(iterations: 400) { i in
                 if i.isMultiple(of: 2) {
                     store.bump(ResearchKey.interactions, by: 1)
@@ -218,11 +217,11 @@ struct ResearchSchedulerTests {
                     logger.bump(ResearchKey.interactionsText)
                 }
             }
+            appDone.bump()
         }
-        rig.scheduler.start()
-        await app.value
-        try await until("the scheduler's 12 checks") { rig.sleeper.isParked }
-        await rig.scheduler.stopAndWait()
+        try await runUntilParked(rig.scheduler, rig.sleeper)
+        try await until("the 400 app bumps") { appDone.value == 1 }
+        rig.logger.flush()
 
         let counts = Dictionary(uniqueKeysWithValues: try rig.counters("2026-09-29"))
         #expect(counts == ["interactions": .int(200), "interactions_text": .int(200),
@@ -245,11 +244,13 @@ struct ResearchSchedulerTests {
             return turns.count
         }
         let rclock = ResearchClock(clock, timeZone: schedulerLondon)
-        let usage = UsageStore(paths: ResearchPaths(box.paths), clock: rclock)
+        let research = LogLines()
+        let usage = UsageStore(paths: ResearchPaths(box.paths), clock: rclock, log: { research.record($0) })
         let logger = ResearchLogger(paths: ResearchPaths(box.paths), clock: rclock,
                                     sources: FileSnapshotSources(here: box.root, historyTurns: historyOnDisk),
                                     runtime: { SchedulerFixtures.runtime(.dev) }, store: usage,
-                                    git: { _, _ in "" }, host: { SchedulerFixtures.host })
+                                    git: { _, _ in "" }, host: { SchedulerFixtures.host },
+                                    log: { research.record($0) })
         let store = try StateStore(root: box.root.path(percentEncoded: false), lease: nil, clock: clock)
         let core = CoreState(store: store, clock: clock, research: usage, frontApp: BlankFrontApp())
 
@@ -267,9 +268,7 @@ struct ResearchSchedulerTests {
         let lines = LogLines()
         let scheduler = ResearchScheduler(store: usage, logger: logger, build: .dev, core: core, environment: [:],
                                           sleep: { try await sleeper.sleep($0) }, log: { lines.record($0) })
-        scheduler.start()
-        try await until("one check") { sleeper.isParked }
-        await scheduler.stopAndWait()
+        try await runUntilParked(scheduler, sleeper)
 
         let data = try #require(FileManager.default.contents(atPath: box.paths.researchMetrics.path(percentEncoded: false)))
         let rows = String(decoding: data, as: UTF8.self).split(separator: "\n")
@@ -278,6 +277,7 @@ struct ResearchSchedulerTests {
         #expect(counts["corrections"] == .int(Int64(expected.correctionsCount)))
         #expect(counts["history_turns"] == .int(Int64(expected.historyTurns)))
         #expect(await core.snapshotInputs() == expected)
+        #expect(research.all == ["Research snapshot appended for 2026-09-29."])
     }
 
     // MARK: A text-only run, for the schema check

@@ -134,14 +134,6 @@ public final class ResearchScheduler {
         log("Research scheduler stopped")
     }
 
-    /// `stop()`, then waits for the loop to end: nothing is written after this returns.
-    public func stopAndWait() async {
-        let running = task
-        stop()
-        await running?.value
-        logger.flush()
-    }
-
     nonisolated static func describe(_ outcome: SnapshotOutcome) -> String {
         switch outcome {
         case .written(let date): "alive_hours bumped; snapshot written for \(date)"
@@ -185,7 +177,7 @@ extension ResearchLogger {
     public func appendNativeDevWritesAnnotation(text: String, date: String? = nil,
                                                 recorded: String? = nil, by: String = "user") -> Bool {
         guard mayWrite else {
-            JarvisLog.log("Research annotation: \(UsageError.leaseNotHeld)", category: .research)
+            log("Research annotation: \(UsageError.leaseNotHeld)")
             return false
         }
         let today = clock.today()
@@ -195,7 +187,7 @@ extension ResearchLogger {
             try MetricsLog(url: annotationsURL).append(line)
             return true
         } catch {
-            JarvisLog.log("Research annotation: \(error)", category: .research)
+            log("Research annotation: \(error)")
             return false
         }
     }

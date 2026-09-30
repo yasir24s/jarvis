@@ -13,11 +13,13 @@ import Testing
 private let refusal = "not written: the state lease is not held (D-36)"
 private let day = "2026-09-29"
 
-private func logger(_ root: URL, lease: (any StateLease)?, clock: ManualClock) -> ResearchLogger {
+/// A logger with its own store over `root`; its log lines go to `log`, never to JarvisLog.
+private func logger(_ root: URL, lease: (any StateLease)?, clock: ManualClock,
+                    log: LogLines = LogLines()) -> ResearchLogger {
     ResearchLogger(paths: ResearchPaths(here: root), clock: ResearchClock(clock, timeZone: schedulerLondon),
                    sources: FileSnapshotSources(here: root, historyTurns: { 0 }),
                    runtime: { SchedulerFixtures.runtime(.dev) }, lease: lease,
-                   git: { _, _ in "" }, host: { SchedulerFixtures.host })
+                   git: { _, _ in "" }, host: { SchedulerFixtures.host }, log: { log.record($0) })
 }
 
 @Suite("Research writes need the state lease (D-36)")
@@ -27,13 +29,16 @@ struct ResearchLeaseTests {
     @Test func usageStoreRefusesARealRootWithoutTheLease() throws {
         let root = try RealLikeResearchRoot(researchDir: false)
         defer { root.remove() }
+        let lines = LogLines()
         let store = UsageStore(paths: ResearchPaths(here: root.url),
-                               clock: ResearchClock(ManualClock(schedulerMorning), timeZone: schedulerLondon))
+                               clock: ResearchClock(ManualClock(schedulerMorning), timeZone: schedulerLondon),
+                               log: { lines.record($0) })
         #expect(throws: UsageError.leaseNotHeld) {
             try store.bump(ResearchKey.interactions, by: 1, day: day, now: schedulerMorning)
         }
         store.bump(ResearchKey.interactions, by: 1)          // the ResearchCounting path: logged, no throw
         #expect(UsageError.leaseNotHeld.description == refusal)
+        #expect(lines.all == ["Research bump: \(refusal)"])
         // Refused before makedirs: not even research/ was created.
         #expect(try FileManager.default.contentsOfDirectory(atPath: root.url.path(percentEncoded: false)) == ["jarvis.py"])
     }
@@ -44,7 +49,7 @@ struct ResearchLeaseTests {
         let lease = try root.acquireLease()
         let store = UsageStore(paths: ResearchPaths(here: root.url),
                                clock: ResearchClock(ManualClock(schedulerMorning), timeZone: schedulerLondon),
-                               lease: lease)
+                               lease: lease, log: { _ in })
         try store.bump(ResearchKey.interactions, by: 1, day: day, now: schedulerMorning)
         let written = fileTree(root.url)
         let usage = try #require(written["research/usage.json"])
@@ -63,7 +68,8 @@ struct ResearchLeaseTests {
         let root = try RealLikeResearchRoot()
         defer { root.remove() }
         let before = fileTree(root.url)
-        let log = logger(root.url, lease: nil, clock: ManualClock(schedulerMorning))
+        let lines = LogLines()
+        let log = logger(root.url, lease: nil, clock: ManualClock(schedulerMorning), log: lines)
 
         log.bump(ResearchKey.interactions)
         log.flush()
@@ -71,6 +77,8 @@ struct ResearchLeaseTests {
         #expect(log.hourlyCheck() == .failed(refusal))
         #expect(log.appendNativeDevWritesAnnotation(text: "stand-in text") == false)
         #expect(fileTree(root.url) == before)
+        #expect(lines.all == ["Research bump: \(refusal)", "Research snapshot: \(refusal)",
+                              "Research check: \(refusal)", "Research annotation: \(refusal)"])
         #expect(try FileManager.default.contentsOfDirectory(atPath: log.paths.dir.path(percentEncoded: false)).isEmpty)
     }
 
@@ -141,6 +149,9 @@ struct ResearchLeaseTests {
             "Research check 2 at +3690 s: no snapshot: \(refusal)",
         ])
         #expect(rig.inputCalls.value == 0)
+        // The launch bump, then both checks, each refused and logged (FIFO on the logger's queue).
+        #expect(rig.researchLog.all == ["Research bump: \(refusal)", "Research check: \(refusal)",
+                                        "Research check: \(refusal)"])
     }
 
     @MainActor
@@ -155,6 +166,7 @@ struct ResearchLeaseTests {
         #expect(try rig.rows().count == 1)
         #expect(described(try rig.counters(day)) == ["starts_swift_dev=1", "alive_hours=2"])
         #expect(!rig.lines.all.contains { $0.contains("D-36") })
+        #expect(rig.researchLog.all == ["Research snapshot appended for \(day)."])
     }
 
     // MARK: The native-dev-writes annotation (T10; the app never calls it)

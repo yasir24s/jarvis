@@ -52,22 +52,28 @@ public final class UsageStore: ResearchCounting, Sendable {
     private let lock = Mutex(())                  // the analogue of _research_lock
     private let lease: (any StateLease)?
     private let needsLease: Bool
+    private let log: @Sendable (String) -> Void
 
     /// D-36: the repo root holding `url`'s research/ folder is real state by StateStore's own
     /// rule (it has jarvis.py and is not a test Sandbox), decided here once. Writing a real
     /// root then needs `lease` held, and a lease that was given must be held for any root;
     /// otherwise a bump is refused (`.leaseNotHeld`) before anything under the root is touched.
-    public init(url: URL, clock: ResearchClock = ResearchClock(), lease: (any StateLease)? = nil) {
+    /// `log` takes this store's log lines (JarvisLog by default; tests pass a recorder, so they
+    /// never write the process-global log).
+    public init(url: URL, clock: ResearchClock = ResearchClock(), lease: (any StateLease)? = nil,
+                log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .research) }) {
         self.url = url
         self.clock = clock
         self.lease = lease
+        self.log = log
         let here = url.deletingLastPathComponent().deletingLastPathComponent()
         self.needsLease = StateStore.isRealRepoRoot(here.path(percentEncoded: false))
     }
 
     public convenience init(paths: ResearchPaths, clock: ResearchClock = ResearchClock(),
-                            lease: (any StateLease)? = nil) {
-        self.init(url: paths.usage, clock: clock, lease: lease)
+                            lease: (any StateLease)? = nil,
+                            log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .research) }) {
+        self.init(url: paths.usage, clock: clock, lease: lease, log: log)
     }
 
     /// D-36, as `StateStore.save` checks it: false when a lease is needed or was given and
@@ -83,7 +89,7 @@ public final class UsageStore: ResearchCounting, Sendable {
         do {
             try bump(key, by: n, day: clock.localDate(now), now: now)
         } catch {
-            JarvisLog.log("Research bump: \(error)", category: .research)
+            log("Research bump: \(error)")
         }
     }
 
@@ -178,9 +184,8 @@ public final class UsageStore: ResearchCounting, Sendable {
                 unlink(name)
                 throw .quarantine("write failed")
             }
-            JarvisLog.log("Research: usage.json was unparseable (\(why)); original kept as "
-                          + "\(name.split(separator: "/").last ?? "") before rewriting",
-                          category: .research)
+            log("Research: usage.json was unparseable (\(why)); original kept as "
+                + "\(name.split(separator: "/").last ?? "") before rewriting")
             return
         }
         throw .quarantine("100 quarantine names already taken")

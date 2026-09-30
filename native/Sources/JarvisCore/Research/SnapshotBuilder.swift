@@ -32,19 +32,23 @@ public struct SnapshotBuilder: Sendable {
     private let runtime: @Sendable () -> RuntimeInfo
     private let git: GitProbe.Runner
     private let host: @Sendable () -> HostSample
+    private let log: @Sendable (String) -> Void
 
     /// `git` runs research_snapshot's two git commands (tests inject a recorder); `host`
-    /// samples the OS / hardware / memory facts of the runtime block.
+    /// samples the OS / hardware / memory facts of the runtime block; `log` takes the
+    /// snapshot's log lines (JarvisLog by default).
     public init(paths: ResearchPaths, clock: ResearchClock, sources: any SnapshotSources,
                 runtime: @escaping @Sendable () -> RuntimeInfo,
                 git: @escaping GitProbe.Runner = GitProbe.run,
-                host: @escaping @Sendable () -> HostSample = { HostSample.current() }) {
+                host: @escaping @Sendable () -> HostSample = { HostSample.current() },
+                log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .research) }) {
         self.paths = paths
         self.clock = clock
         self.sources = sources
         self.runtime = runtime
         self.git = git
         self.host = host
+        self.log = log
     }
 
     /// jarvis.py's code measure: `sum(1 for _ in open(me))` (UTF-8 text mode, universal
@@ -126,20 +130,19 @@ public struct SnapshotBuilder: Sendable {
         do {
             built = try row(now: clock.now(), inputs: inputs)
         } catch {
-            JarvisLog.log("Research snapshot: \(error)", category: .research)
+            log("Research snapshot: \(error)")
             return .failed(error.detail)
         }
         if built.codeUnreadable {
-            JarvisLog.log("Research snapshot: jarvis.py unreadable; code.bytes/lines recorded as null (D5)",
-                          category: .research)
+            log("Research snapshot: jarvis.py unreadable; code.bytes/lines recorded as null (D5)")
         }
         do {
             try MetricsLog(paths: paths).append(PyJSON.dumps(.object(built.row)))
         } catch {
-            JarvisLog.log("Research snapshot: \(error)", category: .research)
+            log("Research snapshot: \(error)")
             return .failed("\(error)")
         }
-        JarvisLog.log("Research snapshot appended for \(built.date).", category: .research)
+        log("Research snapshot appended for \(built.date).")
         return .written(date: built.date)
     }
 }
