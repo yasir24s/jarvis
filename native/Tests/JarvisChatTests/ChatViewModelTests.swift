@@ -249,6 +249,21 @@ struct ChatViewModelTests {
         #expect(model.backendLine == "Last backend: \(LocalBrain.backendName)")
     }
 
+    @Test("when the brain does not start, one system row says chat is off and names the log")
+    func startFailedShowsOneRow() async throws {
+        let model = ChatViewModel()
+        model.startFailed(log: "~/jarvis/logs/jarvis.log")
+        model.startFailed(log: "~/jarvis/logs/jarvis.log")
+        #expect(model.messages.map(\.role) == [.system])
+        #expect(model.messages.map(\.text)
+                == ["Chat is off: JARVIS could not start its brain. The reason is in the log, ~/jarvis/logs/jarvis.log."])
+        #expect(model.messages.allSatisfy { $0.phase == .finished && !$0.rendersMarkdown })
+        model.draft.text = "what time is it"
+        #expect(model.send() == nil)
+        #expect(model.draft.text == "what time is it")
+        #expect(model.messages.count == 1)
+    }
+
     @Test("the speak hook sees each finished reply once, with its turn, and nothing for a refused submit")
     func speakHookSeesFinishedReplies() async throws {
         let outcomes = Outcomes([.reply("It is three o'clock, sir."), .busy])

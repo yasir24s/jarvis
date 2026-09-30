@@ -139,6 +139,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             store = try StateStore(root: paths.root.path(percentEncoded: false), lease: lease)
         } catch {
             JarvisLog.log("cannot open the state store (\(error)) — chat is off.", category: .state)
+            chat.startFailed(log: Self.abbreviate(paths.logFile))
             return
         }
         let environment = ProcessInfo.processInfo.environment
@@ -176,6 +177,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 try await assembly.start()
             } catch {
                 JarvisLog.log("cannot start the brain (\(error)) — chat is off.", category: .brain)
+                self.chat.startFailed(log: Self.abbreviate(paths.logFile))
                 return
             }
             self.chat.connect(assembly.coordinator, lastBackend: { await assembly.backend.last.name })

@@ -77,6 +77,21 @@ public final class ChatViewModel: ReplySink {
 
     public var isConnected: Bool { submitter != nil }
 
+    /// The row shown when chat is off because the state store or the brain did not start.
+    /// `log` is the log file's path, with ~ for the home folder.
+    public static func startFailedNotice(log: String) -> String {
+        "Chat is off: JARVIS could not start its brain. The reason is in the log, \(log)."
+    }
+
+    /// The state store or the brain did not start, so no turn can run: one system row says so
+    /// and names the log, instead of a window that silently sends nothing. A second call adds
+    /// nothing.
+    public func startFailed(log: String) {
+        let text = Self.startFailedNotice(log: log)
+        guard !messages.contains(where: { $0.role == .system && $0.text == text }) else { return }
+        messages.append(ChatMessage(role: .system, text: text, phase: .finished))
+    }
+
     /// The menu's backend line.
     public var backendLine: String { "Last backend: \(lastBackend ?? "—")" }
 
