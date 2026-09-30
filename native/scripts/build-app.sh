@@ -47,6 +47,15 @@ if [[ -n "$(git -C "$REPO" status --porcelain)" ]]; then DIRTY=true; else DIRTY=
 /usr/libexec/PlistBuddy -c "Add :JARVISBuildChannel string $CHANNEL" -c "Add :JARVISGitCommit string $COMMIT" \
     -c "Add :JARVISGitDirty bool $DIRTY" "$STAGE/Contents/Info.plist"
 printf 'APPL????' > "$STAGE/Contents/PkgInfo"
+# The Dock icon (D-43; M00 deferred jarvis_icon.png → .icns to M4): every size iconutil wants,
+# scaled from the 1024 px source. Info.plist names it (CFBundleIconFile AppIcon).
+ICONTMP="$(mktemp -d)"; ICONSET="$ICONTMP/AppIcon.iconset"; mkdir "$ICONSET"
+for s in 16 32 128 256 512; do
+    sips -z "$s" "$s" "$REPO/jarvis_icon.png" --out "$ICONSET/icon_${s}x${s}.png" >/dev/null
+    sips -z "$((s * 2))" "$((s * 2))" "$REPO/jarvis_icon.png" --out "$ICONSET/icon_${s}x${s}@2x.png" >/dev/null
+done
+iconutil -c icns "$ICONSET" -o "$STAGE/Contents/Resources/AppIcon.icns"
+rm -rf "$ICONTMP"
 if otool -L "$BIN" | grep -q libonnxruntime; then   # only once M10 links ORT
     cp "$ORT_LIB/libonnxruntime.1.26.0.dylib" "$STAGE/Contents/Frameworks/libonnxruntime.1.dylib"
 fi

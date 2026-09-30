@@ -35,4 +35,16 @@ struct AppShellTests {
         #expect(!script.contains("LSUIElement"))
         #expect(!script.contains("LSBackgroundOnly"))
     }
+
+    @Test("the Dock icon: Info.plist names AppIcon, and build-app.sh makes it from jarvis_icon.png")
+    func dockIcon() throws {
+        let data = try Data(contentsOf: Self.native.appending(path: "Resources/Info.plist"))
+        let plist = try #require(try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
+        #expect(plist["CFBundleIconFile"] as? String == "AppIcon")
+        let script = try String(contentsOf: Self.native.appending(path: "scripts/build-app.sh"), encoding: .utf8)
+        #expect(script.contains("$REPO/jarvis_icon.png"))
+        #expect(script.contains("iconutil -c icns \"$ICONSET\" -o \"$STAGE/Contents/Resources/AppIcon.icns\""))
+        let source = Self.native.deletingLastPathComponent().appending(path: "jarvis_icon.png")
+        #expect(FileManager.default.fileExists(atPath: source.path(percentEncoded: false)))
+    }
 }
