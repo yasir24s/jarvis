@@ -414,6 +414,17 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
   claude_refusal_fallback; the on-device backend counter is backend_local_apple_foundation_model_
   with a trailing underscore. research/README.md documents all four.
 
+## M4 build notes
+
+- **D-43. JARVIS is a full macOS application** (user, 2026-09-30). It has a Dock icon and appears
+  in Cmd-Tab, with a main window holding the chat and a normal app menu (About, Edit, Window,
+  Quit). The menu-bar item stays, and the HUD (M13) and the voice loop (M8 to M12) will run
+  alongside it as background UI. Closing the window keeps JARVIS running; the Dock icon or Open
+  Chat reopens it. A launch with `--background` (the future login item) does not open the
+  window. This supersedes the plan's LSUIElement agent app and `.accessory` policy (M02-M04 §1
+  and §3.12) and A-12's "no Dock icon": A-12 now checks that the Dock icon is present. The HUD
+  panel must never change the activation policy. Registered as DEV-M4-01.
+
 ## Open user decisions
 
 - Write `shouldSpeakReply` (text chat, M02–M04 §3.12) and `speakLocally` (sensitive routing

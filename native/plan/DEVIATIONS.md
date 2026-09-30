@@ -95,6 +95,7 @@ Line numbers refer to jarvis.py @ 68cd112.
 | DEV-M3-12 | M3 | No cancellation path | A cancelled on-device turn with no text yet is an error with no retry; with text already streamed, that text is kept | Cancellation is new in native | `LocalBrainTests` | `approved` | user sign-off of M3, 2026-09-29 |
 | DEV-M3-13 | M3 | `datetime.now()` keeps the time zone the process started with (not verified) | `get_time` uses the autoupdating time zone, so it follows a system change without a restart | Correct time after travel | `GetTimeTests` (pinned zone) | `approved` | user sign-off of M3, 2026-09-29 |
 | DEV-M3-14 | M3 | No text channel | When a text-chat turn fails partway, salvage also keeps text already shown on screen | What the user already read stays | `ClaudeDriverTests` (partial) | `approved` | user sign-off of M3, 2026-09-29 |
+| DEV-M4-01 | M4 | Python JARVIS runs as an accessory app with no Dock icon (the pywebview HUD overlay sets activation policy 1, Accessory) | Native JARVIS is a regular app: Dock icon, Cmd-Tab, a main chat window and an app menu, with the menu-bar item and the background UI (HUD, voice loop) alongside | User decision D-43: JARVIS should be an actual application, not only background UI | A-12 (the Dock icon is present) | `approved` | README D-43, 2026-09-30 |
 
 The M7 table gives one fixture for all 15 `DEV-M7-*` / `DEV-M14-*` rows (§8.1 heading:
 "fixture §4.2"). For the `DEV-M14-*` rows that marker was carried over as written; the
@@ -102,10 +103,10 @@ loop behaviours may need their own tests at M14.
 
 ## Counts
 
-72 entries: 45 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-8, R3 → D-15, R4 → D-14, DEV-M7-01,
+73 entries: 46 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-8, R3 → D-15, R4 → D-14, DEV-M7-01,
 DEV-M7-02, DEV-M7-05, R9 → D-18, DEV-M0-01, DEV-M0-02, DEV-M0-03, DEV-M1-01, DEV-M1-02, DEV-M1-03,
 DEV-M1-04, D1a, D1b, D1c, D5a, R8-str-float, R8-load-not-dict, R8-nan-sort,
-R8-kb-summary-not-str, R8-list-content, DEV-M3-01 to DEV-M3-14), 1 `approved (overage kill-switch only)` (X-10), 1 `rejected` (X-5),
+R8-kb-summary-not-str, R8-list-content, DEV-M3-01 to DEV-M3-14, DEV-M4-01), 1 `approved (overage kill-switch only)` (X-10), 1 `rejected` (X-5),
 1 `resolved — parity since fef66c1` (R2 → D-12) and 24 `proposed — decide at milestone start`.
 
 ## Not registered: differences mentioned only in the M05 §3.5 tool table
