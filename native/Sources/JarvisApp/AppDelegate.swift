@@ -30,6 +30,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The research scheduler (plan: M01b §3.5), started once CoreState exists. It is stopped
     /// before the lock is released: its flush writes, and writes need the lease (D-36).
     private var research: ResearchScheduler?
+    /// The personality upkeep (P1), started with the brain and stopped, like `research`,
+    /// before the lock is released: its passes write, and writes need the lease.
+    private var personality: PersonalitySchedule?
     private var sigterm: DispatchSourceSignal?
     /// Opens the chat window. Set by the window each time it appears, for the Dock icon.
     var openChat: (() -> Void)?
@@ -115,6 +118,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         JarvisLog.log("Quit JARVIS — exiting.")
         research?.stop()   // flushes enqueued bumps while the lease is still held
         research = nil
+        personality?.stop()   // no personality pass outlives the lease
+        personality = nil
         lock = nil   // closes the fd: releases the flock before exit
     }
 
@@ -172,6 +177,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Python's is_online(): asked only when a turn reaches the brain.
             online: { await Net.isOnline() })
         brain = assembly
+        // P1: the hourly consolidation check starts now (first pass in 120 s); the chat's
+        // dismissals reach it through the coordinator once the brain has started.
+        assembly.personality.start()
+        personality = assembly.personality
         Task { @MainActor in
             do {
                 try await assembly.start()
@@ -211,6 +220,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated {
                 JarvisLog.log("received SIGTERM — exiting.")
                 self.research?.stop()   // flushes enqueued bumps while the lease is still held
+                self.personality?.stop()   // no personality pass outlives the lease
                 self.lock = nil
                 exit(0)
             }

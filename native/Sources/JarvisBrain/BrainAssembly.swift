@@ -4,8 +4,8 @@ import JarvisTools
 
 /// Builds the brain from its parts (plan: M02-M04 §3.5-§3.11): one confirmation gate, a
 /// gateway that counts and logs, the MCP turn registry and server on the run directory, the
-/// Claude driver, the on-device brain on the same gateway, the backend reporter, the router
-/// and the turn coordinator. `start()` creates
+/// Claude driver, the on-device brain on the same gateway, the backend reporter, the router,
+/// the personality upkeep (P1) and the turn coordinator. `start()` creates
 /// the run directory and starts the server; `stop()` stops it.
 public final class BrainAssembly: Sendable {
     /// `~/Library/Application Support/JARVIS/`, which holds `run/` and `claude-cwd/`
@@ -23,6 +23,11 @@ public final class BrainAssembly: Sendable {
     public let driver: ClaudeDriver
     public let router: BrainRouter
     public let coordinator: TurnCoordinator
+    /// The personality upkeep (P1): the hourly consolidation check, and the distillation a
+    /// typed dismissal starts through the coordinator's hook, both written by the
+    /// collaborative writer. Not started here: the app starts it at launch and stops it
+    /// before the lock is released.
+    public let personality: PersonalitySchedule
     /// The `claude` found on the child's PATH, or nil. With none, the driver is given
     /// `~/.local/bin/claude` (where the installer puts it, first on that PATH), so each Claude
     /// turn fails with ENOENT ("Claude Code CLI not found") and falls back to the local model,
@@ -39,11 +44,16 @@ public final class BrainAssembly: Sendable {
     ///   - claudeExecutable: overrides the PATH search (the smoke mode's stream tap).
     ///   - localBrain: builds the on-device brain on this assembly's gateway; nil means
     ///     `LocalBrain` (T3.6). Tests pass a fake.
+    ///   - personaWriter: what consolidation and distillation are written by; nil means
+    ///     `CollaborativePersonaLLM` over `LocalPersonaLLM` and a `ClaudePersonaLLM` with the
+    ///     driver's config, executable, working directory, environment and `online`. Tests pass
+    ///     a fake.
     ///   - log: every log line of the parts, with its category. Tests pass their own.
     public init(core: CoreState, research: any ResearchCounting,
                 config: ClaudeConfig, environment: [String: String],
                 runDirectory: URL, claudeWorkingDirectory: URL, claudeExecutable: URL? = nil,
                 localBrain: ((ToolGateway) -> any LocalGenerating)? = nil,
+                personaWriter: (any PersonaLLM)? = nil,
                 textAuthenticator: any ConfirmAuthenticator, fastPath: any FastPathRouting = NoFastPath(),
                 online: @escaping @Sendable () async -> Bool,
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
@@ -66,9 +76,16 @@ public final class BrainAssembly: Sendable {
         let local = localBrain?(gateway) ?? LocalBrain(gateway: gateway, log: brainLog)
         router = BrainRouter(core: core, config: config, claude: driver, local: local, backend: backend,
                              research: research, log: brainLog)
+        let writer = personaWriter ?? CollaborativePersonaLLM(
+            local: LocalPersonaLLM(),
+            claude: ClaudePersonaLLM(config: config, executable: executable, workingDirectory: claudeWorkingDirectory,
+                                     parentEnvironment: environment, online: online, log: brainLog))
+        let personality = PersonalitySchedule(core: core, writer: writer)
+        self.personality = personality
         coordinator = TurnCoordinator(brain: router, fastPath: fastPath, confirmations: confirmations,
                                       textAuthenticator: textAuthenticator, online: online,
-                                      onTurnStart: onTurnStart)
+                                      onTurnStart: onTurnStart,
+                                      onConversationEnded: { personality.conversationEnded() })
     }
 
     /// Registers the built-in tool bodies on the gateway (the system clock, the system time
