@@ -485,6 +485,29 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
   - The on-device model and Claude write the notes together: the local model drafts, Claude
     improves the draft when it is available, and the result must pass the same validator.
     Everything is saved on the Mac.
+- **D-51. Memory that keeps everything, and background file understanding** (user,
+  2026-09-30). New, native-only, built after P1.
+  - **P2, memory.** Python's rolling 12-entry `history.json` stays as it is, because Python
+    shares it. Alongside it, a local `memory/` folder in the state root keeps every exchange
+    (an append-only archive) and a store of compiled facts about the user. Each fact records
+    its source (conversation or file), its date and which writer made it. At each dismissal,
+    P1's local-plus-Claude writers also extract facts from the conversation. Each turn gets the
+    most relevant facts appended to its prompt, ranked on the Mac with on-device sentence
+    embeddings within a token budget. That appendix is a registered deviation from Python's
+    byte-identical prompt. `memory/` is never committed: it goes into .gitignore and the
+    pre-commit denylist.
+  - **P3, files.** A continuous low-priority scan of the user's home folder. It skips
+    `~/Library`, hidden files and folders (`.ssh`, `.aws`, `.claude`, `.signing` and the rest),
+    key, certificate, credential and `.env` files, JARVIS's own state and memory, build
+    output (`.build`, `node_modules`, DerivedData) and media. Anything left that looks like a
+    key or token is redacted before either model sees it. Small files, those that fit the
+    on-device model's budget, are read by the local model; larger ones are read by Claude.
+    Claude's reading has an hourly cap, and scanning pauses while a turn runs, so the user's
+    subscription stays free for conversation. An index of path, size, modification time and
+    digest means unchanged files are never read twice.
+  - **File text is untrusted.** The extraction prompts ask only for facts about the user.
+    Candidate facts that carry instructions, commands or URLs to fetch are dropped, and the
+    prompt shows memory as information, never as instructions.
 
 ## Open user decisions
 
