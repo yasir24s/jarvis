@@ -154,6 +154,49 @@ struct MCPServerTests {
         await h.remove()
     }
 
+    /// Codex review finding 4: the envelope is checked before anything is dispatched. A missing
+    /// or wrong version, or an id that is not a string or an integer, is -32600 and runs nothing.
+    @Test func malformedEnvelopesAreRejectedWithoutDispatch() async throws {
+        let h = try MCPHarness()
+        let (turn, _, token) = try await h.openTurn()
+        let end = try await h.bound(token: token)
+        func exchange(_ line: String) async throws -> JSONValue {
+            end.send(line + "\n")
+            return try json(await end.line())
+        }
+        func invalid(_ id: JSONValue) -> JSONValue {
+            .object(JSONObject([.init(key: "jsonrpc", value: .string("2.0")), .init(key: "id", value: id),
+                                .init(key: "error", value: .object(JSONObject([
+                                    .init(key: "code", value: .int(-32600)),
+                                    .init(key: "message", value: .string("Invalid Request"))])))]))
+        }
+        let call = #""method":"tools/call","params":{"name":"get_time","arguments":{}}}"#
+        // The review's scenario: a wrong version and an object id.
+        #expect(try await exchange(#"{"jsonrpc":"wrong","id":{},"# + call) == invalid(.null))
+        // A bad version with a good id: rejected, and the id is echoed.
+        #expect(try await exchange(#"{"id":1,"# + call) == invalid(.int(1)))
+        #expect(try await exchange(#"{"jsonrpc":"1.0","id":2,"# + call) == invalid(.int(2)))
+        #expect(try await exchange(#"{"jsonrpc":2.0,"id":3,"# + call) == invalid(.int(3)))
+        #expect(try await exchange(#"{"jsonrpc":"2.0 ","id":"four","# + call) == invalid(.string("four")))
+        // The right version with an id that is not a string or an integer.
+        for id in ["{}", "[5]", "true", "null", "6.5", "7.0"] {
+            #expect(try await exchange(#"{"jsonrpc":"2.0","id":\#(id),"# + call) == invalid(.null), "id \(id)")
+        }
+        // A notification needs the version too.
+        #expect(try await exchange(#"{"jsonrpc":"1.0","method":"notifications/initialized"}"#) == invalid(.null))
+        #expect(await turn.summary().toolRuns.isEmpty)
+        // String and integer ids, one past Int64 included, still work, and a good call runs.
+        let big = try await exchange(#"{"jsonrpc":"2.0","id":123456789012345678901234567890,"method":"ping"}"#)
+        #expect(big.objectValue?["id"] == .bigInt("123456789012345678901234567890"))
+        #expect(big.objectValue?["result"] == .object(JSONObject()))
+        let ran = try await exchange(#"{"jsonrpc":"2.0","id":"s","# + call)
+        #expect(ran.objectValue?["id"] == .string("s"))
+        #expect(ran.objectValue?["result"]?.objectValue?["content"] != nil)
+        #expect(await turn.summary().toolRuns.map(\.name) == ["get_time"])
+        end.close()
+        await h.remove()
+    }
+
     @Test func requestsAfterCloseTurnAreTurnClosed() async throws {
         let h = try MCPHarness()
         let (turn, files, token) = try await h.openTurn()

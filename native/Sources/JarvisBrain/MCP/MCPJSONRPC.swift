@@ -52,12 +52,17 @@ struct MCPJSONRPC: Sendable {
             // A batch array, or a bare scalar.
             return .invalid(error(id: .null, code: -32600, message: "Invalid Request"))
         }
+        // The envelope, checked on top of the parser: `"jsonrpc": "2.0"`, a string method, and
+        // a request id that is a string or an integer. Anything else is answered, never dispatched.
         let id = object["id"]
-        guard let method = object["method"]?.stringValue else {
+        guard object["jsonrpc"] == .string("2.0"), let method = object["method"]?.stringValue else {
             return .invalid(error(id: id.flatMap(validID) ?? .null, code: -32600, message: "Invalid Request"))
         }
         guard let id else { return .notification(method: method) }
-        return .request(id: validID(id) ?? .null, method: method, params: object["params"]?.objectValue)
+        guard let requestID = validID(id) else {
+            return .invalid(error(id: .null, code: -32600, message: "Invalid Request"))
+        }
+        return .request(id: requestID, method: method, params: object["params"]?.objectValue)
     }
 
     /// The reply to a request on an open turn, or the tool call it needs.
@@ -114,13 +119,12 @@ struct MCPJSONRPC: Sendable {
                                    .init(key: "error", value: .object(body))]))
     }
 
-    /// JSON-RPC ids are strings, numbers or null. Anything else, and NaN or infinity (which
-    /// `json.dumps` would write as invalid JSON), is answered with `null`.
+    /// An MCP request id is a string or an integer (MCP rules out null; a fraction is no id).
+    /// Anything else, NaN and infinity included, is not echoed: the error reply carries `null`.
     private static func validID(_ id: JSONValue) -> JSONValue? {
         switch id {
-        case .string, .int, .bigInt, .null: id
-        case .double(let d): d.isFinite ? id : nil
-        case .bool, .array, .object: nil
+        case .string, .int, .bigInt: id
+        case .null, .double, .bool, .array, .object: nil
         }
     }
 }
