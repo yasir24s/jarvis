@@ -221,7 +221,7 @@ public actor MCPServer {
                             drop(connection, "line over \(limits.lineBytes) bytes")
                             return
                         }
-                        if let reply = await respond(to: line, binding) { connection.send(reply) }
+                        if let reply = await respond(to: line, binding, handle) { connection.send(reply) }
                         continue
                     }
                     guard let line = lines.nextLine() else {
@@ -302,8 +302,21 @@ public actor MCPServer {
 
     // MARK: - JSON-RPC
 
+    /// The gateway's `live` check for calls from one connection (MCP review finding 3): false
+    /// once closeTurn has revoked the connection's handle or removed its turn. A call that
+    /// passed the registry check and then waited in the turn's FIFO, behind the local model for
+    /// instance, therefore never runs its body after the revocation.
+    nonisolated static func liveCheck(handle: MCPServeHandle, registry: MCPTurnRegistry,
+                                      turnID: UUID) -> @Sendable () async -> Bool {
+        {
+            if handle.isRevoked { return false }
+            return await registry.isOpen(turnID)
+        }
+    }
+
     /// The reply line for one request line, or nil for a notification.
-    private func respond(to line: [UInt8], _ binding: MCPTurnRegistry.Binding) async -> String? {
+    private func respond(to line: [UInt8], _ binding: MCPTurnRegistry.Binding,
+                         _ handle: MCPServeHandle) async -> String? {
         let turn = binding.turn
         switch MCPJSONRPC.parse(line) {
         case .invalid(let error):
@@ -319,7 +332,8 @@ public actor MCPServer {
             case .reply(let reply):
                 return MCPJSONRPC.encode(reply)
             case .callTool(let name, let arguments):
-                let result = await gateway.call(name, arguments, turn: turn, origin: .model(.claude))
+                let live = Self.liveCheck(handle: handle, registry: registry, turnID: binding.turnID)
+                let result = await gateway.call(name, arguments, turn: turn, origin: .model(.claude), live: live)
                 return MCPJSONRPC.encode(MCPJSONRPC.toolResult(id: id, result))
             }
         }
