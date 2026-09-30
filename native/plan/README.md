@@ -508,12 +508,17 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
   - **File text is untrusted.** The extraction prompts ask only for facts about the user.
     Candidate facts that carry instructions, commands or URLs to fetch are dropped, and the
     prompt shows memory as information, never as instructions.
+- **D-52. X-4 approved; the voice reference clip is in** (user, 2026-09-30). Shell segments that
+  run `security find-generic-password`, `find-internet-password`, `dump-keychain` or `export`
+  are blocked. Codex wires X-4 with X-1, in the same fixture. The reference clip for the voice
+  spike (D-48) is `voices/jarvis_en.wav` (83 s, 16-bit stereo, 44.1 kHz; `voices/` is
+  git-ignored and in the pre-commit denylist), from the JARVIS-ChatGPT repository's
+  `Assistant/voices/`. The spike cuts a clean 5 to 15 s reference from it.
 
 ## Open user decisions
 
 - `speakLocally` (sensitive routing to a local voice, M08 §3.2). `shouldSpeakReply` was
   drafted in 986a890 at the user's request; Codex polishes it.
-- X-4 (`security` secret-reading subcommands blocked in shell commands): decide at M5 start.
 - Any download or brew install (webrtc VAD source, espeak-ng): only if the spikes fail, and
   only with approval.
 - Deleting or renaming the `~/jarvis-swift` prototype (T0.2 only unregisters it).
