@@ -273,10 +273,10 @@ struct ResearchGitGoldenTests {
 
     /// A command that outlives the timeout is killed and blanks both fields.
     @Test func timeoutBlanksBothFields() {
-        let started = Date()
+        let started = SuspendingClock.now      // awake time: a closed lid does not count
         let out = GitProbe.run(["sleep", "5"], 0.3)
         #expect(out == nil)
-        #expect(Date().timeIntervalSince(started) < 3)
+        #expect(started.duration(to: .now) < .seconds(3))
         #expect(GitProbe.run(["printf", "abc\\n"], 5) == "abc\n")
         #expect(GitProbe.run(["jarvis-no-such-command-x4"], 5) == "")    // env: exit 127, empty stdout
     }
