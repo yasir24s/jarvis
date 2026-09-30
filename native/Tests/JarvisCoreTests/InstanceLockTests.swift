@@ -143,19 +143,19 @@ private func acquired(_ outcome: InstanceLock.Outcome) -> InstanceLock? {
 /// milliseconds — 0 misses without concurrent spawns, 7 with. Parallel tests here spawn
 /// constantly. A real leak (a child keeping the fd) lasts far longer than the window.
 private func acquiredSoon(_ url: URL, _ root: URL) -> InstanceLock? {
-    let deadline = Date().addingTimeInterval(2)
+    let deadline = SuspendingClock.now.advanced(by: .seconds(2))
     while true {
         if let lock = acquired(InstanceLock.tryAcquire(at: url, repoRoot: root)) { return lock }
-        if Date() >= deadline { return nil }
+        if SuspendingClock.now >= deadline { return nil }
         usleep(20_000)
     }
 }
 
 private func pythonProbeSoon(_ lock: URL) throws -> Int32 {
-    let deadline = Date().addingTimeInterval(2)
+    let deadline = SuspendingClock.now.advanced(by: .seconds(2))
     while true {
         let rc = try pythonProbe(lock)
-        if rc != 11 || Date() >= deadline { return rc }
+        if rc != 11 || SuspendingClock.now >= deadline { return rc }
         usleep(20_000)
     }
 }
