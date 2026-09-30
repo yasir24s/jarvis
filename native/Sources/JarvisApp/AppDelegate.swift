@@ -27,6 +27,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var lock: InstanceLock?
     /// Built once the lock is held and kept for the app's life (plan: M02-M04 §3.5, §3.12).
     private var brain: BrainAssembly?
+    /// The research scheduler (plan: M01b §3.5), started once CoreState exists. It is stopped
+    /// before the lock is released: its flush writes, and writes need the lease (D-36).
+    private var research: ResearchScheduler?
     private var sigterm: DispatchSourceSignal?
     /// Opens the chat window. Set by the window each time it appears, for the Dock icon.
     var openChat: (() -> Void)?
@@ -110,6 +113,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         JarvisLog.log("Quit JARVIS — exiting.")
+        research?.stop()   // flushes enqueued bumps while the lease is still held
+        research = nil
         lock = nil   // closes the fd: releases the flock before exit
     }
 
@@ -124,15 +129,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// before that. `run/` and `claude-cwd/` are the plan's, under Application Support (§3.6,
     /// §3.7).
     private func startBrain(lock: InstanceLock, paths: StatePaths) {
-        let research = UsageStore(paths: ResearchPaths(paths))
+        // One lease over the held lock for every writer of this root (D-36): the state store
+        // and the app's one UsageStore, which everything that bumps is handed.
+        let lease = InstanceLockLease(lock)
+        let researchPaths = ResearchPaths(paths)
+        let research = UsageStore(paths: researchPaths, lease: lease)
         let store: StateStore
         do {
-            store = try StateStore(root: paths.root.path(percentEncoded: false), lease: InstanceLockLease(lock))
+            store = try StateStore(root: paths.root.path(percentEncoded: false), lease: lease)
         } catch {
             JarvisLog.log("cannot open the state store (\(error)) — chat is off.", category: .state)
             return
         }
         let environment = ProcessInfo.processInfo.environment
+        let config = ClaudeConfig(environment: environment)
+        let core = CoreState(store: store, clock: SystemClock(), research: research, frontApp: WorkspaceFrontApp())
+        let scheduler = AppResearch.scheduler(
+            store: research, paths: researchPaths, here: paths.root, core: core,
+            runtime: AppResearch.runtime(processStarted: Self.processStarted, claudeEnabled: config.enabled))
+        scheduler.start()
+        self.research = scheduler
         let support = BrainAssembly.supportDirectory
         // The owner check a typed confirmation must pass (plan §3.4), counted as it runs.
         let authenticator = CountingTextAuthenticator(LAConfirmAuthenticator(), research: research)
@@ -147,8 +163,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                        log: { JarvisLog.log($0, category: .voice) })
         }
         let assembly = BrainAssembly(
-            core: CoreState(store: store, clock: SystemClock(), research: research, frontApp: WorkspaceFrontApp()),
-            research: research, config: ClaudeConfig(environment: environment), environment: environment,
+            core: core, research: research, config: config, environment: environment,
             runDirectory: support.appending(path: "run", directoryHint: .isDirectory),
             claudeWorkingDirectory: support.appending(path: "claude-cwd", directoryHint: .isDirectory),
             textAuthenticator: authenticator,
@@ -192,6 +207,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         source.setEventHandler {
             MainActor.assumeIsolated {
                 JarvisLog.log("received SIGTERM — exiting.")
+                self.research?.stop()   // flushes enqueued bumps while the lease is still held
                 self.lock = nil
                 exit(0)
             }
@@ -199,6 +215,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         source.resume()
         sigterm = source
     }
+
+    /// When this process started, as unix time: the snapshot's `runtime.process_started`.
+    private static let processStarted = Date().timeIntervalSince1970
 
     /// Seconds since the last keyboard, mouse or trackpad event in this login session.
     private static func userIdleSeconds() -> Double {

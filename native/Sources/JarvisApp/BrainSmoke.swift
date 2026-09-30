@@ -107,10 +107,13 @@ enum BrainSmoke {
         }
         defer { try? FileManager.default.removeItem(at: scratch) }
 
-        let research = UsageStore(paths: ResearchPaths(paths))
+        // One lease over the held lock for the state store and the UsageStore (D-36), as in the
+        // app. The smoke mode runs no research scheduler.
+        let lease = InstanceLockLease(lock)
+        let research = UsageStore(paths: ResearchPaths(paths), lease: lease)
         let core: CoreState
         do {
-            let store = try StateStore(root: paths.root.path(percentEncoded: false), lease: InstanceLockLease(lock))
+            let store = try StateStore(root: paths.root.path(percentEncoded: false), lease: lease)
             core = CoreState(store: store, clock: SystemClock(), research: research, frontApp: HeadlessFrontApp())
         } catch {
             return fail("cannot open the state store: \(error)", 78)
