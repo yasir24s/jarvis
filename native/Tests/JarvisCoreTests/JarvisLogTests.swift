@@ -15,13 +15,15 @@ struct JarvisLogTests {
         defer { JarvisLog.configure(file: nil, mirrorToStdout: false) }
         JarvisLog.log("Another JARVIS (python 4242) holds .jarvis.lock — exiting.", category: .lock)
         JarvisLog.log("activation policy: accessory")
-        #expect(try s.read("logs/jarvis.log") == """
-            ===== JARVIS starting 2026-09-01 08:00:00 =====
-            [JARVIS] from python
-            [JARVIS] Another JARVIS (python 4242) holds .jarvis.lock — exiting.
-            [JARVIS] activation policy: accessory
-
-            """)
+        // Other suites share this sink, so their lines may land between ours: check that
+        // Python's lines stay an untouched prefix and that ours follow, whole and in order.
+        let prior = "===== JARVIS starting 2026-09-01 08:00:00 =====\n[JARVIS] from python\n"
+        let ours = ["[JARVIS] Another JARVIS (python 4242) holds .jarvis.lock — exiting.",
+                    "[JARVIS] activation policy: accessory"]
+        let content = try s.read("logs/jarvis.log")
+        #expect(content.hasPrefix(prior))
+        #expect(content.hasSuffix("\n"))
+        #expect(content.dropFirst(prior.count).split(separator: "\n").map(String.init).filter(ours.contains) == ours)
     }
 
     @Test func bannerMatchesPythonShapeWithNativeMarker() throws {
@@ -31,9 +33,11 @@ struct JarvisLogTests {
         defer { JarvisLog.configure(file: nil, mirrorToStdout: false) }
         JarvisLog.banner(now: Date(timeIntervalSince1970: 1_700_000_000), timeZone: TimeZone(identifier: "UTC")!)
         JarvisLog.banner(now: Date(timeIntervalSince1970: 1_700_000_000), timeZone: TimeZone(identifier: "Asia/Tokyo")!)
-        #expect(try s.read("logs/jarvis.log")
-                == "\n===== JARVIS (native) starting 2023-11-14 22:13:20 =====\n"
-                 + "\n===== JARVIS (native) starting 2023-11-15 07:13:20 =====\n")
+        // Each banner is one write, so it stays whole even when other suites log in between.
+        let content = try s.read("logs/jarvis.log")
+        let utc = try #require(content.range(of: "\n===== JARVIS (native) starting 2023-11-14 22:13:20 =====\n"))
+        let tokyo = try #require(content.range(of: "\n===== JARVIS (native) starting 2023-11-15 07:13:20 =====\n"))
+        #expect(utc.lowerBound < tokyo.lowerBound)
     }
 
     @Test func configureCreatesTheLogDirectory() throws {
@@ -42,7 +46,7 @@ struct JarvisLogTests {
         JarvisLog.configure(file: s.root.appending(path: "fresh/logs/jarvis.log"), mirrorToStdout: false)
         defer { JarvisLog.configure(file: nil, mirrorToStdout: false) }
         JarvisLog.log("first")
-        #expect(try s.read("fresh/logs/jarvis.log") == "[JARVIS] first\n")
+        #expect(try s.read("fresh/logs/jarvis.log").split(separator: "\n").contains("[JARVIS] first"))
     }
 
     @Test func logDescriptorIsAppendOnlyAndCloseOnExec() throws {
