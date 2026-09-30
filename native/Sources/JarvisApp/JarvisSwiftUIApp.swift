@@ -8,7 +8,12 @@ struct JarvisSwiftUIApp: App {
 
     var body: some Scene {
         MenuBarExtra("JARVIS", systemImage: "circle.hexagongrid.fill") {
+            #if DEBUG
+            MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat,
+                        testConfirmation: { appDelegate.stashTestConfirmation() })
+            #else
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat)
+            #endif
         }
         .menuBarExtraStyle(.menu)
 

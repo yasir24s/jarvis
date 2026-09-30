@@ -162,6 +162,23 @@ struct ConfirmationCardTests {
         #expect(!model.responding)
     }
 
+    #if DEBUG
+    @Test("the DEBUG test confirmation shows on the card and its only effect is its fixed reply")
+    func debugTestConfirmation() async throws {
+        let gate = ConfirmationGate()
+        let authenticator = FakeTextAuthenticator(answer: true)
+        let model = ChatViewModel(submitter: confirmingCoordinator(gate, authenticator: authenticator))
+        model.watchConfirmations(gate, authenticator: authenticator)
+        await TestConfirmation.stash(on: gate)
+        #expect(await eventually { model.pending != nil })
+        #expect(model.pending?.desc == TestConfirmation.desc)
+        await model.confirmPending()?.value
+        #expect(model.messages.map(\.text) == ["confirm", "Test confirmation approved, sir."])
+        #expect(authenticator.reasons == [TestConfirmation.desc])
+        #expect(TestConfirmation.menuTitle == "Test confirmation")
+    }
+    #endif
+
     @Test("the system sheet's settings: reason, fallback button, 60 s limit")
     func sheetSettings() {
         #expect(TextConfirmation.localizedReason(Self.desc) == "confirm: delete test.txt permanently")

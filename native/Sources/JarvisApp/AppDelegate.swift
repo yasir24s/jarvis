@@ -128,6 +128,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    #if DEBUG
+    /// The DEBUG menu's "Test confirmation": stashes the harmless confirmation on the brain's
+    /// gate, where the chat's card shows it. Its action only returns a fixed line.
+    func stashTestConfirmation() {
+        guard let brain else {
+            JarvisLog.log("test confirmation: the brain has not started", category: .security)
+            return
+        }
+        Task { await TestConfirmation.stash(on: brain.confirmations) }
+    }
+    #endif
+
     /// Python sets the policy again after its UI starts (jarvis.py `setActivationPolicy_(1)`
     /// in the overlay setup), because a UI layer can flip it back to Regular. Called each time
     /// the chat window appears.
