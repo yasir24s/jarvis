@@ -47,7 +47,9 @@ struct GetTimeTests {
         let (zone, cases) = try Self.fixture()
         let clock = ManualClock(0)
         let gateway = ToolGateway(confirmationGate: ConfirmationGate(), log: { _ in })
-        await BuiltInTools.register(on: gateway, clock: clock, timeZone: zone)
+        let sandbox = try ToolCoreSandbox()
+        defer { sandbox.remove() }
+        await BuiltInTools.register(on: gateway, core: sandbox.core, clock: clock, timeZone: zone)
         for c in cases {
             clock.set(c.epoch)
             let result = await gateway.call("get_time", JSONObject(), turn: TurnContext(channel: .voice),
@@ -70,7 +72,10 @@ struct GetTimeTests {
         #expect(GetTime.schema == catalog)
         let gateway = ToolGateway(confirmationGate: ConfirmationGate(), log: { _ in })
         #expect(await gateway.toolList().first { $0.name == "get_time" } == ToolSchema(name: "get_time"))
-        await BuiltInTools.register(on: gateway, clock: ManualClock(0), timeZone: try Self.fixture().timeZone)
+        let sandbox = try ToolCoreSandbox()
+        defer { sandbox.remove() }
+        await BuiltInTools.register(on: gateway, core: sandbox.core, clock: ManualClock(0),
+                                    timeZone: try Self.fixture().timeZone)
         let listed = await gateway.toolList()
         #expect(listed.map(\.name) == DataSourceMap.toolNames)
         #expect(listed.first { $0.name == "get_time" } == catalog)
@@ -85,7 +90,9 @@ struct GetTimeTests {
         let log = TimeLog()
         let counter = TimeCounter()
         let gateway = ToolGateway(confirmationGate: ConfirmationGate(), log: log.sink, research: counter)
-        await BuiltInTools.register(on: gateway, clock: ManualClock(c.epoch), timeZone: zone)
+        let sandbox = try ToolCoreSandbox()
+        defer { sandbox.remove() }
+        await BuiltInTools.register(on: gateway, core: sandbox.core, clock: ManualClock(c.epoch), timeZone: zone)
         let turn = TurnContext(channel: .voice, startTainted: true)
         #expect(!TaintPolicy.executors.contains("get_time"))
         #expect(!TaintPolicy.untrusted.contains("get_time"))

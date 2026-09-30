@@ -28,6 +28,8 @@ public final class BrainAssembly: Sendable {
     /// turn fails with ENOENT ("Claude Code CLI not found") and falls back to the local model,
     /// as Python's does when the CLI is missing.
     public let claudeExecutable: URL?
+    /// The state owner the personality tool bodies write through (`start()` registers them).
+    private let core: CoreState
 
     /// - Parameters:
     ///   - research: every counter the brain bumps: the gateway's `taint_block`, the driver's,
@@ -47,6 +49,7 @@ public final class BrainAssembly: Sendable {
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
                 log: @escaping @Sendable (String, LogCategory) -> Void = { JarvisLog.log($0, category: $1) }) {
         let brainLog: @Sendable (String) -> Void = { log($0, .brain) }
+        self.core = core
         confirmations = ConfirmationGate()
         gateway = ToolGateway(confirmationGate: confirmations, log: { log($0, .tools) }, research: research)
         registry = MCPTurnRegistry(runDirectory: runDirectory)
@@ -68,11 +71,12 @@ public final class BrainAssembly: Sendable {
                                       onTurnStart: onTurnStart)
     }
 
-    /// Registers the built-in tool bodies on the gateway (the system clock, and the system time
-    /// zone as `autoupdatingCurrent`, so a change of zone needs no restart), then creates the
-    /// run directory (0700) and starts the MCP server on it.
+    /// Registers the built-in tool bodies on the gateway (the system clock, the system time
+    /// zone as `autoupdatingCurrent`, so a change of zone needs no restart, and the CoreState
+    /// the personality tools write through), then creates the run directory (0700) and starts
+    /// the MCP server on it.
     public func start() async throws {
-        await BuiltInTools.register(on: gateway, clock: SystemClock(), timeZone: .autoupdatingCurrent)
+        await BuiltInTools.register(on: gateway, core: core, clock: SystemClock(), timeZone: .autoupdatingCurrent)
         try await server.start()
     }
 
