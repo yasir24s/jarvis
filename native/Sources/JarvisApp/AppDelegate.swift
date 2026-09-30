@@ -113,9 +113,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             runDirectory: support.appending(path: "run", directoryHint: .isDirectory),
             claudeWorkingDirectory: support.appending(path: "claude-cwd", directoryHint: .isDirectory),
             textAuthenticator: authenticator,
-            // Python's is_online() arrives with M5's Net.isOnline. Until then an offline turn
-            // tries Claude, fails, and falls back to the local model.
-            online: { true })
+            // Python's is_online(): asked only when a turn reaches the brain.
+            online: { await Net.isOnline() })
         brain = assembly
         Task { @MainActor in
             do {
