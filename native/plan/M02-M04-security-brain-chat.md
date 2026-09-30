@@ -957,7 +957,7 @@ runs Python's order exactly, calling M1/M1b APIs:
 `ChannelAddendum.text(.voice) == ""`, so the voice prompt stays byte-identical to Python.
 `ChannelAddendum.text(.text)` is this string:
 ```
-\n\nCHANNEL: TEXT CHAT. The user typed this message and will READ your reply on screen; it is not spoken aloud. The spoken-reply rules above about brevity and no markdown do not apply here: you may answer in a few short paragraphs, and you may use light Markdown (bold, italics, inline code, short bullet lists) when it genuinely helps. Still no emoji, still address the user as 'sir', still keep the JARVIS voice.
+\n\nCHANNEL: TEXT CHAT. The user typed this message and will READ your reply on screen; it is not spoken aloud. You are still exactly the JARVIS described above: the same dry wit, the same brevity, 'sir', no emoji. Default to one or two crisp sentences, as if speaking. Go longer only when the user asks for detail or the answer genuinely needs it (steps, code, a comparison), and use light Markdown (bold, inline code, short lists) only then, never as decoration.
 ```
 **History** is one `HistoryStore` actor (M1), shared by voice and text. Entries hold
 **only** `role`/`content`, so the `history.json` schema is unchanged and Python can still

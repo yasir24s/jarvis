@@ -464,6 +464,12 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
   on-device frameworks (Vision, Speech, SoundAnalysis, AVFoundation) by default, with the image
   itself sent to Claude through the MCP server when a turn needs deeper understanding. Media
   is untrusted content, so it taints the turn.
+- **D-49. Text chat keeps Python's JARVIS** (user, 2026-09-30). The first real-root chats read
+  like a generic assistant: numbered lists, bold, long troubleshooting, asides about the
+  safety rules. The cause was §3.9's addendum, which lifted the spoken persona's brevity for
+  text. It now says JARVIS stays exactly as the persona describes: one or two crisp sentences
+  by default, longer and with light Markdown only when the user asks for detail or the answer
+  needs it. The voice prompt is unchanged and byte-identical to Python's.
 
 ## Open user decisions
 
