@@ -22,6 +22,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = AppModel()
     /// The chat window's state. It sends nothing until the brain has started.
     let chat = ChatViewModel()
+    /// The menu's "Speak replies" toggle, the user's input to the speak policy.
+    let speakReplies = SpeakRepliesToggle()
     private var lock: InstanceLock?
     /// Built once the lock is held and kept for the app's life (plan: M02-M04 §3.5, §3.12).
     private var brain: BrainAssembly?
@@ -134,6 +136,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let support = BrainAssembly.supportDirectory
         // The owner check a typed confirmation must pass (plan §3.4), counted as it runs.
         let authenticator = CountingTextAuthenticator(LAConfirmAuthenticator(), research: research)
+        // Each finished typed reply goes to the user's speak policy (plan §3.12). No speaker
+        // exists before M8, so nothing is spoken yet.
+        chat.onReplyFinished = { [weak self] message, turn in
+            guard let self else { return }
+            let context = SpeakReplies.context(for: message, turn: turn, toggle: self.speakReplies,
+                                               chatWindowIsKey: self.chat.windowIsKey,
+                                               userIdleSeconds: Self.userIdleSeconds())
+            SpeakReplies.replyFinished(message, context: context, research: research, speaker: nil,
+                                       log: { JarvisLog.log($0, category: .voice) })
+        }
         let assembly = BrainAssembly(
             core: CoreState(store: store, clock: SystemClock(), research: research, frontApp: WorkspaceFrontApp()),
             research: research, config: ClaudeConfig(environment: environment), environment: environment,
@@ -186,6 +198,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         source.resume()
         sigterm = source
+    }
+
+    /// Seconds since the last keyboard, mouse or trackpad event in this login session.
+    private static func userIdleSeconds() -> Double {
+        guard let anyInput = CGEventType(rawValue: ~0) else { return 0 }
+        return CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: anyInput)
     }
 
     /// "native 123" — the lock-file syntax, shared with the selftest report.

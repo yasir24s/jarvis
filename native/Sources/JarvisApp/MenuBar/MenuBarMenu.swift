@@ -2,11 +2,12 @@ import AppKit
 import JarvisChat
 import SwiftUI
 
-/// The menu-bar menu (plan: M02-M04 §3.12): Open Chat, the last backend, M0's state-root and
-/// lock lines, and Quit. DEBUG builds add "Test confirmation".
+/// The menu-bar menu (plan: M02-M04 §3.12): Open Chat, the last backend, the "Speak replies"
+/// toggle, M0's state-root and lock lines, and Quit. DEBUG builds add "Test confirmation".
 struct MenuBarMenu: View {
     let model: AppModel
     let chat: ChatViewModel
+    @Bindable var speak: SpeakRepliesToggle
     #if DEBUG
     /// Stashes the harmless test confirmation (`TestConfirmation`); DEBUG builds only.
     let testConfirmation: () -> Void
@@ -19,7 +20,8 @@ struct MenuBarMenu: View {
             NSApp.activate()
         }
         Text(chat.backendLine)
-        // The "Speak replies" toggle (plan §3.12, the SpeakPolicy batch) goes here.
+        // The input to the user's speak policy (SpeakPolicy.swift); it persists across launches.
+        Toggle("Speak replies", isOn: $speak.isOn)
         Divider()
         Text("State: \(model.stateRoot)")
         Text("Lock: \(model.lockHolder)")

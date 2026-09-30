@@ -41,6 +41,8 @@ public final class ChatViewModel: ReplySink {
     /// The confirmation the card shows, from `ConfirmationGate.updates`: nil when none is
     /// pending, and cleared at its deadline, since the gate says nothing when one goes stale.
     public private(set) var pending: PendingConfirmation?
+    /// Set by the chat window: whether it is the active window (an input to the speak policy).
+    public var windowIsKey = false
 
     /// The speak policy's hook (plan §3.12 `SpeakPolicy`): each finished assistant row of a
     /// turn, with that turn's summary (its data sources and taint). Rows made here without a

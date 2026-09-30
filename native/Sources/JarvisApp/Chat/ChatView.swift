@@ -12,6 +12,7 @@ struct ChatView: View {
     /// reopen it (D-43).
     var onAppear: (OpenWindowAction) -> Void = { _ in }
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.appearsActive) private var appearsActive
 
     var body: some View {
         VStack(spacing: 0) {
@@ -52,6 +53,12 @@ struct ChatView: View {
         .frame(minWidth: 420, minHeight: 360)
         .onAppear {
             onAppear(openWindow)
+        }
+        .onChange(of: appearsActive, initial: true) {
+            model.windowIsKey = appearsActive
+        }
+        .onDisappear {
+            model.windowIsKey = false
         }
     }
 }
