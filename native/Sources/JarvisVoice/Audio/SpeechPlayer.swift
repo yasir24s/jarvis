@@ -13,7 +13,8 @@ public protocol SpeechPlayer: Sendable {
 /// converts them to the output device's rate. Output only: the input node is never touched, so
 /// playing asks for no microphone access.
 ///
-/// Every part gets the gain `Loudness.gain` gives it, so the output reads `Loudness.targetLUFS`.
+/// Every part gets the gain `Loudness.gain` gives it, so the output reads `Loudness.targetLUFS`,
+/// then `Loudness.limited` keeps its peaks at or below `Loudness.peakCeilingDBFS`.
 /// The node takes two equal channels, not the mono part itself. Rendered offline, the main mixer
 /// played a mono node 3.01 dB down on each channel when its output ran at 44.1 kHz, and at full
 /// level at the other rates tried (16 to 96 kHz); two equal channels played at full level at every
@@ -67,9 +68,9 @@ public actor EnginePlayer: SpeechPlayer {
             throw SpeechEngineError(.error, "cannot allocate \(chunk.samples.count) frames")
         }
         buffer.frameLength = AVAudioFrameCount(chunk.samples.count)
-        let gain = Loudness.gain(for: chunk.samples, sampleRate: Self.sampleRate, lift: Self.outputLiftDB)
+        let part = Loudness.normalized(chunk.samples, sampleRate: Self.sampleRate, lift: Self.outputLiftDB)
         for c in 0..<Int(format.channelCount) {
-            for i in chunk.samples.indices { channels[c][i] = chunk.samples[i] * gain }
+            part.withUnsafeBufferPointer { channels[c].update(from: $0.baseAddress!, count: $0.count) }
         }
 
         let wait = PlaybackWait()

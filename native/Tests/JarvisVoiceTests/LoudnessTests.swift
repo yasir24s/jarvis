@@ -102,12 +102,71 @@ struct LoudnessTests {
 
     // MARK: the gain
 
-    @Test func thePeakStaysAtMinus1dBFS() {
-        // A quiet tone with one loud click: the loudness asks for more gain than the click allows.
-        var part = Self.sine(220, amplitude: 0.01, seconds: 2, rate: Self.rate)
-        part[24_000] = 0.5
-        let gain = Loudness.gain(for: part, sampleRate: Self.rate)
-        #expect(abs(Self.dB(Loudness.samplePeak(part) * gain) - -1) < 0.001)
+    /// The speech-like part at `lufs` with a 2 ms burst at `peak` dBFS every 0.6 s, as F5 at 4
+    /// steps makes them (the live parts measured -11 to -13 LUFS with peaks up to +5.5 dBFS).
+    static func spiky(lufs: Double, peak: Double) throws -> [Float] {
+        var x = try speechLike(lufs: lufs)
+        let amplitude = pow(10, peak / 20)
+        for start in stride(from: Int(0.5 * rate), to: Int(2.6 * rate), by: Int(0.6 * rate)) {
+            for k in 0..<48 { x[start + k] = Float(amplitude * cos(2 * Double.pi * 3_000 * Double(k) / rate + 0.3)) }
+        }
+        return x
+    }
+
+    @Test func aPeakDoesNotLowerTheGain() throws {
+        // A quiet tone with one loud click: the gain is the loudness's, and the click is left to
+        // the limiter.
+        var part = Self.sine(220, amplitude: 0.05, seconds: 2, rate: Self.rate)
+        part[24_000] = 0.9
+        let lufs = try #require(Loudness.integrated([part], sampleRate: Self.rate))
+        #expect(abs(Self.dB(Loudness.gain(for: part, sampleRate: Self.rate)) - (Loudness.targetLUFS - lufs)) < 0.001)
+    }
+
+    @Test func theLimiterKeepsEverySampleAtOrUnderMinus1dBFS() throws {
+        let part = try Self.spiky(lufs: -11, peak: 5.5)
+        // The bursts' crests fall between samples: +5.5 dBFS read between them, +5.1 on them.
+        #expect(20 * log10(Loudness.between(part).max() ?? 0) > 5.4)
+        let out = Loudness.normalized(part, sampleRate: Self.rate, lift: EnginePlayer.outputLiftDB)
+        #expect(Self.dB(Loudness.samplePeak(out)) <= Loudness.peakCeilingDBFS)
+        #expect(!out.contains { abs($0) > 1 })
+        // The bursts are limited, not the part: it still reads the target, less the lift.
+        let lufs = try #require(Loudness.integrated([out], sampleRate: Self.rate))
+        #expect(abs(lufs - (Loudness.targetLUFS - EnginePlayer.outputLiftDB)) < 0.5, "\(lufs)")
+    }
+
+    @Test func theLimiterOnlyTouchesTheSamplesAroundAPeak() {
+        // A sine at 0.3 with one sample at 2.0: the gain falls over 5 ms (120 samples) to meet it,
+        // then recovers with a 50 ms time constant.
+        var part = Self.sine(220, amplitude: 0.3, seconds: 1, rate: Self.rate)
+        let p = 6_000
+        part[p] = 2
+        let out = Loudness.limited(part, sampleRate: Self.rate)
+        func gain(_ i: Int) -> Double { Double(out[i]) / Double(part[i]) }
+        let look = 120
+        // The values read between samples reach a few samples either side of the spike.
+        #expect(Array(out[..<(p - look - 6)]) == Array(part[..<(p - look - 6)]), "untouched before the look-ahead")
+        #expect(Double(abs(out[p])) <= pow(10, Loudness.peakCeilingDBFS / 20))
+        let floor = gain(p)
+        #expect(floor < 0.45)
+        #expect(gain(p - look / 2) < 1 && gain(p - look / 2) > floor, "halfway down the attack")
+        // 50 ms after: about 1 - (1 - floor) e^-1; 250 ms after: back within 1 %.
+        let expected = 1 - (1 - floor) * exp(-1)
+        #expect(abs(gain(p + 1_200) - expected) < 0.05, "\(gain(p + 1_200)) against \(expected)")
+        #expect(gain(p + 6_000) > 0.99)
+    }
+
+    /// The in-between reader: a sine a quarter of the rate, sampled 45 degrees off its crests,
+    /// has samples at 0.707 of its amplitude and crests between them.
+    @Test func theValuesBetweenSamplesFindTheCrests() {
+        let x = (0..<2_400).map { Float(0.5 * sin(Double.pi / 2 * Double($0) + Double.pi / 4)) }
+        #expect(abs(Double(Loudness.samplePeak(x)) - 0.5 * sqrt(0.5)) < 1e-6)
+        let peak = Loudness.between(x)[1_000...1_400].max() ?? 0
+        #expect(abs(peak - 0.5) < 0.01, "\(peak)")
+    }
+
+    @Test func aPartUnderTheCeilingIsNotLimited() throws {
+        let part = try Self.speechLike(lufs: -20)
+        #expect(Loudness.limited(part, sampleRate: Self.rate) == part)
     }
 
     @Test func theGainStopsAt20dB() {
@@ -132,6 +191,17 @@ struct LoudnessTests {
         #expect(peak.allSatisfy { $0 <= Loudness.peakCeilingDBFS })
         // Both channels carry the same signal.
         #expect(out[0] == out[1])
+    }
+
+    @Test func aPartWithBurstsOverFullScalePlaysAtMinus14LUFS() async throws {
+        let part = try Self.spiky(lufs: -11, peak: 5.5)
+        let out = try await Self.played(part, outputRate: 48_000)
+        let lufs = try #require(Loudness.integrated(out, sampleRate: 48_000))
+        let peak = out.map { Self.dB(Loudness.samplePeak($0)) }
+        print("P5 loudness: a -11 LUFS part with +5.5 dBFS bursts plays at \(String(format: "%.2f", lufs)) LUFS, "
+              + "peaks \(peak.map { String(format: "%.2f", $0) }) dBFS")
+        #expect(abs(lufs - Loudness.targetLUFS) <= 1)
+        #expect(peak.allSatisfy { $0 <= Loudness.peakCeilingDBFS })
     }
 
     @Test func aLoudPartIsTurnedDown() async throws {
