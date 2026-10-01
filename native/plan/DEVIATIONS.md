@@ -117,6 +117,12 @@ Line numbers refer to jarvis.py @ 68cd112.
 | DEV-P4-05 | P4 | `read_file` reads every file as text, so an image-only PDF gives nothing useful | A PDF whose first five pages show no text is rendered with CoreGraphics and read by the `see_screen` Vision recogniser within 30 s; the reply says it is OCR of N of M pages and keeps every cap | Scanned PDFs were unreadable | `ScannedPDFTests` | `proposed` | P4 report part 5 |
 | DEV-P4-06 | P4 | `_claude_stream` joins all messages in one buffer, so text around a tool call runs together | A later message ends the earlier one's sentence and the reply joins messages with a blank line | "I need the file paths.I couldn't check it" | `ClaudeDriverTests` (Python's verdict in `withKnownIssue`) | `proposed` | P4 report part 6 |
 | DEV-P5-01 | P5 | `personality_rewrite_tool` stores the rewrite's 3 to 12 lines as the whole core | The seed's Persona line is always line 1; the seed's Tone and Humour lines come back when no rewrite line mentions humour, tone, sir or butler. Reply text, the line rule and the reset are unchanged | A model rewrite replaced the J.A.R.V.I.S. persona with 6 generic lines | `PersonaGuardTests`; Python's verdict in `withKnownIssue` (m1_personality x10, m1_prompt, m1_persona_llm, `PersonalityToolTests`) | `proposed` | P5 report part 4 |
+| DEV-P6-01 | P6 | The prompt shows `personality.json`'s core alone | The 8 seed lines from source first, then the file's other core lines, then the learned notes; byte for byte Python's when the core is the seed | His persona was lost to a model rewrite; it now lives in source (D-57) | `PersonaBaseTests`; Python's verdict in `withKnownIssue` (m1_personality x27, m1_prompt x2) | `proposed` | P6 report part 1 |
+| DEV-P6-02 | P6 | No backups of memory or persona files, and nothing stops a bad write | Hourly backups of facts.json, personality.json and profile.json (48 newest plus one a day for 30 days, 0600), a write that would drop more than 10 facts or 10% refused unless it is a forget by ids, and a launch check that restores an unreadable file from backup | Memory must not be lost (D-57) | `MemoryPermanenceTests`, `MemoryToolsTests` | `proposed` | P6 report part 2 |
+| DEV-P6-03 | P6 | (P4) `forget_memory` deletes outright | Forgotten notes go to `memory/forgotten.json` for 30 days, and `restore_memory` (a `TaintPolicy` executor) puts them back | Every forget recoverable | `MemoryPermanenceTests`, `MemoryToolsWiringTests`, `M2SecurityTests` | `proposed` | P6 report part 2 |
+| DEV-P6-04 | P6 | (P2) Facts are compiled from chats only on "that's all" | Also after 30 minutes with no turn | Chats were never compiled (`compiled_through` 0) | `IdleCompileTests` | `proposed` | P6 report part 3 |
+| DEV-P6-05 | P6 | Python's conversations were never turned into memory | A one-time `--import-python-memory` compiles the Python-era paired exchanges, history, queue and corrections, tagged `python:<date>`, resumable and never run twice | The user's Python-era memory comes back (D-57) | `PythonEraMemoryTests`, `PythonImportTests` | `proposed` | P6 report part 4 |
+| DEV-P6-06 | P6 | (P3) The background scan runs with no consent step | `fileLearningEnabled` gates the scanner: off on a new install, on where an index already exists; a menu toggle and a one-time first-run offer | New users start blank and grant access (D-57) | `FileLearningTests`, `FileScannerTests` | `proposed` | P6 report part 5 |
 
 The M7 table gives one fixture for all 15 `DEV-M7-*` / `DEV-M14-*` rows (§8.1 heading:
 "fixture §4.2"). For the `DEV-M14-*` rows that marker was carried over as written; the
@@ -124,13 +130,14 @@ loop behaviours may need their own tests at M14.
 
 ## Counts
 
-94 entries: 60 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
+100 entries: 60 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
 DEV-M7-01, DEV-M7-02, DEV-M7-05, R9 → D-18, DEV-M0-01 to DEV-M0-03, DEV-M1-01 to DEV-M1-04, D1a,
 D1b, D1c, D5a, R8-str-float, R8-load-not-dict, R8-nan-sort, R8-kb-summary-not-str,
 R8-list-content, DEV-M3-01 to DEV-M3-14, DEV-M4-01, DEV-M4-02, DEV-P1-01, DEV-P1-02, DEV-P2-01,
 DEV-P3-01, DEV-M5-01 to DEV-M5-05, R11, R12, R13), 1 `approved (overage kill-switch only)`
-(X-10), 1 `rejected` (X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 31 proposed: 20 `proposed —
-decide at milestone start`, plus DEV-M8-01 to DEV-M8-04, DEV-P4-01 to DEV-P4-06 and DEV-P5-01.
+(X-10), 1 `rejected` (X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 37 proposed: 20 `proposed —
+decide at milestone start`, plus DEV-M8-01 to DEV-M8-04, DEV-P4-01 to DEV-P4-06, DEV-P5-01
+and DEV-P6-01 to DEV-P6-06.
 
 ## Not registered: differences mentioned only in the M05 §3.5 tool table
 

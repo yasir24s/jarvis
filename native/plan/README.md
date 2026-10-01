@@ -590,6 +590,28 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
   0.1 dB under −1 dBFS. A reply is split at a sentence end only when a part's audio covers the
   next part's generation; otherwise it is spoken whole. Live and under load, first audio came
   after 6.4 to 7.4 s for replies of 78 to 120 characters, against 18 to 21 s before.
+- **D-58. Live updates, chat editing, and memory that keeps everything** (user, 2026-10-01).
+  - **Live updates by swap-over (U1).** A build no longer replaces the running app. JARVIS
+    moves to a staged build only when no turn, speech or confirmation is active and the user
+    has been away for 10 minutes, or when the user picks "Update Now". He keeps the chat,
+    draft, scroll and window, and rolls back if the new build fails to start. Splitting him
+    into a window process and a brain process waits until later.
+  - **Chat like Claude's (C3):** a Stop button and Esc for text and voice, a message sent
+    mid-reply added as context to the same request, and an earlier message edited and run
+    again, with ‹ 1/2 › versions.
+  - **Memory keeps everything said to him (P6b).** Every uncompiled message is compiled in
+    batches, the conversation archives can be searched word for word and are backed up, and
+    the Python-era exchanges are kept verbatim.
+  - **Voice next (V1):**
+    - an instant acknowledgement in his cloned voice when a message is sent
+    - no splits at all
+    - the room echo removed and a gate between words
+    - speed about 1.25
+    - the helper kept loaded from the first keystroke
+    - the file scan paused while he speaks
+  - **Then (M9 to M12):** push-to-talk, a first-launch setup that records the user's
+    voiceprint so only their voice is heard, and "Hey Jarvis".
+  - **App updates wait** until the file scan has finished, as the user asked.
 
 ## Open user decisions
 
