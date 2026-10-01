@@ -16,6 +16,8 @@ import JarvisTools
 ///   in usage.json can show it.
 /// - The local model gets the same folded prompt as Claude (D-11), where Python hands Ollama
 ///   `sys_prompt` plus the 12 raw history turns.
+/// - With `recall`, the facts relevant to the message follow the channel addendum (D-51 P2),
+///   within each brain's own budget. No relevant fact adds nothing.
 public struct BrainRouter: Sendable {
     private let core: CoreState
     private let config: ClaudeConfig
@@ -23,12 +25,16 @@ public struct BrainRouter: Sendable {
     private let local: any LocalGenerating
     private let backend: any BackendReporting
     private let research: any ResearchCounting
+    private let recall: MemoryRecall?
     private let log: @Sendable (String) -> Void
 
-    /// - Parameter log: where the router's own line goes (a turn whose state files have the
-    ///   wrong shape). Tests pass their own.
+    /// - Parameters:
+    ///   - recall: the long-term memory's recall (D-51 P2); nil adds none.
+    ///   - log: where the router's own line goes (a turn whose state files have the wrong
+    ///     shape). Tests pass their own.
     public init(core: CoreState, config: ClaudeConfig, claude: any ClaudeGenerating,
                 local: any LocalGenerating, backend: any BackendReporting, research: any ResearchCounting,
+                recall: MemoryRecall? = nil,
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .brain) }) {
         self.core = core
         self.config = config
@@ -36,14 +42,16 @@ public struct BrainRouter: Sendable {
         self.local = local
         self.backend = backend
         self.research = research
+        self.recall = recall
         self.log = log
     }
 
-    /// The system prompt both brains get: `system + ChannelAddendum.text(channel) + preamble`
-    /// (steps 10 and 11). `claudeSystem` is `system + preamble`, so for voice, whose addendum
-    /// is empty, this is `claudeSystem` itself, byte for byte.
-    public static func prompt(_ head: CoreState.TurnPrompt, channel: Channel) -> String {
-        let addendum = ChannelAddendum.text(channel)
+    /// The system prompt a brain gets: `system + ChannelAddendum.text(channel) + memory +
+    /// preamble` (steps 10 and 11, and the D-51 memory block). `claudeSystem` is `system +
+    /// preamble`, so for voice, whose addendum is empty, with no memory this is `claudeSystem`
+    /// itself, byte for byte.
+    public static func prompt(_ head: CoreState.TurnPrompt, channel: Channel, memory: String = "") -> String {
+        let addendum = ChannelAddendum.text(channel) + memory
         guard !addendum.isEmpty else { return head.claudeSystem }
         let system = Array(head.system.utf8), full = Array(head.claudeSystem.utf8)
         guard full.starts(with: system) else {
@@ -69,7 +77,10 @@ public struct BrainRouter: Sendable {
         if channel == .text {
             research.bump(ResearchKey.interactionsText, by: 1)                       // step 5
         }
-        let system = Self.prompt(head, channel: channel)                              // step 10
+        let memory = recall?.appendix(for: text) ?? .none                              // D-51 P2
+        let system = Self.prompt(head, channel: channel, memory: memory.claude)       // step 10
+        let localSystem = memory.local == memory.claude ? system
+            : Self.prompt(head, channel: channel, memory: memory.local)
 
         if config.enabled && online {                                                  // step 11
             // Python's `if reply:`: nil and "" both fall through to the local model.
@@ -82,7 +93,7 @@ public struct BrainRouter: Sendable {
 
         await backend.set(LocalBrain.backendName)                                     // step 13
         // History as Python's four local-loop endings leave it (jarvis.py 5086-5118).
-        switch await local.generate(system: system, user: text, channel: channel, turn: turn, sink: sink) {
+        switch await local.generate(system: localSystem, user: text, channel: channel, turn: turn, sink: sink) {
         case .reply(let reply):
             await core.recordAssistant(reply)
             return reply
