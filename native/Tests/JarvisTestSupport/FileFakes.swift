@@ -98,3 +98,18 @@ public final class FakeFileProbe: FileSystemProbe, Sendable {
         return path.count > 1 && path.hasSuffix("/") ? String(path.dropLast()) : path
     }
 }
+
+/// A state lease a test holds or drops by hand.
+public final class HandLease: StateLease, Sendable {
+    private let held: Mutex<Bool>
+
+    public init(_ held: Bool) {
+        self.held = Mutex(held)
+    }
+
+    public var isHeld: Bool { held.withLock { $0 } }
+
+    public func set(_ value: Bool) {
+        held.withLock { $0 = value }
+    }
+}

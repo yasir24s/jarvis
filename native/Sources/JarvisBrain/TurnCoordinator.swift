@@ -58,6 +58,7 @@ public actor TurnCoordinator {
     private let onTurnStart: (@Sendable (TurnContext) -> Void)?
     private let onConversationEnded: (@Sendable () -> Void)?
     private let archive: (any ExchangeArchiving)?
+    private let activity: TurnActivity?
     private var running = false
 
     /// - Parameters:
@@ -70,12 +71,15 @@ public actor TurnCoordinator {
     ///   - archive: given every accepted turn's message and reply (D-51 P2), after the reply
     ///     has gone to the sink, so it never delays it; a dismissal is archived before
     ///     `onConversationEnded`. A turn refused as `.empty` or `.busy` is not archived.
+    ///   - activity: told when each accepted turn begins and ends, so background work (the
+    ///     file scanner, D-51 P3) can wait for it.
     public init(brain: BrainRouter, fastPath: any FastPathRouting = NoFastPath(),
                 confirmations: ConfirmationGate, textAuthenticator: any ConfirmAuthenticator,
                 online: @escaping @Sendable () async -> Bool,
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
                 onConversationEnded: (@Sendable () -> Void)? = nil,
-                archive: (any ExchangeArchiving)? = nil) {
+                archive: (any ExchangeArchiving)? = nil,
+                activity: TurnActivity? = nil) {
         self.brain = brain
         self.fastPath = fastPath
         self.confirmations = confirmations
@@ -84,6 +88,7 @@ public actor TurnCoordinator {
         self.onTurnStart = onTurnStart
         self.onConversationEnded = onConversationEnded
         self.archive = archive
+        self.activity = activity
     }
 
     /// Runs one turn, or returns `.busy` at once if one is already running. A confirmation
@@ -99,6 +104,8 @@ public actor TurnCoordinator {
         guard !running else { return .busy }
         running = true
         defer { running = false }
+        activity?.begin()
+        defer { activity?.end() }
 
         let turn = TurnContext(channel: input.channel, startTainted: input.pasted)
         defer { await turn.close() }
