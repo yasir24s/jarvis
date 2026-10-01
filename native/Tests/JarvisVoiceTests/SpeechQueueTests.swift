@@ -9,11 +9,18 @@ struct SpeechChunkingTests {
         + "I have also drafted the reply you asked for, and it is waiting in your outbox for review. "
         + "Shall I read it to you now?"
 
-    @Test func aShortReplyIsOnePart() {
+    @Test func aShortOneSentenceReplyIsOnePart() {
         #expect(SpeechQueue.chunks("Hello, sir.", limit: 160) == ["Hello, sir."])
         let exact = String(repeating: "a", count: 160)
         #expect(SpeechQueue.chunks(exact, limit: 160) == [exact])
         #expect(SpeechQueue.chunks("", limit: 160).isEmpty)
+    }
+
+    @Test func theFirstOfTwoOrMoreSentencesIsAPartOnItsOwn() {
+        #expect(SpeechQueue.chunks("Good evening, sir. It's 3:45 PM.", limit: 160)
+            == ["Good evening, sir.", "It's 3:45 PM."])
+        #expect(SpeechQueue.chunks("Yes, sir. Done. Anything else?", limit: 160)
+            == ["Yes, sir.", "Done. Anything else?"])
     }
 
     @Test func aLongReplyIsSplitAtSentenceEndsIntoPartsWithinTheLimit() {
@@ -24,15 +31,15 @@ struct SpeechChunkingTests {
         // Every part ends at a sentence end.
         #expect(parts.allSatisfy { $0.last.map { ".?!".contains($0) } ?? false })
         #expect(parts == [
-            "Good evening, sir. The weather today is mild, with light rain expected after four.",
-            "Your first meeting starts at ten, and the second one has been moved to the afternoon.",
+            "Good evening, sir.",
+            "The weather today is mild, with light rain expected after four. Your first meeting starts at ten, and the second one has been moved to the afternoon.",
             "I have also drafted the reply you asked for, and it is waiting in your outbox for review. Shall I read it to you now?",
         ])
     }
 
     @Test func sentencesArePackedUpToTheLimit() {
-        let parts = SpeechQueue.chunks("One. Two. Three. Four.", limit: 10)
-        #expect(parts == ["One. Two.", "Three.", "Four."])
+        let parts = SpeechQueue.chunks("One. Two. Three. Four.", limit: 11)
+        #expect(parts == ["One.", "Two. Three.", "Four."])
     }
 
     @Test func aSentenceLongerThanTheLimitIsCutAtItsLastSpace() {
@@ -51,8 +58,11 @@ struct SpeechChunkingTests {
 
     @Test func lengthsAreUnicodeScalars() {
         // "👍🏽" is two scalars: 4 + 1 + 2 = 7 fits a limit of 7.
-        #expect(SpeechQueue.chunks("Yes. 👍🏽", limit: 7) == ["Yes. 👍🏽"])
-        #expect(SpeechQueue.chunks("Yes. 👍🏽", limit: 6) == ["Yes.", "👍🏽"])
+        #expect(SpeechQueue.chunks("Ok. Yes. 👍🏽", limit: 7) == ["Ok.", "Yes. 👍🏽"])
+        #expect(SpeechQueue.chunks("Ok. Yes. 👍🏽", limit: 6) == ["Ok.", "Yes.", "👍🏽"])
+        // One sentence of 3 + 1 + 2 = 6 fits a limit of 6, not 5.
+        #expect(SpeechQueue.chunks("Yes 👍🏽", limit: 6) == ["Yes 👍🏽"])
+        #expect(SpeechQueue.chunks("Yes 👍🏽", limit: 5) == ["Yes", "👍🏽"])
     }
 
     @Test func theLimitComesFromTheDefaultsWith160AsTheDefault() throws {
@@ -144,6 +154,26 @@ struct SpeechQueueTests {
         await speech.idle()
         #expect(await f5.asked == ["One one.", "Two two.", "Three 3."])
         #expect(log.all.last?.hasPrefix("voice: 26 chars in 3 part(s); first audio after ") == true)
+    }
+
+    @Test func theFirstSentencePlaysWhileTheRestGenerates() async {
+        let f5 = FakeEngine(.f5, respond: Self.quick)
+        let say = FakeEngine(.say, respond: Self.quick)
+        let player = FakePlayer(hold: true)
+        let log = LogLines()
+        let speech = queue(f5, say, player, log)
+        await speech.say("Good evening, sir. The weather is mild, with rain after four.", turn: turn)
+        #expect(await eventually { await player.waiting == 1 })
+        #expect(await player.played == [18])
+        // The first sentence plays; the rest has been asked for.
+        #expect(await eventually { await f5.asked.count == 2 })
+        #expect(await f5.asked == ["Good evening, sir.", "The weather is mild, with rain after four."])
+        await player.finish()
+        #expect(await eventually { await player.played.count == 2 })
+        await player.finish()
+        await speech.idle()
+        #expect(await player.played == [18, 42])
+        #expect(log.all.last?.hasPrefix("voice: 61 chars in 2 part(s); first audio after ") == true, "\(log.all)")
     }
 
     @Test func aNewReplyCancelsWhatIsPlayingAndQueued() async {

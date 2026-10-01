@@ -4,11 +4,12 @@ import JarvisCore
 /// The only way anything speaks (M8). `say(_:turn:)` takes a finished reply: TextClean, then
 /// chunking, then the clone, with `say` for any part the clone fails, then the player.
 ///
-/// A reply of at most `voiceChunkChars` characters (default 160) is generated whole: F5 makes
-/// audio about 3.6 times slower than it plays, so sentence by sentence would leave a pause
-/// between sentences (D-54). A longer reply is split at sentence ends into groups of at most
-/// that many characters, and the next group is generated while the one before it plays.
-/// A new reply cancels whatever is queued or playing; `cancelAll()` stops everything.
+/// A reply of one sentence is generated whole when it fits `voiceChunkChars` (default 160). In a
+/// reply of two or more sentences the first sentence is a part of its own, so the voice starts
+/// on it sooner, and the rest is grouped at sentence ends into parts of at most that many
+/// characters. Each part is generated while the one before it plays (P5; D-54 generated a reply
+/// of up to 160 characters whole, when F5 at 8 steps made audio about 3.6 times slower than it
+/// plays). A new reply cancels whatever is queued or playing; `cancelAll()` stops everything.
 public actor SpeechQueue {
     /// Where `voiceChunkChars` is read from.
     public static let defaultsSuite = "com.jarvis.assistant"
@@ -193,17 +194,20 @@ public actor SpeechQueue {
         return value > 0 ? value : defaultChunkChars
     }
 
-    /// The parts of a cleaned reply, in Unicode scalars (Python `len()`). At most `limit` is one
-    /// part. Longer text is split after each sentence end (a run of . ! ? followed by a space),
-    /// a sentence longer than `limit` is cut at its last space within the limit (pop_sentences'
-    /// rule) or at the limit itself, and the pieces are packed in order into parts of at most
-    /// `limit`, joined by one space.
+    /// The parts of a cleaned reply, in Unicode scalars (Python `len()`). One sentence of at most
+    /// `limit` is one part. Otherwise the text is split after each sentence end (a run of . ! ?
+    /// followed by a space), a sentence longer than `limit` is cut at its last space within the
+    /// limit (pop_sentences' rule) or at the limit itself, the first piece is a part on its own,
+    /// and the pieces after it are packed in order into parts of at most `limit`, joined by one
+    /// space.
     public static func chunks(_ text: String, limit: Int) -> [String] {
         let limit = max(1, limit)
         let u = Array(text.unicodeScalars)
-        if u.count <= limit { return u.isEmpty ? [] : [text] }
+        guard !u.isEmpty else { return [] }
+        let found = sentences(u)
+        if found.count == 1, u.count <= limit { return [text] }
         var pieces: [ArraySlice<Unicode.Scalar>] = []
-        for sentence in sentences(u) {
+        for sentence in found {
             var rest = sentence
             while rest.count > limit {
                 let window = rest.prefix(limit)
@@ -214,9 +218,11 @@ public actor SpeechQueue {
             }
             if !rest.isEmpty { pieces.append(rest) }
         }
-        var parts: [String] = []
+        // The first piece plays while the rest generates.
+        guard let first = pieces.first else { return [] }
+        var parts = [string(Array(first))]
         var group: [Unicode.Scalar] = []
-        for piece in pieces {
+        for piece in pieces.dropFirst() {
             if group.isEmpty {
                 group = Array(piece)
             } else if group.count + 1 + piece.count <= limit {
