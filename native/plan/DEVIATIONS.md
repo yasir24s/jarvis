@@ -123,6 +123,12 @@ Line numbers refer to jarvis.py @ 68cd112.
 | DEV-P6-04 | P6 | (P2) Facts are compiled from chats only on "that's all" | Also after 30 minutes with no turn | Chats were never compiled (`compiled_through` 0) | `IdleCompileTests` | `proposed` | P6 report part 3 |
 | DEV-P6-05 | P6 | Python's conversations were never turned into memory | A one-time `--import-python-memory` compiles the Python-era paired exchanges, history, queue and corrections, tagged `python:<date>`, resumable and never run twice | The user's Python-era memory comes back (D-57) | `PythonEraMemoryTests`, `PythonImportTests` | `proposed` | P6 report part 4 |
 | DEV-P6-06 | P6 | (P3) The background scan runs with no consent step | `fileLearningEnabled` gates the scanner: off on a new install, on where an index already exists; a menu toggle and a one-time first-run offer | New users start blank and grant access (D-57) | `FileLearningTests`, `FileScannerTests` | `proposed` | P6 report part 5 |
+| DEV-P6b-01 | P6b | (P2) The compile read the newest 6,000 characters of uncompiled messages and skipped the rest | All uncompiled messages, oldest first, in batches of at most 6,000 characters; the offset moves after each saved batch and a failed batch is resumed | The user: "save everything spoken to him" (D-58) | `FactExtractionTests`, `FactCompilerTests` | `proposed` | P6b report part 1 |
+| DEV-P6b-02 | P6b | (P4) `search_memory` searched facts only and was trusted | It also searches the archived conversations by keyword (up to 10, redacted, dated, listed apart, labelled information only) and is in `TaintPolicy.untrusted` | "What did I say about X" should work | `MemoryToolsTests`, `MemoryToolsWiringTests`, `M2SecurityTests` | `proposed` | P6b report part 2 |
+| DEV-P6b-03 | P6b | (P6) Backups and the launch check covered facts, personality and profile | Also `archive.jsonl`, `archive-python.jsonl` and `journal.jsonl` | Conversations can't be lost | `MemoryPermanenceTests` | `proposed` | P6b report part 3 |
+| DEV-P6b-04 | P6b | (P6) The Python import produced facts only | It also keeps the paired exchanges word for word in `archive-python.jsonl`, once, never compiled again | The user's Python conversations kept | `PythonImportTests`, `MemoryPermanenceTests` | `proposed` | P6b report part 4 |
+| DEV-P6b-05 | P6b | No record of what he did | `memory/journal.jsonl`: one redacted line per tool call (time, tool, outcome, a short argument summary, up to 200 characters of a trusted tool's reply), searchable through `search_memory` | "Write everything so he can reference everything" | `MemoryJournalTests`, `ToolJournalTests` | `proposed` | P6b report part 5 |
+| DEV-P6b-06 | P6b | (P4) The self-knowledge section had no recall rule | With memory tools it adds: search before saying you don't remember (conversations, journal, notes, and `search_files` for documents); 691 bytes | Proactive recall | `SelfKnowledgeTests` | `proposed` | P6b report part 6 |
 
 The M7 table gives one fixture for all 15 `DEV-M7-*` / `DEV-M14-*` rows (§8.1 heading:
 "fixture §4.2"). For the `DEV-M14-*` rows that marker was carried over as written; the
@@ -130,14 +136,14 @@ loop behaviours may need their own tests at M14.
 
 ## Counts
 
-100 entries: 60 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
+106 entries: 60 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
 DEV-M7-01, DEV-M7-02, DEV-M7-05, R9 → D-18, DEV-M0-01 to DEV-M0-03, DEV-M1-01 to DEV-M1-04, D1a,
 D1b, D1c, D5a, R8-str-float, R8-load-not-dict, R8-nan-sort, R8-kb-summary-not-str,
 R8-list-content, DEV-M3-01 to DEV-M3-14, DEV-M4-01, DEV-M4-02, DEV-P1-01, DEV-P1-02, DEV-P2-01,
 DEV-P3-01, DEV-M5-01 to DEV-M5-05, R11, R12, R13), 1 `approved (overage kill-switch only)`
-(X-10), 1 `rejected` (X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 37 proposed: 20 `proposed —
-decide at milestone start`, plus DEV-M8-01 to DEV-M8-04, DEV-P4-01 to DEV-P4-06, DEV-P5-01
-and DEV-P6-01 to DEV-P6-06.
+(X-10), 1 `rejected` (X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 43 proposed: 20 `proposed —
+decide at milestone start`, plus DEV-M8-01 to DEV-M8-04, DEV-P4-01 to DEV-P4-06, DEV-P5-01,
+DEV-P6-01 to DEV-P6-06 and DEV-P6b-01 to DEV-P6b-06.
 
 ## Not registered: differences mentioned only in the M05 §3.5 tool table
 
