@@ -1,0 +1,640 @@
+{
+ "schema": 1,
+ "suite": "m8_textclean",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "patterns",
+   "input": {},
+   "expected": {
+    "patterns": [
+     "[*_`#\\[\\]()|\\\\~>•]",
+     "\\s+"
+    ]
+   }
+  },
+  {
+   "name": "empty",
+   "input": {
+    "text": ""
+   },
+   "expected": {
+    "spoken": null
+   }
+  },
+  {
+   "name": "spaces",
+   "input": {
+    "text": "   "
+   },
+   "expected": {
+    "spoken": null
+   }
+  },
+  {
+   "name": "newlines_only",
+   "input": {
+    "text": "\n\n"
+   },
+   "expected": {
+    "spoken": null
+   }
+  },
+  {
+   "name": "plain",
+   "input": {
+    "text": "Hello, sir."
+   },
+   "expected": {
+    "spoken": "Hello, sir."
+   }
+  },
+  {
+   "name": "bold",
+   "input": {
+    "text": "**Bold** move, sir."
+   },
+   "expected": {
+    "spoken": "Bold move, sir."
+   }
+  },
+  {
+   "name": "italic_underscores",
+   "input": {
+    "text": "_italic_ and __double__"
+   },
+   "expected": {
+    "spoken": "italic and double"
+   }
+  },
+  {
+   "name": "inline_code",
+   "input": {
+    "text": "Run `ls -la` now."
+   },
+   "expected": {
+    "spoken": "Run ls -la now."
+   }
+  },
+  {
+   "name": "fenced_code",
+   "input": {
+    "text": "Code:\n```python\nprint('hi')\n```"
+   },
+   "expected": {
+    "spoken": "Code: python print'hi'"
+   }
+  },
+  {
+   "name": "heading",
+   "input": {
+    "text": "# Heading\nText under it."
+   },
+   "expected": {
+    "spoken": "Heading Text under it."
+   }
+  },
+  {
+   "name": "subheading",
+   "input": {
+    "text": "## Sub-heading"
+   },
+   "expected": {
+    "spoken": "Sub-heading"
+   }
+  },
+  {
+   "name": "link",
+   "input": {
+    "text": "See [the docs](https://example.com/page) first."
+   },
+   "expected": {
+    "spoken": "See the docshttps://example.com/page first."
+   }
+  },
+  {
+   "name": "nested_link",
+   "input": {
+    "text": "Nested [**bold link**](https://example.com)"
+   },
+   "expected": {
+    "spoken": "Nested bold linkhttps://example.com"
+   }
+  },
+  {
+   "name": "table_pipes",
+   "input": {
+    "text": "Table | with | pipes"
+   },
+   "expected": {
+    "spoken": "Table with pipes"
+   }
+  },
+  {
+   "name": "markdown_table",
+   "input": {
+    "text": "Table:\n| a | b |\n|---|---|\n| 1 | 2 |"
+   },
+   "expected": {
+    "spoken": "Table: a b ------ 1 2"
+   }
+  },
+  {
+   "name": "strike",
+   "input": {
+    "text": "~strike~ and ~~through~~"
+   },
+   "expected": {
+    "spoken": "strike and through"
+   }
+  },
+  {
+   "name": "blockquote",
+   "input": {
+    "text": "> quoted line"
+   },
+   "expected": {
+    "spoken": "quoted line"
+   }
+  },
+  {
+   "name": "nested_quote",
+   "input": {
+    "text": ">> deeper quote"
+   },
+   "expected": {
+    "spoken": "deeper quote"
+   }
+  },
+  {
+   "name": "bullets",
+   "input": {
+    "text": "• bullet one\n• bullet two"
+   },
+   "expected": {
+    "spoken": "bullet one bullet two"
+   }
+  },
+  {
+   "name": "bullet_glued",
+   "input": {
+    "text": "Bullet•glued"
+   },
+   "expected": {
+    "spoken": "Bulletglued"
+   }
+  },
+  {
+   "name": "dash_list",
+   "input": {
+    "text": "- dash bullet\n- another"
+   },
+   "expected": {
+    "spoken": "- dash bullet - another"
+   }
+  },
+  {
+   "name": "star_list",
+   "input": {
+    "text": "* star bullet\n* another"
+   },
+   "expected": {
+    "spoken": "star bullet another"
+   }
+  },
+  {
+   "name": "numbered_list",
+   "input": {
+    "text": "1. first\n2. second"
+   },
+   "expected": {
+    "spoken": "1. first 2. second"
+   }
+  },
+  {
+   "name": "tabs",
+   "input": {
+    "text": "Tabs\tand\tspaces   inside"
+   },
+   "expected": {
+    "spoken": "Tabs and spaces inside"
+   }
+  },
+  {
+   "name": "crlf",
+   "input": {
+    "text": "Line one\r\nLine two"
+   },
+   "expected": {
+    "spoken": "Line one Line two"
+   }
+  },
+  {
+   "name": "trailing_newline",
+   "input": {
+    "text": "Trailing newline\n"
+   },
+   "expected": {
+    "spoken": "Trailing newline"
+   }
+  },
+  {
+   "name": "leading_newlines",
+   "input": {
+    "text": "\n\nLeading newlines"
+   },
+   "expected": {
+    "spoken": "Leading newlines"
+   }
+  },
+  {
+   "name": "blank_lines",
+   "input": {
+    "text": "Multiple    spaces\n\n\nand newlines"
+   },
+   "expected": {
+    "spoken": "Multiple spaces and newlines"
+   }
+  },
+  {
+   "name": "vt_ff",
+   "input": {
+    "text": "Mixed\twhitespace\u000b\fend"
+   },
+   "expected": {
+    "spoken": "Mixed whitespace end"
+   }
+  },
+  {
+   "name": "nbsp",
+   "input": {
+    "text": "Non-breaking space"
+   },
+   "expected": {
+    "spoken": "Non-breaking space"
+   }
+  },
+  {
+   "name": "ideographic_space",
+   "input": {
+    "text": "Ideographic　space"
+   },
+   "expected": {
+    "spoken": "Ideographic space"
+   }
+  },
+  {
+   "name": "zero_width_space",
+   "input": {
+    "text": "Zero​width space"
+   },
+   "expected": {
+    "spoken": "Zero​width space"
+   }
+  },
+  {
+   "name": "file_separator",
+   "input": {
+    "text": "Separator\u001cchars\u001fhere"
+   },
+   "expected": {
+    "spoken": "Separator chars here"
+   }
+  },
+  {
+   "name": "next_line",
+   "input": {
+    "text": "Nextline"
+   },
+   "expected": {
+    "spoken": "Next line"
+   }
+  },
+  {
+   "name": "line_separator",
+   "input": {
+    "text": "Line separator"
+   },
+   "expected": {
+    "spoken": "Line separator"
+   }
+  },
+  {
+   "name": "emoji",
+   "input": {
+    "text": "Emoji 😀 stays"
+   },
+   "expected": {
+    "spoken": "Emoji 😀 stays"
+   }
+  },
+  {
+   "name": "zwj_family",
+   "input": {
+    "text": "Family 👨‍👩‍👧 emoji"
+   },
+   "expected": {
+    "spoken": "Family 👨‍👩‍👧 emoji"
+   }
+  },
+  {
+   "name": "flag",
+   "input": {
+    "text": "Flag 🇬🇧 here"
+   },
+   "expected": {
+    "spoken": "Flag 🇬🇧 here"
+   }
+  },
+  {
+   "name": "skin_tone",
+   "input": {
+    "text": "Thumbs 👍🏽 up"
+   },
+   "expected": {
+    "spoken": "Thumbs 👍🏽 up"
+   }
+  },
+  {
+   "name": "keycap",
+   "input": {
+    "text": "Keycap 1️⃣ two"
+   },
+   "expected": {
+    "spoken": "Keycap 1️⃣ two"
+   }
+  },
+  {
+   "name": "precomposed",
+   "input": {
+    "text": "Café déjà vu"
+   },
+   "expected": {
+    "spoken": "Café déjà vu"
+   }
+  },
+  {
+   "name": "decomposed",
+   "input": {
+    "text": "Café decomposed"
+   },
+   "expected": {
+    "spoken": "Café decomposed"
+   }
+  },
+  {
+   "name": "straight_quotes",
+   "input": {
+    "text": "\"Double quotes\" and 'single'"
+   },
+   "expected": {
+    "spoken": "\"Double quotes\" and 'single'"
+   }
+  },
+  {
+   "name": "curly_quotes",
+   "input": {
+    "text": "Curly “quotes” and ‘single’"
+   },
+   "expected": {
+    "spoken": "Curly “quotes” and ‘single’"
+   }
+  },
+  {
+   "name": "apostrophe",
+   "input": {
+    "text": "It's what you'd expect."
+   },
+   "expected": {
+    "spoken": "It's what you'd expect."
+   }
+  },
+  {
+   "name": "time",
+   "input": {
+    "text": "It's 3:45 PM."
+   },
+   "expected": {
+    "spoken": "It's 3:45 PM."
+   }
+  },
+  {
+   "name": "percent",
+   "input": {
+    "text": "Your battery is at 64%."
+   },
+   "expected": {
+    "spoken": "Your battery is at 64%."
+   }
+  },
+  {
+   "name": "pounds",
+   "input": {
+    "text": "That costs £20."
+   },
+   "expected": {
+    "spoken": "That costs £20."
+   }
+  },
+  {
+   "name": "dollars_parens",
+   "input": {
+    "text": "Price: $5 (approx.)"
+   },
+   "expected": {
+    "spoken": "Price: $5 approx."
+   }
+  },
+  {
+   "name": "math_star",
+   "input": {
+    "text": "Math: 2 * 3 = 6"
+   },
+   "expected": {
+    "spoken": "Math: 2 3 = 6"
+   }
+  },
+  {
+   "name": "snake_case",
+   "input": {
+    "text": "Under_score_name"
+   },
+   "expected": {
+    "spoken": "Underscorename"
+   }
+  },
+  {
+   "name": "hashtag",
+   "input": {
+    "text": "#hashtag"
+   },
+   "expected": {
+    "spoken": "hashtag"
+   }
+  },
+  {
+   "name": "less_greater",
+   "input": {
+    "text": "a > b and b < c"
+   },
+   "expected": {
+    "spoken": "a b and b < c"
+   }
+  },
+  {
+   "name": "backslash",
+   "input": {
+    "text": "Backslash \\ alone"
+   },
+   "expected": {
+    "spoken": "Backslash alone"
+   }
+  },
+  {
+   "name": "windows_path",
+   "input": {
+    "text": "C:\\Temp\\notes.txt"
+   },
+   "expected": {
+    "spoken": "C:Tempnotes.txt"
+   }
+  },
+  {
+   "name": "pipes_everywhere",
+   "input": {
+    "text": "Pipes || everywhere |"
+   },
+   "expected": {
+    "spoken": "Pipes everywhere"
+   }
+  },
+  {
+   "name": "tilde",
+   "input": {
+    "text": "Tilde ~ approximately"
+   },
+   "expected": {
+    "spoken": "Tilde approximately"
+   }
+  },
+  {
+   "name": "dashes",
+   "input": {
+    "text": "Ellipsis… and dash — and en–dash"
+   },
+   "expected": {
+    "spoken": "Ellipsis… and dash — and en–dash"
+   }
+  },
+  {
+   "name": "punctuation_run",
+   "input": {
+    "text": "Question? Exclaim! Done."
+   },
+   "expected": {
+    "spoken": "Question? Exclaim! Done."
+   }
+  },
+  {
+   "name": "ends_bang",
+   "input": {
+    "text": "Ends with punctuation!!!"
+   },
+   "expected": {
+    "spoken": "Ends with punctuation!!!"
+   }
+  },
+  {
+   "name": "asterisk_in_word",
+   "input": {
+    "text": "Asterisk*in*word"
+   },
+   "expected": {
+    "spoken": "Asteriskinword"
+   }
+  },
+  {
+   "name": "greek",
+   "input": {
+    "text": "Greek ΟΔΟΣ and Σ"
+   },
+   "expected": {
+    "spoken": "Greek ΟΔΟΣ and Σ"
+   }
+  },
+  {
+   "name": "arabic",
+   "input": {
+    "text": "Arabic مرحبا"
+   },
+   "expected": {
+    "spoken": "Arabic مرحبا"
+   }
+  },
+  {
+   "name": "cjk",
+   "input": {
+    "text": "CJK 你好世界"
+   },
+   "expected": {
+    "spoken": "CJK 你好世界"
+   }
+  },
+  {
+   "name": "only_stars",
+   "input": {
+    "text": "***"
+   },
+   "expected": {
+    "spoken": null
+   }
+  },
+  {
+   "name": "only_brackets",
+   "input": {
+    "text": "[]()"
+   },
+   "expected": {
+    "spoken": null
+   }
+  },
+  {
+   "name": "only_bullets",
+   "input": {
+    "text": "• • •"
+   },
+   "expected": {
+    "spoken": null
+   }
+  },
+  {
+   "name": "only_markup_and_space",
+   "input": {
+    "text": " ** __ ## \n > "
+   },
+   "expected": {
+    "spoken": null
+   }
+  },
+  {
+   "name": "mixed_markup",
+   "input": {
+    "text": "Mixed **bold** and _italic_ with `code`."
+   },
+   "expected": {
+    "spoken": "Mixed bold and italic with code."
+   }
+  }
+ ]
+}

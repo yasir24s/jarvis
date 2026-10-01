@@ -40,6 +40,12 @@ let package = Package(
         .target(name: "JarvisBrain", dependencies: ["JarvisCore", "JarvisTools"]),
         .testTarget(name: "JarvisBrainTests", dependencies: ["JarvisBrain", "JarvisTools", "JarvisTestSupport"]),
 
+        // M8 voice out (plan: M08-M13 §3.2, D-54): the F5 clone through the jarvis-voice helper,
+        // `say` as the fallback, the speech queue and the one player. Foundation and AVFAudio only.
+        // The helper is a package of its own (VoiceHelper/), so this package never depends on MLX.
+        .target(name: "JarvisVoice", dependencies: ["JarvisCore"]),
+        .testTarget(name: "JarvisVoiceTests", dependencies: ["JarvisVoice", "JarvisCore", "JarvisTestSupport"]),
+
         // Sandbox + golden-fixture loader shared by every test target. Foundation only —
         // it must NOT import Testing (Testing.framework is only on the test targets' search path).
         .target(
