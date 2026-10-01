@@ -40,6 +40,9 @@ public enum BuiltInTools {
         await gateway.register(Capped(ReadFile(home: platform.home, userHome: platform.userHome)))
         await gateway.register(Capped(RunCommand(runner: platform.commandRunner)))
         await gateway.register(Capped(RunAppleScript(runner: platform.scriptRunner)))
+        await gateway.register(Capped(WriteFile(session: platform.files)))
+        await gateway.register(Capped(MoveFile(session: platform.files)))
+        await gateway.register(Capped(DeleteFile(session: platform.files)))
     }
 
     /// The generated `ToolCatalog` entry for `name`, so no body carries a hand-written schema.
@@ -67,6 +70,8 @@ struct ToolPlatform: Sendable {
     /// run_command's `/bin/sh` and run_applescript's osascript, with the agent PATH.
     var commandRunner: any CommandRunning = BoundedRunner(environment: BoundedRunner.agentEnvironment())
     var scriptRunner: any StdinCommandRunning = BoundedRunner(environment: BoundedRunner.agentEnvironment())
+    /// write_file, move_file and delete_file, with `_written_this_session` kept per process.
+    var files: FileMutationSession = .live
 
     static var live: ToolPlatform {
         ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard(), screen: LiveScreenCapture(),

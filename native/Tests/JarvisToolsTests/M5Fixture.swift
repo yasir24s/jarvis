@@ -179,8 +179,21 @@ extension ToolPlatform {
                      userHome: @escaping @Sendable (String) -> String? = { _ in nil }) -> ToolPlatform {
         ToolPlatform(system: system, clipboard: clipboard, screen: screen, recognizer: recognizer, home: home,
                      apps: apps, browser: browser, spotlightRunner: spotlightRunner, userHome: userHome,
-                     commandRunner: FakeRunner(stdout: ""), scriptRunner: FakeStdinRunner())
+                     commandRunner: FakeRunner(stdout: ""), scriptRunner: FakeStdinRunner(),
+                     files: FileMutationSession(files: NoFiles(), home: home, cwd: home))
     }
+}
+
+/// The file tools' backing for `.fake()` platforms: nothing exists and every mutation is
+/// refused, so a test that registers every body never writes, moves or deletes anything.
+struct NoFiles: FileMutating {
+    struct Refused: Error {}
+    func exists(_ p: String) -> Bool { false }
+    func isDir(_ p: String) -> Bool { false }
+    func trash(_ p: String) -> Bool { false }
+    func hardDelete(_ p: String) throws { throw Refused() }
+    func write(_ p: String, content: String) throws { throw Refused() }
+    func move(_ source: String, _ destination: String) throws { throw Refused() }
 }
 
 actor FakeStdinRunner: StdinCommandRunning {

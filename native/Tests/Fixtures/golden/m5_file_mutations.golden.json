@@ -1,0 +1,706 @@
+{
+ "schema": 1,
+ "suite": "m5_file_mutations",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "write/new_nested",
+   "input": {
+    "tool": "write_file",
+    "args": {
+     "path": "@HOME@/nested/a.txt",
+     "content": "hello 🙂\n"
+    },
+    "setup": [],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": null,
+    "text": "Wrote a.txt, sir.",
+    "repeat": null,
+    "tree": {
+     "h/nested/": null,
+     "h/nested/a.txt": "68656c6c6f20f09f99820a"
+    }
+   }
+  },
+  {
+   "name": "write/overwrite_home",
+   "input": {
+    "tool": "write_file",
+    "args": {
+     "path": "@HOME@/a.txt",
+     "content": "new"
+    },
+    "setup": [
+     [
+      "h/a.txt",
+      "old"
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": null,
+    "text": "Wrote a.txt, sir.",
+    "repeat": null,
+    "tree": {
+     "h/a.txt": "6e6577"
+    }
+   }
+  },
+  {
+   "name": "write/overwrite_outside",
+   "input": {
+    "tool": "write_file",
+    "args": {
+     "path": "@OUTSIDE@/a.txt",
+     "content": "new"
+    },
+    "setup": [
+     [
+      "o/a.txt",
+      "old"
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": "That will overwrite a.txt outside your home folder",
+    "text": "Wrote a.txt, sir.",
+    "repeat": "Wrote a.txt, sir.",
+    "tree": {
+     "o/a.txt": "6e6577"
+    }
+   }
+  },
+  {
+   "name": "write/empty",
+   "input": {
+    "tool": "write_file",
+    "args": {
+     "path": "",
+     "content": "x"
+    },
+    "setup": [],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": null,
+    "text": "Which file, sir?",
+    "repeat": null,
+    "tree": {}
+   }
+  },
+  {
+   "name": "write/directory",
+   "input": {
+    "tool": "write_file",
+    "args": {
+     "path": "@HOME@/dir",
+     "content": "x"
+    },
+    "setup": [
+     [
+      "h/dir/",
+      null
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": null,
+    "text": "Write failed, sir: [Errno 21] Is a directory: '@HOME@/dir'",
+    "repeat": null,
+    "tree": {
+     "h/dir/": null
+    }
+   }
+  },
+  {
+   "name": "write/startup",
+   "input": {
+    "tool": "write_file",
+    "args": {
+     "path": "@HOME@/.zshrc",
+     "content": "fixture"
+    },
+    "setup": [],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": "That will write .zshrc, a startup or credential file",
+    "text": "Wrote .zshrc, sir.",
+    "repeat": null,
+    "tree": {
+     "h/.zshrc": "66697874757265"
+    }
+   }
+  },
+  {
+   "name": "delete/trash",
+   "input": {
+    "tool": "delete_file",
+    "args": {
+     "path": "@HOME@/a.txt"
+    },
+    "setup": [
+     [
+      "h/a.txt",
+      "old"
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": null,
+    "text": "Moved a.txt to the Trash, sir.",
+    "repeat": null,
+    "tree": {}
+   }
+  },
+  {
+   "name": "delete/trash_fails",
+   "input": {
+    "tool": "delete_file",
+    "args": {
+     "path": "@HOME@/a.txt"
+    },
+    "setup": [
+     [
+      "h/a.txt",
+      "old"
+     ]
+    ],
+    "trash_ok": false
+   },
+   "expected": {
+    "gate": null,
+    "text": "I couldn't move a.txt to the Trash, sir.",
+    "repeat": null,
+    "tree": {
+     "h/a.txt": "6f6c64"
+    }
+   }
+  },
+  {
+   "name": "delete/error_name",
+   "input": {
+    "tool": "delete_file",
+    "args": {
+     "path": "@HOME@/error.txt"
+    },
+    "setup": [
+     [
+      "h/error.txt",
+      "old"
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": null,
+    "text": "Moved error.txt to the Trash, sir.",
+    "repeat": null,
+    "tree": {}
+   }
+  },
+  {
+   "name": "delete/permanent",
+   "input": {
+    "tool": "delete_file",
+    "args": {
+     "path": "@HOME@/a.txt",
+     "permanent": true
+    },
+    "setup": [
+     [
+      "h/a.txt",
+      "old"
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": "That will delete a.txt permanently (bypassing the Trash)",
+    "text": "Permanently deleted a.txt, sir.",
+    "repeat": null,
+    "tree": {}
+   }
+  },
+  {
+   "name": "delete/outside",
+   "input": {
+    "tool": "delete_file",
+    "args": {
+     "path": "@OUTSIDE@/a.txt"
+    },
+    "setup": [
+     [
+      "o/a.txt",
+      "old"
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": "That will delete a.txt outside your home folder",
+    "text": "Permanently deleted a.txt, sir.",
+    "repeat": null,
+    "tree": {}
+   }
+  },
+  {
+   "name": "delete/missing",
+   "input": {
+    "tool": "delete_file",
+    "args": {
+     "path": "@HOME@/missing"
+    },
+    "setup": [],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": null,
+    "text": "I can't find @HOME@/missing, sir.",
+    "repeat": null,
+    "tree": {}
+   }
+  },
+  {
+   "name": "delete/home",
+   "input": {
+    "tool": "delete_file",
+    "args": {
+     "path": "~"
+    },
+    "setup": [],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": null,
+    "text": "I won't delete that, sir — it's a protected system location.",
+    "repeat": null,
+    "tree": {}
+   }
+  },
+  {
+   "name": "delete/system",
+   "input": {
+    "tool": "delete_file",
+    "args": {
+     "path": "/etc/hosts"
+    },
+    "setup": [],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": null,
+    "text": "I won't delete that, sir — it's a protected system location.",
+    "repeat": null,
+    "tree": {}
+   }
+  },
+  {
+   "name": "delete/private",
+   "input": {
+    "tool": "delete_file",
+    "args": {
+     "path": "/private/tmp/x"
+    },
+    "setup": [],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": null,
+    "text": "I won't delete that, sir — it's a protected system location.",
+    "repeat": null,
+    "tree": {}
+   }
+  },
+  {
+   "name": "delete/link_dir",
+   "input": {
+    "tool": "delete_file",
+    "args": {
+     "path": "@HOME@/link",
+     "permanent": true
+    },
+    "setup": [
+     [
+      "h/dir/",
+      null
+     ],
+     [
+      "h/link",
+      {
+       "link": "dir"
+      }
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": "That will delete link permanently (bypassing the Trash)",
+    "text": "Delete failed, sir: [Errno None] None: '@HOME@/link'",
+    "repeat": null,
+    "tree": {
+     "h/dir/": null,
+     "h/link": {
+      "link": "dir"
+     }
+    }
+   }
+  },
+  {
+   "name": "move/rename",
+   "input": {
+    "tool": "move_file",
+    "args": {
+     "src": "@HOME@/a.txt",
+     "dst": "@HOME@/b.txt"
+    },
+    "setup": [
+     [
+      "h/a.txt",
+      "old"
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": null,
+    "text": "Moved a.txt to b.txt, sir.",
+    "repeat": null,
+    "tree": {
+     "h/b.txt": "6f6c64"
+    }
+   }
+  },
+  {
+   "name": "move/into_directory",
+   "input": {
+    "tool": "move_file",
+    "args": {
+     "src": "@HOME@/a.txt",
+     "dst": "@HOME@/dir"
+    },
+    "setup": [
+     [
+      "h/a.txt",
+      "old"
+     ],
+     [
+      "h/dir/",
+      null
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": "That will overwrite dir",
+    "text": "Moved a.txt to dir, sir.",
+    "repeat": null,
+    "tree": {
+     "h/dir/": null,
+     "h/dir/a.txt": "6f6c64"
+    }
+   }
+  },
+  {
+   "name": "move/clobber",
+   "input": {
+    "tool": "move_file",
+    "args": {
+     "src": "@HOME@/a.txt",
+     "dst": "@HOME@/b.txt"
+    },
+    "setup": [
+     [
+      "h/a.txt",
+      "new"
+     ],
+     [
+      "h/b.txt",
+      "old"
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": "That will overwrite b.txt",
+    "text": "Moved a.txt to b.txt, sir.",
+    "repeat": null,
+    "tree": {
+     "h/b.txt": "6e6577"
+    }
+   }
+  },
+  {
+   "name": "move/outside",
+   "input": {
+    "tool": "move_file",
+    "args": {
+     "src": "@HOME@/a.txt",
+     "dst": "@OUTSIDE@/a.txt"
+    },
+    "setup": [
+     [
+      "h/a.txt",
+      "old"
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": "That will move a.txt outside your home folder",
+    "text": "Moved a.txt to a.txt, sir.",
+    "repeat": null,
+    "tree": {
+     "o/a.txt": "6f6c64"
+    }
+   }
+  },
+  {
+   "name": "move/trailing_slash",
+   "input": {
+    "tool": "move_file",
+    "args": {
+     "src": "@HOME@/dir/",
+     "dst": "@HOME@/other/"
+    },
+    "setup": [
+     [
+      "h/dir/",
+      null
+     ],
+     [
+      "h/other/",
+      null
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": "That will overwrite ",
+    "text": "Moved  to , sir.",
+    "repeat": null,
+    "tree": {
+     "h/other/": null,
+     "h/other/dir/": null
+    },
+    "deviation": "DEV-M5-04",
+    "native_gate": "That will overwrite other",
+    "native_text": "Moved dir to other, sir."
+   }
+  },
+  {
+   "name": "move/system",
+   "input": {
+    "tool": "move_file",
+    "args": {
+     "src": "/etc/hosts",
+     "dst": "@HOME@/hosts"
+    },
+    "setup": [],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": null,
+    "text": "I won't move to or from a system location, sir.",
+    "repeat": null,
+    "tree": {}
+   }
+  },
+  {
+   "name": "move/exists_in_directory",
+   "input": {
+    "tool": "move_file",
+    "args": {
+     "src": "@HOME@/a.txt",
+     "dst": "@HOME@/dir"
+    },
+    "setup": [
+     [
+      "h/a.txt",
+      "new"
+     ],
+     [
+      "h/dir/a.txt",
+      "old"
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": "That will overwrite dir",
+    "text": "Move failed, sir: Destination path '@HOME@/dir/a.txt' already exists",
+    "repeat": null,
+    "tree": {
+     "h/a.txt": "6e6577",
+     "h/dir/": null,
+     "h/dir/a.txt": "6f6c64"
+    }
+   }
+  },
+  {
+   "name": "move/into_itself",
+   "input": {
+    "tool": "move_file",
+    "args": {
+     "src": "@HOME@/dir",
+     "dst": "@HOME@/dir/sub"
+    },
+    "setup": [
+     [
+      "h/dir/sub/",
+      null
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": "That will overwrite sub",
+    "text": "Move failed, sir: Cannot move a directory '@HOME@/dir' into itself '@HOME@/dir/sub'.",
+    "repeat": null,
+    "tree": {
+     "h/dir/": null,
+     "h/dir/sub/": null
+    }
+   }
+  },
+  {
+   "name": "move/missing_parent",
+   "input": {
+    "tool": "move_file",
+    "args": {
+     "src": "@HOME@/a.txt",
+     "dst": "@HOME@/nope/a.txt"
+    },
+    "setup": [
+     [
+      "h/a.txt",
+      "old"
+     ]
+    ],
+    "trash_ok": true
+   },
+   "expected": {
+    "gate": null,
+    "text": "Move failed, sir: [Errno 2] No such file or directory: '@HOME@/nope/a.txt'",
+    "repeat": null,
+    "tree": {
+     "h/a.txt": "6f6c64"
+    }
+   }
+  },
+  {
+   "name": "move/cross_device_file",
+   "input": {
+    "tool": "move_file",
+    "args": {
+     "src": "@HOME@/a.txt",
+     "dst": "@OUTSIDE@/b.txt"
+    },
+    "setup": [
+     [
+      "h/a.txt",
+      "old"
+     ]
+    ],
+    "trash_ok": true,
+    "exdev": true
+   },
+   "expected": {
+    "gate": "That will move a.txt outside your home folder",
+    "text": "Moved a.txt to b.txt, sir.",
+    "repeat": null,
+    "tree": {
+     "o/b.txt": "6f6c64"
+    }
+   }
+  },
+  {
+   "name": "move/cross_device_dir",
+   "input": {
+    "tool": "move_file",
+    "args": {
+     "src": "@HOME@/dir",
+     "dst": "@OUTSIDE@/moved"
+    },
+    "setup": [
+     [
+      "h/dir/x.txt",
+      "x"
+     ],
+     [
+      "h/dir/link",
+      {
+       "link": "x.txt"
+      }
+     ]
+    ],
+    "trash_ok": true,
+    "exdev": true
+   },
+   "expected": {
+    "gate": "That will move dir outside your home folder",
+    "text": "Moved dir to moved, sir.",
+    "repeat": null,
+    "tree": {
+     "o/moved/": null,
+     "o/moved/link": {
+      "link": "x.txt"
+     },
+     "o/moved/x.txt": "78"
+    }
+   }
+  },
+  {
+   "name": "move/cross_device_link",
+   "input": {
+    "tool": "move_file",
+    "args": {
+     "src": "@HOME@/link",
+     "dst": "@OUTSIDE@/link"
+    },
+    "setup": [
+     [
+      "h/a.txt",
+      "old"
+     ],
+     [
+      "h/link",
+      {
+       "link": "a.txt"
+      }
+     ]
+    ],
+    "trash_ok": true,
+    "exdev": true
+   },
+   "expected": {
+    "gate": "That will move link outside your home folder",
+    "text": "Moved link to link, sir.",
+    "repeat": null,
+    "tree": {
+     "h/a.txt": "6f6c64",
+     "o/link": {
+      "link": "a.txt"
+     }
+    }
+   }
+  }
+ ]
+}
