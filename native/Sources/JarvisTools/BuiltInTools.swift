@@ -48,6 +48,9 @@ public enum BuiltInTools {
                                                     cli: platform.brightnessCLI)))
         await gateway.register(Capped(Notify(notifications: platform.notifications, runner: platform.scriptRunner)))
         await gateway.register(Capped(TypeText(keyboard: platform.keyboard)))
+        await gateway.register(Capped(OpenSettings(opener: platform.settingsOpener)))
+        await gateway.register(Capped(SystemControl(runner: platform.actionRunner, scriptRunner: platform.scriptRunner,
+                                                    executable: platform.executable)))
     }
 
     /// The generated `ToolCatalog` entry for `name`, so no body carries a hand-written schema.
@@ -88,6 +91,10 @@ struct ToolPlatform: Sendable {
     var notifications: any NotificationPosting = LiveNotification()
     /// `_brightness_cli()`: the Homebrew `brightness` command, when installed.
     var brightnessCLI: @Sendable () -> String? = SetBrightness.liveCLI
+    /// LaunchServices, for open_settings's `x-apple.systempreferences:` URLs (no AppKit here).
+    var settingsOpener: any SettingsOpening = LiveSettingsOpener()
+    /// `shutil.which` over the agent PATH, for blueutil and shortcuts.
+    var executable: @Sendable (String) -> String? = SystemControl.liveExecutable
 
     static var live: ToolPlatform {
         ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard(), screen: LiveScreenCapture(),

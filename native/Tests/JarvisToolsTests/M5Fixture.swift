@@ -182,7 +182,8 @@ extension ToolPlatform {
                      commandRunner: FakeRunner(stdout: ""), scriptRunner: FakeStdinRunner(),
                      files: FileMutationSession(files: NoFiles(), home: home, cwd: home),
                      actionRunner: FakeRunner(stdout: ""), volume: FakeVolume(), keyboard: FakeKeyboard(),
-                     notifications: FakeNotification(), brightnessCLI: { nil })
+                     notifications: FakeNotification(), brightnessCLI: { nil },
+                     settingsOpener: FakeSettingsOpener(), executable: { _ in nil })
     }
 }
 

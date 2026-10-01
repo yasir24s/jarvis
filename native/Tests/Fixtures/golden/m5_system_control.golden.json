@@ -1,0 +1,1712 @@
+{
+ "schema": 1,
+ "suite": "m5_system_control",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "control/0",
+   "input": {
+    "feature": "dark mode",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Dark mode on, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\" to tell appearance preferences to set dark mode to true"
+    ]
+   }
+  },
+  {
+   "name": "control/1",
+   "input": {
+    "feature": "dark mode",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Dark mode off, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\" to tell appearance preferences to set dark mode to false"
+    ]
+   }
+  },
+  {
+   "name": "control/2",
+   "input": {
+    "feature": "hidden files",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Hidden files enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.finder",
+      "AppleShowAllFiles",
+      "-bool",
+      "true"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/3",
+   "input": {
+    "feature": "hidden files",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Hidden files disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.finder",
+      "AppleShowAllFiles",
+      "-bool",
+      "false"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/4",
+   "input": {
+    "feature": "show hidden files",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Show hidden files enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.finder",
+      "AppleShowAllFiles",
+      "-bool",
+      "true"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/5",
+   "input": {
+    "feature": "show hidden files",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Show hidden files disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.finder",
+      "AppleShowAllFiles",
+      "-bool",
+      "false"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/6",
+   "input": {
+    "feature": "file extensions",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "File extensions enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "-g",
+      "AppleShowAllExtensions",
+      "-bool",
+      "true"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/7",
+   "input": {
+    "feature": "file extensions",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "File extensions disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "-g",
+      "AppleShowAllExtensions",
+      "-bool",
+      "false"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/8",
+   "input": {
+    "feature": "dock autohide",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Dock autohide enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.dock",
+      "autohide",
+      "-bool",
+      "true"
+     ],
+     [
+      "killall",
+      "Dock"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/9",
+   "input": {
+    "feature": "dock autohide",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Dock autohide disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.dock",
+      "autohide",
+      "-bool",
+      "false"
+     ],
+     [
+      "killall",
+      "Dock"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/10",
+   "input": {
+    "feature": "auto hide the dock",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Auto hide the dock enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.dock",
+      "autohide",
+      "-bool",
+      "true"
+     ],
+     [
+      "killall",
+      "Dock"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/11",
+   "input": {
+    "feature": "auto hide the dock",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Auto hide the dock disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.dock",
+      "autohide",
+      "-bool",
+      "false"
+     ],
+     [
+      "killall",
+      "Dock"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/12",
+   "input": {
+    "feature": "dock magnification",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Dock magnification enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.dock",
+      "magnification",
+      "-bool",
+      "true"
+     ],
+     [
+      "killall",
+      "Dock"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/13",
+   "input": {
+    "feature": "dock magnification",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Dock magnification disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.dock",
+      "magnification",
+      "-bool",
+      "false"
+     ],
+     [
+      "killall",
+      "Dock"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/14",
+   "input": {
+    "feature": "path bar",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Path bar enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.finder",
+      "ShowPathbar",
+      "-bool",
+      "true"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/15",
+   "input": {
+    "feature": "path bar",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Path bar disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.finder",
+      "ShowPathbar",
+      "-bool",
+      "false"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/16",
+   "input": {
+    "feature": "status bar",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Status bar enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.finder",
+      "ShowStatusBar",
+      "-bool",
+      "true"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/17",
+   "input": {
+    "feature": "status bar",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Status bar disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.finder",
+      "ShowStatusBar",
+      "-bool",
+      "false"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/18",
+   "input": {
+    "feature": "desktop icons",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Desktop icons enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.finder",
+      "CreateDesktop",
+      "-bool",
+      "true"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/19",
+   "input": {
+    "feature": "desktop icons",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Desktop icons disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.finder",
+      "CreateDesktop",
+      "-bool",
+      "false"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/20",
+   "input": {
+    "feature": "screenshot shadow",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Screenshot shadow enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.screencapture",
+      "disable-shadow",
+      "-bool",
+      "true"
+     ],
+     [
+      "killall",
+      "SystemUIServer"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/21",
+   "input": {
+    "feature": "screenshot shadow",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Screenshot shadow disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.screencapture",
+      "disable-shadow",
+      "-bool",
+      "false"
+     ],
+     [
+      "killall",
+      "SystemUIServer"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/22",
+   "input": {
+    "feature": "spring loading",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Spring loading enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "-g",
+      "com.apple.springing.enabled",
+      "-bool",
+      "true"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/23",
+   "input": {
+    "feature": "spring loading",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Spring loading disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "-g",
+      "com.apple.springing.enabled",
+      "-bool",
+      "false"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/24",
+   "input": {
+    "feature": "key repeat",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Key repeat enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "-g",
+      "ApplePressAndHoldEnabled",
+      "-bool",
+      "false"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/25",
+   "input": {
+    "feature": "key repeat",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Key repeat disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "-g",
+      "ApplePressAndHoldEnabled",
+      "-bool",
+      "true"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/26",
+   "input": {
+    "feature": "natural scrolling",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Natural scrolling enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "-g",
+      "com.apple.swipescrolldirection",
+      "-bool",
+      "true"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/27",
+   "input": {
+    "feature": "natural scrolling",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Natural scrolling disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "-g",
+      "com.apple.swipescrolldirection",
+      "-bool",
+      "false"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/28",
+   "input": {
+    "feature": "wifi",
+    "enable": true,
+    "ports": "Hardware Port: Wi-Fi\nDevice: en7\n",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "Wi-Fi on, sir.",
+    "argv": [
+     [
+      "networksetup",
+      "-listallhardwareports"
+     ],
+     [
+      "networksetup",
+      "-setairportpower",
+      "en7",
+      "on"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/29",
+   "input": {
+    "feature": "wifi",
+    "enable": false,
+    "ports": "Hardware Port: Wi-Fi\nDevice: en7\n",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "Wi-Fi off, sir.",
+    "argv": [
+     [
+      "networksetup",
+      "-listallhardwareports"
+     ],
+     [
+      "networksetup",
+      "-setairportpower",
+      "en7",
+      "off"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/30",
+   "input": {
+    "feature": "wifi",
+    "enable": true,
+    "ports": "no wifi",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "Wi-Fi on, sir.",
+    "argv": [
+     [
+      "networksetup",
+      "-listallhardwareports"
+     ],
+     [
+      "networksetup",
+      "-setairportpower",
+      "en0",
+      "on"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/31",
+   "input": {
+    "feature": "wifi",
+    "enable": false,
+    "ports": "no wifi",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "Wi-Fi off, sir.",
+    "argv": [
+     [
+      "networksetup",
+      "-listallhardwareports"
+     ],
+     [
+      "networksetup",
+      "-setairportpower",
+      "en0",
+      "off"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/32",
+   "input": {
+    "feature": "bt",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "I need the blueutil tool to toggle Bluetooth, sir — install it with brew install blueutil.",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/33",
+   "input": {
+    "feature": "bt",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "I need the blueutil tool to toggle Bluetooth, sir — install it with brew install blueutil.",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/34",
+   "input": {
+    "feature": "bt",
+    "enable": true,
+    "ports": "",
+    "bt": true,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "Bluetooth on, sir.",
+    "argv": [
+     [
+      "/fake/blueutil",
+      "-p",
+      "1"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/35",
+   "input": {
+    "feature": "bt",
+    "enable": false,
+    "ports": "",
+    "bt": true,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "Bluetooth off, sir.",
+    "argv": [
+     [
+      "/fake/blueutil",
+      "-p",
+      "0"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/36",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/37",
+   "input": {
+    "feature": "dnd",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "Done, sir."
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/38",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "I couldn't find a shortcut matching toggle do not disturb, sir."
+   },
+   "expected": {
+    "text": "I can toggle Do Not Disturb if you make a Shortcut named 'toggle do not disturb', sir.",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/39",
+   "input": {
+    "feature": "dnd",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": "I couldn't find a shortcut matching toggle do not disturb, sir."
+   },
+   "expected": {
+    "text": "I can toggle Do Not Disturb if you make a Shortcut named 'toggle do not disturb', sir.",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/40",
+   "input": {
+    "feature": "dark",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "execution error",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "I couldn't change the appearance, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\" to tell appearance preferences to set dark mode to true"
+    ]
+   }
+  },
+  {
+   "name": "control/41",
+   "input": {
+    "feature": "dark",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "execution error",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "I couldn't change the appearance, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\" to tell appearance preferences to set dark mode to false"
+    ]
+   }
+  },
+  {
+   "name": "control/42",
+   "input": {
+    "feature": "light mode",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "Dark mode off, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\" to tell appearance preferences to set dark mode to false"
+    ]
+   }
+  },
+  {
+   "name": "control/43",
+   "input": {
+    "feature": "light mode",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "Dark mode on, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\" to tell appearance preferences to set dark mode to true"
+    ]
+   }
+  },
+  {
+   "name": "control/44",
+   "input": {
+    "feature": "the dock autohide",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "Dock autohide enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.dock",
+      "autohide",
+      "-bool",
+      "true"
+     ],
+     [
+      "killall",
+      "Dock"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/45",
+   "input": {
+    "feature": "the dock autohide",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "Dock autohide disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.dock",
+      "autohide",
+      "-bool",
+      "false"
+     ],
+     [
+      "killall",
+      "Dock"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/46",
+   "input": {
+    "feature": "hidden",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "Hidden files enabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.finder",
+      "AppleShowAllFiles",
+      "-bool",
+      "true"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/47",
+   "input": {
+    "feature": "hidden",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "Hidden files disabled, sir.",
+    "argv": [
+     [
+      "defaults",
+      "write",
+      "com.apple.finder",
+      "AppleShowAllFiles",
+      "-bool",
+      "false"
+     ],
+     [
+      "killall",
+      "Finder"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/48",
+   "input": {
+    "feature": "nonsense",
+    "enable": true,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "I don't have a hidden toggle for nonsense, sir.",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "control/49",
+   "input": {
+    "feature": "nonsense",
+    "enable": false,
+    "ports": "",
+    "bt": false,
+    "script_output": "",
+    "shortcut": ""
+   },
+   "expected": {
+    "text": "I don't have a hidden toggle for nonsense, sir.",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/no_cli",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": false,
+    "list": null,
+    "run": null
+   },
+   "expected": {
+    "text": "I can toggle Do Not Disturb if you make a Shortcut named 'toggle do not disturb', sir.",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/empty_list",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": true,
+    "list": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "I can toggle Do Not Disturb if you make a Shortcut named 'toggle do not disturb', sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/exact",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": true,
+    "list": {
+     "stdout_hex": "546f67676c6520446f204e6f7420446973747572620a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Toggle Do Not Disturb"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/exact_fails",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": true,
+    "list": {
+     "stdout_hex": "4f746865720a746f67676c6520646f206e6f7420646973747572620a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "626f6f6d",
+     "status": 1,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "The toggle do not disturb shortcut failed, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "toggle do not disturb"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/shortest_substring",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": true,
+    "list": {
+     "stdout_hex": "446f204e6f74204469737475726220506c75730a446f204e6f7420446973747572620a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Do Not Disturb"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/token_overlap",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": true,
+    "list": {
+     "stdout_hex": "4469737475726220546f67676c650a556e72656c617465640a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Disturb Toggle"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/no_match",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": true,
+    "list": {
+     "stdout_hex": "556e72656c617465640a546f67676c652057692d46690a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "I can toggle Do Not Disturb if you make a Shortcut named 'toggle do not disturb', sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/run_timeout",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": true,
+    "list": {
+     "stdout_hex": "546f67676c6520446f204e6f7420446973747572620a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": true,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "The Toggle Do Not Disturb shortcut is taking a while, sir — it may still be running.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Toggle Do Not Disturb"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/run_missing",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": true,
+    "list": {
+     "stdout_hex": "546f67676c6520446f204e6f7420446973747572620a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": 2
+    }
+   },
+   "expected": {
+    "text": "Shortcut error: [Errno 2] No such file or directory: 'shortcuts'",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Toggle Do Not Disturb"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/run_invalid_utf8",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": true,
+    "list": {
+     "stdout_hex": "546f67676c6520446f204e6f7420446973747572620a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "ff",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "Shortcut error: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Toggle Do Not Disturb"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/list_timeout",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": true,
+    "list": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": true,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "I can toggle Do Not Disturb if you make a Shortcut named 'toggle do not disturb', sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/list_invalid_stderr",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": true,
+    "list": {
+     "stdout_hex": "546f67676c6520446f204e6f7420446973747572620a",
+     "stderr_hex": "ff",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "I can toggle Do Not Disturb if you make a Shortcut named 'toggle do not disturb', sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/list_crlf",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": true,
+    "list": {
+     "stdout_hex": "2020546f67676c6520446f204e6f74204469737475726220200d0a0d0a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Toggle Do Not Disturb"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "dnd/reply_says_couldnt_find",
+   "input": {
+    "feature": "dnd",
+    "enable": true,
+    "cli": true,
+    "list": {
+     "stdout_hex": "636f756c646e27742066696e6420746f67676c6520646f206e6f7420646973747572620a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 1,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "I can toggle Do Not Disturb if you make a Shortcut named 'toggle do not disturb', sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "couldn't find toggle do not disturb"
+     ]
+    ],
+    "scripts": []
+   }
+  }
+ ]
+}

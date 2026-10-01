@@ -1,0 +1,568 @@
+{
+ "schema": 1,
+ "suite": "m5_open_settings",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "pane/0",
+   "input": {
+    "pane": "wifi"
+   },
+   "expected": {
+    "text": "Opening wifi settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.wifi-settings-extension"
+   }
+  },
+  {
+   "name": "pane/1",
+   "input": {
+    "pane": "wi-fi"
+   },
+   "expected": {
+    "text": "Opening wi-fi settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.wifi-settings-extension"
+   }
+  },
+  {
+   "name": "pane/2",
+   "input": {
+    "pane": "network"
+   },
+   "expected": {
+    "text": "Opening network settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Network-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/3",
+   "input": {
+    "pane": "bluetooth"
+   },
+   "expected": {
+    "text": "Opening bluetooth settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.BluetoothSettings"
+   }
+  },
+  {
+   "name": "pane/4",
+   "input": {
+    "pane": "sound"
+   },
+   "expected": {
+    "text": "Opening sound settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Sound-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/5",
+   "input": {
+    "pane": "notifications"
+   },
+   "expected": {
+    "text": "Opening notifications settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Notifications-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/6",
+   "input": {
+    "pane": "displays"
+   },
+   "expected": {
+    "text": "Opening displays settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Displays-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/7",
+   "input": {
+    "pane": "display"
+   },
+   "expected": {
+    "text": "Opening display settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Displays-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/8",
+   "input": {
+    "pane": "battery"
+   },
+   "expected": {
+    "text": "Opening battery settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Battery-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/9",
+   "input": {
+    "pane": "wallpaper"
+   },
+   "expected": {
+    "text": "Opening wallpaper settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Wallpaper-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/10",
+   "input": {
+    "pane": "screen saver"
+   },
+   "expected": {
+    "text": "Opening screen saver settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.ScreenSaver-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/11",
+   "input": {
+    "pane": "accessibility"
+   },
+   "expected": {
+    "text": "Opening accessibility privacy settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+   }
+  },
+  {
+   "name": "pane/12",
+   "input": {
+    "pane": "privacy"
+   },
+   "expected": {
+    "text": "Opening privacy settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension"
+   }
+  },
+  {
+   "name": "pane/13",
+   "input": {
+    "pane": "security"
+   },
+   "expected": {
+    "text": "Opening security settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension"
+   }
+  },
+  {
+   "name": "pane/14",
+   "input": {
+    "pane": "privacy and security"
+   },
+   "expected": {
+    "text": "Opening privacy and security settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension"
+   }
+  },
+  {
+   "name": "pane/15",
+   "input": {
+    "pane": "keyboard"
+   },
+   "expected": {
+    "text": "Opening keyboard settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/16",
+   "input": {
+    "pane": "mouse"
+   },
+   "expected": {
+    "text": "Opening mouse settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Mouse-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/17",
+   "input": {
+    "pane": "trackpad"
+   },
+   "expected": {
+    "text": "Opening trackpad settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Trackpad-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/18",
+   "input": {
+    "pane": "general"
+   },
+   "expected": {
+    "text": "Opening general settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.systempreferences.GeneralSettings"
+   }
+  },
+  {
+   "name": "pane/19",
+   "input": {
+    "pane": "software update"
+   },
+   "expected": {
+    "text": "Opening software update settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Software-Update-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/20",
+   "input": {
+    "pane": "storage"
+   },
+   "expected": {
+    "text": "Opening storage settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.settings.Storage"
+   }
+  },
+  {
+   "name": "pane/21",
+   "input": {
+    "pane": "users"
+   },
+   "expected": {
+    "text": "Opening users settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Users-Groups-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/22",
+   "input": {
+    "pane": "users and groups"
+   },
+   "expected": {
+    "text": "Opening users and groups settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Users-Groups-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/23",
+   "input": {
+    "pane": "date and time"
+   },
+   "expected": {
+    "text": "Opening date and time settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Date-Time-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/24",
+   "input": {
+    "pane": "language"
+   },
+   "expected": {
+    "text": "Opening language settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Localization-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/25",
+   "input": {
+    "pane": "desktop and dock"
+   },
+   "expected": {
+    "text": "Opening desktop and dock settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Desktop-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/26",
+   "input": {
+    "pane": "dock"
+   },
+   "expected": {
+    "text": "Opening dock settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Desktop-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/27",
+   "input": {
+    "pane": "focus"
+   },
+   "expected": {
+    "text": "Opening focus settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Focus-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/28",
+   "input": {
+    "pane": "screen time"
+   },
+   "expected": {
+    "text": "Opening screen time settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Screen-Time-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/29",
+   "input": {
+    "pane": "apple id"
+   },
+   "expected": {
+    "text": "Opening apple id settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.systempreferences.AppleIDSettings"
+   }
+  },
+  {
+   "name": "pane/30",
+   "input": {
+    "pane": "wallet"
+   },
+   "expected": {
+    "text": "Opening wallet settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.WalletSettingsExtension"
+   }
+  },
+  {
+   "name": "pane/31",
+   "input": {
+    "pane": "siri"
+   },
+   "expected": {
+    "text": "Opening siri settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Siri-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/32",
+   "input": {
+    "pane": "spotlight"
+   },
+   "expected": {
+    "text": "Opening spotlight settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Spotlight-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/33",
+   "input": {
+    "pane": "control center"
+   },
+   "expected": {
+    "text": "Opening control center settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.ControlCenter-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/34",
+   "input": {
+    "pane": "sharing"
+   },
+   "expected": {
+    "text": "Opening sharing settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Sharing-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/35",
+   "input": {
+    "pane": "printers"
+   },
+   "expected": {
+    "text": "Opening printers settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Print-Scan-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/36",
+   "input": {
+    "pane": "printers and scanners"
+   },
+   "expected": {
+    "text": "Opening printers and scanners settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Print-Scan-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/37",
+   "input": {
+    "pane": "vpn"
+   },
+   "expected": {
+    "text": "Opening vpn settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Network-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/38",
+   "input": {
+    "pane": "microphone"
+   },
+   "expected": {
+    "text": "Opening microphone privacy settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"
+   }
+  },
+  {
+   "name": "pane/39",
+   "input": {
+    "pane": "camera"
+   },
+   "expected": {
+    "text": "Opening camera privacy settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera"
+   }
+  },
+  {
+   "name": "pane/40",
+   "input": {
+    "pane": "screen recording"
+   },
+   "expected": {
+    "text": "Opening screen recording privacy settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+   }
+  },
+  {
+   "name": "pane/41",
+   "input": {
+    "pane": "accessibility"
+   },
+   "expected": {
+    "text": "Opening accessibility privacy settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+   }
+  },
+  {
+   "name": "pane/42",
+   "input": {
+    "pane": "full disk access"
+   },
+   "expected": {
+    "text": "Opening full disk access privacy settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
+   }
+  },
+  {
+   "name": "pane/43",
+   "input": {
+    "pane": "automation"
+   },
+   "expected": {
+    "text": "Opening automation privacy settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation"
+   }
+  },
+  {
+   "name": "pane/44",
+   "input": {
+    "pane": "location"
+   },
+   "expected": {
+    "text": "Opening location privacy settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices"
+   }
+  },
+  {
+   "name": "pane/45",
+   "input": {
+    "pane": "files and folders"
+   },
+   "expected": {
+    "text": "Opening files and folders privacy settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.preference.security?Privacy_FilesAndFolders"
+   }
+  },
+  {
+   "name": "pane/46",
+   "input": {
+    "pane": "input monitoring"
+   },
+   "expected": {
+    "text": "Opening input monitoring privacy settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent"
+   }
+  },
+  {
+   "name": "pane/47",
+   "input": {
+    "pane": "the sound settings"
+   },
+   "expected": {
+    "text": "Opening sound settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Sound-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/48",
+   "input": {
+    "pane": "my displays pane"
+   },
+   "expected": {
+    "text": "Opening displays settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.Displays-Settings.extension"
+   }
+  },
+  {
+   "name": "pane/49",
+   "input": {
+    "pane": "Bluetooth preferences"
+   },
+   "expected": {
+    "text": "Opening bluetooth settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.BluetoothSettings"
+   }
+  },
+  {
+   "name": "pane/50",
+   "input": {
+    "pane": "blue"
+   },
+   "expected": {
+    "text": "Opening bluetooth settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.BluetoothSettings"
+   }
+  },
+  {
+   "name": "pane/51",
+   "input": {
+    "pane": "privacy & security"
+   },
+   "expected": {
+    "text": "Opening privacy settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension"
+   }
+  },
+  {
+   "name": "pane/52",
+   "input": {
+    "pane": "xyz"
+   },
+   "expected": {
+    "text": "I couldn't find a xyz pane, sir, so I've opened System Settings.",
+    "url": "x-apple.systempreferences:"
+   }
+  },
+  {
+   "name": "pane/53",
+   "input": {
+    "pane": ""
+   },
+   "expected": {
+    "text": "Opening System Settings, sir.",
+    "url": "x-apple.systempreferences:"
+   }
+  },
+  {
+   "name": "pane/54",
+   "input": {
+    "pane": "accessibility"
+   },
+   "expected": {
+    "text": "Opening accessibility privacy settings, sir.",
+    "url": "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+   }
+  }
+ ]
+}
