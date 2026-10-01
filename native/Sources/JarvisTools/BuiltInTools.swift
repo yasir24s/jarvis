@@ -43,6 +43,11 @@ public enum BuiltInTools {
         await gateway.register(Capped(WriteFile(session: platform.files)))
         await gateway.register(Capped(MoveFile(session: platform.files)))
         await gateway.register(Capped(DeleteFile(session: platform.files)))
+        await gateway.register(Capped(SetVolume(volume: platform.volume)))
+        await gateway.register(Capped(SetBrightness(keyboard: platform.keyboard, runner: platform.actionRunner,
+                                                    cli: platform.brightnessCLI)))
+        await gateway.register(Capped(Notify(notifications: platform.notifications, runner: platform.scriptRunner)))
+        await gateway.register(Capped(TypeText(keyboard: platform.keyboard)))
     }
 
     /// The generated `ToolCatalog` entry for `name`, so no body carries a hand-written schema.
@@ -72,6 +77,17 @@ struct ToolPlatform: Sendable {
     var scriptRunner: any StdinCommandRunning = BoundedRunner(environment: BoundedRunner.agentEnvironment())
     /// write_file, move_file and delete_file, with `_written_this_session` kept per process.
     var files: FileMutationSession = .live
+    /// The fixed internal commands (the brightness CLI, later networksetup, blueutil,
+    /// defaults, killall and shortcuts), with the agent PATH. Never model text.
+    var actionRunner: any CommandRunning = BoundedRunner(environment: BoundedRunner.agentEnvironment())
+    /// CoreAudio's default output device.
+    var volume: any VolumeSetting = LiveVolume()
+    /// CGEvent keyboard posts, for type_text and set_brightness's key-tap fallback.
+    var keyboard: any KeyboardPosting = LiveKeyboard()
+    /// UserNotifications when JARVIS is authorised; notify falls back to osascript otherwise.
+    var notifications: any NotificationPosting = LiveNotification()
+    /// `_brightness_cli()`: the Homebrew `brightness` command, when installed.
+    var brightnessCLI: @Sendable () -> String? = SetBrightness.liveCLI
 
     static var live: ToolPlatform {
         ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard(), screen: LiveScreenCapture(),

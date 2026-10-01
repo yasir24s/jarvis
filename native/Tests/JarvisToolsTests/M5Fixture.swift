@@ -180,7 +180,9 @@ extension ToolPlatform {
         ToolPlatform(system: system, clipboard: clipboard, screen: screen, recognizer: recognizer, home: home,
                      apps: apps, browser: browser, spotlightRunner: spotlightRunner, userHome: userHome,
                      commandRunner: FakeRunner(stdout: ""), scriptRunner: FakeStdinRunner(),
-                     files: FileMutationSession(files: NoFiles(), home: home, cwd: home))
+                     files: FileMutationSession(files: NoFiles(), home: home, cwd: home),
+                     actionRunner: FakeRunner(stdout: ""), volume: FakeVolume(), keyboard: FakeKeyboard(),
+                     notifications: FakeNotification(), brightnessCLI: { nil })
     }
 }
 

@@ -1,0 +1,915 @@
+{
+ "schema": 1,
+ "suite": "m5_actions",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "set_volume/0",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": -20
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Volume set to 0.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "set volume output volume 0"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/1",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": 0
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Volume set to 0.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "set volume output volume 0"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/2",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": 1
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Volume set to 1.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "set volume output volume 1"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/3",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": 30
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Volume set to 30.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "set volume output volume 30"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/4",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": 50
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Volume set to 50.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "set volume output volume 50"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/5",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": 55.9
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Volume set to 55.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "set volume output volume 55"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/6",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": 100
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Volume set to 100.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "set volume output volume 100"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/7",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": 130
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Volume set to 100.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "set volume output volume 100"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/8",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": true
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Volume set to 1.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "set volume output volume 1"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/9",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": "55"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Volume set to 55.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "set volume output volume 55"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/10",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": "1_0"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Volume set to 10.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "set volume output volume 10"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/11",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": "55.5"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Tool error: invalid literal for int() with base 10: '55.5'",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/12",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": ""
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Tool error: invalid literal for int() with base 10: ''",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/13",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": null
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Tool error: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_volume/14",
+   "input": {
+    "tool": "set_volume",
+    "args": {
+     "level": "abc"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Tool error: invalid literal for int() with base 10: 'abc'",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_brightness/15",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": -20
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to about 0 percent, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  repeat 16 times\n    key code 145\n  end repeat\n  repeat 0 times\n    key code 144\n  end repeat\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "set_brightness/16",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": 0
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to about 0 percent, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  repeat 16 times\n    key code 145\n  end repeat\n  repeat 0 times\n    key code 144\n  end repeat\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "set_brightness/17",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": 1
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to about 1 percent, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  repeat 16 times\n    key code 145\n  end repeat\n  repeat 0 times\n    key code 144\n  end repeat\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "set_brightness/18",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": 30
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to about 30 percent, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  repeat 16 times\n    key code 145\n  end repeat\n  repeat 5 times\n    key code 144\n  end repeat\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "set_brightness/19",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": 50
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to about 50 percent, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  repeat 16 times\n    key code 145\n  end repeat\n  repeat 8 times\n    key code 144\n  end repeat\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "set_brightness/20",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": 55.9
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to about 55 percent, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  repeat 16 times\n    key code 145\n  end repeat\n  repeat 9 times\n    key code 144\n  end repeat\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "set_brightness/21",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": 100
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to about 100 percent, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  repeat 16 times\n    key code 145\n  end repeat\n  repeat 16 times\n    key code 144\n  end repeat\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "set_brightness/22",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": 130
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to about 100 percent, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  repeat 16 times\n    key code 145\n  end repeat\n  repeat 16 times\n    key code 144\n  end repeat\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "set_brightness/23",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": true
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to about 1 percent, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  repeat 16 times\n    key code 145\n  end repeat\n  repeat 0 times\n    key code 144\n  end repeat\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "set_brightness/24",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": "55"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to about 55 percent, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  repeat 16 times\n    key code 145\n  end repeat\n  repeat 9 times\n    key code 144\n  end repeat\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "set_brightness/25",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": "1_0"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to about 10 percent, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  repeat 16 times\n    key code 145\n  end repeat\n  repeat 2 times\n    key code 144\n  end repeat\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "set_brightness/26",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": "55.5"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Tool error: invalid literal for int() with base 10: '55.5'",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_brightness/27",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": ""
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Tool error: invalid literal for int() with base 10: ''",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_brightness/28",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": null
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Tool error: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_brightness/29",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": "abc"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Tool error: invalid literal for int() with base 10: 'abc'",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_brightness/30",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": 0
+    },
+    "cli": true,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to 0 percent, sir.",
+    "argv": [
+     [
+      "/fake/brightness",
+      "0.0"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_brightness/31",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": 30
+    },
+    "cli": true,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to 30 percent, sir.",
+    "argv": [
+     [
+      "/fake/brightness",
+      "0.3"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_brightness/32",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": 100
+    },
+    "cli": true,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Brightness set to 100 percent, sir.",
+    "argv": [
+     [
+      "/fake/brightness",
+      "1.0"
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "set_brightness/33",
+   "input": {
+    "tool": "set_brightness",
+    "args": {
+     "level": 30
+    },
+    "cli": false,
+    "script_output": "execution error"
+   },
+   "expected": {
+    "text": "I need Accessibility permission to change brightness, sir — or install the brightness command with brew.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  repeat 16 times\n    key code 145\n  end repeat\n  repeat 5 times\n    key code 144\n  end repeat\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "type_text/34",
+   "input": {
+    "tool": "type_text",
+    "args": {
+     "text": ""
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Nothing to type, sir.",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "type_text/35",
+   "input": {
+    "tool": "type_text",
+    "args": {
+     "text": " \n"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Nothing to type, sir.",
+    "argv": [],
+    "scripts": []
+   }
+  },
+  {
+   "name": "type_text/36",
+   "input": {
+    "tool": "type_text",
+    "args": {
+     "text": "hello"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Typed, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  keystroke \"hello\"\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "type_text/37",
+   "input": {
+    "tool": "type_text",
+    "args": {
+     "text": "say \"hi\" \\"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Typed, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  keystroke \"say \\\"hi\\\" \\\\\"\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "type_text/38",
+   "input": {
+    "tool": "type_text",
+    "args": {
+     "text": "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Typed, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  keystroke \"🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂\"\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "type_text/39",
+   "input": {
+    "tool": "type_text",
+    "args": {
+     "text": "a\n\nb\n"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Typed, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  keystroke \"a\"\n  key code 36\n  key code 36\n  keystroke \"b\"\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "type_text/40",
+   "input": {
+    "tool": "type_text",
+    "args": {
+     "text": "  hello"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Typed, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  keystroke \"  hello\"\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "type_text/41",
+   "input": {
+    "tool": "type_text",
+    "args": {
+     "text": "a\r\nb"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Typed, sir.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  keystroke \"a\r\"\n  key code 36\n  keystroke \"b\"\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "type_text/42",
+   "input": {
+    "tool": "type_text",
+    "args": {
+     "text": "hello"
+    },
+    "cli": false,
+    "script_output": "execution error (-1719)"
+   },
+   "expected": {
+    "text": "I need Accessibility permission to type, sir — grant it in Privacy and Security settings.",
+    "argv": [],
+    "scripts": [
+     "tell application \"System Events\"\n  keystroke \"hello\"\nend tell"
+    ]
+   }
+  },
+  {
+   "name": "notify/43",
+   "input": {
+    "tool": "notify",
+    "args": {},
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Notification shown.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "display notification \"\" with title \"JARVIS\""
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "notify/44",
+   "input": {
+    "tool": "notify",
+    "args": {
+     "message": "hello"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Notification shown.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "display notification \"hello\" with title \"JARVIS\""
+     ]
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "notify/45",
+   "input": {
+    "tool": "notify",
+    "args": {
+     "title": "a\"b",
+     "message": "x\\y\n🙂"
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Notification shown.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "display notification \"x\\y\n🙂\" with title \"a\"b\""
+     ]
+    ],
+    "scripts": [],
+    "deviation": "R11",
+    "native_script": "display notification \"x\\\\y\n🙂\" with title \"a\\\"b\""
+   }
+  },
+  {
+   "name": "notify/46",
+   "input": {
+    "tool": "notify",
+    "args": {
+     "title": null,
+     "message": false
+    },
+    "cli": false,
+    "script_output": ""
+   },
+   "expected": {
+    "text": "Notification shown.",
+    "argv": [
+     [
+      "osascript",
+      "-e",
+      "display notification \"False\" with title \"None\""
+     ]
+    ],
+    "scripts": []
+   }
+  }
+ ]
+}
