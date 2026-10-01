@@ -9,7 +9,7 @@ import Foundation
 
 public enum PersonaDistill {
     /// personality_consolidate's system message, verbatim.
-    public static let consolidateSystem =
+    public static let pythonConsolidateSystem =
         "You maintain the persona file of a JARVIS voice assistant. Merge these "
         + "style notes into at most 8 distinct notes: combine duplicates and "
         + "near-duplicates keeping the strongest and most recent phrasing; drop "
@@ -17,13 +17,20 @@ public enum PersonaDistill {
         + "Reply with ONLY the merged notes, one per line, no bullets or numbering."
 
     /// personality_distill_async's system message, verbatim.
-    public static let distillSystem =
+    public static let pythonDistillSystem =
         "You maintain the persona file of a JARVIS voice assistant. From the "
         + "conversation, extract AT MOST ONE durable preference about HOW the "
         + "assistant should speak or behave (tone, humour, form of address, "
         + "verbosity). Ignore one-off tasks and facts about the user's life. "
         + "Reply with just the preference as one short sentence starting "
         + "'The user ', or exactly NONE."
+
+    /// P4 (DEV-P4-03): what native adds to both writers' messages, so a note is short enough
+    /// never to be cut (`PersonalityLogic.noteCut`).
+    public static let noteLengthRequest = " Keep each note under 180 characters."
+    /// The system messages native sends: Python's, then `noteLengthRequest`.
+    public static let consolidateSystem = pythonConsolidateSystem + noteLengthRequest
+    public static let distillSystem = pythonDistillSystem + noteLengthRequest
 
     /// `ollama_post(..., timeout=120)` in personality_consolidate.
     public static let consolidateTimeout: Duration = .seconds(120)
@@ -66,10 +73,11 @@ public enum PersonaDistill {
         return parts.joined(separator: "\n")
     }
 
-    /// `[l.strip().lstrip("-• ")[:200] for l in reply.splitlines() if len(l.strip()) >= 8]`.
-    /// The length test runs before the bullets are stripped, as in Python.
+    /// `[l.strip().lstrip("-• ")[:200] for l in reply.splitlines() if len(l.strip()) >= 8]`,
+    /// with `PersonalityLogic.noteCut` for `[:200]` (DEV-P4-03). The length test runs before
+    /// the bullets are stripped, as in Python.
     public static func consolidationCandidates(fromReply r: String) -> [String] {
-        Py.splitlines(r).filter { Py.len(Py.strip($0)) >= 8 }.map { Py.prefix(Py.lstrip(Py.strip($0), "-• "), 200) }
+        Py.splitlines(r).filter { Py.len(Py.strip($0)) >= 8 }.map { PersonalityLogic.noteCut(Py.lstrip(Py.strip($0), "-• ")) }
     }
 
     /// The candidates, or nil unless there are 1 to 8 (Python's "rejected" path).

@@ -63,9 +63,39 @@ public enum PersonalityLogic {
         Py.strip(nonWord.sub(Py.lower(note), literal: " "))
     }
 
+    /// The most characters (code points, as Python's `len`) a kept note has.
+    public static let noteLimit = 200
+
+    /// A kept note (P4, DEV-P4-03; Python keeps `note[:200]`, which stops mid-word). A note of
+    /// at most `noteLimit` code points is kept whole. A longer one is cut to its longest prefix
+    /// of at most `noteLimit` that ends a sentence ("." "!" "?" or "…", with any closing quotes
+    /// or brackets, followed by white space); with no sentence end, to its last whole word
+    /// (trailing white space and `, ; : -` or a dash dropped); and with no word boundary at all,
+    /// to `noteLimit` code points, as Python does.
+    public static func noteCut(_ note: String) -> String {
+        let u = Array(note.unicodeScalars)
+        guard u.count > noteLimit else { return note }
+        var word: Int?
+        for end in stride(from: noteLimit, to: 0, by: -1) where u[end].properties.isWhitespace {
+            if word == nil { word = end }
+            var last = end - 1
+            while last > 0, closers.contains(u[last]) { last -= 1 }
+            if sentenceEnds.contains(u[last]) { return String(String.UnicodeScalarView(u[..<end])) }
+        }
+        guard let word else { return Py.prefix(note, noteLimit) }
+        var cut = word
+        while cut > 0, u[cut - 1].properties.isWhitespace || trailing.contains(u[cut - 1]) { cut -= 1 }
+        return cut == 0 ? Py.prefix(note, noteLimit) : String(String.UnicodeScalarView(u[..<cut]))
+    }
+
+    private static let sentenceEnds: Set<Unicode.Scalar> = [".", "!", "?", "…"]
+    private static let closers: Set<Unicode.Scalar> = ["\"", "'", "”", "’", ")", "]", "»"]
+    private static let trailing: Set<Unicode.Scalar> = [",", ";", ":", "-", "–", "—"]
+
     /// `personality_learn` on a loaded object: drops every entry with the same dedupe key and,
     /// for an "X is ON:/OFF:" toggle, every entry starting "X is "; keeps the last 14
-    /// survivors and appends `{"note": note[:200], "added": now}`. False = rejected (under 8
+    /// survivors and appends `{"note": noteCut(note), "added": now}` (Python's
+    /// `note[:200]`; DEV-P4-03). The dedupe key is the whole note's, as in Python. False = rejected (under 8
     /// code points): `p` is untouched and Python does not save. Throws where Python raises
     /// (an entry that is not a dict with a string "note", a non-list "learned").
     @discardableResult
@@ -82,7 +112,7 @@ public enum PersonalityLogic {
             if !sameKey && !toggled { kept.append(e) }
         }
         kept = Py.tail(kept, 14)
-        kept.append(.object(JSONObject([JSONObject.Member(key: "note", value: .string(Py.prefix(note, 200))),
+        kept.append(.object(JSONObject([JSONObject.Member(key: "note", value: .string(noteCut(note))),
                                         JSONObject.Member(key: "added", value: .double(now))])))
         p["learned"] = .array(kept)
         return true

@@ -77,10 +77,10 @@ struct M1PersonaLLMTests {
     static func check(_ c: GoldenCase) async throws -> PersonaGolden.Report {
         if c.name == "literals" {
             var hard: [String] = []
-            if PersonaDistill.consolidateSystem != c.expected.string("consolidate_system") {
+            if PersonaDistill.pythonConsolidateSystem != c.expected.string("consolidate_system") {
                 hard.append("consolidateSystem differs from personality_consolidate's")
             }
-            if PersonaDistill.distillSystem != c.expected.string("distill_system") {
+            if PersonaDistill.pythonDistillSystem != c.expected.string("distill_system") {
                 hard.append("distillSystem differs from personality_distill_async's")
             }
             return PersonaGolden.Report(hard: hard)
@@ -106,6 +106,7 @@ struct M1PersonaLLMTests {
         let core = CoreState(store: try StateStore(root: root, lease: nil, clock: clock), clock: clock,
                              research: counter, frontApp: NoFrontApp())
         let llm = CannedLLM(core: core)
+        var lengthRequest: [String] = []           // DEV-P4-03's Python differences
         for (k, (s, e)) in zip(steps, expected).enumerated() {
             guard let so = s.objectValue, let eo = e.objectValue, let op = so.string("op"),
                   let args = so.object("args"), let now = PersonaGolden.double(so["now"]),
@@ -125,7 +126,9 @@ struct M1PersonaLLMTests {
             default: report.hard.append("\(tag): unknown op"); continue
             }
             let requests = llm.requests
-            if let m = compareRequest(requests, eo["llm_request"]) { out.append("\(tag): \(m)") }
+            let request = compareRequest(requests, eo["llm_request"])
+            if let m = request.hard { out.append("\(tag): \(m)") }
+            if let m = request.known { lengthRequest.append("\(tag): \(m)") }
             let want = bumps.map { b -> String in
                 let a = b.arrayValue ?? []
                 let n: Int64 = if case .int(let i)? = a.last { i } else { -1 }
@@ -154,25 +157,36 @@ struct M1PersonaLLMTests {
                 report.hard += out
             }
         }
+        if !lengthRequest.isEmpty {
+            report.knownPython += lengthRequest
+            report.divergence = [report.divergence, "DEV-P4-03"].compactMap { $0 }.joined(separator: "; ")
+        }
         return report
     }
 
     /// Python's recorded `{system, user, timeout}` (or null: no call) against native's calls.
-    static func compareRequest(_ got: [CannedLLM.Request], _ want: JSONValue?) -> String? {
+    /// Native's system message is Python's followed by `PersonaDistill.noteLengthRequest`
+    /// (DEV-P4-03): anything else is a `hard` difference, and Python's own message is reported
+    /// as `known`, Python's verdict for the deviation.
+    static func compareRequest(_ got: [CannedLLM.Request], _ want: JSONValue?) -> (hard: String?, known: String?) {
         guard case .object(let w)? = want else {
-            return got.isEmpty ? nil : "native called the model \(got.count)×; Python made no call"
+            return (got.isEmpty ? nil : "native called the model \(got.count)×; Python made no call", nil)
         }
         guard got.count == 1, let r = got.first else {
-            return "native called the model \(got.count)×; Python called it once"
+            return ("native called the model \(got.count)×; Python called it once", nil)
         }
         var diffs: [String] = []
-        if r.system != w.string("system") { diffs.append("system \(r.system.debugDescription.prefix(300))") }
+        let python = w.string("system")
+        if r.system != (python ?? "") + PersonaDistill.noteLengthRequest {
+            diffs.append("system \(r.system.debugDescription.prefix(300))")
+        }
+        let known = r.system == python ? nil : "Python's system message has no length request (DEV-P4-03)"
         if r.user != w.string("user") {
             diffs.append("user \(r.user.debugDescription.prefix(600)) != Python "
                          + "\((w.string("user") ?? "nil").debugDescription.prefix(600))")
         }
         if r.timeout != .seconds(w.int("timeout") ?? -1) { diffs.append("timeout \(r.timeout)") }
-        return diffs.isEmpty ? nil : "request differs: " + diffs.joined(separator: "; ")
+        return (diffs.isEmpty ? nil : "request differs: " + diffs.joined(separator: "; "), known)
     }
 }
 
