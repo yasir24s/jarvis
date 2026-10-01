@@ -83,16 +83,28 @@ public final class MemoryStore: Sendable {
         return (entries, ends, Int(start) + whole.count)
     }
 
-    /// The archives search_memory reads (P6b), in this order.
-    public static let searchedArchives: [MemoryFile] = [.archive]
+    /// The archives search_memory reads (P6b), in this order: the chats, then the Python-era
+    /// exchanges.
+    public static let searchedArchives: [MemoryFile] = [.archive, .pythonArchive]
 
-    /// P6b: every message in `searchedArchives`, each file's oldest first. Lines that do not
+    /// P6b: every message in `searchedArchives`, each file in its own order. Lines that do not
     /// parse, and a torn final line, are skipped.
     public func archivedMessages() -> [ArchiveEntry] {
         Self.searchedArchives.flatMap { file -> [ArchiveEntry] in
             guard let data = store.read(file) else { return [] }
             return data.split(separator: 0x0A).compactMap { ArchiveEntry(line: Data($0)) }
         }
+    }
+
+    /// P6b: writes the Python-era exchanges to memory/archive-python.jsonl, whole and atomically
+    /// (so writing it again never repeats a message), then takes its hourly backup. The chat
+    /// compile never reads this file. False when the lease is not held or the write failed.
+    @discardableResult
+    public func writePythonArchive(_ entries: [ArchiveEntry]) -> Bool {
+        let data = Data(entries.map { $0.line + "\n" }.joined().utf8)
+        guard store.write(data, to: .pythonArchive) else { return false }
+        backups.afterWrite(.pythonArchive, data: data)
+        return true
     }
 
     // MARK: - Facts
@@ -250,12 +262,12 @@ public final class MemoryStore: Sendable {
     }
 
     /// Run once at launch, before anything writes. For facts.json, personality.json,
-    /// profile.json and (P6b) the archive: an unreadable file (empty, damaged, or not that file's
-    /// shape; for the archive, lines of which not one is a message) is replaced by its newest
+    /// profile.json and (P6b) both archives: an unreadable file (empty, damaged, or not that
+    /// file's shape; for an archive, lines of which not one is a message) is replaced by its newest
     /// readable backup and logged, its bytes put aside as `<file>-<now>.unreadable`. A file
     /// holding more than `dropShare` fewer entries than its newest backup, beyond the facts
     /// forgotten since that backup, is logged as a warning and both are kept: the backup is put
-    /// aside as `<file>-<stamp>.kept.json` (`.kept.jsonl` for the archive), out of the rotation.
+    /// aside as `<file>-<stamp>.kept.json` (`.kept.jsonl` for an archive), out of the rotation.
     /// A missing file counts as empty.
     /// Then the forgotten bin drops what is past 30 days, and each readable file that has no
     /// backup from the last hour gets one. Shared files are copied byte for byte.
@@ -297,6 +309,7 @@ public final class MemoryStore: Sendable {
             case .personality: store.restore(.personality, bytes: backup.data)
             case .profile: store.restore(.profile, bytes: backup.data)
             case .archive: store.write(backup.data, to: .archive)
+            case .pythonArchive: store.write(backup.data, to: .pythonArchive)
             }
             guard restored else {
                 log("memory: \(name) is unreadable and its backup could not be put back; left as it is")

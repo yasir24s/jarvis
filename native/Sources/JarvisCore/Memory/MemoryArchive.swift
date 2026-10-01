@@ -16,7 +16,8 @@ public enum MemoryRole: String, Sendable, CaseIterable {
 public struct ArchiveEntry: Sendable, Equatable {
     public var timestamp: Double
     public var date: String          // the local calendar date of `timestamp`
-    public var channel: String       // `Channel.rawValue` (JarvisTools): "voice" or "text"
+    public var channel: String       // `Channel.rawValue` (JarvisTools): "voice" or "text";
+                                     // "voice (Python)" in archive-python.jsonl (P6b)
     public var role: MemoryRole
     public var text: String
 

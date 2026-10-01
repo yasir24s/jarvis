@@ -5,8 +5,8 @@ import Synchronization
 // personality.json and profile.json in memory/backups/, at most one an hour per file, so a bad
 // write, a wipe or a damaged file can be undone. personality.json and profile.json are shared
 // with Python: they are copied byte for byte and their own format never changes. P6b: the
-// conversation archive too, copied whole after an append. Logs carry file names and counts
-// only, never what the files hold.
+// conversation archive too, copied whole after an append, and the Python-era archive after the
+// import writes it. Logs carry file names and counts only, never what the files hold.
 
 /// A file the backups cover.
 public enum BackedUpFile: String, CaseIterable, Sendable {
@@ -14,6 +14,7 @@ public enum BackedUpFile: String, CaseIterable, Sendable {
     case personality
     case profile
     case archive                    // P6b: memory/archive.jsonl, append-only
+    case pythonArchive = "archive-python" // P6b: memory/archive-python.jsonl, written once
 
     /// The file's path under the state root.
     public var relativePath: String {
@@ -22,6 +23,7 @@ public enum BackedUpFile: String, CaseIterable, Sendable {
         case .personality: StateFile.personality.rawValue
         case .profile: StateFile.profile.rawValue
         case .archive: MemoryFile.archive.rawValue
+        case .pythonArchive: MemoryFile.pythonArchive.rawValue
         }
     }
 
@@ -29,7 +31,7 @@ public enum BackedUpFile: String, CaseIterable, Sendable {
     public var fileExtension: String {
         switch self {
         case .facts, .personality, .profile: "json"
-        case .archive: "jsonl"
+        case .archive, .pythonArchive: "jsonl"
         }
     }
 
@@ -47,7 +49,7 @@ public enum BackedUpFile: String, CaseIterable, Sendable {
     /// archive's messages (nil when it has lines and not one of them is a message).
     public func entries(in data: Data) -> Int? {
         switch self {
-        case .archive:
+        case .archive, .pythonArchive:
             let lines = data.split(separator: 0x0A)
             let messages = lines.filter { ArchiveEntry(line: Data($0)) != nil }.count
             return messages == 0 && !lines.isEmpty ? nil : messages

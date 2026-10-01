@@ -446,4 +446,28 @@ struct MemoryPermanenceTests {
         #expect(bytes(archive) == eight)
         #expect(bytes(rig.backupDir + "/archive-\(copy).kept.jsonl") == good)
     }
+
+    /// The Python-era archive: written whole (again, nothing repeats), copied, searched with the
+    /// chats, and put back at launch when it cannot be read.
+    @Test func thePythonEraArchiveIsBackedUpAndCheckedAtLaunch() throws {
+        let rig = try Rig()
+        defer { rig.sb.remove() }
+        let said = (0..<4).map {
+            ArchiveEntry(timestamp: 1_781_082_900, date: "2026-06-10", channel: "voice (Python)",
+                         role: $0 % 2 == 0 ? .user : .jarvis, text: "Invented line \($0).")
+        }
+        #expect(rig.memory.writePythonArchive(said))
+        let path = rig.path("memory/archive-python.jsonl")
+        let good = try #require(bytes(path))
+        #expect(rig.backupNames() == ["archive-python-\(Int64(epoch)).jsonl"])
+        #expect(rig.memory.writePythonArchive(said))
+        #expect(bytes(path) == good)
+        #expect(rig.memory.archive("A chat message.", role: .user, channel: "text"))
+        #expect(rig.memory.archivedMessages().map(\.text) == ["A chat message."] + said.map(\.text))
+
+        try Data("garbage\n".utf8).write(to: URL(fileURLWithPath: path))
+        rig.clock.advance(60)
+        #expect(rig.memory.checkAtLaunch()[.pythonArchive] == .restored(stamp: Int64(epoch)))
+        #expect(bytes(path) == good)
+    }
 }

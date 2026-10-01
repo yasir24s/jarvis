@@ -19,6 +19,13 @@ import JarvisTools
 ///    its text) and, once every batch is done, the completion. A rerun skips finished batches,
 ///    and after completion it does nothing.
 ///
+/// P6b: first, the log's paired exchanges are kept word for word in memory/archive-python.jsonl
+/// (`PythonEraMemory.archived`: each with its session's date, on the channel "voice (Python)"),
+/// written whole and once: python-import.json records it, so a run that already completed
+/// writes the file and compiles nothing again, and a later run does neither. search_memory reads
+/// that file and the backups cover it; the chat compile never reads it, since the batches above
+/// already compiled the same exchanges.
+///
 /// One log line per batch and a summary, counts and dates only.
 public final class PythonImport: Sendable {
     public struct Summary: Sendable, Equatable {
@@ -31,8 +38,10 @@ public final class PythonImport: Sendable {
         public var dropped = 0          // reply lines the validator dropped
         public var skipped: [PythonEraMemory.Skip: Int] = [:]
         public var alreadyDone = false
+        public var archived = 0         // P6b: messages kept word for word in this run
+        public var archiveFailed = false // P6b: archive-python.jsonl could not be written
 
-        public var complete: Bool { alreadyDone || failed == 0 }
+        public var complete: Bool { (alreadyDone || failed == 0) && !archiveFailed }
     }
 
     public enum Route: String, Sendable {
@@ -112,10 +121,19 @@ public final class PythonImport: Sendable {
         return (PythonEraMemory.batches(groups), skipped)
     }
 
+    /// P6b: the log's paired exchanges as archive-python.jsonl keeps them; none without a log.
+    public func exchanges() -> [ArchiveEntry] {
+        let logPath = (store.root.isEmpty || store.root.hasSuffix("/") ? store.root : store.root + "/") + Self.logFile
+        guard let data = AtomicFile.read(logPath) else { return [] }
+        return PythonEraMemory.archived(PythonEraMemory.readLog(String(decoding: data, as: UTF8.self),
+                                                                timeZone: timeZone))
+    }
+
     /// Runs the import, or says it already ran.
     public func run() async -> Summary {
         var summary = Summary()
         var progress = ImportProgress(data: store.read(.pythonImport)) ?? ImportProgress(started: clock.now())
+        if progress.archived == nil { keepExchanges(&progress, &summary) }
         if let done = progress.completed {
             summary.alreadyDone = true
             summary.batches = progress.batches
@@ -189,6 +207,23 @@ public final class PythonImport: Sendable {
 
     // MARK: - Helpers
 
+    /// P6b: archive-python.jsonl, written whole, then recorded. Nothing to keep records nothing.
+    private func keepExchanges(_ progress: inout ImportProgress, _ summary: inout Summary) {
+        let exchanges = exchanges()
+        guard !exchanges.isEmpty else { return }
+        guard memory.writePythonArchive(exchanges) else {
+            summary.archiveFailed = true
+            log("memory: memory/archive-python.jsonl not written; run JARVIS --import-python-memory again "
+                + "to keep the Python conversations")
+            return
+        }
+        progress.archived = clock.now()
+        progress.archivedMessages = exchanges.count
+        save(progress)
+        summary.archived = exchanges.count
+        log("memory: kept \(exchanges.count) Python-era message(s) word for word in memory/archive-python.jsonl")
+    }
+
     private func save(_ progress: ImportProgress) {
         if !store.write(progress.data, to: .pythonImport) {
             log("memory: python-import.json not saved; a rerun repeats the finished batches")
@@ -252,7 +287,10 @@ struct ClaudeAlone: AttributedWriting {
 }
 
 /// memory/python-import.json: `{"version": 1, "started": t, "completed": t or null, "batches": n,
-/// "done": [<batch hash>], "added": n, "updated": n, "dropped": n, "skipped": {<why>: n}}`.
+/// "done": [<batch hash>], "added": n, "updated": n, "dropped": n, "skipped": {<why>: n},
+/// "archived": t or null, "archived_messages": n}`. P6b added the last two (when
+/// archive-python.jsonl was written, and how many messages it holds); a file without them reads
+/// as not yet archived.
 struct ImportProgress: Equatable {
     var started: Double
     var completed: Double?
@@ -262,6 +300,8 @@ struct ImportProgress: Equatable {
     var updated = 0
     var dropped = 0
     var skipped: [PythonEraMemory.Skip: Int] = [:]
+    var archived: Double?
+    var archivedMessages = 0
 
     init(started: Double) {
         self.started = started
@@ -286,6 +326,8 @@ struct ImportProgress: Equatable {
             .init(key: "updated", value: .int(Int64(updated))),
             .init(key: "dropped", value: .int(Int64(dropped))),
             .init(key: "skipped", value: .object(JSONObject(skips))),
+            .init(key: "archived", value: archived.map { .double($0) } ?? .null),
+            .init(key: "archived_messages", value: .int(Int64(archivedMessages))),
         ])
         return Data(PyJSON.dumps(.object(object), indent: 1).utf8)
     }
@@ -304,6 +346,8 @@ struct ImportProgress: Equatable {
         for why in PythonEraMemory.Skip.allCases {
             if let n = o["skipped"]?.objectValue?[why.rawValue]?.intValue { skipped[why] = n }
         }
+        archived = o["archived"]?.doubleValue
+        archivedMessages = o["archived_messages"]?.intValue ?? 0
     }
 }
 

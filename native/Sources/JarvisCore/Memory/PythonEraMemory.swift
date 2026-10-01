@@ -43,6 +43,9 @@ public enum PythonEraMemory {
         public var nativeSessions = 0
     }
 
+    /// P6b: the channel of the Python-era messages kept in memory/archive-python.jsonl.
+    public static let archiveChannel = "voice (Python)"
+
     public static let heardPrefix = "[Heard]   "        // print(f"[Heard]   {text}")
     public static let replyPrefix = "[JARVIS]  "        // print(f"[JARVIS]  {reply}"); log() has one space
     public static let actingSuffix = "  (acting)"       // a fast-path reply that acts as it speaks
@@ -102,6 +105,15 @@ public enum PythonEraMemory {
         }
         flushUnpaired()
         return reading
+    }
+
+    /// P6b: the log's paired exchanges as memory/archive-python.jsonl keeps them, word for
+    /// word: every message in log order, with its session's date and start time, on
+    /// `archiveChannel`.
+    public static func archived(_ reading: LogReading) -> [ArchiveEntry] {
+        reading.groups.filter { $0.source == .log }.flatMap(\.entries).map {
+            ArchiveEntry(timestamp: $0.timestamp, date: $0.date, channel: archiveChannel, role: $0.role, text: $0.text)
+        }
     }
 
     // MARK: - The state files
