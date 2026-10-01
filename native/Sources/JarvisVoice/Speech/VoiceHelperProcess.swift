@@ -7,8 +7,8 @@ import Foundation
 /// user chose 4 on 2026-10-01, when one 5.8 s sentence took 7.7 s at 4 against 18.0 s at 8
 /// with the words exact at both. A `cfg` of 0 garbled the words, so cfg keeps its default.
 /// The speed is the `voiceSpeed` setting (P5): at F5's own speed of 1 the clone spoke about 140
-/// words a minute, under conversation's 155 to 165. A changed setting reaches the helper when
-/// it next starts.
+/// words a minute, under conversation's 155 to 165. The app reads the setting once, at launch,
+/// for both the helper and SpeechQueue's timing, so a change takes effect at the next launch.
 public struct VoiceHelperSetup: VoiceHelperLauncher {
     /// What the helper loads from `assets` (install-voice-assets.sh copies exactly these).
     public static let assetFiles = [
