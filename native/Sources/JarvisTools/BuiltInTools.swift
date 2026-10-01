@@ -3,7 +3,8 @@ import JarvisCore
 
 /// The tool bodies that exist so far (B4: `get_time`; D-50: `personality_note` and
 /// `personality_rewrite`; M5 T5.5: `get_battery`, `get_cpu_usage`, `get_wifi_status`,
-/// `run_diagnostics`; T5.6: `read_clipboard`; T5.7: `see_screen`, `take_screenshot`), registered on a gateway in one call, so JarvisBrain and JarvisApp
+/// `run_diagnostics`; T5.6: `read_clipboard`; T5.7: `see_screen`, `take_screenshot`; T5.8:
+/// `find_apps`), registered on a gateway in one call, so JarvisBrain and JarvisApp
 /// never name a tool type. Every other catalog tool stays listed with no body, and the gateway
 /// answers it with its unknown-tool text until M5 or M6 adds one.
 public enum BuiltInTools {
@@ -30,6 +31,7 @@ public enum BuiltInTools {
         await gateway.register(SeeScreen(capturer: platform.screen, recognizer: platform.recognizer))
         await gateway.register(TakeScreenshot(capturer: platform.screen, clock: clock, timeZone: timeZone,
                                               home: platform.home))
+        await gateway.register(FindApps(index: platform.apps, browser: platform.browser))
     }
 
     /// The generated `ToolCatalog` entry for `name`, so no body carries a hand-written schema.
@@ -47,10 +49,14 @@ struct ToolPlatform: Sendable {
     var recognizer: any TextRecognizing
     /// `$HOME`, as Python's `os.path.expanduser` reads it.
     var home: String
+    /// Built on the first find_apps, then kept for the process, as Python's APP_INDEX.
+    var apps: AppIndex
+    var browser: any DefaultBrowserLookup
 
     static var live: ToolPlatform {
         ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard(), screen: LiveScreenCapture(),
                      recognizer: VisionTextRecognizer(),
-                     home: ProcessInfo.processInfo.environment["HOME"] ?? NSHomeDirectory())
+                     home: ProcessInfo.processInfo.environment["HOME"] ?? NSHomeDirectory(),
+                     apps: AppIndex(runner: BoundedRunner()), browser: LiveDefaultBrowser())
     }
 }

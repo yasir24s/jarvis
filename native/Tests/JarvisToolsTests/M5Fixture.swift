@@ -135,14 +135,47 @@ final class FakeRecognizer: TextRecognizing, @unchecked Sendable {
     }
 }
 
+/// A child-process runner that never starts a process: each call gets the next canned output
+/// (the last one repeats), and every argv is recorded.
+final class FakeRunner: CommandRunning, @unchecked Sendable {
+    private let lock = NSLock()
+    private var outputs: [ProcessOutput?]
+    private var recorded: [[String]] = []
+
+    init(_ outputs: [ProcessOutput?]) { self.outputs = outputs }
+
+    /// One successful run that prints `stdout`.
+    convenience init(stdout: String) {
+        self.init([ProcessOutput(stdout: Data(stdout.utf8), stderr: Data(), status: 0, timedOut: false, truncated: false)])
+    }
+
+    var calls: [[String]] { lock.withLock { recorded } }
+
+    func run(_ argv: [String], timeout: Double) async -> ProcessOutput? {
+        lock.withLock {
+            recorded.append(argv)
+            return outputs.count > 1 ? outputs.removeFirst() : outputs.first ?? nil
+        }
+    }
+}
+
+struct StubBrowser: DefaultBrowserLookup {
+    var name = ""
+    func defaultBrowserName() async -> String { name }
+}
+
 extension ToolPlatform {
     /// Fakes for everything; each test swaps in the reader it exercises. The default home is a
-    /// path that does not exist, so nothing can be written under it by accident.
+    /// path that does not exist, so nothing can be written under it by accident, and the
+    /// default app index lists nothing.
     static func fake(system: any SystemProbing = FakeSystemProbe(),
                      clipboard: any ClipboardReading = FakeClipboard(nil),
                      screen: any ScreenCapturing = FixtureScreen(nil),
                      recognizer: any TextRecognizing = FakeRecognizer(""),
-                     home: String = "/nonexistent/jarvis-test-home") -> ToolPlatform {
-        ToolPlatform(system: system, clipboard: clipboard, screen: screen, recognizer: recognizer, home: home)
+                     home: String = "/nonexistent/jarvis-test-home",
+                     apps: AppIndex = AppIndex(runner: FakeRunner(stdout: ""), loadPlist: { _ in nil }),
+                     browser: any DefaultBrowserLookup = StubBrowser()) -> ToolPlatform {
+        ToolPlatform(system: system, clipboard: clipboard, screen: screen, recognizer: recognizer, home: home,
+                     apps: apps, browser: browser)
     }
 }
