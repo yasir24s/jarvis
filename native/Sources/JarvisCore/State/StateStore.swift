@@ -32,6 +32,7 @@ public enum StateFile: String, CaseIterable, Sendable {
 public enum MemoryFile: String, CaseIterable, Sendable {
     case archive = "memory/archive.jsonl"      // append-only, one JSON object per message
     case facts = "memory/facts.json"           // compiled facts, written atomically
+    case filesIndex = "memory/files-index.json" // the file scanner's index (P3), written atomically
 }
 
 public enum StateStoreError: Error, Sendable, Equatable {

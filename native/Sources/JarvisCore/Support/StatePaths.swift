@@ -67,6 +67,7 @@ public struct StatePaths: Sendable, Equatable {
     }
     public var memoryArchive: URL { file(MemoryFile.archive.rawValue) } // new in native (D-51)
     public var memoryFacts: URL { file(MemoryFile.facts.rawValue) }     // new in native (D-51)
+    public var memoryFilesIndex: URL { file(MemoryFile.filesIndex.rawValue) } // new in native (D-51 P3)
 
     private static let appBundleID = "com.jarvis.assistant"
 
