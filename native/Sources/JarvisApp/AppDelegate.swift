@@ -209,6 +209,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // P2: the long-term memory in memory/, on the same lease-holding store. Local dates
         // follow the Mac's time zone as it changes.
         let memory = MemoryStore(store: store, clock: SystemClock(), timeZone: .autoupdatingCurrent)
+        // P6: before anything writes, an unreadable facts.json, personality.json or profile.json
+        // is put back from its newest backup, and one that shrank is logged with both kept.
+        memory.checkAtLaunch()
         // P3: the home folder is read in the background into the same facts; JARVIS's own state
         // root is never read. PDFKit and AppKit read pdf, docx and rtf here (D-13).
         let fileSetup = FileScanSetup(home: FileManager.default.homeDirectoryForCurrentUser, stateRoot: paths.root,

@@ -124,6 +124,13 @@ public struct FactsFile: Sendable, Equatable {
         return Data(PyJSON.dumps(.object(object), indent: 1, ensureASCII: false).utf8)
     }
 
+    /// The id of each entry in a facts file's bytes, nil for an entry without a string id
+    /// (P6: what the mass-deletion guard counts, including entries `init?(data:)` drops).
+    public static func entryIDs(_ data: Data) -> [String?] {
+        guard let facts = (try? PyJSON.loads(data))?.objectValue?["facts"]?.arrayValue else { return [] }
+        return facts.map { $0.objectValue?["id"]?.stringValue }
+    }
+
     /// nil unless `data` is a facts file. A fact entry of the wrong shape is dropped.
     public init?(data: Data) {
         guard let value = try? PyJSON.loads(data), let o = value.objectValue,

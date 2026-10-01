@@ -8,8 +8,9 @@ import JarvisCore
 /// never name a tool type. Every other catalog tool stays listed with no body, and the gateway
 /// answers it with its unknown-tool text until M5 or M6 adds one.
 public enum BuiltInTools {
-    /// What the native memory tools (P4: `search_memory`, `forget_memory`, `correct_memory`)
-    /// need: the store they write through, and the search behind search_memory.
+    /// What the native memory tools (P4: `search_memory`, `forget_memory`, `correct_memory`;
+    /// P6: `restore_memory`) need: the store they write through, and the search behind
+    /// search_memory.
     public struct Memory: Sendable {
         public let store: MemoryStore
         public let search: any MemorySearching
@@ -23,7 +24,7 @@ public enum BuiltInTools {
     /// Registers every implemented body on `gateway`. `clock` and `timeZone` stand in for what
     /// Python's `datetime.now()` reads; the app passes the system's, tests pin both. `core` owns
     /// the personality file the two personality tools write (through its StateStore). With
-    /// `memory`, the three memory tools are registered too (NativeToolCatalog).
+    /// `memory`, the four memory tools are registered too (NativeToolCatalog).
     public static func register(on gateway: ToolGateway, core: CoreState, clock: any JarvisClock,
                                 timeZone: TimeZone, memory: Memory? = nil) async {
         await register(on: gateway, core: core, clock: clock, timeZone: timeZone, platform: .live, memory: memory)
@@ -69,6 +70,7 @@ public enum BuiltInTools {
             await gateway.register(Capped(SearchMemory(memory: memory.store, search: memory.search)))
             await gateway.register(Capped(ForgetMemory(memory: memory.store)))
             await gateway.register(Capped(CorrectMemory(memory: memory.store, clock: clock)))
+            await gateway.register(Capped(RestoreMemory(memory: memory.store)))
         }
     }
 

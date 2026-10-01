@@ -147,8 +147,11 @@ struct MemoryToolsTests {
         #expect(rig.facts == [Self.leeds])
     }
 
+    /// P6: among 100 notes, so that one note is within the mass-deletion guard's 10%
+    /// (`forgetByPhraseInASmallMemoryIsRefusedByTheGuard` is the other side).
     @Test func forgetByPhraseRemovesOnlyTheNotesThatHoldIt() async throws {
-        let rig = try await Rig(facts: [Self.leeds, Self.bees, Self.mother])
+        let filler = (0..<97).map { Self.fact("filler-\($0)", "The user owns umbrella number \($0).") }
+        let rig = try await Rig(facts: [Self.leeds, Self.bees, Self.mother] + filler)
         defer { rig.sandbox.remove() }
         #expect(await rig.call("forget_memory", [("query", .string("LIVES in leeds!"))]).text == """
         Removed 1 note:
@@ -157,7 +160,7 @@ struct MemoryToolsTests {
         #expect(await rig.call("forget_memory", [("query", .string("lives in York"))]).text
                 == "No note holds \"lives in York\", so nothing was removed. search_memory finds notes and their ids.")
         #expect(await rig.call("forget_memory", [("query", .string("Robin Vale"))]).text.hasPrefix("Removed 1 note:\n"))
-        #expect(rig.facts == [Self.bees])
+        #expect(rig.facts == [Self.bees] + filler)
     }
 
     @Test func forgetByPhraseRefusesMoreThanTen() async throws {
@@ -240,6 +243,59 @@ struct MemoryToolsTests {
         #expect(rig.facts == [Self.leeds, Self.mother])
     }
 
+    // MARK: - restore_memory and the guard (P6)
+
+    /// forget_memory moves notes to the forgotten bin, stamped; restore_memory lists them and
+    /// brings them back exactly as they were, by phrase or by id.
+    @Test func aForgottenNoteComesBackByPhraseOrById() async throws {
+        let rig = try await Rig(facts: [Self.leeds, Self.bees, Self.mother])
+        defer { rig.sandbox.remove() }
+        #expect(await rig.call("forget_memory", [("ids", .array([.string(Self.leeds.id)]))]).text.hasPrefix("Removed 1 note:\n"))
+        rig.clock.advance(30)
+        #expect(await rig.call("forget_memory", [("ids", .array([.string(Self.mother.id)]))]).text.hasPrefix("Removed 1 note:\n"))
+        #expect(rig.facts == [Self.bees])
+        let bin = try #require(rig.memory.loadForgotten())
+        #expect(bin.entries.map(\.fact) == [Self.leeds, Self.mother])
+        #expect(bin.entries.map(\.forgotten) == [MemoryToolsTests.epoch + 60, MemoryToolsTests.epoch + 90])
+        #expect(await rig.call("restore_memory", []).text == """
+        The 2 most recently forgotten of 2 notes, kept for 30 days (id: note):
+        - 7b1d0e44-0000-4000-8000-000000000003: About Robin Vale (the user's mother): Robin Vale is studying for a Master's in Leeds.
+        - 3f2a9c1e-0000-4000-8000-000000000001: The user lives in Leeds.
+        """)
+        #expect(await rig.call("restore_memory", [("query", .string("LIVES in leeds"))]).text == """
+        Restored 1 note:
+        - 3f2a9c1e-0000-4000-8000-000000000001: The user lives in Leeds.
+        """)
+        #expect(rig.facts == [Self.bees, Self.leeds])
+        #expect(await rig.call("restore_memory", [("ids", .string("7b1d0e44, nope"))]).text == """
+        Restored 1 note:
+        - 7b1d0e44-0000-4000-8000-000000000003: About Robin Vale (the user's mother): Robin Vale is studying for a Master's in Leeds.
+        No forgotten note has the id "nope".
+        """)
+        #expect(rig.facts == [Self.bees, Self.leeds, Self.mother])
+        #expect(rig.memory.loadForgotten()?.entries == [])
+        #expect(await rig.call("restore_memory", [("query", .string("keeps bees"))]).text
+                == "No forgotten note holds \"keeps bees\", so nothing was restored. restore_memory with no ids or query "
+                + "lists the forgotten notes.")
+        #expect(await rig.call("restore_memory", []).text == "No note has been forgotten in the last 30 days.")
+    }
+
+    /// The mass-deletion guard: by a phrase, a forget may take at most 10% of the notes (and
+    /// at most 10), so in a small memory it is refused and nothing moves; by ids, any number goes.
+    @Test func forgetByPhraseInASmallMemoryIsRefusedByTheGuard() async throws {
+        let rig = try await Rig(facts: [Self.leeds, Self.bees, Self.mother])
+        defer { rig.sandbox.remove() }
+        #expect(await rig.call("forget_memory", [("query", .string("lives in Leeds"))]).text
+                == "Forgetting 1 note of 3 by a phrase is more than I remove at once, so nothing was removed. "
+                + "Use search_memory, then forget them by id.")
+        #expect(rig.facts == [Self.leeds, Self.bees, Self.mother])
+        #expect(rig.memory.loadForgotten()?.entries == [])
+        let all = [Self.leeds, Self.bees, Self.mother].map { JSONValue.string($0.id) }
+        #expect(await rig.call("forget_memory", [("ids", .array(all))]).text.hasPrefix("Removed 3 notes:\n"))
+        #expect(rig.facts.isEmpty)
+        #expect(rig.memory.loadForgotten()?.entries.count == 3)
+    }
+
     // MARK: - Lease and the injection guard
 
     @Test func withoutTheLeaseNothingIsChanged() async throws {
@@ -254,11 +310,11 @@ struct MemoryToolsTests {
         #expect(rig.facts == [Self.leeds, Self.bees])
     }
 
-    /// The two that change memory are executors: after untrusted content (a web page, a file)
-    /// the guard answers before either body runs. search_memory only reads, so it still runs.
+    /// The three that change memory are executors: after untrusted content (a web page, a file)
+    /// the guard answers before any body runs. search_memory only reads, so it still runs.
     @Test(arguments: [BackendKind.local, BackendKind.claude])
     func aTaintedTurnCannotChangeMemory(_ backend: BackendKind) async throws {
-        #expect(TaintPolicy.executors.isSuperset(of: ["forget_memory", "correct_memory"]))
+        #expect(TaintPolicy.executors.isSuperset(of: ["forget_memory", "correct_memory", "restore_memory"]))
         #expect(!TaintPolicy.executors.contains("search_memory"))
         let rig = try await Rig(facts: [Self.leeds], hits: [Self.leeds.id])
         defer { rig.sandbox.remove() }
@@ -268,7 +324,9 @@ struct MemoryToolsTests {
         let correct = await rig.call("correct_memory", [("id", .string(Self.leeds.id)),
                                                         ("text", .string("The user lives in York."))],
                                      tainted: true, backend: backend)
-        for result in [forget, correct] {
+        let restore = await rig.call("restore_memory", [("ids", .array([.string(Self.leeds.id)]))], tainted: true,
+                                     backend: backend)
+        for result in [forget, correct, restore] {
             #expect(result.text == blocked && result.record.outcome == .blockedTaint)
         }
         #expect(rig.facts == [Self.leeds])
@@ -280,7 +338,7 @@ struct MemoryToolsTests {
 
     /// Native-only: the Python catalog is untouched, and the three hand-written schemas parse.
     @Test func theSchemasAreNativeOnlyAndValid() throws {
-        #expect(NativeToolCatalog.memoryToolNames == ["search_memory", "forget_memory", "correct_memory"])
+        #expect(NativeToolCatalog.memoryToolNames == ["search_memory", "forget_memory", "correct_memory", "restore_memory"])
         #expect(ToolCatalog.tools.count == 46)
         #expect(Set(ToolCatalog.tools.map(\.name)).isDisjoint(with: NativeToolCatalog.memoryToolNames))
         #expect(DataSourceMap.allTools.isDisjoint(with: NativeToolCatalog.memoryToolNames))
@@ -290,7 +348,7 @@ struct MemoryToolsTests {
             #expect(!schema.description.isEmpty)
         }
         #expect(SearchMemory.schema.name == "search_memory" && ForgetMemory.schema.name == "forget_memory"
-                && CorrectMemory.schema.name == "correct_memory")
+                && CorrectMemory.schema.name == "correct_memory" && RestoreMemory.schema.name == "restore_memory")
         #expect(SearchMemory.schema.description.contains("only a few notes"))
     }
 

@@ -86,8 +86,9 @@ struct SearchMemory: ToolImpl {
 /// `forget_memory(ids or query)`: removes the notes with those ids (an id, or the only id that
 /// starts with 8 or more of its characters), or, with no ids, the notes that hold `query` as a
 /// whole phrase (`FactExtraction.normalized`, so case and punctuation do not matter), at most
-/// `queryLimit`: more than that removes nothing. One atomic write. The reply lists exactly what
-/// was removed, and any id that was not found.
+/// `queryLimit`: more than that removes nothing. P6: the notes move to the forgotten bin for 30
+/// days (`MemoryStore.forget`), and only a removal by ids passes the mass-deletion guard
+/// whatever its size. The reply lists exactly what was removed, and any id that was not found.
 struct ForgetMemory: ToolImpl {
     static let name = "forget_memory"
     static let schema = NativeToolCatalog.schema(named: name)
@@ -103,8 +104,8 @@ struct ForgetMemory: ToolImpl {
                          + "Nothing was removed.")
         }
         guard memory.loadFacts() != nil else { return .text(MemoryToolText.unreadable) }
-        var removed: [MemoryFact] = [], missing: [String] = [], refusal: String?
-        let saved = memory.updateFacts { file in
+        var missing: [String] = [], refusal: String?
+        let outcome = memory.forget(byIDs: !ids.isEmpty) { file in
             var remove = Set<Int>()
             if !ids.isEmpty {
                 for id in ids {
@@ -118,24 +119,29 @@ struct ForgetMemory: ToolImpl {
                 if remove.count > Self.queryLimit {
                     refusal = "\(MemoryToolText.notes(remove.count)) hold \"\(query)\", more than \(Self.queryLimit), "
                         + "so nothing was removed. Use search_memory, then forget them by id."
-                    return false
+                    return []
                 }
             }
-            guard !remove.isEmpty else { return false }
-            removed = remove.sorted().map { file.facts[$0] }
-            file.facts = file.facts.indices.filter { !remove.contains($0) }.map { file.facts[$0] }
-            return true
+            return remove
         }
         if let refusal { return .text(refusal) }
         let notFound = missing.isEmpty ? "" : "\nNo note has the id " + missing.map { "\"\($0)\"" }.joined(separator: ", ") + "."
-        guard !removed.isEmpty else {
+        switch outcome {
+        case .moved(let removed):
+            return .text("Removed \(MemoryToolText.notes(removed.count)):\n"
+                         + removed.map(MemoryToolText.line).joined(separator: "\n") + notFound)
+        case .nothing:
             return .text(ids.isEmpty ? "No note holds \"\(query)\", so nothing was removed. search_memory finds notes "
                                        + "and their ids."
                                      : "Nothing was removed." + notFound)
+        case .refused(let dropped, let total):
+            return .text("Forgetting \(MemoryToolText.notes(dropped)) of \(total) by a phrase is more than I remove at once, "
+                         + "so nothing was removed. Use search_memory, then forget them by id.")
+        case .unreadable:
+            return .text(MemoryToolText.unreadable)
+        case .notSaved:
+            return .text(MemoryToolText.notSaved)
         }
-        guard saved else { return .text(MemoryToolText.notSaved) }
-        return .text("Removed \(MemoryToolText.notes(removed.count)):\n"
-                     + removed.map(MemoryToolText.line).joined(separator: "\n") + notFound)
     }
 
     /// `ids` as a list of strings, or one string of ids split at commas and white space.
@@ -206,5 +212,69 @@ struct CorrectMemory: ToolImpl {
         }
         if saved { return .text(reply) }
         return .text(reply.isEmpty || reply.hasPrefix("Corrected") ? MemoryToolText.notSaved : reply)
+    }
+}
+
+/// `restore_memory(ids or query)` (P6, DEV-P6-03): brings notes back from the forgotten bin,
+/// where forget_memory keeps them for 30 days, exactly as they were. By ids (as forget_memory
+/// takes them), or, with no ids, the forgotten notes that hold `query` as a whole phrase, at
+/// most `queryLimit`. With neither, it lists the newest forgotten notes and their ids. The
+/// reply lists exactly what came back, and any id that was not found.
+struct RestoreMemory: ToolImpl {
+    static let name = "restore_memory"
+    static let schema = NativeToolCatalog.schema(named: name)
+    static let queryLimit = 10
+    static let listLimit = 25
+
+    let memory: MemoryStore
+
+    func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome {
+        let ids = ForgetMemory.ids(args["ids"])
+        let query = Py.strip(args["query"]?.stringValue ?? "")
+        guard memory.loadFacts() != nil, let bin = memory.loadForgotten() else { return .text(MemoryToolText.unreadable) }
+        guard !ids.isEmpty || !query.isEmpty else {
+            guard !bin.entries.isEmpty else { return .text("No note has been forgotten in the last 30 days.") }
+            let newest = bin.entries.sorted { $0.forgotten > $1.forgotten }.prefix(Self.listLimit)
+            return .text("The \(newest.count) most recently forgotten of \(MemoryToolText.notes(bin.entries.count)), "
+                         + "kept for 30 days (id: note):\n"
+                         + newest.map { MemoryToolText.line($0.fact) }.joined(separator: "\n"))
+        }
+        var missing: [String] = [], refusal: String?
+        let outcome = memory.restore { bin in
+            let facts = bin.entries.map(\.fact)
+            var pick = Set<Int>()
+            if !ids.isEmpty {
+                for id in ids {
+                    if let i = MemoryToolText.index(of: id, in: facts) { pick.insert(i) } else { missing.append(id) }
+                }
+            } else {
+                let phrase = " " + FactExtraction.normalized(query) + " "
+                pick = Set(facts.indices.filter {
+                    (" " + FactExtraction.normalized(facts[$0].shown) + " ").contains(phrase)
+                })
+                if pick.count > Self.queryLimit {
+                    refusal = "\(MemoryToolText.notes(pick.count)) forgotten notes hold \"\(query)\", more than "
+                        + "\(Self.queryLimit), so nothing was restored. Restore them by id."
+                    return []
+                }
+            }
+            return pick
+        }
+        if let refusal { return .text(refusal) }
+        let notFound = missing.isEmpty ? "" : "\nNo forgotten note has the id "
+            + missing.map { "\"\($0)\"" }.joined(separator: ", ") + "."
+        switch outcome {
+        case .moved(let back):
+            return .text("Restored \(MemoryToolText.notes(back.count)):\n"
+                         + back.map(MemoryToolText.line).joined(separator: "\n") + notFound)
+        case .nothing:
+            return .text(ids.isEmpty ? "No forgotten note holds \"\(query)\", so nothing was restored. restore_memory "
+                                       + "with no ids or query lists the forgotten notes."
+                                     : "Nothing was restored." + notFound)
+        case .unreadable:
+            return .text(MemoryToolText.unreadable)
+        case .refused, .notSaved:
+            return .text(MemoryToolText.notSaved)
+        }
     }
 }

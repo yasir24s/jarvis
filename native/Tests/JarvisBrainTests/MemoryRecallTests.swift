@@ -120,7 +120,10 @@ struct MemoryRecallTests {
         _ = recall.relevant(to: "q")
         #expect(embedding.count("The user a.") == 1 && embedding.count("The user b.") == 1)
         #expect(embedding.count("q") == 2)                                        // the query each turn
-        Self.store([Self.fact(1, "The user a.")], in: memory)
+        // P6: a fact leaves through forget_memory's removal by id (the mass-deletion guard
+        // refuses a plain write that drops 1 of 2).
+        let gone = memory.forget(byIDs: true) { file in Set(file.facts.indices.filter { file.facts[$0].id == "f2" }) }
+        #expect(gone == .moved([Self.fact(2, "The user b.")]))
         _ = recall.relevant(to: "q")
         #expect(vectors.cachedCount == 1)
     }

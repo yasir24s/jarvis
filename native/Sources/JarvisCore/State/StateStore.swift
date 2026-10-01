@@ -33,6 +33,7 @@ public enum MemoryFile: String, CaseIterable, Sendable {
     case archive = "memory/archive.jsonl"      // append-only, one JSON object per message
     case facts = "memory/facts.json"           // compiled facts, written atomically
     case filesIndex = "memory/files-index.json" // the file scanner's index (P3), written atomically
+    case forgotten = "memory/forgotten.json"   // what forget_memory removed, kept 30 days (P6)
 }
 
 public enum StateStoreError: Error, Sendable, Equatable {
@@ -48,6 +49,9 @@ public final class StateStore: Sendable {
     private let needsLease: Bool
     private let clock: any JarvisClock
     private let backups = Mutex(Backups())
+    /// Told the file and its bytes after each successful `save` (P6: the memory store's hourly
+    /// backups of personality.json and profile.json). Nil until one is set.
+    private let saved = Mutex<(@Sendable (StateFile, Data) -> Void)?>(nil)
 
     private struct Backups {
         var pending: [StateFile: Data] = [:]       // bytes of a failed load, not yet backed up
@@ -113,10 +117,39 @@ public final class StateStore: Sendable {
         backUpUnreadable(f)
         let text = PyJSON.dumps(v, indent: f.indent)
         do {
-            try AtomicFile.write(Data(text.utf8), to: path(f))
+            let data = Data(text.utf8)
+            try AtomicFile.write(data, to: path(f))
+            saved.withLock { $0 }?(f, data)
             return true
         } catch {
             JarvisLog.log("state: \(f.rawValue) save failed: \(error)", category: .state)
+            return false
+        }
+    }
+
+    /// Sets the one observer `save` tells after each successful write (P6), replacing any other.
+    public func onSave(_ observer: @escaping @Sendable (StateFile, Data) -> Void) {
+        saved.withLock { $0 = observer }
+    }
+
+    /// True when a write may go ahead: no lease is needed or given, or the lease is held.
+    public var mayWrite: Bool {
+        !((needsLease || lease != nil) && lease?.isHeld != true)
+    }
+
+    /// Writes `data` as `f` exactly (P6: a backup put back at launch), atomically and under the
+    /// lease rule `save` keeps. The observer is not told: the bytes are a backup's already.
+    @discardableResult
+    public func restore(_ f: StateFile, bytes data: Data) -> Bool {
+        guard mayWrite else {
+            JarvisLog.log("state: \(f.rawValue) not restored: \(StateStoreError.leaseLost)", category: .state)
+            return false
+        }
+        do {
+            try AtomicFile.write(data, to: path(f))
+            return true
+        } catch {
+            JarvisLog.log("state: \(f.rawValue) restore failed: \(error)", category: .state)
             return false
         }
     }

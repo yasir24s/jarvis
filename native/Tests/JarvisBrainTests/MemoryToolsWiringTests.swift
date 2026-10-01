@@ -16,7 +16,8 @@ struct MemoryToolsWiringTests {
         #expect(without.tools == ToolCatalog.tools)
         #expect(without.allowed == ClaudeDriver.defaultAllowedTools)
         let with = BrainAssembly.claudeTools(memory: true)
-        #expect(with.tools.map(\.name) == DataSourceMap.toolNames + ["search_memory", "forget_memory", "correct_memory"])
+        #expect(with.tools.map(\.name) == DataSourceMap.toolNames
+                + ["search_memory", "forget_memory", "correct_memory", "restore_memory"])
         #expect(with.allowed == with.tools.map { "mcp__jarvis__" + $0.name })
     }
 

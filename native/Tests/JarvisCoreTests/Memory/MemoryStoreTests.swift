@@ -250,14 +250,15 @@ struct MemoryStorageTests {
         try #require(lstat(store.path(.facts), &after) == 0)
         #expect(before.st_ino != after.st_ino)
         let dir = rootPath(sb) + "/memory"
-        #expect(try FileManager.default.contentsOfDirectory(atPath: dir).sorted() == ["facts.json"])
+        // P6: beside the hourly backups folder.
+        #expect(try FileManager.default.contentsOfDirectory(atPath: dir).sorted() == ["backups", "facts.json"])
 
         let good = try #require(bytes(store.path(.facts)))
         try #require(chmod(dir, 0o500) == 0)                     // mkstemp in memory/ now fails
         defer { chmod(dir, 0o700) }
         #expect(!mem.updateFacts { $0.facts.append(fact("f3", "three")); return true })
         #expect(bytes(store.path(.facts)) == good)
-        #expect(try FileManager.default.contentsOfDirectory(atPath: dir).sorted() == ["facts.json"])
+        #expect(try FileManager.default.contentsOfDirectory(atPath: dir).sorted() == ["backups", "facts.json"])
     }
 
     @Test func anUnreadableFactsFileIsNeverOverwritten() throws {

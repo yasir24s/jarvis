@@ -2,8 +2,8 @@
 // schemas. ToolCatalog stays the generated Python catalog, byte for byte; these are served
 // after it, and only when the app has a memory store.
 
-/// search_memory, forget_memory and correct_memory, in that order. Each `parametersJSON` is
-/// written in `json.dumps`'s style, like the Python catalog's.
+/// search_memory, forget_memory, correct_memory and (P6) restore_memory, in that order. Each
+/// `parametersJSON` is written in `json.dumps`'s style, like the Python catalog's.
 public enum NativeToolCatalog {
     public static let memoryTools: [ToolSchema] = [
         ToolSchema(
@@ -18,6 +18,10 @@ public enum NativeToolCatalog {
             name: "correct_memory",
             description: "Correct one note in your long-term memory when the user says it is wrong: reword it, or say whose it is (the user's, or someone in their life). A note about the user is a short sentence starting 'The user'; a note about someone else names them. The reply shows the note before and after.",
             parametersJSON: #"{"type": "object", "properties": {"id": {"type": "string", "description": "The note's id, from search_memory"}, "text": {"type": "string", "description": "The corrected note"}, "about": {"type": "string", "description": "'user', or the full name of the person the note is about"}, "relation": {"type": "string", "description": "How that person is related to the user, such as 'mother'; empty to clear it"}}, "required": ["id"]}"#),
+        ToolSchema(
+            name: "restore_memory",
+            description: "Bring back notes you forgot: forget_memory keeps what it removes for 30 days. Give their ids (from forget_memory's reply, or from this tool with no arguments, which lists the forgotten notes), or a query: then the forgotten notes that contain that exact phrase come back, at most 10. The reply lists exactly what came back.",
+            parametersJSON: #"{"type": "object", "properties": {"ids": {"type": "array", "items": {"type": "string"}, "description": "The ids of the forgotten notes to bring back"}, "query": {"type": "string", "description": "Instead of ids, a phrase the forgotten notes contain"}}, "required": []}"#),
     ]
 
     /// The tool names, in order.
