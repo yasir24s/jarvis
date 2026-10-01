@@ -4,7 +4,7 @@ import JarvisCore
 /// The tool bodies that exist so far (B4: `get_time`; D-50: `personality_note` and
 /// `personality_rewrite`; M5 T5.5: `get_battery`, `get_cpu_usage`, `get_wifi_status`,
 /// `run_diagnostics`; T5.6: `read_clipboard`; T5.7: `see_screen`, `take_screenshot`; T5.8:
-/// `find_apps`; T5.10: `search_files`, `find_files`), registered on a gateway in one call, so JarvisBrain and JarvisApp
+/// `find_apps`; T5.10: `search_files`, `find_files`; T5.11: `read_file`), registered on a gateway in one call, so JarvisBrain and JarvisApp
 /// never name a tool type. Every other catalog tool stays listed with no body, and the gateway
 /// answers it with its unknown-tool text until M5 or M6 adds one.
 public enum BuiltInTools {
@@ -23,18 +23,21 @@ public enum BuiltInTools {
         await gateway.register(GetTime(clock: clock, timeZone: timeZone))
         await gateway.register(PersonalityNote(core: core))
         await gateway.register(PersonalityRewrite(core: core))
-        await gateway.register(GetBattery(probe: platform.system))
-        await gateway.register(GetCPUUsage(probe: platform.system))
-        await gateway.register(GetWiFiStatus(probe: platform.system))
-        await gateway.register(RunDiagnostics(probe: platform.system, clock: clock))
-        await gateway.register(ReadClipboard(clipboard: platform.clipboard))
-        await gateway.register(SeeScreen(capturer: platform.screen, recognizer: platform.recognizer))
-        await gateway.register(TakeScreenshot(capturer: platform.screen, clock: clock, timeZone: timeZone,
-                                              home: platform.home))
-        await gateway.register(FindApps(index: platform.apps, browser: platform.browser))
+        // Every M5 body goes through the reply cap (ReplyCap): Python has none, and only a reply
+        // that echoes a huge argument can reach it.
+        await gateway.register(Capped(GetBattery(probe: platform.system)))
+        await gateway.register(Capped(GetCPUUsage(probe: platform.system)))
+        await gateway.register(Capped(GetWiFiStatus(probe: platform.system)))
+        await gateway.register(Capped(RunDiagnostics(probe: platform.system, clock: clock)))
+        await gateway.register(Capped(ReadClipboard(clipboard: platform.clipboard)))
+        await gateway.register(Capped(SeeScreen(capturer: platform.screen, recognizer: platform.recognizer)))
+        await gateway.register(Capped(TakeScreenshot(capturer: platform.screen, clock: clock, timeZone: timeZone,
+                                                     home: platform.home)))
+        await gateway.register(Capped(FindApps(index: platform.apps, browser: platform.browser)))
         let spotlight = Spotlight(runner: platform.spotlightRunner, home: platform.home)
-        await gateway.register(SearchFiles(spotlight: spotlight))
-        await gateway.register(FindFiles(spotlight: spotlight))
+        await gateway.register(Capped(SearchFiles(spotlight: spotlight)))
+        await gateway.register(Capped(FindFiles(spotlight: spotlight)))
+        await gateway.register(Capped(ReadFile(home: platform.home, userHome: platform.userHome)))
     }
 
     /// The generated `ToolCatalog` entry for `name`, so no body carries a hand-written schema.
@@ -57,6 +60,8 @@ struct ToolPlatform: Sendable {
     var browser: any DefaultBrowserLookup
     /// mdfind for search_files and find_files.
     var spotlightRunner: any CommandRunning
+    /// `pwd.getpwnam(name).pw_dir`, for read_file's `~name` paths.
+    var userHome: @Sendable (String) -> String? = ReadFile.passwdHome
 
     static var live: ToolPlatform {
         ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard(), screen: LiveScreenCapture(),
@@ -64,5 +69,44 @@ struct ToolPlatform: Sendable {
                      home: ProcessInfo.processInfo.environment["HOME"] ?? NSHomeDirectory(),
                      apps: AppIndex(runner: BoundedRunner()), browser: LiveDefaultBrowser(),
                      spotlightRunner: BoundedRunner(cap: Spotlight.cap))
+    }
+}
+
+/// The bound on every M5 reply (the brief: no tool returns more than about 1 MiB). The MCP
+/// server reads request lines of up to 1 MiB and drops a connection with 4 MiB of replies
+/// queued, so a reply that echoes an argument (read_file's error text repeats the path twice,
+/// once as a repr) could pass that. At most 1 MiB of UTF-8 and 256 Ki code points (JSON
+/// escaping widens a code point to 12 bytes at most, so 3 MiB), cut on a code point. Python
+/// has no cap; every reply its own caps allow is far below this.
+enum ReplyCap {
+    static let bytes = 1 << 20
+    static let scalars = 1 << 18
+
+    static func apply(_ text: String) -> String {
+        if text.utf8.count <= bytes && text.unicodeScalars.count <= scalars { return text }
+        var out = String.UnicodeScalarView()
+        var size = 0
+        for (i, u) in text.unicodeScalars.enumerated() {
+            let width = String(u).utf8.count
+            guard i < scalars, size + width <= bytes else { break }
+            out.append(u)
+            size += width
+        }
+        return String(out)
+    }
+}
+
+/// A tool body with its text reply passed through `ReplyCap`.
+struct Capped<Tool: ToolImpl>: ToolImpl {
+    static var name: String { Tool.name }
+    static var schema: ToolSchema { Tool.schema }
+    let tool: Tool
+
+    init(_ tool: Tool) { self.tool = tool }
+
+    func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome {
+        let outcome = try await tool.run(args, ctx)
+        if case .text(let text) = outcome { return .text(ReplyCap.apply(text)) }
+        return outcome
     }
 }

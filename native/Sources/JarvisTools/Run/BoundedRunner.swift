@@ -11,16 +11,23 @@ struct ProcessOutput: Sendable, Equatable {
     var status: Int32
     var timedOut: Bool
     var truncated: Bool
+    /// Set when the spawn itself failed with this errno (E2BIG for an oversized argv); the
+    /// streams are then empty. Python raises `OSError` for it before any output.
+    var launchErrno: Int32? = nil
 
     /// The run finished by itself (no timeout, no cap), as `subprocess.run` would return.
-    var completed: Bool { !timedOut && !truncated }
+    var completed: Bool { !timedOut && !truncated && launchErrno == nil }
+
+    static func launchFailed(_ code: Int32) -> ProcessOutput {
+        ProcessOutput(stdout: Data(), stderr: Data(), status: -1, timedOut: false, truncated: false, launchErrno: code)
+    }
 }
 
 /// Runs a child process with a deadline. Tools depend on this, never on `Process`, so tests
 /// inject a fake that returns canned output and records the argv.
 protocol CommandRunning: Sendable {
-    /// `argv[0]` is an absolute path. Nil when the child could not be started (Python's
-    /// `FileNotFoundError` / `PermissionError` from `subprocess.run`).
+    /// `argv[0]` is an absolute path. Nil when the child could not be started for a reason
+    /// with no errno; a spawn that failed with one returns `launchErrno` instead.
     func run(_ argv: [String], timeout: Double) async -> ProcessOutput?
 }
 
@@ -97,7 +104,13 @@ struct BoundedRunner: CommandRunning {
         process.standardInput = FileHandle.nullDevice
         let exited = DispatchSemaphore(value: 0)
         process.terminationHandler = { _ in exited.signal() }
-        do { try process.run() } catch { return nil }
+        do {
+            try process.run()
+        } catch let error as NSError where error.domain == NSPOSIXErrorDomain {
+            return .launchFailed(Int32(error.code))
+        } catch {
+            return nil
+        }
         let pid = process.processIdentifier
         // Process closes the parent's copies of the write ends after the spawn (GitProbe
         // relies on the same), so EOF arrives when the child and its heirs close theirs.

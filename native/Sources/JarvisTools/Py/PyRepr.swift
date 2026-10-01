@@ -10,27 +10,31 @@ enum PyRepr {
     static func string(_ s: String) -> String {
         let scalars = s.unicodeScalars
         let quote: Unicode.Scalar = scalars.contains("'") && !scalars.contains("\"") ? "\"" : "'"
-        var out = String.UnicodeScalarView([quote])
+        // Built as UTF-8 bytes. A UnicodeScalarView built with append(contentsOf:) took 41 s
+        // on a 900 000-scalar path in a debug build; this takes 0.2 s.
+        var out: [UInt8] = []
+        out.reserveCapacity(s.utf8.count + 2)
+        func put(_ text: String) { out.append(contentsOf: text.utf8) }
+        out.append(UInt8(quote.value))
         for u in scalars {
             switch u {
-            case quote, "\\": out.append("\\"); out.append(u)
-            case "\t": out.append(contentsOf: "\\t".unicodeScalars)
-            case "\n": out.append(contentsOf: "\\n".unicodeScalars)
-            case "\r": out.append(contentsOf: "\\r".unicodeScalars)
+            case quote, "\\": out.append(0x5C); out.append(UInt8(u.value))
+            case "\t": put("\\t")
+            case "\n": put("\\n")
+            case "\r": put("\\r")
             default:
                 if u.value < 0x20 || u.value == 0x7F {
-                    out.append(contentsOf: hex(u.value, "x", 2).unicodeScalars)
+                    put(hex(u.value, "x", 2))
                 } else if u.value < 0x7F || isPrintable(u) {
-                    out.append(u)
+                    out.append(contentsOf: String(u).utf8)
                 } else {
-                    let escaped = u.value <= 0xFF ? hex(u.value, "x", 2) : u.value <= 0xFFFF ? hex(u.value, "u", 4)
-                        : hex(u.value, "U", 8)
-                    out.append(contentsOf: escaped.unicodeScalars)
+                    put(u.value <= 0xFF ? hex(u.value, "x", 2) : u.value <= 0xFFFF ? hex(u.value, "u", 4)
+                        : hex(u.value, "U", 8))
                 }
             }
         }
-        out.append(quote)
-        return String(out)
+        out.append(UInt8(quote.value))
+        return String(decoding: out, as: UTF8.self)
     }
 
     /// `str.isprintable()` for one code point: not Other (Cc Cf Cs Co Cn) and not a separator

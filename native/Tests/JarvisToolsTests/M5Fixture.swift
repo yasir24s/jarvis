@@ -175,8 +175,9 @@ extension ToolPlatform {
                      home: String = "/nonexistent/jarvis-test-home",
                      apps: AppIndex = AppIndex(runner: FakeRunner(stdout: ""), loadPlist: { _ in nil }),
                      browser: any DefaultBrowserLookup = StubBrowser(),
-                     spotlightRunner: any CommandRunning = FakeRunner(stdout: "")) -> ToolPlatform {
+                     spotlightRunner: any CommandRunning = FakeRunner(stdout: ""),
+                     userHome: @escaping @Sendable (String) -> String? = { _ in nil }) -> ToolPlatform {
         ToolPlatform(system: system, clipboard: clipboard, screen: screen, recognizer: recognizer, home: home,
-                     apps: apps, browser: browser, spotlightRunner: spotlightRunner)
+                     apps: apps, browser: browser, spotlightRunner: spotlightRunner, userHome: userHome)
     }
 }

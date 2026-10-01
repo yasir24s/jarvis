@@ -27,6 +27,7 @@ actor AppIndex {
         if let built { return built }
         let task = building ?? Task { [runner, loadPlist] in
             guard let output = await runner.run(Self.query, timeout: Self.timeout), !output.timedOut,
+                  output.launchErrno == nil,
                   let stdout = PyText.decode(output.stdout) else { return nil }
             let entries = AppKinds.index(fromMdfind: stdout)
             return AppCatalog(entries: entries, meta: AppKinds.enrich(entries, load: loadPlist) ?? [:])

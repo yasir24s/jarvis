@@ -77,6 +77,14 @@ struct SpotlightToolTests {
         #expect(text == "Found 2: a.txt, b.txt.\n/Volumes/Work/a.txt\n/Volumes/Work/b.txt")
     }
 
+    /// Python's subprocess raises OSError for an argv past ARG_MAX: "[Errno 7] Argument list too
+    /// long: 'mdfind'" (the same wording Python printed for /usr/bin/true with a 3 MiB argument).
+    @Test func oversizedQueryReportsPythonsOSError() async throws {
+        let spotlight = Spotlight(runner: FakeRunner([.launchFailed(E2BIG)]), home: "/nonexistent")
+        let text = try await spotlight.search(query: "x", kind: nil, recent: false)
+        #expect(text == "Search error: [Errno 7] Argument list too long: 'mdfind'")
+    }
+
     @Test func registeredSchemasAreTheCatalogEntries() async throws {
         let sandbox = try ToolCoreSandbox()
         defer { sandbox.remove() }

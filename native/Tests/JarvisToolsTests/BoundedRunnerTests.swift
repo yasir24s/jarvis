@@ -69,6 +69,16 @@ struct BoundedRunnerTests {
         #expect(output.stderr == Data("err\n".utf8))
     }
 
+    /// A spawn that fails with an errno reports it: E2BIG for an argv past ARG_MAX, which is
+    /// the OSError Python's subprocess raises before any output.
+    @Test func oversizedArgvReportsE2BIG() async throws {
+        let output = try #require(await BoundedRunner().run(["/usr/bin/true", String(repeating: "x", count: 3 << 20)],
+                                                            timeout: 5))
+        #expect(output.launchErrno == E2BIG)
+        #expect(!output.completed)
+        #expect(output.stdout.isEmpty && output.stderr.isEmpty)
+    }
+
     @Test func launchFailureIsNil() async {
         #expect(await BoundedRunner().run(["/nonexistent/jarvis-no-such-tool"], timeout: 1) == nil)
         #expect(await BoundedRunner().run(["sleep", "1"], timeout: 1) == nil, "argv[0] must be absolute")

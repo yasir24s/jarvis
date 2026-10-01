@@ -121,6 +121,9 @@ struct Spotlight: Sendable {
         guard let output = await runner.run(["/usr/bin/mdfind"] + argv.dropFirst(), timeout: SpotlightQuery.timeout) else {
             return "Search error: [Errno 2] No such file or directory: 'mdfind'"
         }
+        if let code = output.launchErrno {                     // E2BIG for a huge query, as Python's OSError
+            return "Search error: [Errno \(code)] \(String(cString: strerror(code))): 'mdfind'"
+        }
         if output.timedOut { return "Search error: " + SpotlightQuery.timeoutText(argv) }
         var bytes = output.stdout
         if output.truncated, let lastBreak = bytes.lastIndex(of: 0x0A) {

@@ -178,3 +178,136 @@ def spotlight(ctx):
                       "expected": {"text": text, "argv": fake.calls[0] if fake.calls else None}})
     _assert_guard_live("m5_spotlight")
     return cases
+
+
+# ─── m5_read_file ───────────────────────────────────────────────────────────────
+# m5_read_file  input {args, tree: [[rel, kind, hex|target|mode]]} -> expected {text}:
+#               execute_tool("read_file", args) over a tree the suite builds in the sandbox
+#               home (kind: file + content hex, dir, symlink + target, mode for chmod).
+
+_CHUNK = 8192                         # TextIOWrapper's chunk size: boundary cases straddle it
+_PREFIX = "€".encode() * 2730 + b"x"   # 8191 bytes, 2731 characters
+assert len(_PREFIX) == _CHUNK - 1
+
+
+def _read_tree():
+    emoji = "😀"
+    return [
+        ("empty.txt", "file", b""),
+        ("hello.txt", "file", b"hello\nworld\n"),
+        ("bom.txt", "file", b"\xef\xbb\xbfbom first"),
+        ("crlf.txt", "file", b"a\r\nb\rc\n\rd\r"),
+        ("invalid.txt", "file", b"ok \xff\xfe bad \xe2\x28\xa1 \xed\xa0\x80 \xc0\xaf end \xe2\x82"),
+        ("only-invalid.txt", "file", b"\xff\xfe\xfd"),
+        ("ascii5000.txt", "file", b"x" * 5000),
+        ("emoji.txt", "file", (emoji * 4100).encode()),
+        ("flags.txt", "file", ("x" + "🇬🇧" * 2100).encode()),
+        ("cr-at-4000.txt", "file", b"y" * 3999 + b"\r\nafter"),
+        # 2730 three-byte characters and one ASCII byte fill all but the last byte of the first
+        # 8192-byte chunk while staying under 4000 characters, so the next sequence straddles it.
+        ("crlf-at-chunk.txt", "file", _PREFIX + b"\r\n" + b"tail"),
+        ("small-crlf-at-chunk.txt", "file", b"a\r\n" * 2000),
+        ("split-utf8-at-chunk.txt", "file", _PREFIX + "é".encode() + b"rest"),
+        ("invalid-at-chunk.txt", "file", _PREFIX + b"\xe2\x82" + b"\xffXYZ"),
+        ("cr-ends-chunk.txt", "file", _PREFIX + b"\r" + b"next"),
+        ("truncated-at-eof.txt", "file", "end €".encode() + b"\xe2\x82"),
+        ("nul.txt", "file", b"a\x00b"),
+        ("it's.txt", "file", b"quote in name"),
+        ("say \"hi\".txt", "file", b"double quote in name"),
+        ("café.txt", "file", "unicode name ✓".encode()),
+        ("dir", "dir", None),
+        ("locked.txt", "file", b"secret"),
+        ("link-to-file", "symlink", "hello.txt"),
+        ("link-to-dir", "symlink", "dir"),
+        ("broken-link", "symlink", "nowhere.txt"),
+    ]
+
+
+def _read_args(home):
+    long_name = "n" * 300
+    return [
+        ("missing", {"path": f"{home}/missing.txt"}),
+        ("empty_file", {"path": f"{home}/empty.txt"}),
+        ("hello", {"path": f"{home}/hello.txt"}),
+        ("padded_path", {"path": f"  {home}/hello.txt \n"}),
+        ("bom_kept", {"path": f"{home}/bom.txt"}),
+        ("crlf_and_cr", {"path": f"{home}/crlf.txt"}),
+        ("invalid_utf8_dropped", {"path": f"{home}/invalid.txt"}),
+        ("only_invalid_is_empty", {"path": f"{home}/only-invalid.txt"}),
+        ("ascii_5000_cut", {"path": f"{home}/ascii5000.txt"}),
+        ("emoji_cut_by_code_point", {"path": f"{home}/emoji.txt"}),
+        ("flag_cut_mid_pair", {"path": f"{home}/flags.txt"}),
+        ("crlf_at_4000", {"path": f"{home}/cr-at-4000.txt"}),
+        ("crlf_across_chunk", {"path": f"{home}/crlf-at-chunk.txt"}),
+        ("many_crlf", {"path": f"{home}/small-crlf-at-chunk.txt"}),
+        ("utf8_across_chunk", {"path": f"{home}/split-utf8-at-chunk.txt"}),
+        ("invalid_across_chunk", {"path": f"{home}/invalid-at-chunk.txt"}),
+        ("cr_ends_chunk", {"path": f"{home}/cr-ends-chunk.txt"}),
+        ("truncated_sequence_at_eof", {"path": f"{home}/truncated-at-eof.txt"}),
+        ("nul_byte_content", {"path": f"{home}/nul.txt"}),
+        ("quote_in_path", {"path": f"{home}/it's.txt"}),
+        ("missing_with_quote", {"path": f"{home}/it's not here.txt"}),
+        ("missing_with_both_quotes", {"path": f"{home}/it's \"x\".txt"}),
+        ("double_quote_in_path", {"path": f"{home}/say \"hi\".txt"}),
+        ("unicode_path", {"path": f"{home}/café.txt"}),
+        ("missing_control_chars", {"path": f"{home}/tab\there\x01.txt"}),
+        ("directory", {"path": f"{home}/dir"}),
+        ("directory_trailing_slash", {"path": f"{home}/dir/"}),
+        ("permission_denied", {"path": f"{home}/locked.txt"}),
+        ("not_a_directory", {"path": f"{home}/hello.txt/child"}),
+        ("name_too_long", {"path": f"{home}/{long_name}"}),
+        ("symlink_to_file", {"path": f"{home}/link-to-file"}),
+        ("symlink_to_dir", {"path": f"{home}/link-to-dir"}),
+        ("broken_symlink", {"path": f"{home}/broken-link"}),
+        ("tilde_home_is_dir", {"path": "~"}),
+        ("tilde_file", {"path": "~/hello.txt"}),
+        ("tilde_slash_only", {"path": "~/"}),
+        ("tilde_unknown_user", {"path": "~nosuchuser-jarvis/x.txt"}),
+        ("tilde_in_middle", {"path": f"{home}/~/hello.txt"}),
+        ("embedded_nul_in_path", {"path": f"{home}/a\x00b"}),
+        ("embedded_nul_in_tilde_user", {"path": " ~a\x00b/x "}),
+        ("dev_null_is_empty", {"path": "/dev/null"}),
+        ("empty_string", {"path": ""}),
+        ("whitespace_only", {"path": "   "}),
+        ("no_path_key", {}),
+        ("none_path", {"path": None}),
+        ("int_path", {"path": 5}),
+        ("zero_path", {"path": 0}),
+        ("list_path", {"path": ["a"]}),
+        ("bool_path", {"path": True}),
+        ("dict_path", {"path": {"p": 1}}),
+        ("float_path", {"path": 1.5}),
+    ]
+
+
+@suite("m5_read_file")
+def read_file(ctx):
+    J = ctx.J
+    home = os.path.expanduser("~")
+    _assert_guard_live("m5_read_file")
+    tree = []
+    for rel, kind, payload in _read_tree():
+        path = os.path.join(home, rel)
+        if kind == "file":
+            with open(path, "wb") as f:
+                f.write(payload)
+            tree.append([rel, kind, payload.hex()])
+        elif kind == "dir":
+            os.makedirs(path, exist_ok=True)
+            tree.append([rel, kind, None])
+        else:
+            os.symlink(payload, path)
+            tree.append([rel, kind, payload])
+    os.chmod(os.path.join(home, "locked.txt"), 0)
+    cases = []
+    try:
+        for name, args in _read_args(home):
+            with _patched(J, emotion_event=lambda *a, **k: None):
+                text = J.execute_tool("read_file", args)
+            cases.append({"name": f"read/{name}", "input": {"args": args},
+                          "expected": {"text": text}})
+    finally:
+        os.chmod(os.path.join(home, "locked.txt"), 0o600)
+    cases.insert(0, {"name": "tree", "input": {"tree": tree, "locked": ["locked.txt"]}, "expected": {}})
+    _assert_guard_live("m5_read_file")
+    return cases
