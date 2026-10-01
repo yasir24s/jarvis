@@ -247,7 +247,10 @@ actor FakeEngine: SpeechEngine {
         }
     }
 
-    func release() async {}
+    /// How many times the queue released this engine.
+    private(set) var releases = 0
+
+    func release() async { releases += 1 }
 }
 
 /// Collects log lines.

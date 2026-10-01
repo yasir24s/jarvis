@@ -22,6 +22,13 @@ public final class SpeakRepliesToggle {
         self.defaults = defaults
         isOn = defaults.bool(forKey: Self.defaultsKey)
     }
+
+    /// Reads the setting again (U1 part 5), so a change made outside the menu (`defaults
+    /// write`) holds from the next reply; the menu shows it too.
+    public func refresh() {
+        let stored = defaults.bool(forKey: Self.defaultsKey)
+        if stored != isOn { isOn = stored }
+    }
 }
 
 /// What happens to each finished typed reply (plan §3.12): the user's policy is asked. On a
@@ -44,9 +51,10 @@ public enum SpeakReplies {
     public static func context(for message: ChatMessage, turn: TurnSummary, toggle: SpeakRepliesToggle,
                                chatWindowIsKey: Bool, userIdleSeconds: Double,
                                ttsBackend: String = noTTSBackend) -> SpeakContext {
-        SpeakContext(chatWindowIsKey: chatWindowIsKey, speakToggleOn: toggle.isOn, userIdleSeconds: userIdleSeconds,
-                     voiceConversationActive: false, replyCharCount: message.text.unicodeScalars.count,
-                     turn: turn, ttsBackend: ttsBackend)
+        toggle.refresh()   // U1 part 5: the setting as it is now, not as it was at launch
+        return SpeakContext(chatWindowIsKey: chatWindowIsKey, speakToggleOn: toggle.isOn,
+                            userIdleSeconds: userIdleSeconds, voiceConversationActive: false,
+                            replyCharCount: message.text.unicodeScalars.count, turn: turn, ttsBackend: ttsBackend)
     }
 
     /// Asks `policy` (the user's `shouldSpeakReply`) about `message`, and returns its answer.

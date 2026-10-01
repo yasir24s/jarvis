@@ -13,11 +13,12 @@ final class AppVoice {
 
     init() {
         let folder = FileManager.default.temporaryDirectory.appending(path: "jarvis-voice", directoryHint: .isDirectory)
+        // voiceSpeed is read for each reply and at each helper launch, never kept (U1 part 5).
         let setup = VoiceHelperSetup.inApp(log: folder.appending(path: "helper.log"))
         let f5 = F5Engine(launcher: setup)
         self.f5 = f5
         queue = SpeechQueue(engine: f5, fallback: SayEngine(), player: EnginePlayer(),
-                            timing: SpeechQueue.f5Timing.at(speed: setup.speed),
+                            timing: SpeechQueue.f5Timing, speed: VoiceHelperSetup.speedFromDefaults,
                             helperFootprintMB: { f5.lastFootprintMB },
                             log: { JarvisLog.log($0, category: .voice) })
     }

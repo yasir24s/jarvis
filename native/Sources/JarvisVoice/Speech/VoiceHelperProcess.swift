@@ -7,8 +7,9 @@ import Foundation
 /// user chose 4 on 2026-10-01, when one 5.8 s sentence took 7.7 s at 4 against 18.0 s at 8
 /// with the words exact at both. A `cfg` of 0 garbled the words, so cfg keeps its default.
 /// The speed is the `voiceSpeed` setting (P5): at F5's own speed of 1 the clone spoke about 140
-/// words a minute, under conversation's 155 to 165. The app reads the setting once, at launch,
-/// for both the helper and SpeechQueue's timing, so a change takes effect at the next launch.
+/// words a minute, under conversation's 155 to 165. The app reads the setting for each reply
+/// (U1 part 5): SpeechQueue times the reply with it, and when it changed since the last reply
+/// it releases the helper, which the next request starts again with the new `--speed`.
 public struct VoiceHelperSetup: VoiceHelperLauncher {
     /// What the helper loads from `assets` (install-voice-assets.sh copies exactly these).
     public static let assetFiles = [
@@ -28,15 +29,27 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
     public let outDirectory: URL
     /// The helper's stderr is appended here; nil discards it.
     public let log: URL?
-    /// F5's speed: 1 is the reference's own pace.
-    public let speed: Double
+    /// F5's speed: 1 is the reference's own pace. Read each time it is asked for, so each launch
+    /// of the helper (`arguments`) gets the setting as it is then.
+    public var speed: Double { speedSource() }
+    private let speedSource: @Sendable () -> Double
 
     public init(executable: URL, assets: URL, outDirectory: URL, log: URL?, speed: Double = VoiceHelperSetup.defaultSpeed) {
+        self.init(executable: executable, assets: assets, outDirectory: outDirectory, log: log, speed: { speed })
+    }
+
+    /// `speed` is asked at every launch of the helper.
+    public init(executable: URL, assets: URL, outDirectory: URL, log: URL?, speed: @escaping @Sendable () -> Double) {
         self.executable = executable
         self.assets = assets
         self.outDirectory = outDirectory
         self.log = log
-        self.speed = speed
+        self.speedSource = speed
+    }
+
+    /// `voiceSpeed` from the app's defaults (SpeechQueue's suite), read afresh at each call.
+    public static let speedFromDefaults: @Sendable () -> Double = {
+        speed(in: UserDefaults(suiteName: SpeechQueue.defaultsSuite))
     }
 
     /// `voiceSpeed` from the app's defaults, clamped to `speedRange`, or `defaultSpeed` when it is
@@ -49,15 +62,21 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
     }
 
     /// The app's own helper, the installed assets, a folder of the user's temporary directory, and
-    /// the `voiceSpeed` setting.
+    /// the `voiceSpeed` setting in `defaults` as it is at each launch of the helper.
     public static func inApp(bundle: Bundle = .main, log: URL?,
                              defaults: UserDefaults? = UserDefaults(suiteName: SpeechQueue.defaultsSuite)) -> VoiceHelperSetup {
-        VoiceHelperSetup(
+        let shared = SharedDefaults(defaults: defaults)
+        return VoiceHelperSetup(
             executable: bundle.bundleURL.appending(path: "Contents/Helpers/jarvis-voice", directoryHint: .notDirectory),
             assets: installedAssets,
             outDirectory: FileManager.default.temporaryDirectory.appending(path: "jarvis-voice", directoryHint: .isDirectory),
             log: log,
-            speed: speed(in: defaults))
+            speed: { speed(in: shared.defaults) })
+    }
+
+    /// UserDefaults is thread-safe (Apple documents it so) but is not marked Sendable.
+    private struct SharedDefaults: @unchecked Sendable {
+        let defaults: UserDefaults?
     }
 
     /// `~/Library/Application Support/JARVIS/voice/`.

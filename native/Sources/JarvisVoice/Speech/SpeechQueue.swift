@@ -55,16 +55,23 @@ public actor SpeechQueue {
     private let player: any SpeechPlayer
     private let chunkChars: @Sendable () -> Int
     private let timing: Timing
+    /// The voice's speed, read for each reply (U1 part 5); nil keeps `timing` as given.
+    private let speed: (@Sendable () -> Double)?
+    /// The speed the last reply was spoken at.
+    private var lastSpeed: Double?
     private let helperFootprintMB: @Sendable () -> Int?
     private let log: @Sendable (String) -> Void
     private var current: Task<Void, Never>?
 
     /// - engine: the voice (F5Engine); `fallback` speaks a part it fails (SayEngine).
     /// - helperFootprintMB: the helper's footprint in its last reply, for the log line.
-    /// - timing: what the split rule predicts with (`chunks`).
+    /// - timing: what the split rule predicts with (`chunks`), at speed 1 when `speed` is given.
+    /// - speed: `voiceSpeed`, read for each reply: the reply is timed at it, and when it changed
+    ///   since the last reply the engine is released first, so it starts again at the new speed.
     public init(engine: any SpeechEngine, fallback: any SpeechEngine, player: any SpeechPlayer,
                 chunkChars: @escaping @Sendable () -> Int = SpeechQueue.chunkCharsFromDefaults,
                 timing: Timing = SpeechQueue.f5Timing,
+                speed: (@Sendable () -> Double)? = nil,
                 helperFootprintMB: @escaping @Sendable () -> Int? = { nil },
                 log: @escaping @Sendable (String) -> Void) {
         self.engine = engine
@@ -72,6 +79,7 @@ public actor SpeechQueue {
         self.player = player
         self.chunkChars = chunkChars
         self.timing = timing
+        self.speed = speed
         self.helperFootprintMB = helperFootprintMB
         self.log = log
     }
@@ -85,11 +93,17 @@ public actor SpeechQueue {
             current = nil
             return
         }
+        let speed = self.speed?()
+        let timing = speed.map { self.timing.at(speed: $0) } ?? self.timing
         let parts = Self.chunks(clean, limit: chunkChars(), timing: timing)
+        let restart = speed != nil && lastSpeed != nil && speed != lastSpeed
+        if let speed { lastSpeed = speed }
         current = Task {
             await previous?.value   // the reply before has stopped its audio
             guard !Task.isCancelled else { return }
-            await self.speak(parts, characters: clean.unicodeScalars.count, turn: turn, started: started)
+            if restart { await self.engine.release() }   // the next part starts it at the new speed
+            await self.speak(parts, characters: clean.unicodeScalars.count, turn: turn, started: started,
+                             timing: timing)
         }
     }
 
@@ -117,7 +131,8 @@ public actor SpeechQueue {
         var fallbackReason: String?
     }
 
-    private func speak(_ parts: [String], characters: Int, turn: UUID, started: ContinuousClock.Instant) async {
+    private func speak(_ parts: [String], characters: Int, turn: UUID, started: ContinuousClock.Instant,
+                       timing: Timing) async {
         let context = SynthesisContext(turnID: turn)
         var firstAudio: Duration?
         var generating = Duration.zero
