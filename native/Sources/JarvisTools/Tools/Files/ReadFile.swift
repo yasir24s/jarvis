@@ -20,9 +20,18 @@ struct ReadFile: ToolImpl {
     let home: String
     /// `pwd.getpwnam(name).pw_dir` for `~name`, nil for no such user.
     var userHome: @Sendable (String) -> String? = ReadFile.passwdHome
+    /// P4: the screen tools' recogniser, for a scanned PDF (`ScannedPDF`), and its time limit.
+    var recognizer: any TextRecognizing = VisionTextRecognizer()
+    var ocrTimeout: Duration = ScannedPDF.timeout
 
+    /// A PDF with no text layer is read by OCR (P4, native-only); everything else as Python's
+    /// `_read_file` reads it.
     func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome {
-        .text(read(args["path"]))
+        if let raw = args["path"]?.stringValue, let path = expanduser(Py.strip(raw)),
+           let text = await ScannedPDF.ocr(path: path, recognizer: recognizer, timeout: ocrTimeout) {
+            return .text(text)
+        }
+        return .text(read(args["path"]))
     }
 
     func read(_ argument: JSONValue?) -> String {

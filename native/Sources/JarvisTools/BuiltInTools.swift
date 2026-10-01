@@ -50,7 +50,8 @@ public enum BuiltInTools {
         let spotlight = Spotlight(runner: platform.spotlightRunner, home: platform.home)
         await gateway.register(Capped(SearchFiles(spotlight: spotlight)))
         await gateway.register(Capped(FindFiles(spotlight: spotlight)))
-        await gateway.register(Capped(ReadFile(home: platform.home, userHome: platform.userHome)))
+        await gateway.register(Capped(ReadFile(home: platform.home, userHome: platform.userHome,
+                                               recognizer: platform.recognizer)))
         await gateway.register(Capped(RunCommand(runner: platform.commandRunner)))
         await gateway.register(Capped(RunAppleScript(runner: platform.scriptRunner)))
         await gateway.register(Capped(WriteFile(session: platform.files)))
