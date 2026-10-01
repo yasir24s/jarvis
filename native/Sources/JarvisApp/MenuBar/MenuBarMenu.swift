@@ -3,13 +3,15 @@ import JarvisChat
 import SwiftUI
 
 /// The menu-bar menu (plan: M02-M04 §3.12): Open Chat, the last backend, the "Speak replies"
-/// toggle, M8's "Stop Speaking", P6's "Learn About Me From My Files", M0's state-root and lock
-/// lines, and Quit. DEBUG builds add "Test confirmation".
+/// toggle, M8's "Stop Speaking", P6's "Learn About Me From My Files", U1's "Update Ready" and
+/// "Update Now" while a build waits, M0's state-root and lock lines, and Quit. DEBUG builds add
+/// "Test confirmation".
 struct MenuBarMenu: View {
     let model: AppModel
     let chat: ChatViewModel
     @Bindable var speak: SpeakRepliesToggle
     let learn: FileLearningConsent
+    let updates: UpdateWatcher
     /// Stops the reply being spoken and anything queued (AppDelegate.stopSpeaking).
     let stopSpeaking: () -> Void
     #if DEBUG
@@ -30,6 +32,7 @@ struct MenuBarMenu: View {
             stopSpeaking()
         }
         FileLearningToggle(consent: learn)
+        UpdateMenuItems(updates: updates)
         Divider()
         Text("State: \(model.stateRoot)")
         Text("Lock: \(model.lockHolder)")
@@ -56,5 +59,25 @@ struct FileLearningToggle: View {
 
     var body: some View {
         Toggle(FileLearningConsent.menuTitle, isOn: $consent.isOn)
+    }
+}
+
+/// U1: while a staged build waits, "Update Ready" and "Update Now", in the app menu and the
+/// menu-bar menu. Once Update Now is chosen the item says what the swap still waits for.
+struct UpdateMenuItems: View {
+    let updates: UpdateWatcher
+
+    var body: some View {
+        if updates.ready != nil, !updates.swapping {
+            Divider()
+            Text("Update Ready")
+            if updates.updateNowRequested {
+                Text("Update Now: waiting, \(updates.hold?.reason ?? "almost done")")
+            } else {
+                Button("Update Now") {
+                    updates.updateNow()
+                }
+            }
+        }
     }
 }

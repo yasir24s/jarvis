@@ -28,6 +28,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let speakReplies = SpeakRepliesToggle()
     /// P6: "Learn About Me From My Files", the user's consent to the file scanner.
     let fileLearning = FileLearningConsent()
+    /// U1: watches dist/staged/ for a new build and swaps over when JARVIS is not in use. It
+    /// sees nothing unless this bundle runs as dist/JARVIS.app with its update helper.
+    let updates = UpdateWatcher(folders: UpdateFolders.of(bundle: Bundle.main.bundleURL))
     private var lock: InstanceLock?
     /// Built once the lock is held and kept for the app's life (plan: M02-M04 §3.5, §3.12).
     private var brain: BrainAssembly?
@@ -123,6 +126,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// is done. Speech stops at once, and the voice helper's stdin is closed last, with up to
     /// 2 s for it to exit.
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        updates.stop()
         let voice = self.voice
         self.voice = nil
         voice?.stop()
@@ -163,6 +167,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         lock = held
         model.lockHolder = Self.describe(InstanceLock.readHolder(at: paths.lockFile))
         startBrain(lock: held, paths: paths)
+        // U1: from here a staged build is noticed, even when the brain did not start.
+        updates.start(signals: { [weak self] in self?.updateSignals() ?? Self.busySignals },
+                      swap: { [weak self] build in self?.swapOver(to: build) })
+    }
+
+    /// What the live-update rule reads (U1): the turn, the speech and the confirmation, and the
+    /// latest use of the chat, a turn or the voice.
+    private func updateSignals() -> UpdateRule.Signals {
+        let turns = brain?.turnActivity
+        let uses = [Self.processStarted, chat.lastUse, turns?.lastActivity, voice?.lastSpoke].compactMap { $0 }
+        return UpdateRule.Signals(turnInFlight: (turns?.isRunning ?? false) || chat.responding,
+                                  speechActive: voice?.isSpeaking ?? false,
+                                  confirmationPending: chat.pending != nil,
+                                  lastUse: uses.max() ?? Self.processStarted)
+    }
+
+    /// Signals that never allow a swap, for a delegate that is already gone.
+    private static let busySignals = UpdateRule.Signals(turnInFlight: true, speechActive: false,
+                                                        confirmationPending: false, lastUse: .infinity)
+
+    /// The swap-over itself (U1): for now only logged.
+    private func swapOver(to build: BuildID) {
+        JarvisLog.log("update: \(build.label) may swap in now")
     }
 
     /// Builds the brain once, on the state this lock guards. The chat is connected only after
@@ -305,6 +332,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         source.setEventHandler {
             MainActor.assumeIsolated {
                 JarvisLog.log("received SIGTERM — exiting.")
+                self.updates.stop()
                 self.research?.stop()   // flushes enqueued bumps while the lease is still held
                 self.personality?.stop()   // no personality pass outlives the lease
                 self.idleCompile?.stop()   // nor an idle compile

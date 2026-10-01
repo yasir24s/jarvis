@@ -49,6 +49,7 @@ struct ChatView: View {
             Composer(text: $model.draft.text, onPaste: { model.notePaste() }, onSubmit: { _ = model.send() })
                 .frame(minHeight: 36, idealHeight: 56, maxHeight: 120)
                 .padding(8)
+                .onChange(of: model.draft.text) { model.noteTyping() }   // U1: typing holds an update back
         }
         .frame(minWidth: 420, minHeight: 360)
         .onAppear {

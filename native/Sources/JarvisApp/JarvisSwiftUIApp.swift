@@ -25,18 +25,20 @@ struct JarvisSwiftUIApp: App {
                 Button("Stop Speaking") { appDelegate.stopSpeaking() }
                 // P6: the user's consent to learning from their files, as in the menu-bar menu.
                 FileLearningToggle(consent: appDelegate.fileLearning)
+                // U1: "Update Ready" and "Update Now" while a staged build waits.
+                UpdateMenuItems(updates: appDelegate.updates)
             }
         }
 
         MenuBarExtra("JARVIS", systemImage: "circle.hexagongrid.fill") {
             #if DEBUG
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
-                        learn: appDelegate.fileLearning,
+                        learn: appDelegate.fileLearning, updates: appDelegate.updates,
                         stopSpeaking: { appDelegate.stopSpeaking() },
                         testConfirmation: { appDelegate.stashTestConfirmation() })
             #else
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
-                        learn: appDelegate.fileLearning,
+                        learn: appDelegate.fileLearning, updates: appDelegate.updates,
                         stopSpeaking: { appDelegate.stopSpeaking() })
             #endif
         }

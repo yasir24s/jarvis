@@ -28,10 +28,23 @@ final class AppVoice {
         f5.isAvailable ? EngineID.f5.rawValue : EngineID.say.rawValue
     }
 
+    /// Replies handed to the queue whose audio has not finished. While any is, a live update
+    /// waits (U1, `UpdateRule`).
+    private(set) var inFlight = 0
+    /// When the last of them finished, by the wall clock; nil before the first.
+    private(set) var lastSpoke: Double?
+    var isSpeaking: Bool { inFlight > 0 }
+
     /// Speaks a finished reply; a new reply cancels whatever is queued or playing.
     func speak(_ text: String, turn: UUID) {
         let queue = self.queue
-        Task { await queue.say(text, turn: turn) }
+        inFlight += 1
+        Task {
+            await queue.say(text, turn: turn)
+            await queue.idle()   // this reply, or one that replaced it, is over
+            self.inFlight -= 1
+            self.lastSpoke = SystemClock().now()
+        }
     }
 
     /// The menus' Stop Speaking.

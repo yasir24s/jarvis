@@ -43,6 +43,9 @@ public final class ChatViewModel: ReplySink {
     public private(set) var pending: PendingConfirmation?
     /// Set by the chat window: whether it is the active window (an input to the speak policy).
     public var windowIsKey = false
+    /// When the user last typed in the composer or sent from this window, by `clock`; nil
+    /// before either. A live update never swaps within 10 minutes of it (U1, `UpdateRule`).
+    @ObservationIgnored public private(set) var lastUse: Double?
 
     /// The speak policy's hook (plan §3.12 `SpeakPolicy`): each finished assistant row of a
     /// turn, with that turn's summary (its data sources and taint). Rows made here without a
@@ -56,17 +59,20 @@ public final class ChatViewModel: ReplySink {
     @ObservationIgnored private var authenticator: (any TextConfirmAuthenticator)?
     @ObservationIgnored private var watcher: Task<Void, Never>?
     @ObservationIgnored private var expiry: Task<Void, Never>?
+    @ObservationIgnored private let clock: any JarvisClock
     private let minimumGap: Duration
 
     /// - Parameters:
     ///   - submitter: where turns go; nil until the brain has started (`connect`).
     ///   - lastBackend: reads the backend that served the latest turn, for the menu line.
     ///   - minimumGap: the shortest gap between two live-row updates.
+    ///   - clock: stamps `lastUse`.
     public init(submitter: (any TurnSubmitting)? = nil, lastBackend: (@Sendable () async -> String)? = nil,
-                minimumGap: Duration = DeltaCoalescer.interval) {
+                minimumGap: Duration = DeltaCoalescer.interval, clock: any JarvisClock = SystemClock()) {
         self.submitter = submitter
         self.backendName = lastBackend
         self.minimumGap = minimumGap
+        self.clock = clock
     }
 
     /// Called once the brain has started. Until then Return keeps the draft and sends nothing.
@@ -108,6 +114,11 @@ public final class ChatViewModel: ReplySink {
         draft.notePaste()
     }
 
+    /// The composer's text changed: the user is typing (`lastUse`).
+    public func noteTyping() {
+        lastUse = clock.now()
+    }
+
     /// Shows `gate`'s pending confirmation on the card from now on (plan §3.4, §3.12).
     /// `authenticator` is the one the coordinator's text port asks: its `canAuthenticate`
     /// decides the "can't verify" refusal here, before anything is sent.
@@ -135,6 +146,7 @@ public final class ChatViewModel: ReplySink {
     /// the confirmation stays pending until its deadline, for the voice channel.
     @discardableResult
     public func send() -> Task<Void, Never>? {
+        lastUse = clock.now()
         guard !responding, let submitter, let input = draft.input else { return nil }
         let sent = draft
         draft = ComposerDraft()
@@ -152,6 +164,7 @@ public final class ChatViewModel: ReplySink {
     /// a new command). Returns the running turn, or nil when nothing was sent.
     @discardableResult
     public func confirmPending(now: ContinuousClock.Instant = .now) -> Task<Void, Never>? {
+        lastUse = clock.now()
         guard let pending, !responding, let submitter else { return nil }
         guard !TextConfirmation.isStale(pending, now: now) else {
             show(nil)
@@ -171,6 +184,7 @@ public final class ChatViewModel: ReplySink {
     /// brain. Returns the task that does it, or nil when no card shows.
     @discardableResult
     public func cancelPending() -> Task<Void, Never>? {
+        lastUse = clock.now()
         guard pending != nil, let confirmations, let authenticator else { return nil }
         show(nil)
         return Task {
