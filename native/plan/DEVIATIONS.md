@@ -45,7 +45,7 @@ Line numbers refer to jarvis.py @ 68cd112.
 | R3 → D-15 | M5 | `get_wifi_status` via `networksetup`, which reports "not associated" while en0 is up on macOS 27 (oracle broken) | CoreWLAN SSID (needs the Location grant), reply in networksetup format | Oracle broken on this OS | A-SYS-4 (manual) | `approved` | M05-M06-tools.md §3.5, §8 R3 |
 | R4 → D-14 | M6 | summarize_page and find_song_by_lyrics call `_ask_model` (Ollama `qwen2.5:3b`) | Brain chain: Claude CLI → FoundationModels; lyrics tool still returns title + artist only, never lyrics | No Ollama in native. **Ledger:** D-14 decides this route | none: answers cannot be golden-tested | `approved` | M05-M06-tools.md §3.5, §8 R4 |
 | §3.6 (no ID) | M5 | No outer timeout on a tool call | Registry safety net at 120 s → `Tool error: timed out` | Only shows on a hang | not stated in the plan | `proposed — decide at milestone start` | M05-M06-tools.md §3.6 |
-| R11 | M5 | `notify` breaks silently on `"` | Quotes escaped; reply always "Notification shown." | Intentional improvement | flagged in PARITY evidence | `proposed — decide at milestone start` | M05-M06-tools.md §3.5, §8 R11 |
+| R11 | M5 | `notify` breaks silently on `"` | Posts through UserNotifications when JARVIS is authorised, otherwise runs Python's osascript line with backslashes and quotes escaped; reply always "Notification shown." | Intentional improvement | `m5_actions.golden.json` case marked `R11` | `proposed — decide at milestone start` | M05-M06-tools.md §3.5, §8 R11 |
 | R12 | M5 | `pbpaste` returns RTF source for an RTF-only clipboard | `""` for an RTF-only clipboard | Intentional improvement | flagged in PARITY evidence | `proposed — decide at milestone start` | M05-M06-tools.md §3.5, §8 R12 |
 | R13 | M5 | Trash via Finder Automation; a filename containing "error" reports a false failure | Trash via `FileManager`, no Automation(Finder); false failure fixed; whether Put Back works is not verified | Intentional improvement | A-FILE-3 (manual Put Back check) | `proposed — decide at milestone start` | M05-M06-tools.md §3.5, §8 R13 |
 | R14 | M6 | Reminder due `(current date)+offset`, which runs 1 s early | EventKit exact due date | Intentional improvement | flagged in PARITY evidence | `proposed — decide at milestone start` | M05-M06-tools.md §3.5, §8 R5, R14 |
@@ -103,6 +103,8 @@ Line numbers refer to jarvis.py @ 68cd112.
 | DEV-M5-01 | M5 | `get_cpu_usage` and the CPU part of `run_diagnostics` copy top's user field, and top prints the hundredths without zero padding: 4.08% comes out as "4.8", and 16.00 as "16.0" | Native prints `%.2f` of a host_statistics sample, as M05-M06 §3.5 says | Python's text misreports the load (in 30 of 30 samples the three fields only add up to 100 when read unpadded) | `m5_sysinfo.golden.json` cases marked `DEV-M5-01` (5) | `approved` | M05-M06 §3.5; README D-53, user 2026-10-01 |
 | DEV-M5-02 | M5 | No limit on a tool reply's size | Every M5 reply is capped at 1 MiB of UTF-8 and 256 Ki code points | The MCP server drops a connection past 4 MiB of queued replies, and read_file's error text repeats the path twice, so a very long path could pass that | `ReadFileToolTests.hugePathEchoIsCapped` | `approved` | MCP review finding 1; README D-53, user 2026-10-01 |
 | DEV-M5-03 | M5 | The app index is built at startup and enriched in a background thread: answers right after startup use name-based kinds, and a failed mdfind leaves the index empty until restart | Built on the first `find_apps` call and enriched before answering; a failed listing is retried on the next call | Python's steady state, with no spawn at startup | `FindAppsTests.failedListingIsRetried` | `approved` | M05-M06 §3.5; README D-53, user 2026-10-01 |
+| DEV-M5-04 | M5 | `move_file` takes the basename for its gate and reply from the expanded path before `abspath`, so a source with a trailing `/` is named `""` | The guard (`FileMutationPolicy.move`) makes both paths absolute first, so the folder's real name appears in the gate and the reply | Clearer confirmation text; the guard itself is unchanged | `m5_file_mutations.golden.json` case marked `DEV-M5-04` | `proposed` | M05-M06 §2a `move_file` row |
+| DEV-M5-05 | M5 | `type_text` and the brightness key path run System Events `keystroke` and `key code` scripts through osascript, which needs Automation(System Events) and mistypes some non-ASCII text | CGEvents after an Accessibility preflight: Unicode strings of at most 20 UTF-16 units that never split a surrogate pair, a return between lines, and Python's key taps for brightness. Without Accessibility, Python's refusal text | No System Events automation; non-ASCII types correctly. Reply text unchanged | `SystemActionsTests` (`m5_actions` key-tap and keystroke cases) | `proposed` | M05-M06 §3.5 `type_text` and `set_brightness` rows |
 | DEV-P3-01 | P3 | Files are read only when a turn asks (`read_file`, `find_files`); nothing is read in the background | `FileScanner` walks the home folder, then iCloud Drive, one file at a time at background priority. It reads txt, md, rtf, rtfd, docx, pdf and csv, and inside a git repository only README files. It skips `~/Library` (except iCloud Drive), hidden names, the state root, build output, bundles, media, archives, disk images, binaries, key, certificate and credential names, `.env` in any spelling, files over 20 MB, and iCloud files not on the Mac. Text is capped at 200,000 characters and redacted. Text that fits 0.6 of the on-device model's context with the instructions goes to that model alone; longer text goes to Claude in parts of up to 100,000 characters, at most 10 files an hour, and every read waits while a turn runs. Kept facts pass P2's validator and merge into `memory/facts.json` with `source: file:<sha256>`. `memory/files-index.json` means an unchanged file is never read twice, and a new walk starts 6 hours after each pass. File names and paths are never sent to either model. P2's transcript and on-device draft are redacted before its Claude stage | The user's decision: JARVIS learns about the user from their files in the background | `FileWalkTests`, `TextExtractionTests`, `RedactorTests`, `TranscriptRedactionTests`, `FileReadingTests`, `FileFactReaderTests`, `TurnActivityTests`, `FileIndexTests`, `FileScannerTests`, `FileScannerWiringTests` | `approved` | README D-51, user 2026-09-30 |
 
 The M7 table gives one fixture for all 15 `DEV-M7-*` / `DEV-M14-*` rows (§8.1 heading:
@@ -111,11 +113,13 @@ loop behaviours may need their own tests at M14.
 
 ## Counts
 
-73 entries: 46 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-8, R3 → D-15, R4 → D-14, DEV-M7-01,
-DEV-M7-02, DEV-M7-05, R9 → D-18, DEV-M0-01, DEV-M0-02, DEV-M0-03, DEV-M1-01, DEV-M1-02, DEV-M1-03,
-DEV-M1-04, D1a, D1b, D1c, D5a, R8-str-float, R8-load-not-dict, R8-nan-sort,
-R8-kb-summary-not-str, R8-list-content, DEV-M3-01 to DEV-M3-14, DEV-M4-01), 1 `approved (overage kill-switch only)` (X-10), 1 `rejected` (X-5),
-1 `resolved — parity since fef66c1` (R2 → D-12) and 24 `proposed — decide at milestone start`.
+83 entries: 55 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
+DEV-M7-01, DEV-M7-02, DEV-M7-05, R9 → D-18, DEV-M0-01 to DEV-M0-03, DEV-M1-01 to DEV-M1-04, D1a,
+D1b, D1c, D5a, R8-str-float, R8-load-not-dict, R8-nan-sort, R8-kb-summary-not-str,
+R8-list-content, DEV-M3-01 to DEV-M3-14, DEV-M4-01, DEV-M4-02, DEV-P1-01, DEV-P1-02, DEV-P2-01,
+DEV-P3-01, DEV-M5-01 to DEV-M5-03), 1 `approved (overage kill-switch only)` (X-10), 1 `rejected`
+(X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 25 proposed: 23 `proposed — decide at
+milestone start`, plus DEV-M5-04 and DEV-M5-05 from M5's tools that act.
 
 ## Not registered: differences mentioned only in the M05 §3.5 tool table
 
@@ -123,7 +127,8 @@ The M05 plan names these as implementation notes, not deviations. Decide at M5 s
 whether each one belongs in the table above:
 
 - `see_screen` writes no screen PNG to `$TMPDIR` (a privacy gain).
-- `type_text` needs no System Events automation and types non-ASCII correctly.
+- `set_volume` uses CoreAudio instead of an osascript spawn. The reply is the same, and in
+  both it does not depend on success.
 - `set_alarm`: the M1 store is an actor, which removes Python's read-modify-write race.
 - `set_reminder`, `find_contact`: no longer launch Reminders.app / Contacts.app and need no Automation grant.
 
