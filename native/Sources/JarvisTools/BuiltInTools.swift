@@ -3,7 +3,7 @@ import JarvisCore
 
 /// The tool bodies that exist so far (B4: `get_time`; D-50: `personality_note` and
 /// `personality_rewrite`; M5 T5.5: `get_battery`, `get_cpu_usage`, `get_wifi_status`,
-/// `run_diagnostics`; T5.6: `read_clipboard`), registered on a gateway in one call, so JarvisBrain and JarvisApp
+/// `run_diagnostics`; T5.6: `read_clipboard`; T5.7: `see_screen`, `take_screenshot`), registered on a gateway in one call, so JarvisBrain and JarvisApp
 /// never name a tool type. Every other catalog tool stays listed with no body, and the gateway
 /// answers it with its unknown-tool text until M5 or M6 adds one.
 public enum BuiltInTools {
@@ -27,6 +27,9 @@ public enum BuiltInTools {
         await gateway.register(GetWiFiStatus(probe: platform.system))
         await gateway.register(RunDiagnostics(probe: platform.system, clock: clock))
         await gateway.register(ReadClipboard(clipboard: platform.clipboard))
+        await gateway.register(SeeScreen(capturer: platform.screen, recognizer: platform.recognizer))
+        await gateway.register(TakeScreenshot(capturer: platform.screen, clock: clock, timeZone: timeZone,
+                                              home: platform.home))
     }
 
     /// The generated `ToolCatalog` entry for `name`, so no body carries a hand-written schema.
@@ -40,8 +43,14 @@ public enum BuiltInTools {
 struct ToolPlatform: Sendable {
     var system: any SystemProbing
     var clipboard: any ClipboardReading
+    var screen: any ScreenCapturing
+    var recognizer: any TextRecognizing
+    /// `$HOME`, as Python's `os.path.expanduser` reads it.
+    var home: String
 
     static var live: ToolPlatform {
-        ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard())
+        ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard(), screen: LiveScreenCapture(),
+                     recognizer: VisionTextRecognizer(),
+                     home: ProcessInfo.processInfo.environment["HOME"] ?? NSHomeDirectory())
     }
 }

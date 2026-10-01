@@ -1,0 +1,182 @@
+{
+ "schema": 1,
+ "suite": "m5_screen",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "ocr/plain",
+   "input": {
+    "image": "m5_ocr/plain.png",
+    "sha256": "371779905f507aa8daa8ed7d9d8dcbfb8807b039e37f0453d5209593f77cc982"
+   },
+   "expected": {
+    "text": "The quick brown fox jumps over the lazy dog.\nNative JARVIS reads the screen with the Vision framework,\none line per observation, joined with a newline.\nMeeting moved to Thursday at 3:30 PM in room 204."
+   }
+  },
+  {
+   "name": "ocr/code",
+   "input": {
+    "image": "m5_ocr/code.png",
+    "sha256": "2f43c62d9f163f5675eefff467b70f87188601018b80dfbd011d731b78f6a427"
+   },
+   "expected": {
+    "text": "func total(_ xs: [Int]) > Int {\nreturn xs. reduce (0, +) // sum\nif (a & b) || c != 0 { print(\"$5.00 @ 50%\") }\nlet path = \"/tmp/report_v2.txt\""
+   }
+  },
+  {
+   "name": "ocr/columns",
+   "input": {
+    "image": "m5_ocr/columns.png",
+    "sha256": "55178abbd3259644bc0f450d1d9f6a7cbbca920068f00fdf9bf1df28f1c725cf"
+   },
+   "expected": {
+    "text": "Left column heading\nApples cost two pounds.\nPears are on sale today.\nRight column heading\nTrains leave at noon.\nPlatform nine is closed."
+   }
+  },
+  {
+   "name": "ocr/dark",
+   "input": {
+    "image": "m5_ocr/dark.png",
+    "sha256": "2153e1422b92b23ef33807a01dd08d27efdc827eb29dbc820426a9db05455830"
+   },
+   "expected": {
+    "text": "Dark mode text is light on a dark background.\nBattery at 70 percent, on battery.\nDownloads folder: 12 items, 3.4 GB."
+   }
+  },
+  {
+   "name": "ocr/blank",
+   "input": {
+    "image": "m5_ocr/blank.png",
+    "sha256": "67bfe5c2e3fdbf3638a1b1ee79b56f4ed97694c29ef736034599d80f6754f601"
+   },
+   "expected": {
+    "text": ""
+   }
+  },
+  {
+   "name": "see_screen/plain",
+   "input": {
+    "image": "m5_ocr/plain.png"
+   },
+   "expected": {
+    "text": "The quick brown fox jumps over the lazy dog.\nNative JARVIS reads the screen with the Vision framework,\none line per observation, joined with a newline.\nMeeting moved to Thursday at 3:30 PM in room 204."
+   }
+  },
+  {
+   "name": "see_screen/code",
+   "input": {
+    "image": "m5_ocr/code.png"
+   },
+   "expected": {
+    "text": "func total(_ xs: [Int]) > Int {\nreturn xs. reduce (0, +) // sum\nif (a & b) || c != 0 { print(\"$5.00 @ 50%\") }\nlet path = \"/tmp/report_v2.txt\""
+   }
+  },
+  {
+   "name": "see_screen/columns",
+   "input": {
+    "image": "m5_ocr/columns.png"
+   },
+   "expected": {
+    "text": "Left column heading\nApples cost two pounds.\nPears are on sale today.\nRight column heading\nTrains leave at noon.\nPlatform nine is closed."
+   }
+  },
+  {
+   "name": "see_screen/dark",
+   "input": {
+    "image": "m5_ocr/dark.png"
+   },
+   "expected": {
+    "text": "Dark mode text is light on a dark background.\nBattery at 70 percent, on battery.\nDownloads folder: 12 items, 3.4 GB."
+   }
+  },
+  {
+   "name": "see_screen/blank",
+   "input": {
+    "image": "m5_ocr/blank.png"
+   },
+   "expected": {
+    "text": "Screen not accessible."
+   }
+  },
+  {
+   "name": "see_screen/capture_fails",
+   "input": {
+    "image": null
+   },
+   "expected": {
+    "text": "Screen not accessible."
+   }
+  },
+  {
+   "name": "screenshot/saved_p1",
+   "input": {
+    "epoch": 1790602215.123456,
+    "saved": true
+   },
+   "expected": {
+    "text": "Screenshot saved to your desktop, sir.",
+    "argv": [
+     "screencapture",
+     "-x",
+     "${JARVIS_HOME}/Desktop/JARVIS Screenshot 2026-09-28 at 14.30.15.png"
+    ]
+   }
+  },
+  {
+   "name": "screenshot/saved_single_digits",
+   "input": {
+    "epoch": 1788595507.0,
+    "saved": true
+   },
+   "expected": {
+    "text": "Screenshot saved to your desktop, sir.",
+    "argv": [
+     "screencapture",
+     "-x",
+     "${JARVIS_HOME}/Desktop/JARVIS Screenshot 2026-09-05 at 09.05.07.png"
+    ]
+   }
+  },
+  {
+   "name": "screenshot/saved_year_end",
+   "input": {
+    "epoch": 1798761599.999,
+    "saved": true
+   },
+   "expected": {
+    "text": "Screenshot saved to your desktop, sir.",
+    "argv": [
+     "screencapture",
+     "-x",
+     "${JARVIS_HOME}/Desktop/JARVIS Screenshot 2026-12-31 at 23.59.59.png"
+    ]
+   }
+  },
+  {
+   "name": "screenshot/failed",
+   "input": {
+    "epoch": 1790602215.123456,
+    "saved": false
+   },
+   "expected": {
+    "text": "The screenshot failed, sir — check Screen Recording permission.",
+    "argv": [
+     "screencapture",
+     "-x",
+     "${JARVIS_HOME}/Desktop/JARVIS Screenshot 2026-09-28 at 14.30.15.png"
+    ]
+   }
+  }
+ ]
+}

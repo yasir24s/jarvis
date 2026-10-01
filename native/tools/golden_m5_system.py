@@ -154,7 +154,7 @@ _LAPTOP = {"memory": {"memsize": 8 * _GIB, "page": 16384, "free_count": 12216, "
            "wifi": "Current Wi-Fi Network: Home Net\n",
            "ps": " %CPU COMM\n 40.3 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n"
                  "  8.1 /usr/libexec/logd\n"}
-_NOW = 1790582415                      # P1 Mon 2026-09-28 14:30:15 (London) as a whole second
+_NOW = 1790582415                      # Mon 2026-09-28 09:00:15 London: the default epoch + 15 s
 
 
 def _battery_cases():

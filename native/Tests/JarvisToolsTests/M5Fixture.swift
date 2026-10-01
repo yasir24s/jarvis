@@ -1,4 +1,6 @@
+import CoreGraphics
 import Foundation
+import ImageIO
 import JarvisCore
 @testable import JarvisTools
 import Testing
@@ -89,10 +91,58 @@ final class FakeClipboard: ClipboardReading, @unchecked Sendable {
     }
 }
 
+/// A screen that "captures" a fixture image (or fails). Counts its captures.
+final class FixtureScreen: ScreenCapturing, @unchecked Sendable {
+    private let lock = NSLock()
+    private let image: CGImage?
+    private var count = 0
+
+    init(_ image: CGImage?) { self.image = image }
+
+    /// A PNG from Tests/Fixtures/golden, decoded the way `_ocr_image` decodes it.
+    convenience init(fixture relative: String?) throws {
+        guard let relative else { self.init(nil); return }
+        self.init(try FixtureScreen.decode(relative))
+    }
+
+    static func decode(_ relative: String) throws -> CGImage {
+        let url = M5Fixture.url("x").deletingLastPathComponent().appending(path: relative)
+        let source = try #require(CGImageSourceCreateWithURL(url as CFURL, nil))
+        return try #require(CGImageSourceCreateImageAtIndex(source, 0, nil))
+    }
+
+    var captures: Int { lock.withLock { count } }
+
+    func captureMainDisplay() async -> CGImage? {
+        lock.withLock { count += 1 }
+        return image
+    }
+}
+
+/// Canned OCR text, for the reply rules the fixture images cannot reach. Counts its calls.
+final class FakeRecognizer: TextRecognizing, @unchecked Sendable {
+    private let lock = NSLock()
+    private let text: String
+    private var count = 0
+
+    init(_ text: String) { self.text = text }
+
+    var calls: Int { lock.withLock { count } }
+
+    func recognizeText(in image: CGImage) async -> String {
+        lock.withLock { count += 1 }
+        return text
+    }
+}
+
 extension ToolPlatform {
-    /// Fakes for everything; each test swaps in the reader it exercises.
+    /// Fakes for everything; each test swaps in the reader it exercises. The default home is a
+    /// path that does not exist, so nothing can be written under it by accident.
     static func fake(system: any SystemProbing = FakeSystemProbe(),
-                     clipboard: any ClipboardReading = FakeClipboard(nil)) -> ToolPlatform {
-        ToolPlatform(system: system, clipboard: clipboard)
+                     clipboard: any ClipboardReading = FakeClipboard(nil),
+                     screen: any ScreenCapturing = FixtureScreen(nil),
+                     recognizer: any TextRecognizing = FakeRecognizer(""),
+                     home: String = "/nonexistent/jarvis-test-home") -> ToolPlatform {
+        ToolPlatform(system: system, clipboard: clipboard, screen: screen, recognizer: recognizer, home: home)
     }
 }
