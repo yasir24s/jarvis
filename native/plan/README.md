@@ -569,6 +569,27 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
   `""` for a clipboard that holds only rich text, where Python returns the RTF source.
   `delete_file` trashes through `FileManager` without Finder automation, which also ends
   Python's false failure for a file whose name contains "error".
+- **D-57. Memory is the user's, the persona is the product's** (user, 2026-10-01). After other
+  people's documents were stored as his facts, the user decided:
+  - **Other people's documents** give nothing unless the user's own name appears in them.
+    When it does, a few notes are kept as about that person (relationship and money
+    details), never their health details or identifiers, and never as the user's. The check
+    runs in code against the Mac account's full name (DEV-P4-01).
+  - **Old wrong facts:** only the wrong ones were removed, 39 facts from 6 documents, with
+    backups outside the repository.
+  - **The J.A.R.V.I.S. persona belongs to the product** and lives in source. Memory belongs
+    to each user, stays on their Mac and never goes in git; the repository is public. A new
+    install starts with blank memory and learns from files only after the user allows it.
+    This user's memory stays private on this Mac.
+  - **P6** builds the compiled persona base, memory that can't be lost, automatic compiling
+    of chats, a one-time import of the Python-era conversations, and first-run consent.
+  - **Push-to-talk** comes right after P6. The user called it "important".
+- **D-54, as built (2026-10-01, P5).** The user chose 4 steps after hearing both settings:
+  the same words, made in 7.7 s instead of 18 s. Speech runs at speed 1.15, about 160 words
+  a minute against 140. Every part plays at −11 LUFS, with a look-ahead limiter holding peaks
+  0.1 dB under −1 dBFS. A reply is split at a sentence end only when a part's audio covers the
+  next part's generation; otherwise it is spoken whole. Live and under load, first audio came
+  after 6.4 to 7.4 s for replies of 78 to 120 characters, against 18 to 21 s before.
 
 ## Open user decisions
 
