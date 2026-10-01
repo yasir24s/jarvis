@@ -13,9 +13,11 @@ final class AppVoice {
 
     init() {
         let folder = FileManager.default.temporaryDirectory.appending(path: "jarvis-voice", directoryHint: .isDirectory)
-        let f5 = F5Engine(launcher: VoiceHelperSetup.inApp(log: folder.appending(path: "helper.log")))
+        let setup = VoiceHelperSetup.inApp(log: folder.appending(path: "helper.log"))
+        let f5 = F5Engine(launcher: setup)
         self.f5 = f5
         queue = SpeechQueue(engine: f5, fallback: SayEngine(), player: EnginePlayer(),
+                            timing: SpeechQueue.f5Timing.at(speed: setup.speed),
                             helperFootprintMB: { f5.lastFootprintMB },
                             log: { JarvisLog.log($0, category: .voice) })
     }

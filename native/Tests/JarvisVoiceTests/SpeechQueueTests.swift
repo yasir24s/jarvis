@@ -29,6 +29,15 @@ struct SpeechChunkingTests {
         #expect(SpeechQueue.f5Timing.gap(after: 18, before: 79) > 6)
     }
 
+    /// At speed 1.15 a character gets 1/1.15 of the frames: its audio and its share of the
+    /// generation shrink, the reference's 2.83 s does not.
+    @Test func theTimingFollowsTheSpeed() {
+        let fast = SpeechQueue.f5Timing.at(speed: 1.15)
+        #expect(abs(fast.audio(115) - SpeechQueue.f5Timing.audio(100)) < 1e-9)
+        #expect(abs(fast.generation(115) - SpeechQueue.f5Timing.generation(100)) < 1e-9)
+        #expect(fast.generation(0) == SpeechQueue.f5Timing.generation(0))
+    }
+
     /// The first boundary that passes is used, so the voice starts as early as it can.
     @Test func theEarliestBoundaryWithNoGapIsUsed() {
         let instant = SpeechQueue.Timing(generationSeconds: 0, generationSecondsPerChar: 0, audioSecondsPerChar: 0.07)

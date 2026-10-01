@@ -7,7 +7,7 @@ import Vocos
 // jarvis-voice: the F5-TTS helper JARVIS speaks through (plan D-54).
 //
 //   jarvis-voice --assets <dir> --out-dir <dir> [--cache-limit-mb 512] [--steps 8]
-//                [--idle-exit 300] [--selftest]
+//                [--speed 1] [--idle-exit 300] [--selftest]
 //
 // Protocol: one JSON object per line on stdin, one per line on stdout.
 //   {"id": "<uuid>", "text": "<clean text>"}
@@ -28,6 +28,7 @@ struct Options {
     var outDir: URL?
     var cacheLimitMB = 512
     var steps = 8
+    var speed = 1.0
     var idleExitSeconds = 300.0
     var selftest = false
 }
@@ -36,7 +37,7 @@ func usage(_ message: String) -> Never {
     FileHandle.standardError.write(Data((
         "jarvis-voice: \(message)\n"
             + "usage: jarvis-voice --assets <dir> --out-dir <dir> [--cache-limit-mb N] [--steps N]"
-            + " [--idle-exit S] [--selftest]\n").utf8))
+            + " [--speed X] [--idle-exit S] [--selftest]\n").utf8))
     exit(2)
 }
 
@@ -59,6 +60,9 @@ func parseOptions(_ args: [String]) -> Options {
         case "--steps":
             guard let n = Int(next(flag)), n > 0 else { usage("\(flag) takes a positive number") }
             options.steps = n
+        case "--speed":
+            guard let s = Double(next(flag)), s > 0 else { usage("\(flag) takes a positive number") }
+            options.speed = s
         case "--idle-exit":
             guard let s = Double(next(flag)), s > 0 else { usage("\(flag) takes seconds") }
             options.idleExitSeconds = s
@@ -97,9 +101,9 @@ struct HelperError: Error, CustomStringConvertible {
 }
 
 /// The loaded F5 model, vocoder and reference. Settings are F5's defaults (rk4, cfg 2,
-/// sway -1, speed 1); only the step count is an argument.
+/// sway -1) but for the step count and the speed, which are arguments. As in F5, the speed
+/// only sets the duration: the text gets 1/speed of the reference's frames per byte.
 final class Voice {
-    static let speed = 1.0
     static let maxFrames = 4096  // F5TTS.sample's maxDuration
 
     let f5: F5TTS
@@ -108,8 +112,9 @@ final class Voice {
     let refSamples: Int
     let refText: String
     let steps: Int
+    let speed: Double
 
-    init(assets: URL, steps: Int) throws {
+    init(assets: URL, steps: Int, speed: Double) throws {
         let files = [
             "f5/model.safetensors", "f5/vocab.txt", "vocos/model.safetensors", "vocos/config.json",
             "reference/reference.wav", "reference/reference.txt",
@@ -134,6 +139,7 @@ final class Voice {
         refCond = F5TTS.normalizeAudio(audio: refAudio).expandedDimensions(axis: 0)
         MLX.eval(refCond)
         self.steps = steps
+        self.speed = speed
     }
 
     /// Duration in frames by F5's own rule (no duration model): reference frames plus
@@ -141,7 +147,7 @@ final class Voice {
     func frames(for text: String) -> Int {
         let refFrames = refSamples / F5TTS.hopLength
         return refFrames
-            + Int(Double(refFrames) / Double(refText.utf8.count) * Double(text.utf8.count) / Voice.speed)
+            + Int(Double(refFrames) / Double(refText.utf8.count) * Double(text.utf8.count) / speed)
     }
 
     /// Text in, 24 kHz mono samples out (the reference part cut off).
@@ -257,7 +263,7 @@ var voice: Voice?
 func loadedVoice() throws -> Voice {
     if let voice { return voice }
     let start = ContinuousClock.now
-    let loaded = try Voice(assets: assets, steps: options.steps)
+    let loaded = try Voice(assets: assets, steps: options.steps, speed: options.speed)
     voice = loaded
     log("model loaded in \(String(format: "%.2f", seconds(ContinuousClock.now - start))) s")
     return loaded

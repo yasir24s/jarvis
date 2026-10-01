@@ -34,10 +34,17 @@ public actor SpeechQueue {
         /// The silence before a part of `next` characters, which generates while a part of
         /// `current` characters plays.
         public func gap(after current: Int, before next: Int) -> Double { max(0, generation(next) - audio(current)) }
+
+        /// The same voice at F5 speed `speed`: a character gets 1/speed of the frames, so its
+        /// audio and its share of the generation shrink by that much; the reference's share stays.
+        public func at(speed: Double) -> Timing {
+            Timing(generationSeconds: generationSeconds, generationSecondsPerChar: generationSecondsPerChar / speed,
+                   audioSecondsPerChar: audioSecondsPerChar / speed)
+        }
     }
 
-    /// F5 at 4 steps with the short reference, fitted to the live run of 2026-10-01 with the
-    /// machine under load (1-minute load average about 5): parts of 18, 79 and 97 characters took
+    /// F5 at 4 steps and speed 1 with the short reference, fitted to the live run of 2026-10-01
+    /// with the machine under load (1-minute load average about 5): parts of 18, 79 and 97 characters took
     /// 3.8 to 3.9, 7.2 and 8.5 s to generate (within 0.15 s of the fit) and gave 1.21, 5.16 and
     /// 6.41 s of audio. F5 makes a part's audio the reference's length per character of its text.
     public static let f5Timing = Timing(generationSeconds: 2.83, generationSecondsPerChar: 0.0568,

@@ -6,6 +6,9 @@ import Foundation
 /// 5 idle minutes, which hands the helper's memory back to the system. D-54 had 8 steps; the
 /// user chose 4 on 2026-10-01, when one 5.8 s sentence took 7.7 s at 4 against 18.0 s at 8
 /// with the words exact at both. A `cfg` of 0 garbled the words, so cfg keeps its default.
+/// The speed is the `voiceSpeed` setting (P5): at F5's own speed of 1 the clone spoke about 140
+/// words a minute, under conversation's 155 to 165. A changed setting reaches the helper when
+/// it next starts.
 public struct VoiceHelperSetup: VoiceHelperLauncher {
     /// What the helper loads from `assets` (install-voice-assets.sh copies exactly these).
     public static let assetFiles = [
@@ -15,27 +18,46 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
     public static let cacheLimitMB = 512
     public static let steps = 4
     public static let idleExitSeconds = 300
+    /// Where `voiceSpeed` is read from: SpeechQueue's suite.
+    public static let speedKey = "voiceSpeed"
+    public static let defaultSpeed = 1.15
+    public static let speedRange = 0.8...1.4
 
     public let executable: URL
     public let assets: URL
     public let outDirectory: URL
     /// The helper's stderr is appended here; nil discards it.
     public let log: URL?
+    /// F5's speed: 1 is the reference's own pace.
+    public let speed: Double
 
-    public init(executable: URL, assets: URL, outDirectory: URL, log: URL?) {
+    public init(executable: URL, assets: URL, outDirectory: URL, log: URL?, speed: Double = VoiceHelperSetup.defaultSpeed) {
         self.executable = executable
         self.assets = assets
         self.outDirectory = outDirectory
         self.log = log
+        self.speed = speed
     }
 
-    /// The app's own helper, the installed assets, and a folder of the user's temporary directory.
-    public static func inApp(bundle: Bundle = .main, log: URL?) -> VoiceHelperSetup {
+    /// `voiceSpeed` from the app's defaults, clamped to `speedRange`, or `defaultSpeed` when it is
+    /// unset or not a number.
+    public static func speed(in defaults: UserDefaults?) -> Double {
+        guard let value = (defaults?.object(forKey: speedKey) as? NSNumber)?.doubleValue, value.isFinite else {
+            return defaultSpeed
+        }
+        return min(max(value, speedRange.lowerBound), speedRange.upperBound)
+    }
+
+    /// The app's own helper, the installed assets, a folder of the user's temporary directory, and
+    /// the `voiceSpeed` setting.
+    public static func inApp(bundle: Bundle = .main, log: URL?,
+                             defaults: UserDefaults? = UserDefaults(suiteName: SpeechQueue.defaultsSuite)) -> VoiceHelperSetup {
         VoiceHelperSetup(
             executable: bundle.bundleURL.appending(path: "Contents/Helpers/jarvis-voice", directoryHint: .notDirectory),
             assets: installedAssets,
             outDirectory: FileManager.default.temporaryDirectory.appending(path: "jarvis-voice", directoryHint: .isDirectory),
-            log: log)
+            log: log,
+            speed: speed(in: defaults))
     }
 
     /// `~/Library/Application Support/JARVIS/voice/`.
@@ -47,7 +69,7 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
     public var arguments: [String] {
         ["--assets", assets.path(percentEncoded: false), "--out-dir", outDirectory.path(percentEncoded: false),
          "--cache-limit-mb", String(Self.cacheLimitMB), "--steps", String(Self.steps),
-         "--idle-exit", String(Self.idleExitSeconds)]
+         "--speed", String(speed), "--idle-exit", String(Self.idleExitSeconds)]
     }
 
     public func isInstalled() -> Bool {
