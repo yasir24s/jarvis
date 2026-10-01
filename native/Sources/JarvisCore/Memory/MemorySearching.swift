@@ -11,4 +11,8 @@ public protocol MemorySearching: Sendable {
     /// keyword, best first. They are what was said, word for word, so the caller shows them as
     /// information only.
     func searchConversations(_ query: String) -> [ArchiveEntry]
+
+    /// P6b: the task journal's calls (`MemoryStore.journalEntries`) that match `query` by
+    /// keyword, best first.
+    func searchJournal(_ query: String) -> [JournalEntry]
 }

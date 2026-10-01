@@ -107,6 +107,27 @@ public final class MemoryStore: Sendable {
         return true
     }
 
+    // MARK: - The task journal (P6b)
+
+    /// Appends one tool call to memory/journal.jsonl, stamped now (`JournalEntry`: the arguments
+    /// summarised and the reply cut, both redacted; `reply` nil keeps none), then the hourly
+    /// backup. False when the lease is not held or the write failed.
+    @discardableResult
+    public func journal(tool: String, outcome: JournalEntry.Outcome, args: JSONObject, reply: String?) -> Bool {
+        let entry = JournalEntry(timestamp: clock.now(), timeZone: timeZone, tool: tool, outcome: outcome,
+                                 args: args, reply: reply)
+        guard store.appendLine(entry.line, to: .journal) else { return false }
+        let store = store
+        backups.afterAppend(.journal) { store.read(.journal) }
+        return true
+    }
+
+    /// Every call in the journal, oldest first. Lines that do not parse are skipped.
+    public func journalEntries() -> [JournalEntry] {
+        guard let data = store.read(.journal) else { return [] }
+        return data.split(separator: 0x0A).compactMap { JournalEntry(line: Data($0)) }
+    }
+
     // MARK: - Facts
 
     /// The facts file: empty when there is none yet, nil when one exists and cannot be read
@@ -262,15 +283,15 @@ public final class MemoryStore: Sendable {
     }
 
     /// Run once at launch, before anything writes. For facts.json, personality.json,
-    /// profile.json and (P6b) both archives: an unreadable file (empty, damaged, or not that
-    /// file's shape; for an archive, lines of which not one is a message) is replaced by its newest
-    /// readable backup and logged, its bytes put aside as `<file>-<now>.unreadable`. A file
-    /// holding more than `dropShare` fewer entries than its newest backup, beyond the facts
-    /// forgotten since that backup, is logged as a warning and both are kept: the backup is put
-    /// aside as `<file>-<stamp>.kept.json` (`.kept.jsonl` for an archive), out of the rotation.
-    /// A missing file counts as empty.
-    /// Then the forgotten bin drops what is past 30 days, and each readable file that has no
-    /// backup from the last hour gets one. Shared files are copied byte for byte.
+    /// profile.json and (P6b) both archives and the journal: an unreadable file (empty, damaged,
+    /// or not that file's shape; for an archive or the journal, lines of which not one is an
+    /// entry) is replaced by its newest readable backup and logged, its bytes put aside as
+    /// `<file>-<now>.unreadable`. A file holding more than `dropShare` fewer entries than its
+    /// newest backup, beyond the facts forgotten since that backup, is logged as a warning and both
+    /// are kept: the backup is put aside as `<file>-<stamp>.kept.json` (`.kept.jsonl` for the
+    /// JSON-lines files), out of the rotation. A missing file counts as empty. Then the forgotten
+    /// bin drops what is past 30 days, and each readable file that has no backup from the last hour
+    /// gets one. Shared files are copied byte for byte.
     @discardableResult
     public func checkAtLaunch() -> [BackedUpFile: LaunchFinding] {
         factsLock.withLock { _ in
@@ -310,6 +331,7 @@ public final class MemoryStore: Sendable {
             case .profile: store.restore(.profile, bytes: backup.data)
             case .archive: store.write(backup.data, to: .archive)
             case .pythonArchive: store.write(backup.data, to: .pythonArchive)
+            case .journal: store.write(backup.data, to: .journal)
             }
             guard restored else {
                 log("memory: \(name) is unreadable and its backup could not be put back; left as it is")

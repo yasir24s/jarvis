@@ -11,16 +11,20 @@ public actor ToolGateway {
     private let confirmationGate: ConfirmationGate
     private let log: @Sendable (String) -> Void
     private let research: (any ResearchCounting)?
+    private let journal: ToolJournal?
 
-    /// Production callers supply their research counter; isolated tests may omit it.
+    /// Production callers supply their research counter; isolated tests may omit it. P6b: with
+    /// `journal`, every call is noted in the task journal once it is answered.
     public init(confirmationGate: ConfirmationGate = .shared,
                 log: @escaping @Sendable (String) -> Void = {
                     JarvisLog.log($0, category: .tools)
                 },
-                research: (any ResearchCounting)? = nil) {
+                research: (any ResearchCounting)? = nil,
+                journal: ToolJournal? = nil) {
         self.confirmationGate = confirmationGate
         self.log = log
         self.research = research
+        self.journal = journal
     }
 
     /// Registers an implementation for later milestones. Registration is deliberately an
@@ -49,7 +53,9 @@ public actor ToolGateway {
     public func call(_ name: String, _ args: JSONObject, turn: TurnContext,
                      origin: ToolOrigin, live: (@Sendable () async -> Bool)? = nil) async -> ToolCallResult {
         await turn.enqueue { [self] in
-            await self.execute(name, args, turn: turn, origin: origin, live: live)
+            let result = await self.execute(name, args, turn: turn, origin: origin, live: live)
+            self.journal?.note(name, args, result)
+            return result
         }
     }
 
@@ -138,7 +144,7 @@ public actor ToolGateway {
                 return await result(text, name: name, origin: origin, outcome: .ran,
                                     error: false, turn: turn)
             case .needsConfirmation(let desc, let action):
-                await confirmationGate.stash(desc: desc, action: action, turn: turn)
+                await confirmationGate.stash(desc: desc, action: journaled(action, name: name, args: args), turn: turn)
                 return await result(GuardStrings.gatePrompt(desc), name: name, origin: origin,
                                     outcome: .gated, error: false, turn: turn)
             }
@@ -148,20 +154,45 @@ public actor ToolGateway {
         }
     }
 
+    /// P6b: a tool's own confirmed action, noted in the journal when it runs (ran, or failed when
+    /// it throws). Without a journal, the action itself.
+    private func journaled(_ action: @escaping @Sendable () async throws -> String, name: String,
+                           args: JSONObject) -> @Sendable () async throws -> String {
+        guard let journal else { return action }
+        return {
+            do {
+                let text = try await action()
+                journal.note(name, args, outcome: .ran, reply: text)
+                return text
+            } catch {
+                journal.note(name, args, outcome: .failed, reply: String(describing: error))
+                throw error
+            }
+        }
+    }
+
     private func runConfirmed(name: String, args: JSONObject, turn: TurnContext,
                               origin: ToolOrigin, verified: VerifiedShellCommand) async -> String {
-        guard let handler = handlers[name] else { return GuardStrings.unknownTool(name) }
+        let (text, outcome) = await confirmedRun(name: name, args: args, turn: turn, origin: origin,
+                                                 verified: verified)
+        journal?.note(name, args, outcome: outcome, reply: text)
+        return text
+    }
+
+    private func confirmedRun(name: String, args: JSONObject, turn: TurnContext, origin: ToolOrigin,
+                              verified: VerifiedShellCommand) async -> (String, JournalEntry.Outcome) {
+        guard let handler = handlers[name] else { return (GuardStrings.unknownTool(name), .failed) }
         do {
             let context = ToolRunContext(toolName: name, origin: origin, turn: turn,
                                          verifiedShellCommand: verified)
             let outcome = try await handler.run(args, context)
             switch outcome {
-            case .text(let text): return text
+            case .text(let text): return (text, .ran)
             case .needsConfirmation:
-                return GuardStrings.confirmFailed("confirmation requested twice")
+                return (GuardStrings.confirmFailed("confirmation requested twice"), .failed)
             }
         } catch {
-            return GuardStrings.confirmFailed(String(describing: error))
+            return (GuardStrings.confirmFailed(String(describing: error)), .failed)
         }
     }
 

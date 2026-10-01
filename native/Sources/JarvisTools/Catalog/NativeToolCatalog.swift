@@ -8,7 +8,7 @@ public enum NativeToolCatalog {
     public static let memoryTools: [ToolSchema] = [
         ToolSchema(
             name: "search_memory",
-            description: "Search your long-term memory of the user and the people in their life (from earlier conversations and the user's files), by keyword and meaning together. Returns each note's id and text, then, listed apart, up to 10 messages from your past conversations that share a key word with the query, each with its date and who said it. The MEMORY block in your prompt holds only a few notes, so search here before saying you don't know or don't remember something. An empty query lists the newest notes.",
+            description: "Search your long-term memory of the user and the people in their life (from earlier conversations and the user's files), by keyword and meaning together. Returns each note's id and text, then, listed apart, up to 10 messages from your past conversations that share a key word with the query, each with its date and who said it, and up to 10 of your past tool calls from your task journal. The MEMORY block in your prompt holds only a few notes, so search here before saying you don't know or don't remember something. An empty query lists the newest notes.",
             parametersJSON: #"{"type": "object", "properties": {"query": {"type": "string", "description": "Words or a question to look for"}}, "required": ["query"]}"#),
         ToolSchema(
             name: "forget_memory",

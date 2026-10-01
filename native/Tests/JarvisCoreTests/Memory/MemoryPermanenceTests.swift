@@ -447,6 +447,27 @@ struct MemoryPermanenceTests {
         #expect(bytes(rig.backupDir + "/archive-\(copy).kept.jsonl") == good)
     }
 
+    /// The task journal (P6b part 5): an append is followed by the hourly copy, and the launch
+    /// check puts an unreadable journal back from it.
+    @Test func theJournalIsBackedUpAndCheckedAtLaunch() throws {
+        let rig = try Rig()
+        defer { rig.sb.remove() }
+        for k in 0..<3 {
+            #expect(rig.memory.journal(tool: "get_time", outcome: .ran, args: JSONObject(), reply: "It is \(k), sir."))
+        }
+        let path = rig.path("memory/journal.jsonl")
+        let good = try #require(bytes(path))
+        #expect(rig.memory.journalEntries().map(\.reply) == ["It is 0, sir.", "It is 1, sir.", "It is 2, sir."])
+        #expect(rig.backupNames() == ["journal-\(Int64(epoch)).jsonl"])
+        rig.clock.advance(3_600)
+        #expect(rig.memory.checkAtLaunch()[.journal] == .fine)                  // and a copy of all three
+        #expect(rig.memory.backups.newestReadable(.journal)?.entries == 3)
+        try Data("garbage\n".utf8).write(to: URL(fileURLWithPath: path))
+        rig.clock.advance(60)
+        #expect(rig.memory.checkAtLaunch()[.journal] == .restored(stamp: Int64(epoch) + 3_600))
+        #expect(bytes(path) == good)
+    }
+
     /// The Python-era archive: written whole (again, nothing repeats), copied, searched with the
     /// chats, and put back at launch when it cannot be read.
     @Test func thePythonEraArchiveIsBackedUpAndCheckedAtLaunch() throws {

@@ -115,7 +115,8 @@ public final class BrainAssembly: Sendable {
         let brainLog: @Sendable (String) -> Void = { log($0, .brain) }
         self.core = core
         confirmations = ConfirmationGate()
-        gateway = ToolGateway(confirmationGate: confirmations, log: { log($0, .tools) }, research: research)
+        gateway = ToolGateway(confirmationGate: confirmations, log: { log($0, .tools) }, research: research,
+                              journal: memory.map { ToolJournal(memory: $0) })
         registry = MCPTurnRegistry(runDirectory: runDirectory)
         let claudeTools = Self.claudeTools(memory: memory != nil)
         server = MCPServer(runDirectory: runDirectory, registry: registry, gateway: gateway,
