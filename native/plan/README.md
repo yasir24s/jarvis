@@ -505,6 +505,16 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
     Claude's reading has an hourly cap, and scanning pauses while a turn runs, so the user's
     subscription stays free for conversation. An index of path, size, modification time and
     digest means unchanged files are never read twice.
+  - **As built (P3, 2026-10-01).** The scan starts 120 s after the brain. It walks the home
+    folder, then iCloud Drive, reading txt, md, rtf, rtfd, docx, pdf and csv (in a git
+    repository, only README files; never source code). It also skips bundles, archives, disk
+    images, binaries, files over 20 MB and iCloud files not on the Mac: a dataless folder is
+    never listed and a dataless file never opened. The on-device model takes a document when
+    it fits 0.6 of the model's context, counted with its tokenizer (about 22,400 characters
+    on macOS 27.2). Claude takes the rest in parts of up to 100,000 characters, at most 10
+    files an hour. File names and paths never reach either model. The scan backs off when the
+    Mac is hot or in Low Power Mode, and stops at quit before the lock is released.
+    Registered as DEV-P3-01.
   - **File text is untrusted.** The extraction prompts ask only for facts about the user.
     Candidate facts that carry instructions, commands or URLs to fetch are dropped, and the
     prompt shows memory as information, never as instructions.
