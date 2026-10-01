@@ -41,9 +41,10 @@ struct SystemFileTokenCounter: FileTokenCounting {
 /// `FileReading.localCharacterEstimate` characters.
 ///
 /// Measured by `FileBudgetLiveProbeTests` on macOS 27.2 with the real tokenizer: contextSize
-/// 8192, so a limit of 4915 tokens; the instructions 226 tokens (799 characters); prose 4.79
-/// characters a token. About 22,400 characters of text fit there, and about 10,600 where
-/// contextSize reads its back-deployed 4096 (before macOS 27).
+/// 8192, so a limit of 4915 tokens; P4's instructions, with an invented two-word name, 474
+/// tokens (1,787 characters; P3's were 226); prose 4.79 characters a token. About 21,200
+/// characters of text fit there, and about 9,500 where contextSize reads its back-deployed
+/// 4096 (before macOS 27).
 public final class LocalFileBudget: Sendable {
     /// The share LocalToolset gives tools and instructions, for the same reason.
     public static let share = 0.6
