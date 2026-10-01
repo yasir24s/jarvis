@@ -1,4 +1,5 @@
 import AppKit
+import CoreLocation
 import Observation
 import JarvisBrain
 import JarvisChat
@@ -36,6 +37,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var sigterm: DispatchSourceSignal?
     /// Opens the chat window. Set by the window each time it appears, for the Dock icon.
     var openChat: (() -> Void)?
+    /// get_wifi_status reads the network name through CoreWLAN, which returns none without
+    /// Location Services. Kept alive for the app's life, as CLLocationManager must be.
+    private let location = CLLocationManager()
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         // A regular app with a Dock icon (D-43); main thread by isolation.
@@ -45,6 +49,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         installSIGTERMHandler()
+        // Asked once: macOS shows the prompt only while the user has not decided.
+        if location.authorizationStatus == .notDetermined {
+            location.requestWhenInUseAuthorization()
+        }
 
         let paths: StatePaths
         do {

@@ -12,6 +12,10 @@
 	<string>JARVIS</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
+	<key>NSLocationUsageDescription</key>
+	<string>JARVIS needs this to read the name of your Wi-Fi network when you ask about your connection.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>JARVIS needs this to read the name of your Wi-Fi network when you ask about your connection.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleInfoDictionaryVersion</key>

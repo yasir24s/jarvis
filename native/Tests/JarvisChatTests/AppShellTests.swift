@@ -47,4 +47,14 @@ struct AppShellTests {
         let source = Self.native.deletingLastPathComponent().appending(path: "jarvis_icon.png")
         #expect(FileManager.default.fileExists(atPath: source.path(percentEncoded: false)))
     }
+
+    @Test("Info.plist explains the Location request that get_wifi_status needs for the network name")
+    func locationUsageStrings() throws {
+        let data = try Data(contentsOf: Self.native.appending(path: "Resources/Info.plist"))
+        let plist = try #require(try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
+        for key in ["NSLocationUsageDescription", "NSLocationWhenInUseUsageDescription"] {
+            let text = try #require(plist[key] as? String, "\(key) is missing")
+            #expect(text.contains("Wi-Fi network"))
+        }
+    }
 }
