@@ -1,0 +1,1396 @@
+{
+ "schema": 1,
+ "suite": "m5_spotlight",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "search/report",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "report"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt\n/Volumes/Work/Projects/report-03.txt\n"
+   },
+   "expected": {
+    "text": "Found 3: report-01.txt, report-02.txt, report-03.txt.\n/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt\n/Volumes/Work/Projects/report-03.txt",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*report*'cd || kMDItemTextContent == '*report*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/zero_hits",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "nothing here"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "No matching files found, sir.",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*nothing here*'cd || kMDItemTextContent == '*nothing here*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/six_hits",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "report"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt\n/Volumes/Work/Projects/report-03.txt\n/Volumes/Work/Projects/report-04.txt\n/Volumes/Work/Projects/report-05.txt\n/Volumes/Work/Projects/report-06.txt\n"
+   },
+   "expected": {
+    "text": "Found 6: report-01.txt, report-02.txt, report-03.txt, report-04.txt, report-05.txt, report-06.txt.\n/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt\n/Volumes/Work/Projects/report-03.txt\n/Volumes/Work/Projects/report-04.txt\n/Volumes/Work/Projects/report-05.txt\n/Volumes/Work/Projects/report-06.txt",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*report*'cd || kMDItemTextContent == '*report*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/seven_hits",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "report"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt\n/Volumes/Work/Projects/report-03.txt\n/Volumes/Work/Projects/report-04.txt\n/Volumes/Work/Projects/report-05.txt\n/Volumes/Work/Projects/report-06.txt\n/Volumes/Work/Projects/report-07.txt\n"
+   },
+   "expected": {
+    "text": "Found 7: report-01.txt, report-02.txt, report-03.txt, report-04.txt, report-05.txt, report-06.txt, and 1 more.\n/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt\n/Volumes/Work/Projects/report-03.txt\n/Volumes/Work/Projects/report-04.txt\n/Volumes/Work/Projects/report-05.txt\n/Volumes/Work/Projects/report-06.txt\n/Volumes/Work/Projects/report-07.txt",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*report*'cd || kMDItemTextContent == '*report*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/twenty_hits",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "report"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt\n/Volumes/Work/Projects/report-03.txt\n/Volumes/Work/Projects/report-04.txt\n/Volumes/Work/Projects/report-05.txt\n/Volumes/Work/Projects/report-06.txt\n/Volumes/Work/Projects/report-07.txt\n/Volumes/Work/Projects/report-08.txt\n/Volumes/Work/Projects/report-09.txt\n/Volumes/Work/Projects/report-10.txt\n/Volumes/Work/Projects/report-11.txt\n/Volumes/Work/Projects/report-12.txt\n/Volumes/Work/Projects/report-13.txt\n/Volumes/Work/Projects/report-14.txt\n/Volumes/Work/Projects/report-15.txt\n/Volumes/Work/Projects/report-16.txt\n/Volumes/Work/Projects/report-17.txt\n/Volumes/Work/Projects/report-18.txt\n/Volumes/Work/Projects/report-19.txt\n/Volumes/Work/Projects/report-20.txt\n"
+   },
+   "expected": {
+    "text": "Found 12: report-01.txt, report-02.txt, report-03.txt, report-04.txt, report-05.txt, report-06.txt, and 6 more.\n/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt\n/Volumes/Work/Projects/report-03.txt\n/Volumes/Work/Projects/report-04.txt\n/Volumes/Work/Projects/report-05.txt\n/Volumes/Work/Projects/report-06.txt\n/Volumes/Work/Projects/report-07.txt\n/Volumes/Work/Projects/report-08.txt\n/Volumes/Work/Projects/report-09.txt\n/Volumes/Work/Projects/report-10.txt\n/Volumes/Work/Projects/report-11.txt\n/Volumes/Work/Projects/report-12.txt",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*report*'cd || kMDItemTextContent == '*report*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/quote",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "it's"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/it's here.txt\n"
+   },
+   "expected": {
+    "text": "Found 1: it's here.txt.\n/Volumes/Work/it's here.txt",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*it\\'s*'cd || kMDItemTextContent == '*it\\'s*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/backslash",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "a\\b"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/a\\b.txt\n"
+   },
+   "expected": {
+    "text": "Found 1: a\\b.txt.\n/Volumes/Work/a\\b.txt",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*a\\\\b*'cd || kMDItemTextContent == '*a\\\\b*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/both_escapes",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": " x\\'y "
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "No matching files found, sir.",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x\\\\\\'y*'cd || kMDItemTextContent == '*x\\\\\\'y*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/whitespace_query",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "   "
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt\n"
+   },
+   "expected": {
+    "text": "Found 2: report-01.txt, report-02.txt.\n/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt",
+    "argv": [
+     "mdfind",
+     "*"
+    ]
+   }
+  },
+  {
+   "name": "search/empty_query",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": ""
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt\n"
+   },
+   "expected": {
+    "text": "Found 2: report-01.txt, report-02.txt.\n/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt",
+    "argv": [
+     "mdfind",
+     "*"
+    ]
+   }
+  },
+  {
+   "name": "search/no_args",
+   "input": {
+    "tool": "search_files",
+    "args": {},
+    "timeout": false,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "No matching files found, sir.",
+    "argv": [
+     "mdfind",
+     "*"
+    ]
+   }
+  },
+  {
+   "name": "search/blank_lines",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "report"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "\n  \n/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt\n\t\n"
+   },
+   "expected": {
+    "text": "Found 2: report-01.txt, report-02.txt.\n/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*report*'cd || kMDItemTextContent == '*report*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/crlf_and_cr",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "report"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/a.txt\r\n/Volumes/Work/b.txt\r/Volumes/Work/c.txt\n"
+   },
+   "expected": {
+    "text": "Found 3: a.txt, b.txt, c.txt.\n/Volumes/Work/a.txt\n/Volumes/Work/b.txt\n/Volumes/Work/c.txt",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*report*'cd || kMDItemTextContent == '*report*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/other_line_breaks",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "odd"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/odd name.txt\n/Volumes/Work/odd\u000bvt.txt\n/Volumes/Work/oddnel.txt\n"
+   },
+   "expected": {
+    "text": "Found 6: odd, name.txt, odd, vt.txt, odd, nel.txt.\n/Volumes/Work/odd\nname.txt\n/Volumes/Work/odd\nvt.txt\n/Volumes/Work/odd\nnel.txt",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*odd*'cd || kMDItemTextContent == '*odd*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/unicode_names",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "café"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/café menu.pdf\n/Volumes/Work/日本語.txt\n/Volumes/Work/😀.png\n"
+   },
+   "expected": {
+    "text": "Found 3: café menu.pdf, 日本語.txt, 😀.png.\n/Volumes/Work/café menu.pdf\n/Volumes/Work/日本語.txt\n/Volumes/Work/😀.png",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*café*'cd || kMDItemTextContent == '*café*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/trailing_slash_dir",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "proj"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/Projects/\n"
+   },
+   "expected": {
+    "text": "Found 1: .\n/Volumes/Work/Projects/",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*proj*'cd || kMDItemTextContent == '*proj*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/non_str_query",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": 5
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'strip'",
+    "argv": null
+   }
+  },
+  {
+   "name": "search/falsy_query",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": 0
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "No matching files found, sir.",
+    "argv": [
+     "mdfind",
+     "*"
+    ]
+   }
+  },
+  {
+   "name": "search/none_query",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": null
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/Projects/report-01.txt\n"
+   },
+   "expected": {
+    "text": "Found 1: report-01.txt.\n/Volumes/Work/Projects/report-01.txt",
+    "argv": [
+     "mdfind",
+     "*"
+    ]
+   }
+  },
+  {
+   "name": "find/kind_pdf",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "",
+     "kind": "pdf"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt\n"
+   },
+   "expected": {
+    "text": "Found 2: report-01.txt, report-02.txt.\n/Volumes/Work/Projects/report-01.txt\n/Volumes/Work/Projects/report-02.txt",
+    "argv": [
+     "mdfind",
+     "kMDItemContentType == 'com.adobe.pdf'"
+    ]
+   }
+  },
+  {
+   "name": "find/kind_with_query",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "tax",
+     "kind": "spreadsheet"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/Projects/report-01.txt\n"
+   },
+   "expected": {
+    "text": "Found 1: report-01.txt.\n/Volumes/Work/Projects/report-01.txt",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*tax*'cd || kMDItemTextContent == '*tax*'cd) && kMDItemContentTypeTree == 'public.spreadsheet'"
+    ]
+   }
+  },
+  {
+   "name": "find/unknown_kind",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "x",
+     "kind": "nosuchkind"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "No matching files found, sir.",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "find/kind_case_sensitive",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "x",
+     "kind": "PDF"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "No matching files found, sir.",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "find/kind_only_unknown",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "kind": "nosuchkind"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "No matching files found, sir.",
+    "argv": [
+     "mdfind",
+     "*"
+    ]
+   }
+  },
+  {
+   "name": "find/kind_int",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "x",
+     "kind": 5
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "No matching files found, sir.",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "find/kind_list",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "x",
+     "kind": [
+      "pdf"
+     ]
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "Tool error: cannot use 'list' as a dict key (unhashable type: 'list')",
+    "argv": null
+   }
+  },
+  {
+   "name": "find/kind_empty_list",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "x",
+     "kind": []
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "No matching files found, sir.",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "find/kind_dict",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "x",
+     "kind": {
+      "a": 1
+     }
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "Tool error: cannot use 'dict' as a dict key (unhashable type: 'dict')",
+    "argv": null
+   }
+  },
+  {
+   "name": "find/every_kind_code",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "main",
+     "kind": "code"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Volumes/Work/Projects/report-01.txt\n"
+   },
+   "expected": {
+    "text": "Found 1: report-01.txt.\n/Volumes/Work/Projects/report-01.txt",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*main*'cd || kMDItemTextContent == '*main*'cd) && kMDItemContentTypeTree == 'public.source-code'"
+    ]
+   }
+  },
+  {
+   "name": "find/kind_app",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "",
+     "kind": "app"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout": "/Applications/Safari.app\n"
+   },
+   "expected": {
+    "text": "Found 1: Safari.app.\n/Applications/Safari.app",
+    "argv": [
+     "mdfind",
+     "kMDItemContentType == 'com.apple.application-bundle'"
+    ]
+   }
+  },
+  {
+   "name": "search/timeout",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "report"
+    },
+    "timeout": true,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "Search error: Command '['mdfind', \"(kMDItemDisplayName == '*report*'cd || kMDItemTextContent == '*report*'cd)\"]' timed out after 15 seconds",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*report*'cd || kMDItemTextContent == '*report*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "find/timeout_recent",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "it's",
+     "recent": true
+    },
+    "timeout": true,
+    "files": [],
+    "stdout": ""
+   },
+   "expected": {
+    "text": "Search error: Command '['mdfind', '-onlyin', '${JARVIS_HOME}', \"(kMDItemDisplayName == '*it\\\\'s*'cd || kMDItemTextContent == '*it\\\\'s*'cd) && kMDItemFSContentChangeDate >= $time.this_week\"]' timed out after 15 seconds",
+    "argv": [
+     "mdfind",
+     "-onlyin",
+     "${JARVIS_HOME}",
+     "(kMDItemDisplayName == '*it\\'s*'cd || kMDItemTextContent == '*it\\'s*'cd) && kMDItemFSContentChangeDate >= $time.this_week"
+    ]
+   }
+  },
+  {
+   "name": "search/invalid_utf8_start",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "x"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout_hex": "2f566f6c756d65732f576f726b2f6f6b0a2f626164ff0a"
+   },
+   "expected": {
+    "text": "Search error: 'utf-8' codec can't decode byte 0xff in position 21: invalid start byte",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/invalid_utf8_continuation",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "x"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout_hex": "2f61e228a10a"
+   },
+   "expected": {
+    "text": "Search error: 'utf-8' codec can't decode byte 0xe2 in position 2: invalid continuation byte",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/invalid_utf8_truncated",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "x"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout_hex": "2f566f6c756d65732f576f726b2f6f6b0a2f62e282"
+   },
+   "expected": {
+    "text": "Search error: 'utf-8' codec can't decode bytes in position 19-20: unexpected end of data",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/invalid_utf8_surrogate",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "x"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout_hex": "2f73eda0800a"
+   },
+   "expected": {
+    "text": "Search error: 'utf-8' codec can't decode byte 0xed in position 2: invalid continuation byte",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/invalid_utf8_overlong",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "x"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout_hex": "2f6fc0af0a"
+   },
+   "expected": {
+    "text": "Search error: 'utf-8' codec can't decode byte 0xc0 in position 2: invalid start byte",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/invalid_utf8_f4_range",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "x"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout_hex": "2f66f49080800a"
+   },
+   "expected": {
+    "text": "Search error: 'utf-8' codec can't decode byte 0xf4 in position 2: invalid continuation byte",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/invalid_utf8_third_byte",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "x"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout_hex": "6162e282280a"
+   },
+   "expected": {
+    "text": "Search error: 'utf-8' codec can't decode bytes in position 2-3: invalid continuation byte",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/invalid_utf8_fourth_byte",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "x"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout_hex": "f09f98280a"
+   },
+   "expected": {
+    "text": "Search error: 'utf-8' codec can't decode bytes in position 0-2: invalid continuation byte",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/invalid_utf8_truncated_four",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "x"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout_hex": "2f780af09f"
+   },
+   "expected": {
+    "text": "Search error: 'utf-8' codec can't decode bytes in position 3-4: unexpected end of data",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/invalid_utf8_f5",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "x"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout_hex": "f5800a"
+   },
+   "expected": {
+    "text": "Search error: 'utf-8' codec can't decode byte 0xf5 in position 0: invalid start byte",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "search/invalid_utf8_after_valid_three",
+   "input": {
+    "tool": "search_files",
+    "args": {
+     "query": "x"
+    },
+    "timeout": false,
+    "files": [],
+    "stdout_hex": "ed9fbfeda00a"
+   },
+   "expected": {
+    "text": "Search error: 'utf-8' codec can't decode byte 0xed in position 3: invalid continuation byte",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*x*'cd || kMDItemTextContent == '*x*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "find/recent_all",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "recent": true
+    },
+    "timeout": false,
+    "files": [
+     [
+      "Documents/plan.txt",
+      1790500000250000000
+     ],
+     [
+      "Documents/notes.md",
+      1790590000500000000
+     ],
+     [
+      "Desktop/photo.png",
+      1790590000500000000
+     ],
+     [
+      "Downloads/old.zip",
+      1789000000000000000
+     ],
+     [
+      "Documents/Library/inside.txt",
+      1790599999000000000
+     ],
+     [
+      "Library/Caches/x.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/.hidden.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/build.LOG",
+      1790599999000000000
+     ],
+     [
+      "Documents/state.db-wal",
+      1790599999000000000
+     ],
+     [
+      "Documents/app.Plist",
+      1790599999000000000
+     ],
+     [
+      "Projects/node_modules/a.js",
+      1790599999000000000
+     ],
+     [
+      "Projects/.git/HEAD",
+      1790599999000000000
+     ],
+     [
+      "Projects/__pycache__/m.pyc",
+      1790599999000000000
+     ],
+     [
+      "Documents/same-a.txt",
+      1790580000000000000
+     ],
+     [
+      "Documents/same-b.txt",
+      1790580000000000000
+     ],
+     [
+      ".Trash/gone.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/near-1.txt",
+      1790580000000000000
+     ],
+     [
+      "Documents/near-2.txt",
+      1790580000000000238
+     ]
+    ],
+    "stdout": "${JARVIS_HOME}/Documents/plan.txt\n${JARVIS_HOME}/Documents/notes.md\n${JARVIS_HOME}/Desktop/photo.png\n${JARVIS_HOME}/Downloads/old.zip\n${JARVIS_HOME}/Documents/Library/inside.txt\n${JARVIS_HOME}/Library/Caches/x.txt\n${JARVIS_HOME}/Documents/.hidden.txt\n${JARVIS_HOME}/Documents/build.LOG\n${JARVIS_HOME}/Documents/state.db-wal\n${JARVIS_HOME}/Documents/app.Plist\n${JARVIS_HOME}/Projects/node_modules/a.js\n${JARVIS_HOME}/Projects/.git/HEAD\n${JARVIS_HOME}/Projects/__pycache__/m.pyc\n${JARVIS_HOME}/Documents/same-a.txt\n${JARVIS_HOME}/Documents/same-b.txt\n${JARVIS_HOME}/.Trash/gone.txt\n${JARVIS_HOME}/Documents/near-1.txt\n${JARVIS_HOME}/Documents/near-2.txt\n${JARVIS_HOME}/Documents/missing.txt\n${JARVIS_HOME}/Documents/\n"
+   },
+   "expected": {
+    "text": "Found 10: , notes.md, photo.png, near-2.txt, same-a.txt, same-b.txt, and 4 more.\n${JARVIS_HOME}/Documents/\n${JARVIS_HOME}/Documents/notes.md\n${JARVIS_HOME}/Desktop/photo.png\n${JARVIS_HOME}/Documents/near-2.txt\n${JARVIS_HOME}/Documents/same-a.txt\n${JARVIS_HOME}/Documents/same-b.txt\n${JARVIS_HOME}/Documents/near-1.txt\n${JARVIS_HOME}/Documents/plan.txt\n${JARVIS_HOME}/Downloads/old.zip\n${JARVIS_HOME}/Documents/missing.txt",
+    "argv": [
+     "mdfind",
+     "-onlyin",
+     "${JARVIS_HOME}",
+     "kMDItemFSContentChangeDate >= $time.this_week"
+    ]
+   }
+  },
+  {
+   "name": "find/recent_query_kind",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "notes",
+     "kind": "document",
+     "recent": true
+    },
+    "timeout": false,
+    "files": [
+     [
+      "Documents/plan.txt",
+      1790500000250000000
+     ],
+     [
+      "Documents/notes.md",
+      1790590000500000000
+     ],
+     [
+      "Desktop/photo.png",
+      1790590000500000000
+     ],
+     [
+      "Downloads/old.zip",
+      1789000000000000000
+     ],
+     [
+      "Documents/Library/inside.txt",
+      1790599999000000000
+     ],
+     [
+      "Library/Caches/x.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/.hidden.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/build.LOG",
+      1790599999000000000
+     ],
+     [
+      "Documents/state.db-wal",
+      1790599999000000000
+     ],
+     [
+      "Documents/app.Plist",
+      1790599999000000000
+     ],
+     [
+      "Projects/node_modules/a.js",
+      1790599999000000000
+     ],
+     [
+      "Projects/.git/HEAD",
+      1790599999000000000
+     ],
+     [
+      "Projects/__pycache__/m.pyc",
+      1790599999000000000
+     ],
+     [
+      "Documents/same-a.txt",
+      1790580000000000000
+     ],
+     [
+      "Documents/same-b.txt",
+      1790580000000000000
+     ],
+     [
+      ".Trash/gone.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/near-1.txt",
+      1790580000000000000
+     ],
+     [
+      "Documents/near-2.txt",
+      1790580000000000238
+     ]
+    ],
+    "stdout": "${JARVIS_HOME}/Documents/plan.txt\n${JARVIS_HOME}/Documents/notes.md\n${JARVIS_HOME}/Desktop/photo.png\n"
+   },
+   "expected": {
+    "text": "Found 3: notes.md, photo.png, plan.txt.\n${JARVIS_HOME}/Documents/notes.md\n${JARVIS_HOME}/Desktop/photo.png\n${JARVIS_HOME}/Documents/plan.txt",
+    "argv": [
+     "mdfind",
+     "-onlyin",
+     "${JARVIS_HOME}",
+     "(kMDItemDisplayName == '*notes*'cd || kMDItemTextContent == '*notes*'cd) && kMDItemContentTypeTree == 'public.content' && kMDItemFSContentChangeDate >= $time.this_week"
+    ]
+   }
+  },
+  {
+   "name": "find/recent_string_false_is_true",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "plan",
+     "recent": "false"
+    },
+    "timeout": false,
+    "files": [
+     [
+      "Documents/plan.txt",
+      1790500000250000000
+     ],
+     [
+      "Documents/notes.md",
+      1790590000500000000
+     ],
+     [
+      "Desktop/photo.png",
+      1790590000500000000
+     ],
+     [
+      "Downloads/old.zip",
+      1789000000000000000
+     ],
+     [
+      "Documents/Library/inside.txt",
+      1790599999000000000
+     ],
+     [
+      "Library/Caches/x.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/.hidden.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/build.LOG",
+      1790599999000000000
+     ],
+     [
+      "Documents/state.db-wal",
+      1790599999000000000
+     ],
+     [
+      "Documents/app.Plist",
+      1790599999000000000
+     ],
+     [
+      "Projects/node_modules/a.js",
+      1790599999000000000
+     ],
+     [
+      "Projects/.git/HEAD",
+      1790599999000000000
+     ],
+     [
+      "Projects/__pycache__/m.pyc",
+      1790599999000000000
+     ],
+     [
+      "Documents/same-a.txt",
+      1790580000000000000
+     ],
+     [
+      "Documents/same-b.txt",
+      1790580000000000000
+     ],
+     [
+      ".Trash/gone.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/near-1.txt",
+      1790580000000000000
+     ],
+     [
+      "Documents/near-2.txt",
+      1790580000000000238
+     ]
+    ],
+    "stdout": "${JARVIS_HOME}/Documents/plan.txt\n"
+   },
+   "expected": {
+    "text": "Found 1: plan.txt.\n${JARVIS_HOME}/Documents/plan.txt",
+    "argv": [
+     "mdfind",
+     "-onlyin",
+     "${JARVIS_HOME}",
+     "(kMDItemDisplayName == '*plan*'cd || kMDItemTextContent == '*plan*'cd) && kMDItemFSContentChangeDate >= $time.this_week"
+    ]
+   }
+  },
+  {
+   "name": "find/recent_zero_is_false",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "plan",
+     "recent": 0
+    },
+    "timeout": false,
+    "files": [
+     [
+      "Documents/plan.txt",
+      1790500000250000000
+     ],
+     [
+      "Documents/notes.md",
+      1790590000500000000
+     ],
+     [
+      "Desktop/photo.png",
+      1790590000500000000
+     ],
+     [
+      "Downloads/old.zip",
+      1789000000000000000
+     ],
+     [
+      "Documents/Library/inside.txt",
+      1790599999000000000
+     ],
+     [
+      "Library/Caches/x.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/.hidden.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/build.LOG",
+      1790599999000000000
+     ],
+     [
+      "Documents/state.db-wal",
+      1790599999000000000
+     ],
+     [
+      "Documents/app.Plist",
+      1790599999000000000
+     ],
+     [
+      "Projects/node_modules/a.js",
+      1790599999000000000
+     ],
+     [
+      "Projects/.git/HEAD",
+      1790599999000000000
+     ],
+     [
+      "Projects/__pycache__/m.pyc",
+      1790599999000000000
+     ],
+     [
+      "Documents/same-a.txt",
+      1790580000000000000
+     ],
+     [
+      "Documents/same-b.txt",
+      1790580000000000000
+     ],
+     [
+      ".Trash/gone.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/near-1.txt",
+      1790580000000000000
+     ],
+     [
+      "Documents/near-2.txt",
+      1790580000000000238
+     ]
+    ],
+    "stdout": "${JARVIS_HOME}/Documents/plan.txt\n"
+   },
+   "expected": {
+    "text": "Found 1: plan.txt.\n${JARVIS_HOME}/Documents/plan.txt",
+    "argv": [
+     "mdfind",
+     "(kMDItemDisplayName == '*plan*'cd || kMDItemTextContent == '*plan*'cd)"
+    ]
+   }
+  },
+  {
+   "name": "find/recent_twelve_of_fifteen",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "query": "bulk",
+     "recent": true
+    },
+    "timeout": false,
+    "files": [
+     [
+      "Documents/bulk-00.txt",
+      1790500000000000000
+     ],
+     [
+      "Documents/bulk-01.txt",
+      1790500037000000000
+     ],
+     [
+      "Documents/bulk-02.txt",
+      1790500074000000000
+     ],
+     [
+      "Documents/bulk-03.txt",
+      1790500111000000000
+     ],
+     [
+      "Documents/bulk-04.txt",
+      1790500148000000000
+     ],
+     [
+      "Documents/bulk-05.txt",
+      1790500185000000000
+     ],
+     [
+      "Documents/bulk-06.txt",
+      1790500222000000000
+     ],
+     [
+      "Documents/bulk-07.txt",
+      1790500259000000000
+     ],
+     [
+      "Documents/bulk-08.txt",
+      1790500296000000000
+     ],
+     [
+      "Documents/bulk-09.txt",
+      1790500333000000000
+     ],
+     [
+      "Documents/bulk-10.txt",
+      1790500370000000000
+     ],
+     [
+      "Documents/bulk-11.txt",
+      1790500407000000000
+     ],
+     [
+      "Documents/bulk-12.txt",
+      1790500444000000000
+     ],
+     [
+      "Documents/bulk-13.txt",
+      1790500481000000000
+     ],
+     [
+      "Documents/bulk-14.txt",
+      1790500518000000000
+     ]
+    ],
+    "stdout": "${JARVIS_HOME}/Documents/bulk-00.txt\n${JARVIS_HOME}/Documents/bulk-01.txt\n${JARVIS_HOME}/Documents/bulk-02.txt\n${JARVIS_HOME}/Documents/bulk-03.txt\n${JARVIS_HOME}/Documents/bulk-04.txt\n${JARVIS_HOME}/Documents/bulk-05.txt\n${JARVIS_HOME}/Documents/bulk-06.txt\n${JARVIS_HOME}/Documents/bulk-07.txt\n${JARVIS_HOME}/Documents/bulk-08.txt\n${JARVIS_HOME}/Documents/bulk-09.txt\n${JARVIS_HOME}/Documents/bulk-10.txt\n${JARVIS_HOME}/Documents/bulk-11.txt\n${JARVIS_HOME}/Documents/bulk-12.txt\n${JARVIS_HOME}/Documents/bulk-13.txt\n${JARVIS_HOME}/Documents/bulk-14.txt\n"
+   },
+   "expected": {
+    "text": "Found 12: bulk-14.txt, bulk-13.txt, bulk-12.txt, bulk-11.txt, bulk-10.txt, bulk-09.txt, and 6 more.\n${JARVIS_HOME}/Documents/bulk-14.txt\n${JARVIS_HOME}/Documents/bulk-13.txt\n${JARVIS_HOME}/Documents/bulk-12.txt\n${JARVIS_HOME}/Documents/bulk-11.txt\n${JARVIS_HOME}/Documents/bulk-10.txt\n${JARVIS_HOME}/Documents/bulk-09.txt\n${JARVIS_HOME}/Documents/bulk-08.txt\n${JARVIS_HOME}/Documents/bulk-07.txt\n${JARVIS_HOME}/Documents/bulk-06.txt\n${JARVIS_HOME}/Documents/bulk-05.txt\n${JARVIS_HOME}/Documents/bulk-04.txt\n${JARVIS_HOME}/Documents/bulk-03.txt",
+    "argv": [
+     "mdfind",
+     "-onlyin",
+     "${JARVIS_HOME}",
+     "(kMDItemDisplayName == '*bulk*'cd || kMDItemTextContent == '*bulk*'cd) && kMDItemFSContentChangeDate >= $time.this_week"
+    ]
+   }
+  },
+  {
+   "name": "find/recent_only_junk",
+   "input": {
+    "tool": "find_files",
+    "args": {
+     "recent": true
+    },
+    "timeout": false,
+    "files": [
+     [
+      "Documents/plan.txt",
+      1790500000250000000
+     ],
+     [
+      "Documents/notes.md",
+      1790590000500000000
+     ],
+     [
+      "Desktop/photo.png",
+      1790590000500000000
+     ],
+     [
+      "Downloads/old.zip",
+      1789000000000000000
+     ],
+     [
+      "Documents/Library/inside.txt",
+      1790599999000000000
+     ],
+     [
+      "Library/Caches/x.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/.hidden.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/build.LOG",
+      1790599999000000000
+     ],
+     [
+      "Documents/state.db-wal",
+      1790599999000000000
+     ],
+     [
+      "Documents/app.Plist",
+      1790599999000000000
+     ],
+     [
+      "Projects/node_modules/a.js",
+      1790599999000000000
+     ],
+     [
+      "Projects/.git/HEAD",
+      1790599999000000000
+     ],
+     [
+      "Projects/__pycache__/m.pyc",
+      1790599999000000000
+     ],
+     [
+      "Documents/same-a.txt",
+      1790580000000000000
+     ],
+     [
+      "Documents/same-b.txt",
+      1790580000000000000
+     ],
+     [
+      ".Trash/gone.txt",
+      1790599999000000000
+     ],
+     [
+      "Documents/near-1.txt",
+      1790580000000000000
+     ],
+     [
+      "Documents/near-2.txt",
+      1790580000000000238
+     ]
+    ],
+    "stdout": "${JARVIS_HOME}/Library/Caches/x.txt\n${JARVIS_HOME}/Documents/.hidden.txt\n"
+   },
+   "expected": {
+    "text": "No matching files found, sir.",
+    "argv": [
+     "mdfind",
+     "-onlyin",
+     "${JARVIS_HOME}",
+     "kMDItemFSContentChangeDate >= $time.this_week"
+    ]
+   }
+  }
+ ]
+}

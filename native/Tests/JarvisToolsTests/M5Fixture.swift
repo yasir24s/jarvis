@@ -174,8 +174,9 @@ extension ToolPlatform {
                      recognizer: any TextRecognizing = FakeRecognizer(""),
                      home: String = "/nonexistent/jarvis-test-home",
                      apps: AppIndex = AppIndex(runner: FakeRunner(stdout: ""), loadPlist: { _ in nil }),
-                     browser: any DefaultBrowserLookup = StubBrowser()) -> ToolPlatform {
+                     browser: any DefaultBrowserLookup = StubBrowser(),
+                     spotlightRunner: any CommandRunning = FakeRunner(stdout: "")) -> ToolPlatform {
         ToolPlatform(system: system, clipboard: clipboard, screen: screen, recognizer: recognizer, home: home,
-                     apps: apps, browser: browser)
+                     apps: apps, browser: browser, spotlightRunner: spotlightRunner)
     }
 }
