@@ -176,6 +176,7 @@ struct MemoryStorageTests {
           {
            "id": "f1",
            "text": "The user's sister is called Amira.",
+           "about": "user",
            "source": "conversation",
            "created": 1790582400.0,
            "updated": 1790582400.0,
@@ -184,6 +185,47 @@ struct MemoryStorageTests {
          ]
         }
         """)
+    }
+
+    /// P4: a note about someone else keeps its person and relation; `relation` is written only
+    /// when it is known (invented names).
+    @Test func aNoteRoundTripsWithItsPersonAndRelation() throws {
+        let sb = try Sandbox()
+        defer { sb.remove() }
+        let (store, mem) = try memory(sb)
+        let note = MemoryFact(id: "n1", text: "Robin Vale pays a TV licence.", about: "Robin Vale", relation: "mother",
+                              source: "file:ab", created: epoch, updated: epoch, by: .claude)
+        let file = FactsFile(facts: [note])
+        #expect(mem.updateFacts { $0 = file; return true })
+        #expect(mem.loadFacts() == file)
+        let text = String(decoding: try #require(bytes(store.path(.facts))), as: UTF8.self)
+        #expect(text.contains("""
+           "text": "Robin Vale pays a TV licence.",
+           "about": "Robin Vale",
+           "relation": "mother",
+           "source": "file:ab",
+        """))
+    }
+
+    /// Every facts.json written before P4 has no `about`: each such fact is about the user, and
+    /// the file loads as it did. A null `about` reads the same; one of another type is the wrong
+    /// shape, so that entry alone is dropped.
+    @Test func aFactWithoutAboutIsAboutTheUser() throws {
+        let sb = try Sandbox()
+        defer { sb.remove() }
+        let (_, mem) = try memory(sb)
+        try sb.write("memory/facts.json", """
+        {"compiled_through": 3, "facts": [
+         {"id": "a", "text": "The user keeps bees.", "source": "conversation", "created": 1.0, "updated": 2.0, "by": "local"},
+         {"id": "b", "text": "The user swims.", "about": null, "source": "conversation", "created": 1.0, "updated": 2.0, "by": "claude"},
+         {"id": "c", "text": "The user runs.", "about": 7, "source": "conversation", "created": 1.0, "updated": 2.0, "by": "claude"},
+         {"id": "d", "text": "Robin Vale sings.", "about": "Robin Vale", "relation": 3, "source": "file:ab", "created": 1.0, "updated": 2.0, "by": "both"}
+        ]}
+        """)
+        let file = try #require(mem.loadFacts())
+        #expect(file.compiledThrough == 3)
+        #expect(file.facts.map(\.id) == ["a", "b"])
+        #expect(file.facts.allSatisfy { $0.about == MemoryFact.user && $0.relation == nil && $0.isAboutUser })
     }
 
     @Test func declinedUpdateWritesNothing() throws {

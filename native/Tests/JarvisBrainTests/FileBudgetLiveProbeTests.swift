@@ -19,8 +19,9 @@ struct FileBudgetLiveProbeTests {
         print("PROBE os \(ProcessInfo.processInfo.operatingSystemVersionString)")
         print("PROBE availability \(model.availability)")
         print("PROBE contextSize \(context), limit \(limit) (share \(LocalFileBudget.share))")
-        let instructions = try await counter.tokenCount(instructions: FileReading.system)
-        print("PROBE instructions \(FileReading.system.count) chars, \(instructions.map(String.init) ?? "no tokenizer") tokens")
+        let system = FileReading.system(userName: "Jordan Sample")
+        let instructions = try await counter.tokenCount(instructions: system)
+        print("PROBE instructions \(system.count) chars, \(instructions.map(String.init) ?? "no tokenizer") tokens")
         let sentences = [
             "The user moved to Leeds in March and walks to the office most days.",
             "Their sister Amira is getting married next spring, and they are planning the trip.",
@@ -34,7 +35,8 @@ struct FileBudgetLiveProbeTests {
             text = String(text.prefix(target))
             let prompt = FileReading.prompt(text, kind: .markdown)
             let tokens = try await counter.tokenCount(prompt: prompt)
-            let budget = await LocalFileBudget(counter: counter).measure(text: text, prompt: prompt)
+            let budget = await LocalFileBudget(counter: counter).measure(text: text, prompt: prompt,
+                                                                         instructions: system)
             let perToken = tokens.map { String(format: "%.2f", Double(prompt.count) / Double($0)) } ?? "-"
             print("PROBE text \(target) chars: prompt \(prompt.count) chars, \(tokens.map(String.init) ?? "-") tokens "
                   + "(\(perToken) chars/token), with instructions \((tokens ?? 0) + (instructions ?? 0)) of \(limit), "

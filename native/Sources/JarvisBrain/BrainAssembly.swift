@@ -139,7 +139,8 @@ public final class BrainAssembly: Sendable {
             files.map { files in
                 let quota = ClaudeReadQuota()
                 let reader = FileFactReader(memory: memory, local: localWriter, claude: claudeWriter,
-                                            budget: .system(), quota: quota, turns: turns, vectors: vectors)
+                                            budget: .system(), quota: quota, turns: turns, vectors: vectors,
+                                            userName: NSFullUserName())
                 return FileScanner(home: files.home, stateRoot: files.stateRoot, store: files.store,
                                    extractors: files.extractors, reader: reader, quota: quota, turns: turns)
             }

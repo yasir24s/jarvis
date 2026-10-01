@@ -46,7 +46,8 @@ private struct Rig {
 
     init(local: ScriptedWriter = ScriptedWriter(), claude: ScriptedWriter = ScriptedWriter(),
          counter: FakeTokenCounter = FakeTokenCounter(), quota: ClaudeReadQuota = ClaudeReadQuota(),
-         lease: (any StateLease)? = nil,
+         lease: (any StateLease)? = nil, userName: String = "",
+         log: @escaping @Sendable (String) -> Void = { _ in },
          sleep: @escaping FileFactReader.Sleep = { _ in try await Task.sleep(for: .milliseconds(2)) }) throws {
         sandbox = try Sandbox()
         memory = MemoryStore(store: try StateStore(root: sandbox.root.path(percentEncoded: false), lease: lease),
@@ -55,7 +56,7 @@ private struct Rig {
         self.claude = claude
         reader = FileFactReader(memory: memory, local: local, claude: claude,
                                 budget: LocalFileBudget(counter: counter), quota: quota, turns: turns,
-                                clock: ManualClock(epoch), sleep: sleep, log: { _ in })
+                                userName: userName, clock: ManualClock(epoch), sleep: sleep, log: log)
     }
 
     var facts: [MemoryFact] { memory.loadFacts()?.facts ?? [] }
@@ -69,7 +70,7 @@ struct FileFactReaderTests {
         let text = String(repeating: "Bees and honey. ", count: 375)          // 6,000 characters
         let outcome = await rig.reader.read(text, kind: .markdown, digest: digest)
         #expect(outcome == .read(.local, added: 1, updated: 0, dropped: 0))
-        #expect(rig.local.calls.map(\.system) == [FileReading.system])
+        #expect(rig.local.calls.map(\.system) == [FileReading.system(userName: "")])
         #expect(rig.local.calls.map(\.user) == [FileReading.prompt(text, kind: .markdown)])
         #expect(rig.claude.calls.isEmpty)
     }
@@ -107,7 +108,7 @@ struct FileFactReaderTests {
         let users = rig.claude.calls.map(\.user)
         #expect(users.count == 2)
         #expect(users[0].hasPrefix("Part 1 of 2 of a document (PDF)") && users[1].hasPrefix("Part 2 of 2"))
-        #expect(rig.claude.calls.allSatisfy { $0.system == FileReading.system })
+        #expect(rig.claude.calls.allSatisfy { $0.system == FileReading.system(userName: "") })
         #expect(FileReading.parts(text).joined() == text)
         #expect(FileReading.parts(text).allSatisfy { $0.count <= FileReading.claudePartCharacters })
     }
@@ -249,6 +250,64 @@ struct FileFactReaderTests {
         defer { rig.sandbox.remove() }
         #expect(await rig.reader.read("Bees.", kind: .plainText, digest: digest) == .notSaved)
         #expect(!FileManager.default.fileExists(atPath: rig.sandbox.root.path(percentEncoded: false) + "/memory"))
+    }
+
+    /// P4: both readers are told the user's name (invented here), and a document about someone
+    /// else that names the user too is kept only as notes about that person: their money with
+    /// them, never their health, and never a note that names the user. No log line holds a name.
+    @Test func otherPeoplesDocumentsBecomeNotesAboutThem() async throws {
+        let logs = LogLines()
+        let reply = """
+        About Robin Vale (Mother): Robin Vale, the user's mother, is studying for a Master's.
+        About Robin Vale (mother): Robin Vale, the user's mother, pays a TV licence and DVLA.
+        About Robin Vale: Robin Vale had flu and a fever in March 2026.
+        About Jordan Sample: Jordan Sample wrote a CV.
+        The user helped with the move.
+        """
+        let rig = try Rig(local: ScriptedWriter(.reply(reply)), userName: "Jordan Sample", log: logs.sink)
+        defer { rig.sandbox.remove() }
+        let text = "Joint statement for Robin Vale and JORDAN SAMPLE. TV licence, DVLA."
+        let outcome = await rig.reader.read(text, kind: .pdf, digest: digest)
+        #expect(outcome == .read(.local, added: 3, updated: 0, dropped: 2))
+        #expect(rig.local.calls.map(\.system) == [FileReading.system(userName: "Jordan Sample")])
+        #expect(rig.facts.map(\.about) == ["Robin Vale", "Robin Vale", "user"])
+        #expect(rig.facts.map(\.relation) == ["mother", "mother", nil])
+        #expect(rig.facts.map(\.shown) == [
+            "About Robin Vale (the user's mother): Robin Vale, the user's mother, is studying for a Master's.",
+            "About Robin Vale (the user's mother): Robin Vale, the user's mother, pays a TV licence and DVLA.",
+            "The user helped with the move.",
+        ])
+        #expect(rig.facts.allSatisfy { $0.source == FileReading.source(digest: digest) })
+        #expect(!logs.all.isEmpty)
+        #expect(logs.all.allSatisfy { !$0.contains("Jordan") && !$0.contains("Robin") })
+    }
+
+    /// The user's rule (2026-10-01), checked in code: from a document whose redacted text does
+    /// not name the user, nothing about anyone else is kept, whatever the model replies.
+    @Test func aDocumentThatDoesNotNameTheUserGivesNoNotes() async throws {
+        let reply = """
+        About Robin Vale (mother): Robin Vale, the user's mother, pays a TV licence.
+        About Robin Vale: Robin Vale, someone in the user's life, is studying for a Master's.
+        """
+        let rig = try Rig(local: ScriptedWriter(.reply(reply)), userName: "Jordan Sample")
+        defer { rig.sandbox.remove() }
+        let text = "Statement for Robin Vale. Jordan is mentioned, and a Sample Street address."
+        #expect(await rig.reader.read(text, kind: .pdf, digest: digest) == .read(.local, added: 0, updated: 0,
+                                                                                 dropped: 2))
+        #expect(rig.facts.isEmpty)
+        #expect(!FileManager.default.fileExists(atPath: rig.sandbox.root.path(percentEncoded: false) + "/memory"))
+    }
+
+    @Test func claudeIsToldTheUsersNameToo() async throws {
+        let rig = try Rig(claude: ScriptedWriter(.reply("About Robin Vale: Robin Vale, someone in the user's life, "
+                                                        + "is studying for a Master's.")),
+                          userName: "Jordan Sample")
+        defer { rig.sandbox.remove() }
+        let big = "Letter to jordan\nsample from Robin Vale. " + String(repeating: "word ", count: 3000)
+        #expect(await rig.reader.read(big, kind: .plainText, digest: digest) ==
+                .read(.claude(parts: 1), added: 1, updated: 0, dropped: 0))
+        #expect(rig.claude.calls.map(\.system) == [FileReading.system(userName: "Jordan Sample")])
+        #expect(rig.facts.map(\.about) == ["Robin Vale"] && rig.facts.map(\.relation) == [nil])
     }
 }
 

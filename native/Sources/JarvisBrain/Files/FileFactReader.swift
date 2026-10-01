@@ -60,7 +60,7 @@ public final class LocalFileBudget: Sendable {
     }
 
     private let counter: any FileTokenCounting
-    private let instructionTokens = Mutex<Int?>(nil)   // counted once
+    private let instructionTokens = Mutex<(instructions: String, tokens: Int)?>(nil)   // counted once
 
     public init(counter: any FileTokenCounting) {
         self.counter = counter
@@ -70,13 +70,14 @@ public final class LocalFileBudget: Sendable {
         LocalFileBudget(counter: SystemFileTokenCounter(model: model))
     }
 
-    /// Whether `prompt` (which holds `text`) fits.
-    public func measure(text: String, prompt: String) async -> Measure {
+    /// Whether `prompt` (which holds `text`) fits with `instructions`, the reader's system text.
+    public func measure(text: String, prompt: String,
+                        instructions system: String = FileReading.system(userName: "")) async -> Measure {
         let context = await counter.contextSize
         let limit = Int(Double(context) * Self.share)
         let estimate = Measure(contextSize: context, limit: limit, instructionTokens: nil, promptTokens: nil,
                                fits: text.count <= FileReading.localCharacterEstimate)
-        guard let instructions = await countInstructions() else { return estimate }
+        guard let instructions = await countInstructions(system) else { return estimate }
         guard prompt.count <= limit * Self.maxCharactersPerToken else {
             return Measure(contextSize: context, limit: limit, instructionTokens: instructions,
                            promptTokens: nil, fits: false)
@@ -86,10 +87,12 @@ public final class LocalFileBudget: Sendable {
                        promptTokens: tokens, fits: instructions + tokens <= limit)
     }
 
-    private func countInstructions() async -> Int? {
-        if let known = instructionTokens.withLock({ $0 }) { return known }
-        guard let counted = try? await counter.tokenCount(instructions: FileReading.system) else { return nil }
-        instructionTokens.withLock { $0 = counted }
+    /// Counted once for the instructions in use (the user's name does not change while the
+    /// app runs).
+    private func countInstructions(_ instructions: String) async -> Int? {
+        if let known = instructionTokens.withLock({ $0 }), known.instructions == instructions { return known.tokens }
+        guard let counted = try? await counter.tokenCount(instructions: instructions) else { return nil }
+        instructionTokens.withLock { $0 = (instructions, counted) }
         return counted
     }
 }
@@ -145,6 +148,9 @@ public final class ClaudeReadQuota: Sendable {
 /// 3. Every call first waits while a turn runs.
 /// 4. Every reply line passes P2's validator; the kept lines are merged by `FactMerge` with
 ///    `source: file:<digest>`, in one atomic write under the lease.
+/// 5. (P4) The readers are told the user's name and whose document counts as the user's. A
+///    document by or about someone else gives only notes about that person (`about`), and only
+///    when its redacted text names the user (`FileReading.namesUser`); otherwise nothing.
 ///
 /// A reader failing, or any part failing, writes nothing, so the file is read again later.
 public struct FileFactReader: Sendable {
@@ -174,12 +180,15 @@ public struct FileFactReader: Sendable {
     private let clock: any JarvisClock
     private let sleep: Sleep
     private let log: @Sendable (String) -> Void
+    /// The Mac account's full name (the app passes `NSFullUserName()`); empty when unknown.
+    private let userName: String
 
     public init(memory: MemoryStore, local: any PersonaLLM, claude: any PersonaLLM, budget: LocalFileBudget,
                 quota: ClaudeReadQuota = ClaudeReadQuota(), turns: TurnActivity, vectors: FactVectors? = nil,
-                clock: any JarvisClock = SystemClock(),
+                userName: String = "", clock: any JarvisClock = SystemClock(),
                 sleep: @escaping Sleep = { try await Task.sleep(for: $0, clock: .suspending) },
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .state) }) {
+        self.userName = userName
         self.memory = memory
         self.local = local
         self.claude = claude
@@ -208,7 +217,7 @@ public struct FileFactReader: Sendable {
             switch route {
             case .local:
                 try await turns.waitUntilIdle(sleep: sleep)
-                replies = [try await local.complete(system: FileReading.system,
+                replies = [try await local.complete(system: FileReading.system(userName: userName),
                                                     user: FileReading.prompt(clean, kind: kind),
                                                     timeout: FileReading.timeout)]
             case .claude(let count):
@@ -225,11 +234,14 @@ public struct FileFactReader: Sendable {
         }
 
         let by: FactWriter = route == .local ? .local : .claude
+        let named = FileReading.namesUser(clean, userName: userName)
         var candidates: [FactMerge.Candidate] = []
         var dropped = 0
         for reply in replies {
-            let parsed = FactExtraction.facts(fromReply: reply)
-            candidates += parsed.facts.map { FactMerge.Candidate(text: $0, by: by) }
+            let parsed = FactExtraction.entries(fromReply: reply, userName: userName, documentNamesUser: named)
+            candidates += parsed.entries.map {
+                FactMerge.Candidate(text: $0.text, by: by, about: $0.about, relation: $0.relation)
+            }
             dropped += parsed.dropped.count
         }
         var counts = (added: 0, updated: 0)
@@ -259,7 +271,8 @@ public struct FileFactReader: Sendable {
     }
 
     private func route(clean: String, kind: DocumentKind) async -> (route: Route, measure: LocalFileBudget.Measure) {
-        let measure = await budget.measure(text: clean, prompt: FileReading.prompt(clean, kind: kind))
+        let measure = await budget.measure(text: clean, prompt: FileReading.prompt(clean, kind: kind),
+                                           instructions: FileReading.system(userName: userName))
         return (measure.fits ? .local : .claude(parts: FileReading.parts(clean).count), measure)
     }
 
@@ -271,7 +284,7 @@ public struct FileFactReader: Sendable {
             if index > 0 { try await turns.waitUntilIdle(sleep: sleep) }
             do {
                 replies.append(try await claude.complete(
-                    system: FileReading.system,
+                    system: FileReading.system(userName: userName),
                     user: FileReading.prompt(part, kind: kind, part: index + 1, of: count),
                     timeout: FileReading.timeout))
             } catch let error as PersonaWriterError where index == 0 && (error == .claudeOff || error == .offline) {

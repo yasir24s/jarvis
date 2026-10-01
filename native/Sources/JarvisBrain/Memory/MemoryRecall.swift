@@ -10,6 +10,8 @@ import JarvisCore
 ///   ranked by set cosine. Ties go to the fact updated last.
 /// - Each fact is checked by `FactExtraction.dropReason` again before it is shown, so a
 ///   hand-edited or file-sourced fact that reads as an instruction never reaches a prompt.
+/// - A note about someone else (P4) is shown as about that person (`MemoryFact.shown`), never
+///   as the user's.
 /// - Budget: the whole block, header included, is at most `localBudget` estimated tokens for
 ///   the on-device model and `claudeBudget` for Claude. The estimate is
 ///   `estimatedTokens`: UTF-8 bytes / 4, rounded up. Facts are taken in relevance order and
@@ -67,7 +69,7 @@ public final class MemoryRecall: Sendable {
     /// The facts at or above the threshold, most relevant first.
     public func relevant(to message: String) -> [MemoryFact] {
         guard let file = memory.loadFacts(), !file.facts.isEmpty else { return [] }
-        let facts = file.facts.filter { FactExtraction.dropReason($0.text) == nil }
+        let facts = file.facts.filter { FactExtraction.dropReason($0) == nil }
         vectors.retain(Set(facts.map(\.text)))
         let scored: [(fact: MemoryFact, score: Double)]
         if let query = vectors.vector(for: message) {
@@ -90,13 +92,13 @@ public final class MemoryRecall: Sendable {
         }.map(\.fact)
     }
 
-    /// `header`, then "\n- <fact>" for each fact in order while the whole stays within
-    /// `budget` estimated tokens. "" when not even one fact fits.
+    /// `header`, then "\n- <fact>" (`MemoryFact.shown`) for each fact in order while the whole
+    /// stays within `budget` estimated tokens. "" when not even one fact fits.
     public static func block(_ facts: [MemoryFact], budget: Int) -> String {
         var text = header
         var count = 0
         for f in facts {
-            let next = text + "\n- " + f.text
+            let next = text + "\n- " + f.shown
             guard estimatedTokens(next) <= budget else { break }
             text = next
             count += 1

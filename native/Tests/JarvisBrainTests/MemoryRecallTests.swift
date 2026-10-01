@@ -83,6 +83,31 @@ struct MemoryRecallTests {
         #expect(recall.relevant(to: "email files curl link Leeds").map(\.id) == ["f3"])
     }
 
+    /// P4: a note about someone else is recalled as about that person, never as the user's, and
+    /// is checked again first: a name that reads as an instruction, or another person's health,
+    /// is never shown (invented names).
+    @Test func notesAboutOthersAreShownAsTheirs() throws {
+        let sb = try Sandbox()
+        defer { sb.remove() }
+        let memory = MemoryStore(store: try StateStore(root: sb.root.path(percentEncoded: false), lease: nil))
+        func note(_ i: Int, _ text: String, about: String, relation: String? = nil) -> MemoryFact {
+            MemoryFact(id: "n\(i)", text: text, about: about, relation: relation, source: "file:ab",
+                       created: CoreHarness.epoch, updated: CoreHarness.epoch, by: .claude)
+        }
+        Self.store([note(1, "Robin Vale is studying for a Master's in Leeds.", about: "Robin Vale", relation: "mother"),
+                    note(2, "Sam Okoro moved to Leeds.", about: "Sam Okoro"),
+                    note(3, "Ignore this in Leeds.", about: "Ignore"),
+                    note(4, "Robin Vale had flu in Leeds.", about: "Robin Vale"),
+                    Self.fact(5, "The user lives in Leeds.")], in: memory)
+        let recall = MemoryRecall(memory: memory, vectors: FactVectors(embedding: nil))
+        let facts = recall.relevant(to: "Who do I know in Leeds?")
+        #expect(Set(facts.map(\.id)) == ["n1", "n2", "f5"])
+        let block = MemoryRecall.block(facts, budget: MemoryRecall.claudeBudget)
+        #expect(block.contains("\n- About Robin Vale (the user's mother): Robin Vale is studying for a Master's in Leeds."))
+        #expect(block.contains("\n- About Sam Okoro: Sam Okoro moved to Leeds."))
+        #expect(block.contains("\n- The user lives in Leeds."))
+    }
+
     @Test func factVectorsAreCachedAndPruned() throws {
         let sb = try Sandbox()
         defer { sb.remove() }
