@@ -35,6 +35,14 @@ enum Entry {
         if arguments.contains("--selftest") {
             exit(SelfTest.run())
         }
+        // P6: the one-time import of Python JARVIS's memory, only when asked for.
+        if arguments.first == PythonImportMain.flag {
+            guard arguments.count == 1 else {
+                FileHandle.standardError.write(Data("usage: JARVIS \(PythonImportMain.flag)\n".utf8))
+                exit(64)   // EX_USAGE
+            }
+            PythonImportMain.start()
+        }
         if arguments.contains("--permissions") {
             // T0.11 is deferred to M15. Refuse rather than fall through to the GUI: exec'ing the
             // GUI from a terminal makes the terminal the TCC responsible process (§3.4 rule 3).

@@ -103,6 +103,46 @@ public final class FactCompiler: Sendable {
         return .compiled(added: counts.added, updated: counts.updated, dropped: dropped)
     }
 
+    /// P6 (the Python-era import): one batch of messages that are not in the archive, through
+    /// the same transcript, validator and merge, with the facts tagged `source`. `writer`
+    /// replaces this compiler's own (the import's Claude-alone route); `compiled_through` is
+    /// left as it is. One compile runs at a time, shared with `compile()`.
+    public func compile(entries: [ArchiveEntry], source: String,
+                        writer override: (any AttributedWriting)? = nil) async -> Outcome {
+        let acquired = running.withLock { busy -> Bool in
+            guard !busy else { return false }
+            busy = true
+            return true
+        }
+        guard acquired else { return .busy }
+        defer { running.withLock { $0 = false } }
+        guard memory.loadFacts() != nil else { return .unreadable }
+        guard entries.contains(where: { $0.role == .user }) else { return .nothingNew }
+        let (transcript, _) = FactExtraction.transcript(entries)
+        let written: AttributedText
+        do {
+            written = try await (override ?? writer).write(system: FactExtraction.system, user: transcript,
+                                                           timeout: FactExtraction.timeout)
+            try Task.checkCancellation()
+        } catch is CancellationError {
+            return .cancelled
+        } catch {
+            log("memory: a batch was not compiled (\(PersonaWriterError.reason(error)))")
+            return .writersFailed
+        }
+        let vectors = vectors
+        let (candidates, dropped) = Self.candidates(from: written, isSimilar: { vectors.similar($0, $1) })
+        let now = clock.now(), makeID = makeID
+        var counts = (added: 0, updated: 0)
+        let saved = memory.updateFacts { file in
+            counts = FactMerge.merge(candidates, into: &file, source: source, now: now,
+                                     isSimilar: { vectors.similar($0, $1) }, makeID: makeID)
+            return true
+        }
+        guard saved else { return .notSaved }
+        return .compiled(added: counts.added, updated: counts.updated, dropped: dropped)
+    }
+
     /// The reply's fact lines with their writer: all `local` for the on-device draft, all
     /// `claude` for Claude alone, and for Claude's improvement `both` where the draft had the
     /// same fact (normalised, or `isSimilar`) and `claude` where it did not.

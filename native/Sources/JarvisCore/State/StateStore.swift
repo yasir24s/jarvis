@@ -34,6 +34,7 @@ public enum MemoryFile: String, CaseIterable, Sendable {
     case facts = "memory/facts.json"           // compiled facts, written atomically
     case filesIndex = "memory/files-index.json" // the file scanner's index (P3), written atomically
     case forgotten = "memory/forgotten.json"   // what forget_memory removed, kept 30 days (P6)
+    case pythonImport = "memory/python-import.json" // the one-time Python-era import's progress (P6)
 }
 
 public enum StateStoreError: Error, Sendable, Equatable {
