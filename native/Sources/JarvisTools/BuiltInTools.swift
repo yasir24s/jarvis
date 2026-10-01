@@ -8,18 +8,31 @@ import JarvisCore
 /// never name a tool type. Every other catalog tool stays listed with no body, and the gateway
 /// answers it with its unknown-tool text until M5 or M6 adds one.
 public enum BuiltInTools {
+    /// What the native memory tools (P4: `search_memory`, `forget_memory`, `correct_memory`)
+    /// need: the store they write through, and the search behind search_memory.
+    public struct Memory: Sendable {
+        public let store: MemoryStore
+        public let search: any MemorySearching
+
+        public init(store: MemoryStore, search: any MemorySearching) {
+            self.store = store
+            self.search = search
+        }
+    }
+
     /// Registers every implemented body on `gateway`. `clock` and `timeZone` stand in for what
     /// Python's `datetime.now()` reads; the app passes the system's, tests pin both. `core` owns
-    /// the personality file the two personality tools write (through its StateStore).
+    /// the personality file the two personality tools write (through its StateStore). With
+    /// `memory`, the three memory tools are registered too (NativeToolCatalog).
     public static func register(on gateway: ToolGateway, core: CoreState, clock: any JarvisClock,
-                                timeZone: TimeZone) async {
-        await register(on: gateway, core: core, clock: clock, timeZone: timeZone, platform: .live)
+                                timeZone: TimeZone, memory: Memory? = nil) async {
+        await register(on: gateway, core: core, clock: clock, timeZone: timeZone, platform: .live, memory: memory)
     }
 
     /// The same registration over `platform`, the machine-facing readers, so tests register
     /// every body over fakes.
     static func register(on gateway: ToolGateway, core: CoreState, clock: any JarvisClock,
-                         timeZone: TimeZone, platform: ToolPlatform) async {
+                         timeZone: TimeZone, platform: ToolPlatform, memory: Memory? = nil) async {
         await gateway.register(GetTime(clock: clock, timeZone: timeZone))
         await gateway.register(PersonalityNote(core: core))
         await gateway.register(PersonalityRewrite(core: core))
@@ -51,6 +64,11 @@ public enum BuiltInTools {
         await gateway.register(Capped(OpenSettings(opener: platform.settingsOpener)))
         await gateway.register(Capped(SystemControl(runner: platform.actionRunner, scriptRunner: platform.scriptRunner,
                                                     executable: platform.executable)))
+        if let memory {
+            await gateway.register(Capped(SearchMemory(memory: memory.store, search: memory.search)))
+            await gateway.register(Capped(ForgetMemory(memory: memory.store)))
+            await gateway.register(Capped(CorrectMemory(memory: memory.store, clock: clock)))
+        }
     }
 
     /// The generated `ToolCatalog` entry for `name`, so no body carries a hand-written schema.

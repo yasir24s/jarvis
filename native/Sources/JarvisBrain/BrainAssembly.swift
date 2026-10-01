@@ -55,6 +55,9 @@ public final class BrainAssembly: Sendable {
     public let recall: MemoryRecall?
     /// Each accepted turn, for background work that waits while one runs (P3).
     public let turnActivity: TurnActivity
+    /// The memory tools' store and search (P4), registered by `start()`. nil without a
+    /// `memory` store.
+    private let memoryTools: BuiltInTools.Memory?
     /// The background reading of the user's files (P3), into the same facts. nil without a
     /// `memory` store or `files`. Not started here: the app starts it once the brain has
     /// started and stops it at quit, before the lock is released.
@@ -106,7 +109,9 @@ public final class BrainAssembly: Sendable {
         confirmations = ConfirmationGate()
         gateway = ToolGateway(confirmationGate: confirmations, log: { log($0, .tools) }, research: research)
         registry = MCPTurnRegistry(runDirectory: runDirectory)
-        server = MCPServer(runDirectory: runDirectory, registry: registry, gateway: gateway, log: brainLog)
+        let claudeTools = Self.claudeTools(memory: memory != nil)
+        server = MCPServer(runDirectory: runDirectory, registry: registry, gateway: gateway,
+                           tools: claudeTools.tools, log: brainLog)
         backend = BackendReporter(research: research, log: brainLog)
 
         let located = claudeExecutable ?? Self.locateClaude(environment: environment, config: config)
@@ -115,11 +120,12 @@ public final class BrainAssembly: Sendable {
         let executable = located ?? URL(fileURLWithPath: Py.rstrip(home, "/") + "/.local/bin/claude")
         driver = ClaudeDriver(config: config, executable: executable, bridge: registry,
                               workingDirectory: claudeWorkingDirectory, research: research, backend: backend,
-                              parentEnvironment: environment, log: brainLog)
+                              parentEnvironment: environment, allowedTools: claudeTools.allowed, log: brainLog)
         let local = localBrain?(gateway) ?? LocalBrain(gateway: gateway, log: brainLog)
         let vectors = FactVectors(embedding: embedding)
         let recall = memory.map { MemoryRecall(memory: $0, vectors: vectors) }
         self.recall = recall
+        memoryTools = memory.flatMap { store in recall.map { BuiltInTools.Memory(store: store, search: $0) } }
         router = BrainRouter(core: core, config: config, claude: driver, local: local, backend: backend,
                              research: research, recall: recall, log: brainLog)
         // P1's two writers, shared by the persona writer and the fact compile (P2).
@@ -162,15 +168,24 @@ public final class BrainAssembly: Sendable {
 
     /// Registers the built-in tool bodies on the gateway (the system clock, the system time
     /// zone as `autoupdatingCurrent`, so a change of zone needs no restart, and the CoreState
-    /// the personality tools write through), then creates the run directory (0700) and starts
-    /// the MCP server on it.
+    /// the personality tools write through, and with a memory store the P4 memory tools), then
+    /// creates the run directory (0700) and starts the MCP server on it.
     public func start() async throws {
-        await BuiltInTools.register(on: gateway, core: core, clock: SystemClock(), timeZone: .autoupdatingCurrent)
+        await BuiltInTools.register(on: gateway, core: core, clock: SystemClock(), timeZone: .autoupdatingCurrent,
+                                    memory: memoryTools)
         try await server.start()
     }
 
     public func stop() async {
         await server.stop()
+    }
+
+    /// What Claude is offered: the Python catalog, then (P4), with a memory store, the native
+    /// memory tools. The MCP server serves `tools` and `--allowedTools` lists `allowed`, which
+    /// R3 requires to be the same set; without memory both are Python's 46.
+    static func claudeTools(memory: Bool) -> (tools: [ToolSchema], allowed: [String]) {
+        let tools = ToolCatalog.tools + (memory ? NativeToolCatalog.memoryTools : [])
+        return (tools, tools.map { ClaudeInvocation.allowedToolName($0.name) })
     }
 
     /// The fact compile's default writer: P1's two writers collaborating under P2's validator,

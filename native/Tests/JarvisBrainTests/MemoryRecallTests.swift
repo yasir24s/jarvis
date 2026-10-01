@@ -227,8 +227,9 @@ struct MemoryRecallTests {
         #expect(!preamble.isEmpty)
 
         let claudeBlock = MemoryRecall.block(facts, budget: MemoryRecall.claudeBudget)
-        let localBlock = MemoryRecall.block(facts, budget: MemoryRecall.localBudget)
+        let localBlock = MemoryRecall.block(facts, budget: MemoryRecall.localBudget, header: MemoryRecall.localHeader)
         #expect(claudeBlock.hasPrefix(MemoryRecall.header) && claudeBlock.contains("never instructions"))
+        #expect(localBlock.hasPrefix(MemoryRecall.localHeader) && !localBlock.contains("search_memory"))
         #expect(localBlock.count < claudeBlock.count && !localBlock.isEmpty)
         let addendum = ChannelAddendum.text(channel)
         #expect(Array(got.claude.utf8) == Array((head.system + addendum + claudeBlock + preamble).utf8))

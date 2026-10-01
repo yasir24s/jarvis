@@ -60,7 +60,7 @@ struct MemoryWiringTests {
                                               sink: RecordingSink())
         #expect(memory.archive(after: 0).entries.map(\.text) == ["My sister Amira is visiting next week", "How lovely, sir."])
         let first = try #require(await local.calls.first)
-        #expect(!first.system.contains(MemoryRecall.header))                     // nothing known yet
+        #expect(!first.system.contains(MemoryRecall.localHeader))                // nothing known yet
 
         #expect(await assembly.coordinator.submit(UserInput(text: "That's all, JARVIS.", channel: .text),
                                                   sink: RecordingSink()) == .dismissed(Dismissal.reply))
@@ -72,7 +72,7 @@ struct MemoryWiringTests {
 
         _ = await assembly.coordinator.submit(UserInput(text: "Is Amira coming over?", channel: .text), sink: RecordingSink())
         let recalled = try #require(await local.calls.last?.system)
-        let block = MemoryRecall.header + "\n- " + Self.fact
+        let block = MemoryRecall.localHeader + "\n- " + Self.fact
         let addendum = try #require(recalled.range(of: ChannelAddendum.textChat))
         let memoryAt = try #require(recalled.range(of: block))
         let preamble = try #require(recalled.range(of: "\n\nRecent conversation:"))

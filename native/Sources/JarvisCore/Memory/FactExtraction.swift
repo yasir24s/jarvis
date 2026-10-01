@@ -120,7 +120,7 @@ public enum FactExtraction {
 
     /// A reply's relation, lowercased and without a leading "the user's" ("the user's mother" is
     /// "mother"); nil when empty or unknown ("unknown", "none", "not known", "not stated", "n/a").
-    static func relation(_ raw: String) -> String? {
+    public static func relation(_ raw: String) -> String? {
         var r = Py.strip(Py.lower(raw))
         for prefix in ["the user's ", "the user’s ", "user's ", "user’s "] where r.hasPrefix(prefix) {
             r = Py.strip(String(r.dropFirst(prefix.count)))
