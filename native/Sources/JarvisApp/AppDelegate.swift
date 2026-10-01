@@ -35,6 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The personality upkeep (P1), started with the brain and stopped, like `research`,
     /// before the lock is released: its passes write, and writes need the lease.
     private var personality: PersonalitySchedule?
+    private var idleCompile: IdleCompile?
     /// The background reading of the user's files (P3), started once the brain has started
     /// and stopped at quit before the lock is released: its index and facts writes need the lease.
     private var files: FileScanner?
@@ -149,6 +150,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         research = nil
         personality?.stop()   // no personality pass outlives the lease
         personality = nil
+        idleCompile?.stop()   // nor an idle compile
+        idleCompile = nil
         files?.cancel()   // already stopped on a normal quit; no file read outlives the lease
         files = nil
         lock = nil   // closes the fd: releases the flock before exit
@@ -230,6 +233,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // compile runs in the same dismissal task, so stopping the schedule stops it too.
         assembly.personality.start()
         personality = assembly.personality
+        // P6: chats are compiled into memory after 30 idle minutes too, not only on a dismissal.
+        assembly.idleCompile?.start()
+        idleCompile = assembly.idleCompile
         // P2: the facts' sentence vectors are computed in the background, not on the first turn.
         if let recall = assembly.recall {
             Task.detached(priority: .utility) {
@@ -286,6 +292,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 JarvisLog.log("received SIGTERM — exiting.")
                 self.research?.stop()   // flushes enqueued bumps while the lease is still held
                 self.personality?.stop()   // no personality pass outlives the lease
+                self.idleCompile?.stop()   // nor an idle compile
                 self.files?.cancel()   // no file read outlives the lease
                 self.lock = nil
                 exit(0)

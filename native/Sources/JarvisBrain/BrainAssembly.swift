@@ -55,6 +55,10 @@ public final class BrainAssembly: Sendable {
     public let recall: MemoryRecall?
     /// Each accepted turn, for background work that waits while one runs (P3).
     public let turnActivity: TurnActivity
+    /// P6: the fact compile after 30 idle minutes, beside the dismissal's. nil without a
+    /// `memory` store. Not started here: the app starts it once the brain has started and stops
+    /// it at quit, before the lock is released.
+    public let idleCompile: IdleCompile?
     /// The memory tools' store and search (P4), registered by `start()`. nil without a
     /// `memory` store.
     private let memoryTools: BuiltInTools.Memory?
@@ -141,6 +145,7 @@ public final class BrainAssembly: Sendable {
         self.facts = facts
         let turns = TurnActivity()
         turnActivity = turns
+        idleCompile = memory.flatMap { memory in facts.map { IdleCompile(compiler: $0, memory: memory, turns: turns) } }
         fileScanner = memory.flatMap { memory in
             files.map { files in
                 let quota = ClaudeReadQuota()
