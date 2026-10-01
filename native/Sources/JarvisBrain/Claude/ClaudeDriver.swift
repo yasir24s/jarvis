@@ -27,6 +27,9 @@ public protocol BackendReporting: Sendable {
 ///   sentence has taken yet (plan §3.6: any displayed delta counts as emitted), and returns
 ///   it after the sentences. The voice channel returns the spoken sentences, as Python does.
 /// - Text for a message that has been retracted (R6) is not fed.
+/// - Text from a later message (after a tool call) is set apart by a blank line, in the deltas
+///   and the reply, and the earlier message's last sentence ends there (P4, DEV-P4-06). Python
+///   runs the two together.
 /// - Stop signals go to the child's process group (see `ClaudeChild`).
 /// - A success result stands even if `claude` then exits non-zero (plan §3.6 has no rule
 ///   for it). The Agent SDK raises `ProcessError` there ("Command failed with exit code"),
@@ -275,6 +278,7 @@ public actor ClaudeDriver {
             guard Py.eq(reason, "refusal") else { break }
             s.discard(id)
             s.retracted.insert(id)
+            if s.lastTextID == id { s.lastTextID = nil }     // what follows starts afresh (P4)
             await sink.retracted(messageID: id)
         case let .refusalFallback(from, to, category):                                      // R7
             s.servingModel = to
@@ -306,8 +310,19 @@ public actor ClaudeDriver {
     }
 
     /// `buf += text`, then `pop_sentences(buf)`, then emit. The raw text goes to `delta` first.
+    ///
+    /// P4 (DEV-P4-06): when the text comes from a new message after another message's text
+    /// (the model wrote, called a tool, and wrote again), that earlier text is ended as a
+    /// sentence, `delta` gets a blank line, and the reply joins the two with one. Python's `buf`
+    /// runs them together: "I need the file paths.I couldn't check it".
     private func feed(_ text: String, from id: String, to s: inout TurnState, sink: any ReplySink) async {
         guard !text.isEmpty else { return }
+        if let last = s.lastTextID, last != id {
+            await emit(s.pop(force: true), to: &s, sink: sink)
+            s.messageStarts.insert(s.spoken.count)
+            await sink.delta(TurnState.messageBreak)
+        }
+        s.lastTextID = id
         await sink.delta(text)
         s.append(text, from: id)
         let sentences = s.pop(force: false)
@@ -334,14 +349,14 @@ public actor ClaudeDriver {
             }
             if !emitted.isEmpty {
                 await backend.set(Self.partialBackend)
-                return Py.strip(emitted.joined(separator: " "))
+                return Py.strip(s.joined(emitted))
             }
             // R8: a rate-limit status other than "allowed" is part of the reason.
             let reason = ClaudeReason.reason(s.rateLimitStatus.map { "rate limit \($0): \(error)" } ?? error)
             log("Claude unavailable this turn — using local model: \(reason)")
             return nil
         }
-        let reply = Py.strip(s.spoken.joined(separator: " "))
+        let reply = Py.strip(s.joined(s.spoken))
         guard !reply.isEmpty else {
             log("Claude unavailable this turn — using local model: empty response")
             return nil
@@ -415,6 +430,11 @@ private struct TurnState {
     private(set) var segments: [Segment] = []
     /// Python's `spoken`: every sentence passed to `ReplySink.sentence`.
     var spoken: [String] = []
+    /// P4: the indices in `spoken` where a later message's text begins, and the message whose
+    /// text was fed last (nil before any, and after that message is retracted).
+    var messageStarts: Set<Int> = []
+    var lastTextID: String?
+    static let messageBreak = "\n\n"
     var deltaSeen: Set<String> = []
     var retracted: Set<String> = []
     var initSeen = false
@@ -429,6 +449,17 @@ private struct TurnState {
 
     var buf: String {
         segments.map(\.text).joined()
+    }
+
+    /// Python's `" ".join(sentences)`, with a blank line instead before each sentence that
+    /// begins a later message (P4).
+    func joined(_ sentences: [String]) -> String {
+        var out = ""
+        for (i, sentence) in sentences.enumerated() {
+            if i > 0 { out += messageStarts.contains(i) ? Self.messageBreak : " " }
+            out += sentence
+        }
+        return out
     }
 
     mutating func append(_ text: String, from id: String) {

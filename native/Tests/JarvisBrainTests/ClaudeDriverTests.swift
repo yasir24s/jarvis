@@ -429,9 +429,10 @@ struct ClaudeDriverTests {
     }
 
     @Test func refusalKeepsAnEarlierMessagesText() async throws {
-        // buf is "Let me check.Here is how" (no boundary) when msg_b is refused: only msg_b's
-        // part goes. Dropping all of buf would give ["Something else."] (R9 feeds the result
-        // text into a blank buf); dropping nothing would give ["Let me check.Here is how"].
+        // msg_a's "Let me check." ends as a sentence when msg_b starts (P4), so when msg_b is
+        // refused only its own "Here is how" goes. Python's buf is "Let me check.Here is how"
+        // there, and drops msg_b's part the same way. Dropping all of it would give
+        // ["Something else."] (R9 feeds the result text into a blank buf).
         let fake = try FakeClaude(transcript: [
             Transcript.initLine(),
             Transcript.messageStart("msg_a"), Transcript.delta("Let me check."), Transcript.stop("tool_use"),
@@ -443,6 +444,47 @@ struct ClaudeDriverTests {
         #expect(await run.generate() == "Let me check.")
         #expect(await run.sink.sentences == ["Let me check."])
         #expect(await run.sink.retractedIDs == ["msg_b"])
+    }
+
+    /// P4 (DEV-P4-06): the text before and after a tool call. Python's `buf += block.text`
+    /// glues it into "I need the file paths.I couldn't check it" (its `_SENT_BOUNDARY` needs
+    /// white space after the full stop), and its reply shows both, so native joins them with a
+    /// blank line: in the deltas the chat shows, and in the reply.
+    @Test func textAroundAToolCallIsSetApartByABlankLine() async throws {
+        let fake = try FakeClaude(transcript: [
+            Transcript.initLine(),
+            Transcript.messageStart("msg_a"), Transcript.delta("I need the file paths."), Transcript.stop("tool_use"),
+            Transcript.toolResult("pong-from-tool"),
+            Transcript.messageStart("msg_b"), Transcript.delta("I couldn't check it"), Transcript.stop("end_turn"),
+            Transcript.result(text: "I couldn't check it"),
+        ], ending: .exit(0))
+        defer { fake.remove() }
+        let run = Run(fake)
+        let reply = await run.generate()
+        #expect(reply == "I need the file paths.\n\nI couldn't check it")
+        #expect(await run.sink.sentences == ["I need the file paths.", "I couldn't check it"])
+        #expect(await run.sink.deltas == ["I need the file paths.", "\n\n", "I couldn't check it"])
+        withKnownIssue("DEV-P4-06: Python runs the two messages together") {
+            #expect(reply == "I need the file paths.I couldn't check it")
+        }
+    }
+
+    /// The same when the first message's sentence had already ended, and within one message
+    /// nothing changes: sentences join with a space, as Python's do.
+    @Test func eachLaterMessageStartsAfterABlankLine() async throws {
+        let fake = try FakeClaude(transcript: [
+            Transcript.initLine(),
+            Transcript.messageStart("msg_a"), Transcript.delta("Let me look. "), Transcript.delta("One moment."),
+            Transcript.stop("tool_use"), Transcript.toolResult("x"),
+            Transcript.messageStart("msg_b"), Transcript.stop("tool_use"), Transcript.toolResult("y"),
+            Transcript.messageStart("msg_c"), Transcript.delta("Found it, sir. "), Transcript.delta("It is in Documents."),
+            Transcript.stop("end_turn"), Transcript.result(text: "It is in Documents."),
+        ], ending: .exit(0))
+        defer { fake.remove() }
+        let run = Run(fake)
+        #expect(await run.generate() == "Let me look. One moment.\n\nFound it, sir. It is in Documents.")
+        #expect(await run.sink.deltas == ["Let me look. ", "One moment.", "\n\n", "Found it, sir. ", "It is in Documents."])
+        #expect(await run.sink.sentences == ["Let me look.", "One moment.", "Found it, sir.", "It is in Documents."])
     }
 
     @Test func blockTextIsFedWhenNoDeltaCame() async throws {
