@@ -45,9 +45,9 @@ Line numbers refer to jarvis.py @ 68cd112.
 | R3 → D-15 | M5 | `get_wifi_status` via `networksetup`, which reports "not associated" while en0 is up on macOS 27 (oracle broken) | CoreWLAN SSID (needs the Location grant), reply in networksetup format | Oracle broken on this OS | A-SYS-4 (manual) | `approved` | M05-M06-tools.md §3.5, §8 R3 |
 | R4 → D-14 | M6 | summarize_page and find_song_by_lyrics call `_ask_model` (Ollama `qwen2.5:3b`) | Brain chain: Claude CLI → FoundationModels; lyrics tool still returns title + artist only, never lyrics | No Ollama in native. **Ledger:** D-14 decides this route | none: answers cannot be golden-tested | `approved` | M05-M06-tools.md §3.5, §8 R4 |
 | §3.6 (no ID) | M5 | No outer timeout on a tool call | Registry safety net at 120 s → `Tool error: timed out` | Only shows on a hang | not stated in the plan | `proposed — decide at milestone start` | M05-M06-tools.md §3.6 |
-| R11 | M5 | `notify` breaks silently on `"` | Posts through UserNotifications when JARVIS is authorised, otherwise runs Python's osascript line with backslashes and quotes escaped; reply always "Notification shown." | Intentional improvement | `m5_actions.golden.json` case marked `R11` | `proposed — decide at milestone start` | M05-M06-tools.md §3.5, §8 R11 |
-| R12 | M5 | `pbpaste` returns RTF source for an RTF-only clipboard | `""` for an RTF-only clipboard | Intentional improvement | flagged in PARITY evidence | `proposed — decide at milestone start` | M05-M06-tools.md §3.5, §8 R12 |
-| R13 | M5 | Trash via Finder Automation; a filename containing "error" reports a false failure | Trash via `FileManager`, no Automation(Finder); false failure fixed; whether Put Back works is not verified | Intentional improvement | A-FILE-3 (manual Put Back check) | `proposed — decide at milestone start` | M05-M06-tools.md §3.5, §8 R13 |
+| R11 | M5 | `notify` breaks silently on `"` | Posts through UserNotifications when JARVIS is authorised, otherwise runs Python's osascript line with backslashes and quotes escaped; reply always "Notification shown." | Intentional improvement | `m5_actions.golden.json` case marked `R11` | `approved` | M05-M06-tools.md §3.5, §8 R11; README D-56, user 2026-10-01 |
+| R12 | M5 | `pbpaste` returns RTF source for an RTF-only clipboard | `""` for an RTF-only clipboard | Intentional improvement | flagged in PARITY evidence | `approved` | M05-M06-tools.md §3.5, §8 R12; README D-56, user 2026-10-01 |
+| R13 | M5 | Trash via Finder Automation; a filename containing "error" reports a false failure | Trash via `FileManager`, no Automation(Finder); false failure fixed; whether Put Back works is not verified | Intentional improvement | A-FILE-3 (manual Put Back check) | `approved` | M05-M06-tools.md §3.5, §8 R13; README D-56, user 2026-10-01 |
 | R14 | M6 | Reminder due `(current date)+offset`, which runs 1 s early | EventKit exact due date | Intentional improvement | flagged in PARITY evidence | `proposed — decide at milestone start` | M05-M06-tools.md §3.5, §8 R5, R14 |
 | DEV-M7-01 | M7 | `start a timer for 5 minutes` → open.app, "I couldn't find an app called a timer for 5 minutes, sir.", no action | timer.set → `_set_timer(300)` | Launcher branch always returns, so it swallows the phrase | `fastpath_deviations.json` | `approved` | M07-fastpath-M14-loops.md §4.2, §8.1 |
 | DEV-M7-02 | M7 | `start music` / `start the music` → open.app, "Opening Music, sir." + launch Music | media.play, "Playing, sir." + `_media("play")` (the set entries are dead code today) | Same launcher bug | `fastpath_deviations.json` | `approved` | M07-fastpath-M14-loops.md §8.1 |
@@ -113,13 +113,13 @@ loop behaviours may need their own tests at M14.
 
 ## Counts
 
-83 entries: 57 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
+83 entries: 60 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
 DEV-M7-01, DEV-M7-02, DEV-M7-05, R9 → D-18, DEV-M0-01 to DEV-M0-03, DEV-M1-01 to DEV-M1-04, D1a,
 D1b, D1c, D5a, R8-str-float, R8-load-not-dict, R8-nan-sort, R8-kb-summary-not-str,
 R8-list-content, DEV-M3-01 to DEV-M3-14, DEV-M4-01, DEV-M4-02, DEV-P1-01, DEV-P1-02, DEV-P2-01,
-DEV-P3-01, DEV-M5-01 to DEV-M5-05), 1 `approved (overage kill-switch only)` (X-10), 1 `rejected`
-(X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 23 `proposed — decide at milestone
-start`.
+DEV-P3-01, DEV-M5-01 to DEV-M5-05, R11, R12, R13), 1 `approved (overage kill-switch only)`
+(X-10), 1 `rejected` (X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 20 `proposed —
+decide at milestone start`.
 
 ## Not registered: differences mentioned only in the M05 §3.5 tool table
 

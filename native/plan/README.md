@@ -564,6 +564,11 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
   from M5's tools that act. `move_file` names the real folder when the source path ends in
   `/`. `type_text` and the brightness keys post CGEvents under Accessibility instead of
   System Events scripts.
+- **D-56. R11, R12 and R13 approved** (user, 2026-10-01). These are M5's three planned fixes
+  of Python bugs, all already built. `notify` survives a quote mark. `read_clipboard` gives
+  `""` for a clipboard that holds only rich text, where Python returns the RTF source.
+  `delete_file` trashes through `FileManager` without Finder automation, which also ends
+  Python's false failure for a file whose name contains "error".
 
 ## Open user decisions
 
