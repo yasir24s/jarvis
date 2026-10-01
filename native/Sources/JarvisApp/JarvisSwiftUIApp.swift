@@ -23,16 +23,20 @@ struct JarvisSwiftUIApp: App {
             // The app menu's "Stop Speaking" (M8), the same as the menu-bar item.
             CommandGroup(after: .appInfo) {
                 Button("Stop Speaking") { appDelegate.stopSpeaking() }
+                // P6: the user's consent to learning from their files, as in the menu-bar menu.
+                FileLearningToggle(consent: appDelegate.fileLearning)
             }
         }
 
         MenuBarExtra("JARVIS", systemImage: "circle.hexagongrid.fill") {
             #if DEBUG
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
+                        learn: appDelegate.fileLearning,
                         stopSpeaking: { appDelegate.stopSpeaking() },
                         testConfirmation: { appDelegate.stashTestConfirmation() })
             #else
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
+                        learn: appDelegate.fileLearning,
                         stopSpeaking: { appDelegate.stopSpeaking() })
             #endif
         }

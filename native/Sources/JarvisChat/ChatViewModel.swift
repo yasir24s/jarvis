@@ -92,6 +92,14 @@ public final class ChatViewModel: ReplySink {
         messages.append(ChatMessage(role: .system, text: text, phase: .finished))
     }
 
+    /// P6: a message JARVIS posts himself, outside any turn (the first-run offer to learn from
+    /// the user's files): one finished assistant row, never sent to the brain and never spoken.
+    /// A second call with the same text adds nothing.
+    public func post(_ text: String) {
+        guard !messages.contains(where: { $0.role == .assistant && $0.text == text }) else { return }
+        messages.append(ChatMessage(role: .assistant, text: text, phase: .finished))
+    }
+
     /// The menu's backend line.
     public var backendLine: String { "Last backend: \(lastBackend ?? "—")" }
 

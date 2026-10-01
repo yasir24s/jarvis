@@ -3,19 +3,23 @@ import JarvisCore
 import JarvisTools
 
 /// What the file scanner (D-51 P3) needs from the app: the folder to walk, JARVIS's state root
-/// (never read), the lease-holding store its index is written through, and the extractors,
-/// which include JarvisApp's PDFKit and AppKit readers.
+/// (never read), the lease-holding store its index is written through, the extractors, which
+/// include JarvisApp's PDFKit and AppKit readers, and (P6) the user's consent.
 public struct FileScanSetup: Sendable {
     public let home: URL
     public let stateRoot: URL
     public let store: StateStore
     public let extractors: TextExtractors
+    /// P6: whether the user allows learning from their files ("Learn About Me From My Files").
+    public let enabled: @Sendable () -> Bool
 
-    public init(home: URL, stateRoot: URL, store: StateStore, extractors: TextExtractors) {
+    public init(home: URL, stateRoot: URL, store: StateStore, extractors: TextExtractors,
+                enabled: @escaping @Sendable () -> Bool = { true }) {
         self.home = home
         self.stateRoot = stateRoot
         self.store = store
         self.extractors = extractors
+        self.enabled = enabled
     }
 }
 
@@ -153,7 +157,8 @@ public final class BrainAssembly: Sendable {
                                             budget: .system(), quota: quota, turns: turns, vectors: vectors,
                                             userName: NSFullUserName())
                 return FileScanner(home: files.home, stateRoot: files.stateRoot, store: files.store,
-                                   extractors: files.extractors, reader: reader, quota: quota, turns: turns)
+                                   extractors: files.extractors, reader: reader, quota: quota, turns: turns,
+                                   enabled: files.enabled)
             }
         }
         // The convenience init's two closures, with the fact compile after the distillation.

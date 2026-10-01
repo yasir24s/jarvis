@@ -26,6 +26,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let chat = ChatViewModel()
     /// The menu's "Speak replies" toggle, the user's input to the speak policy.
     let speakReplies = SpeakRepliesToggle()
+    /// P6: "Learn About Me From My Files", the user's consent to the file scanner.
+    let fileLearning = FileLearningConsent()
     private var lock: InstanceLock?
     /// Built once the lock is held and kept for the app's life (plan: M02-M04 §3.5, §3.12).
     private var brain: BrainAssembly?
@@ -211,15 +213,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         // P2: the long-term memory in memory/, on the same lease-holding store. Local dates
         // follow the Mac's time zone as it changes.
+        // P6: a first launch has no memory folder yet (looked at before anything writes). The
+        // consent to learning from files is decided once: an install whose scanner has run
+        // (memory/files-index.json) has given it; a new install starts with it off.
+        let memoryFolderExists = FileManager.default.fileExists(
+            atPath: paths.root.appending(path: "memory", directoryHint: .isDirectory).path(percentEncoded: false))
+        fileLearning.resolve(filesIndexExists: FileManager.default.fileExists(atPath: store.path(.filesIndex)))
         let memory = MemoryStore(store: store, clock: SystemClock(), timeZone: .autoupdatingCurrent)
         // P6: before anything writes, an unreadable facts.json, personality.json or profile.json
         // is put back from its newest backup, and one that shrank is logged with both kept.
         memory.checkAtLaunch()
         // P3: the home folder is read in the background into the same facts; JARVIS's own state
         // root is never read. PDFKit and AppKit read pdf, docx and rtf here (D-13).
+        let consent = fileLearning.shared
         let fileSetup = FileScanSetup(home: FileManager.default.homeDirectoryForCurrentUser, stateRoot: paths.root,
                                       store: store,
-                                      extractors: TextExtractors([PlainTextExtractor(), DocumentTextExtractor()]))
+                                      extractors: TextExtractors([PlainTextExtractor(), DocumentTextExtractor()]),
+                                      enabled: { consent.isOn })
         let assembly = BrainAssembly(
             core: core, research: research, config: config, environment: environment,
             runDirectory: folders.run, claudeWorkingDirectory: folders.claudeWorkingDirectory,
@@ -253,6 +263,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             self.chat.connect(assembly.coordinator, lastBackend: { await assembly.backend.last.name })
             self.chat.watchConfirmations(assembly.confirmations, authenticator: authenticator)
+            // P6: on a first launch, JARVIS offers once to learn from the user's files.
+            if self.fileLearning.takeFirstRunOffer(memoryFolderExists: memoryFolderExists) {
+                self.chat.post(FileLearningConsent.firstRunOffer)
+                JarvisLog.log("memory: offered to learn from the user's files (first launch)", category: .state)
+            }
             // P3: the file scanner starts once the brain has (its first pass after 120 s).
             guard self.brain === assembly, let scanner = assembly.fileScanner else { return }
             scanner.start()

@@ -3,12 +3,13 @@ import JarvisChat
 import SwiftUI
 
 /// The menu-bar menu (plan: M02-M04 §3.12): Open Chat, the last backend, the "Speak replies"
-/// toggle, M8's "Stop Speaking", M0's state-root and lock lines, and Quit. DEBUG builds add
-/// "Test confirmation".
+/// toggle, M8's "Stop Speaking", P6's "Learn About Me From My Files", M0's state-root and lock
+/// lines, and Quit. DEBUG builds add "Test confirmation".
 struct MenuBarMenu: View {
     let model: AppModel
     let chat: ChatViewModel
     @Bindable var speak: SpeakRepliesToggle
+    let learn: FileLearningConsent
     /// Stops the reply being spoken and anything queued (AppDelegate.stopSpeaking).
     let stopSpeaking: () -> Void
     #if DEBUG
@@ -28,6 +29,7 @@ struct MenuBarMenu: View {
         Button("Stop Speaking") {
             stopSpeaking()
         }
+        FileLearningToggle(consent: learn)
         Divider()
         Text("State: \(model.stateRoot)")
         Text("Lock: \(model.lockHolder)")
@@ -44,5 +46,15 @@ struct MenuBarMenu: View {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q")
+    }
+}
+
+/// P6: "Learn About Me From My Files", with a checkmark while it is on, in the app menu and the
+/// menu-bar menu. Switching it changes what the file scanner may read at once.
+struct FileLearningToggle: View {
+    @Bindable var consent: FileLearningConsent
+
+    var body: some View {
+        Toggle(FileLearningConsent.menuTitle, isOn: $consent.isOn)
     }
 }

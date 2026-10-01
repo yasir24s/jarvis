@@ -313,6 +313,48 @@ struct FileScannerTests {
         try await Task.sleep(for: .milliseconds(20))
         #expect(rig.local.calls.count == 1)
     }
+
+    /// P6: until the user allows learning from their files, a pass reads nothing and the loop
+    /// only looks again; switched on, the loop's next look reads. Switched off mid-pass, the
+    /// pass stops before its next document.
+    @Test func nothingIsReadUntilTheUserAllowsIt() async throws {
+        let rig = try ScanRig(local: ScriptedWriter(.reply("The user keeps bees."), .reply("NONE")))
+        defer { rig.remove() }
+        try rig.home.write("Documents/bees.md", "Hive notes for the summer.")
+        let consent = ConsentFlag(false)
+        let reader = FileFactReader(memory: rig.memory, local: rig.local, claude: rig.claude,
+                                    budget: LocalFileBudget(counter: FakeTokenCounter()), quota: rig.quota,
+                                    turns: rig.turns, clock: ManualClock(epoch), log: { _ in })
+        let scanner = FileScanner(home: rig.home.root, stateRoot: rig.state.root, store: rig.store,
+                                  extractors: TextExtractors([rig.extractor]), reader: reader, quota: rig.quota,
+                                  turns: rig.turns, probe: rig.probe, enabled: { consent.isOn },
+                                  clock: ManualClock(epoch),
+                                  sleep: { d in
+                                      try await Task.sleep(for: d >= .seconds(3600) ? d : .milliseconds(1),
+                                                           clock: .suspending)
+                                  }, log: rig.logs.function)
+        let off = await scanner.pass()
+        #expect(!off.completed && off.readOnDevice == 0 && rig.local.calls.isEmpty && rig.facts.isEmpty)
+        scanner.start()
+        try await waitUntil("the scanner to wait for consent") {
+            rig.logs.all.contains("files: learning from files is off; nothing is read until it is switched on")
+        }
+        try await Task.sleep(for: .milliseconds(20))
+        #expect(rig.local.calls.isEmpty)
+        consent.set(true)
+        try await waitUntil("the first read") { !rig.facts.isEmpty }
+        #expect(rig.facts.map(\.text) == ["The user keeps bees."])
+        #expect(rig.logs.all.contains("files: learning from files was switched on"))
+        await scanner.stop()
+    }
+}
+
+/// A consent the test switches by hand.
+private final class ConsentFlag: Sendable {
+    private let value: Mutex<Bool>
+    init(_ value: Bool) { self.value = Mutex(value) }
+    var isOn: Bool { value.withLock { $0 } }
+    func set(_ on: Bool) { value.withLock { $0 = on } }
 }
 
 /// Runs `onCall` as each call starts, then defers to `inner`.

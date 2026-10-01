@@ -28,6 +28,8 @@ public actor FileScanner {
     public static let startDelay: Duration = .seconds(120)
     /// From the end of one pass to the start of the next.
     public static let rewalkInterval: Duration = .seconds(6 * 3600)
+    /// P6: how often a scanner the user has not allowed (`enabled` false) looks again.
+    public static let consentPoll: Duration = .seconds(30)
     /// How long to wait before looking again while the Mac is hot or in Low Power Mode.
     public static let backoffInterval: Duration = .seconds(60)
     /// The pause after each file that had to be opened.
@@ -75,6 +77,8 @@ public actor FileScanner {
     private let turns: TurnActivity
     private let probe: any FileSystemProbe
     private let conditions: @Sendable () -> PowerConditions
+    /// P6: the user's consent ("Learn About Me From My Files"); nothing is read while false.
+    private let enabled: @Sendable () -> Bool
     private let clock: any JarvisClock
     private let now: Now
     private let sleep: Sleep
@@ -95,10 +99,14 @@ public actor FileScanner {
     ///   - store: the lease-holding store the index is written through.
     ///   - reader: the reader; `quota` and `turns` must be the ones it was given.
     ///   - conditions: the thermal state and Low Power Mode.
+    ///   - enabled: (P6) whether the user allows learning from their files. While it is false
+    ///     the loop reads nothing and looks again every `consentPoll`; a pass under way stops
+    ///     before its next document.
     ///   - now, sleep: the SuspendingClock and its sleep. Tests pass their own.
     public init(home: URL, stateRoot: URL, store: StateStore, extractors: TextExtractors, reader: FileFactReader,
                 quota: ClaudeReadQuota, turns: TurnActivity, probe: any FileSystemProbe = LiveFileSystemProbe(),
                 conditions: @escaping @Sendable () -> PowerConditions = PowerConditions.current,
+                enabled: @escaping @Sendable () -> Bool = { true },
                 clock: any JarvisClock = SystemClock(),
                 now: @escaping Now = { SuspendingClock().now },
                 sleep: @escaping Sleep = { try await Task.sleep(for: $0, clock: .suspending) },
@@ -112,6 +120,7 @@ public actor FileScanner {
         self.turns = turns
         self.probe = probe
         self.conditions = conditions
+        self.enabled = enabled
         self.clock = clock
         self.now = now
         self.sleep = sleep
@@ -158,7 +167,9 @@ public actor FileScanner {
         do {
             try await sleep(Self.startDelay)
             while !Task.isCancelled {
+                try await waitForConsent()
                 let summary = await pass()
+                if !enabled() { continue }             // switched off during the pass
                 let next = now().advanced(by: Self.rewalkInterval)
                 if summary.completed { try await readWaiting(before: next) }
                 let rest = now().duration(to: next)
@@ -168,6 +179,20 @@ public actor FileScanner {
             // The sleep throws once stop() has cancelled the task: the loop is over.
         }
         saveIfNeeded()
+    }
+
+    /// Returns once the user allows learning from their files, at once when they do; throws
+    /// when cancelled. Logs once when it starts waiting.
+    private func waitForConsent() async throws {
+        var said = false
+        while !enabled() {
+            if !said {
+                log("files: learning from files is off; nothing is read until it is switched on")
+                said = true
+            }
+            try await sleep(Self.consentPoll)
+        }
+        if said { log("files: learning from files was switched on") }
     }
 
     // MARK: - A pass
@@ -234,8 +259,10 @@ public actor FileScanner {
         }
     }
 
-    /// One document. `.stop` when cancelled or when the index or facts can no longer be saved.
+    /// One document. `.stop` when cancelled, when the user has switched learning from files
+    /// off (P6), or when the index or facts can no longer be saved.
     private func process(_ candidate: FileCandidate, into summary: inout PassSummary) async -> Step {
+        guard enabled() else { return .stop }
         let path = Self.key(candidate.url)
         if let entry = index.entries[path], entry.status.isSettled,
            entry.size == candidate.size, entry.mtime == candidate.modified {
