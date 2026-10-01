@@ -34,6 +34,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The personality upkeep (P1), started with the brain and stopped, like `research`,
     /// before the lock is released: its passes write, and writes need the lease.
     private var personality: PersonalitySchedule?
+    /// The background reading of the user's files (P3), started once the brain has started
+    /// and stopped at quit before the lock is released: its index and facts writes need the lease.
+    private var files: FileScanner?
     private var sigterm: DispatchSourceSignal?
     /// Opens the chat window. Set by the window each time it appears, for the Dock icon.
     var openChat: (() -> Void)?
@@ -115,7 +118,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard let brain else { return .terminateNow }
         self.brain = nil
+        let files = self.files
+        self.files = nil
         Task { @MainActor in
+            await files?.stop()   // its last index save happens while the lease is still held
             await brain.stop()
             sender.reply(toApplicationShouldTerminate: true)
         }
@@ -128,6 +134,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         research = nil
         personality?.stop()   // no personality pass outlives the lease
         personality = nil
+        files?.cancel()   // already stopped on a normal quit; no file read outlives the lease
+        files = nil
         lock = nil   // closes the fd: releases the flock before exit
     }
 
@@ -181,10 +189,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // P2: the long-term memory in memory/, on the same lease-holding store. Local dates
         // follow the Mac's time zone as it changes.
         let memory = MemoryStore(store: store, clock: SystemClock(), timeZone: .autoupdatingCurrent)
+        // P3: the home folder is read in the background into the same facts; JARVIS's own state
+        // root is never read. PDFKit and AppKit read pdf, docx and rtf here (D-13).
+        let fileSetup = FileScanSetup(home: FileManager.default.homeDirectoryForCurrentUser, stateRoot: paths.root,
+                                      store: store,
+                                      extractors: TextExtractors([PlainTextExtractor(), DocumentTextExtractor()]))
         let assembly = BrainAssembly(
             core: core, research: research, config: config, environment: environment,
             runDirectory: folders.run, claudeWorkingDirectory: folders.claudeWorkingDirectory,
-            memory: memory,
+            memory: memory, files: fileSetup,
             textAuthenticator: authenticator,
             // Python's is_online(): asked only when a turn reaches the brain.
             online: { await Net.isOnline() })
@@ -211,6 +224,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             self.chat.connect(assembly.coordinator, lastBackend: { await assembly.backend.last.name })
             self.chat.watchConfirmations(assembly.confirmations, authenticator: authenticator)
+            // P3: the file scanner starts once the brain has (its first pass after 120 s).
+            guard self.brain === assembly, let scanner = assembly.fileScanner else { return }
+            scanner.start()
+            self.files = scanner
         }
     }
 
@@ -241,6 +258,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 JarvisLog.log("received SIGTERM — exiting.")
                 self.research?.stop()   // flushes enqueued bumps while the lease is still held
                 self.personality?.stop()   // no personality pass outlives the lease
+                self.files?.cancel()   // no file read outlives the lease
                 self.lock = nil
                 exit(0)
             }

@@ -2,10 +2,28 @@ import Foundation
 import JarvisCore
 import JarvisTools
 
+/// What the file scanner (D-51 P3) needs from the app: the folder to walk, JARVIS's state root
+/// (never read), the lease-holding store its index is written through, and the extractors,
+/// which include JarvisApp's PDFKit and AppKit readers.
+public struct FileScanSetup: Sendable {
+    public let home: URL
+    public let stateRoot: URL
+    public let store: StateStore
+    public let extractors: TextExtractors
+
+    public init(home: URL, stateRoot: URL, store: StateStore, extractors: TextExtractors) {
+        self.home = home
+        self.stateRoot = stateRoot
+        self.store = store
+        self.extractors = extractors
+    }
+}
+
 /// Builds the brain from its parts (plan: M02-M04 §3.5-§3.11): one confirmation gate, a
 /// gateway that counts and logs, the MCP turn registry and server on the run directory, the
 /// Claude driver, the on-device brain on the same gateway, the backend reporter, the router,
-/// the personality upkeep (P1), the long-term memory (P2) and the turn coordinator. `start()`
+/// the personality upkeep (P1), the long-term memory (P2), the file scanner (P3) and the turn
+/// coordinator. `start()`
 /// creates the run directory and starts the server; `stop()` stops it.
 public final class BrainAssembly: Sendable {
     /// `~/Library/Application Support/JARVIS/`, which holds `run/` and `claude-cwd/`
@@ -35,6 +53,12 @@ public final class BrainAssembly: Sendable {
     /// The long-term memory's recall (P2), which the router appends to each turn's prompt. nil
     /// without a `memory` store.
     public let recall: MemoryRecall?
+    /// Each accepted turn, for background work that waits while one runs (P3).
+    public let turnActivity: TurnActivity
+    /// The background reading of the user's files (P3), into the same facts. nil without a
+    /// `memory` store or `files`. Not started here: the app starts it once the brain has
+    /// started and stops it at quit, before the lock is released.
+    public let fileScanner: FileScanner?
     /// The `claude` found on the child's PATH, or nil. With none, the driver is given
     /// `~/.local/bin/claude` (where the installer puts it, first on that PATH), so each Claude
     /// turn fails with ENOENT ("Claude Code CLI not found") and falls back to the local model,
@@ -61,6 +85,8 @@ public final class BrainAssembly: Sendable {
     ///     over the same two writers as the default persona writer, with
     ///     `FactExtraction.passesCheck` as its validator and Claude's input redacted
     ///     (`Redactor`, D-51 P3). Tests pass a fake.
+    ///   - files: what the file scanner needs from the app (P3); nil means no scanner. It reads
+    ///     with the same two writers and merges into the same facts.
     ///   - embedding: the sentence vectors for recall and duplicate merging.
     ///   - log: every log line of the parts, with its category. Tests pass their own.
     public init(core: CoreState, research: any ResearchCounting,
@@ -69,6 +95,7 @@ public final class BrainAssembly: Sendable {
                 localBrain: ((ToolGateway) -> any LocalGenerating)? = nil,
                 personaWriter: (any PersonaLLM)? = nil,
                 memory: MemoryStore? = nil, factWriter: (any AttributedWriting)? = nil,
+                files: FileScanSetup? = nil,
                 embedding: any SentenceEmbedding = SystemSentenceEmbedding(),
                 textAuthenticator: any ConfirmAuthenticator, fastPath: any FastPathRouting = NoFastPath(),
                 online: @escaping @Sendable () async -> Bool,
@@ -106,6 +133,17 @@ public final class BrainAssembly: Sendable {
                          vectors: vectors)
         }
         self.facts = facts
+        let turns = TurnActivity()
+        turnActivity = turns
+        fileScanner = memory.flatMap { memory in
+            files.map { files in
+                let quota = ClaudeReadQuota()
+                let reader = FileFactReader(memory: memory, local: localWriter, claude: claudeWriter,
+                                            budget: .system(), quota: quota, turns: turns, vectors: vectors)
+                return FileScanner(home: files.home, stateRoot: files.stateRoot, store: files.store,
+                                   extractors: files.extractors, reader: reader, quota: quota, turns: turns)
+            }
+        }
         // The convenience init's two closures, with the fact compile after the distillation.
         let personality = PersonalitySchedule(
             consolidate: { await core.consolidatePersonalityIfDue(using: writer) },
@@ -118,7 +156,7 @@ public final class BrainAssembly: Sendable {
                                       textAuthenticator: textAuthenticator, online: online,
                                       onTurnStart: onTurnStart,
                                       onConversationEnded: { personality.conversationEnded() },
-                                      archive: memory.map { MemoryArchiver(memory: $0) })
+                                      archive: memory.map { MemoryArchiver(memory: $0) }, activity: turns)
     }
 
     /// Registers the built-in tool bodies on the gateway (the system clock, the system time

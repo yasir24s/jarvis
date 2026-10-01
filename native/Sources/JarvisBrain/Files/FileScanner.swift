@@ -145,6 +145,15 @@ public actor FileScanner {
         await task.value
     }
 
+    /// Cancels the loop without waiting for it (the SIGTERM path, which exits at once).
+    public nonisolated func cancel() {
+        let task = life.withLock { l -> Task<Void, Never>? in
+            l.stopped = true
+            return l.task
+        }
+        task?.cancel()
+    }
+
     private func run() async {
         do {
             try await sleep(Self.startDelay)
