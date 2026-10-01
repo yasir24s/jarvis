@@ -129,6 +129,8 @@ Line numbers refer to jarvis.py @ 68cd112.
 | DEV-P6b-04 | P6b | (P6) The Python import produced facts only | It also keeps the paired exchanges word for word in `archive-python.jsonl`, once, never compiled again | The user's Python conversations kept | `PythonImportTests`, `MemoryPermanenceTests` | `proposed` | P6b report part 4 |
 | DEV-P6b-05 | P6b | No record of what he did | `memory/journal.jsonl`: one redacted line per tool call (time, tool, outcome, a short argument summary, up to 200 characters of a trusted tool's reply), searchable through `search_memory` | "Write everything so he can reference everything" | `MemoryJournalTests`, `ToolJournalTests` | `proposed` | P6b report part 5 |
 | DEV-P6b-06 | P6b | (P4) The self-knowledge section had no recall rule | With memory tools it adds: search before saying you don't remember (conversations, journal, notes, and `search_files` for documents); 691 bytes | Proactive recall | `SelfKnowledgeTests` | `proposed` | P6b report part 6 |
+| DEV-U1-01 | U1 | Every launch counts as a start; there are no live updates | A live update's relaunch (`--resume`) bumps no `starts_swift_<build>`; its research checks run as on any launch | A swap-over is the same run in a new build (D-58) | `ResearchSchedulerTests.aLiveUpdatesRelaunchIsNotCountedAsAStart` | `proposed` | U1 report part 3 |
+| DEV-U1-02 | U1 | `.jarvis.lock` is held from launch to quit | During a swap the lock is free for the few seconds between the old process exiting and the new build taking it; a JARVIS started in that window gets it, and the update rolls back | Swap-over without a manual restart (D-58) | `UpdateScriptTests` (held lock) | `proposed` | U1 report part 4 |
 
 The M7 table gives one fixture for all 15 `DEV-M7-*` / `DEV-M14-*` rows (§8.1 heading:
 "fixture §4.2"). For the `DEV-M14-*` rows that marker was carried over as written; the
@@ -136,14 +138,14 @@ loop behaviours may need their own tests at M14.
 
 ## Counts
 
-106 entries: 60 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
+108 entries: 60 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
 DEV-M7-01, DEV-M7-02, DEV-M7-05, R9 → D-18, DEV-M0-01 to DEV-M0-03, DEV-M1-01 to DEV-M1-04, D1a,
 D1b, D1c, D5a, R8-str-float, R8-load-not-dict, R8-nan-sort, R8-kb-summary-not-str,
 R8-list-content, DEV-M3-01 to DEV-M3-14, DEV-M4-01, DEV-M4-02, DEV-P1-01, DEV-P1-02, DEV-P2-01,
 DEV-P3-01, DEV-M5-01 to DEV-M5-05, R11, R12, R13), 1 `approved (overage kill-switch only)`
-(X-10), 1 `rejected` (X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 43 proposed: 20 `proposed —
+(X-10), 1 `rejected` (X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 45 proposed: 20 `proposed —
 decide at milestone start`, plus DEV-M8-01 to DEV-M8-04, DEV-P4-01 to DEV-P4-06, DEV-P5-01,
-DEV-P6-01 to DEV-P6-06 and DEV-P6b-01 to DEV-P6b-06.
+DEV-P6-01 to DEV-P6-06, DEV-P6b-01 to DEV-P6b-06 and DEV-U1-01 to DEV-U1-02.
 
 ## Not registered: differences mentioned only in the M05 §3.5 tool table
 
