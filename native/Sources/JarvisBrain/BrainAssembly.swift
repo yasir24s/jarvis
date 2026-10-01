@@ -59,7 +59,8 @@ public final class BrainAssembly: Sendable {
     ///     none: no archive, no fact compile and no recall.
     ///   - factWriter: what the fact compile is written by; nil means a `CollaborativePersonaLLM`
     ///     over the same two writers as the default persona writer, with
-    ///     `FactExtraction.passesCheck` as its validator. Tests pass a fake.
+    ///     `FactExtraction.passesCheck` as its validator and Claude's input redacted
+    ///     (`Redactor`, D-51 P3). Tests pass a fake.
     ///   - embedding: the sentence vectors for recall and duplicate merging.
     ///   - log: every log line of the parts, with its category. Tests pass their own.
     public init(core: CoreState, research: any ResearchCounting,
@@ -101,9 +102,8 @@ public final class BrainAssembly: Sendable {
                                             parentEnvironment: environment, online: online, log: brainLog)
         let writer = personaWriter ?? CollaborativePersonaLLM(local: localWriter, claude: claudeWriter)
         let facts = memory.map {
-            FactCompiler(memory: $0, writer: factWriter ?? CollaborativePersonaLLM(
-                local: localWriter, claude: claudeWriter, validator: FactExtraction.passesCheck, name: "Memory writer"),
-                vectors: vectors)
+            FactCompiler(memory: $0, writer: factWriter ?? Self.factWriter(local: localWriter, claude: claudeWriter),
+                         vectors: vectors)
         }
         self.facts = facts
         // The convenience init's two closures, with the fact compile after the distillation.
@@ -132,6 +132,15 @@ public final class BrainAssembly: Sendable {
 
     public func stop() async {
         await server.stop()
+    }
+
+    /// The fact compile's default writer: P1's two writers collaborating under P2's validator,
+    /// with what Claude is given redacted (D-51 P3) and the on-device model's input unchanged.
+    static func factWriter(local: any PersonaLLM, claude: any PersonaLLM,
+                           log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .state) })
+        -> CollaborativePersonaLLM {
+        CollaborativePersonaLLM(local: local, claude: claude, validator: FactExtraction.passesCheck,
+                                name: "Memory writer", claudeInput: Redactor.redacted, log: log)
     }
 
     /// `ClaudeLocator` over the PATH `ChildEnvironment` builds for the child.

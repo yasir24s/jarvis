@@ -28,7 +28,7 @@ public enum FactExtraction {
     public enum Drop: String, Sendable, CaseIterable {
         case tooLong           // over MemoryFact.maxLength characters
         case notAboutTheUser   // does not start "The user"
-        case secret            // a key shape, a secret word, a long random token or number
+        case secret            // a key shape, a secret word, a long random token or number, or masked
         case url               // a scheme, www., or a host name
         case command           // shell syntax or a command-line tool
         case instruction       // talks to JARVIS or tells him what to do, or reads as an injection
@@ -76,7 +76,7 @@ public enum FactExtraction {
     public static func dropReason(_ line: String) -> Drop? {
         if Py.len(line) > MemoryFact.maxLength { return .tooLong }
         if aboutTheUser.match(line) == nil { return .notAboutTheUser }
-        if secret.search(line) != nil { return .secret }
+        if secret.search(line) != nil || line.contains(Redactor.mask) { return .secret }
         if url.search(line) != nil { return .url }
         if command.search(line) != nil { return .command }
         if instruction.search(line) != nil { return .instruction }

@@ -35,6 +35,8 @@ public protocol AttributedWriting: Sendable {
 ///   `PersonaDistill` prompts).
 /// - With no draft (the on-device model unavailable or failing), Claude alone gets the
 ///   original text.
+/// - `claudeInput` rewrites what Claude is given (the text and the draft); the on-device model
+///   always gets the text unchanged. P2's fact compile redacts with it (D-51 P3).
 /// - Both failing throws, and CoreState then writes nothing, as Python did when Ollama failed.
 ///
 /// One log line, headed by `name`, says which writer produced the text. No prompt or reply
@@ -47,16 +49,19 @@ public struct CollaborativePersonaLLM: PersonaLLM, AttributedWriting {
     private let claude: any PersonaLLM
     private let validator: Validator
     private let name: String
+    private let claudeInput: @Sendable (String) -> String
     private let log: @Sendable (String) -> Void
 
     public init(local: any PersonaLLM, claude: any PersonaLLM,
                 validator: @escaping Validator = CollaborativePersonaLLM.passesCoreStateCheck,
                 name: String = "Personality writer",
+                claudeInput: @escaping @Sendable (String) -> String = { $0 },
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .state) }) {
         self.local = local
         self.claude = claude
         self.validator = validator
         self.name = name
+        self.claudeInput = claudeInput
         self.log = log
     }
 
@@ -72,7 +77,7 @@ public struct CollaborativePersonaLLM: PersonaLLM, AttributedWriting {
             try Task.checkCancellation()
             let localReason = PersonaWriterError.reason(error)
             do {
-                let text = try await claude.complete(system: system, user: user, timeout: timeout)
+                let text = try await claude.complete(system: system, user: claudeInput(user), timeout: timeout)
                 log("\(name): Claude alone (\(localReason)).")
                 return AttributedText(text: text, author: .claude)
             } catch {
@@ -83,7 +88,9 @@ public struct CollaborativePersonaLLM: PersonaLLM, AttributedWriting {
         }
         let improved: String
         do {
-            improved = try await claude.complete(system: system, user: Self.improveRequest(user: user, draft: draft),
+            improved = try await claude.complete(system: system,
+                                                 user: Self.improveRequest(user: claudeInput(user),
+                                                                           draft: claudeInput(draft)),
                                                  timeout: timeout)
         } catch {
             try Task.checkCancellation()
