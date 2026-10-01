@@ -61,7 +61,7 @@ public enum FactExtraction {
         var lines: [String] = []
         var used = 0
         for e in entries.reversed() {
-            let line = (e.role == .user ? "User: " : "JARVIS: ") + Py.prefix(e.text, messageLimit)
+            let line = line(e)
             let cost = Py.len(line) + 1
             if !lines.isEmpty && used + cost > limit { break }
             lines.append(line)
@@ -71,6 +71,50 @@ public enum FactExtraction {
         guard let first = kept.first?.date, let last = kept.last?.date else { return ("", entries.count) }
         let header = first == last ? "Conversation on \(first):" : "Conversation from \(first) to \(last):"
         return (([header] + lines.reversed()).joined(separator: "\n"), entries.count - kept.count)
+    }
+
+    /// One message's transcript line: "User: " or "JARVIS: ", then its first `messageLimit`
+    /// characters.
+    static func line(_ e: ArchiveEntry) -> String {
+        (e.role == .user ? "User: " : "JARVIS: ") + Py.prefix(e.text, messageLimit)
+    }
+
+    /// P6b: `entries` cut into batches for the compile, oldest first, each as index ranges into
+    /// `entries` that together cover all of them in order. Each batch's transcript fits `limit`,
+    /// so `transcript` leaves none of its messages out. A user message stays in one batch with
+    /// the replies after it, unless the user message and its replies alone do not fit: they are
+    /// then cut between messages.
+    public static func batches(_ entries: [ArchiveEntry], limit: Int = transcriptLimit) -> [Range<Int>] {
+        var units: [Range<Int>] = []           // a user message and the replies after it
+        for (i, e) in entries.enumerated() {
+            if e.role == .user || units.isEmpty {
+                units.append(i..<(i + 1))
+            } else {
+                units[units.count - 1] = units[units.count - 1].lowerBound..<(i + 1)
+            }
+        }
+        let costs = entries.map { Py.len(line($0)) + 1 }
+        var out: [Range<Int>] = []
+        var start = 0, used = 0
+        func add(_ i: Int) {                    // entry i joins the batch, or starts the next one
+            if i > start && used + costs[i] > limit {
+                out.append(start..<i)
+                start = i
+                used = 0
+            }
+            used += costs[i]
+        }
+        for unit in units {
+            let cost = unit.reduce(0) { $0 + costs[$1] }
+            if unit.lowerBound > start && used + cost > limit {
+                out.append(start..<unit.lowerBound)
+                start = unit.lowerBound
+                used = 0
+            }
+            for i in unit { add(i) }
+        }
+        if start < entries.count { out.append(start..<entries.count) }
+        return out
     }
 
     /// The reply's fact lines, each stripped of a leading bullet or number, and the reasons the

@@ -99,6 +99,33 @@ struct FactExtractionTests {
         #expect(FactExtraction.transcript([]) == ("", 0))
     }
 
+    /// P6b: the batches cover every message once, in order; each transcript leaves none out;
+    /// a user message stays with its reply; and a user message with more replies than fit is
+    /// cut between messages.
+    @Test func batchesCoverEveryMessageAndEachFitsTheTranscript() {
+        var entries: [ArchiveEntry] = []
+        for k in 0..<40 {
+            entries.append(entry(.user, "Question \(k): " + String(repeating: "q", count: 300)))
+            entries.append(entry(.jarvis, "Answer \(k): " + String(repeating: "a", count: 300)))
+        }
+        let batches = FactExtraction.batches(entries)
+        #expect(batches.count == 5)                               // 80 lines of ~320 characters
+        #expect(batches.flatMap { Array($0) } == Array(entries.indices))
+        for range in batches {
+            let batch = Array(entries[range])
+            #expect(FactExtraction.transcript(batch).omitted == 0)
+            #expect(batch.first?.role == .user && batch.last?.role == .jarvis)
+        }
+        #expect(FactExtraction.batches(entries, limit: 100_000) == [0..<80])
+
+        // Lines of 9 and 11 characters, newline included ("User: q0", then "JARVIS: a1" and so on).
+        let long = [entry(.user, "q0")] + (1...4).map { entry(.jarvis, "a\($0)") }
+        #expect(FactExtraction.batches(long, limit: 25) == [0..<2, 2..<4, 4..<5])
+        #expect(FactExtraction.batches([entry(.jarvis, "hello"), entry(.user, "q"), entry(.jarvis, "a")], limit: 20)
+            == [0..<1, 1..<3])
+        #expect(FactExtraction.batches([]).isEmpty)
+    }
+
     @Test func normalisedDuplicates() {
         #expect(FactExtraction.normalized("The user's sister, Amira!") == "the user s sister amira")
         #expect(FactExtraction.normalized("  THE USER'S   sister amira") == "the user s sister amira")

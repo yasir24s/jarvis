@@ -7,15 +7,18 @@ import Synchronization
 ///
 /// 1. Reads the archive from facts.json's `compiled_through` offset: the conversation since
 ///    the last compile. Nothing new from the user means no writer is asked.
-/// 2. The collaborative writer (on-device draft, Claude improves, `FactExtraction.passesCheck`
-///    decides) gets `FactExtraction.system` and the transcript of the newest messages.
-/// 3. Every line of the reply goes through `FactExtraction.dropReason`; each kept line gets
+/// 2. P6b: all of it, oldest first, in batches whose transcripts fit
+///    `FactExtraction.transcriptLimit` (`FactExtraction.batches`), so no message is left out.
+/// 3. For each batch, the collaborative writer (on-device draft, Claude improves,
+///    `FactExtraction.passesCheck` decides) gets `FactExtraction.system` and its transcript.
+/// 4. Every line of the reply goes through `FactExtraction.dropReason`; each kept line gets
 ///    its `by` from which writer wrote it.
-/// 4. `FactMerge` folds them in (a duplicate refreshes `updated` and `by`), and the offset
-///    moves to the end of what was read, in one atomic write under the lease.
+/// 5. `FactMerge` folds them in (a duplicate refreshes `updated` and `by`), and the offset
+///    moves to the end of the batch, in one atomic write under the lease.
 ///
-/// Both writers failing writes nothing, so the same conversation is read again next time.
-/// One compile runs at a time. Logs carry counts only.
+/// A batch whose writers both fail writes nothing and ends the compile: the batches before it
+/// stay compiled, and the next compile starts at that batch. One compile runs at a time. Logs
+/// carry counts only.
 public final class FactCompiler: Sendable {
     /// Embedding cosine at or above which two facts are the same fact.
     public static let duplicateSimilarity = 0.9
@@ -50,14 +53,11 @@ public final class FactCompiler: Sendable {
         self.log = log
     }
 
+    /// Compiles every batch past `compiled_through`, oldest first. `.compiled` totals them all;
+    /// when a batch fails, its outcome is returned and the batches before it stay saved.
     @discardableResult
     public func compile() async -> Outcome {
-        let acquired = running.withLock { busy -> Bool in
-            guard !busy else { return false }
-            busy = true
-            return true
-        }
-        guard acquired else {
+        guard acquire() else {
             log("memory: a fact compile is already running")
             return .busy
         }
@@ -67,10 +67,80 @@ public final class FactCompiler: Sendable {
             log("memory: facts.json unreadable; not compiled")
             return .unreadable
         }
-        let (entries, end) = memory.archive(after: start.compiledThrough)
-        guard entries.contains(where: { $0.role == .user }) else { return .nothingNew }
-        let (transcript, omitted) = FactExtraction.transcript(entries)
+        let read = memory.archiveLines(after: start.compiledThrough)
+        guard read.entries.contains(where: { $0.role == .user }) else { return .nothingNew }
+        let batches = FactExtraction.batches(read.entries)
+        var totals = (added: 0, updated: 0, dropped: 0)
+        for (k, range) in batches.enumerated() {
+            // The last batch's offset also passes any torn or foreign line after it.
+            let end = k == batches.count - 1 ? read.end : read.ends[range.upperBound - 1]
+            let outcome = await compileBatch(Array(read.entries[range]), source: MemoryFact.conversationSource,
+                                             writer: writer, through: end, failure: "memory: facts not compiled")
+            guard case .compiled(let added, let updated, let dropped) = outcome else {
+                if outcome == .notSaved { log("memory: facts not saved") }
+                if k > 0 {
+                    log("memory: compiled \(k) of \(batches.count) batches (\(totals.added) new fact(s), "
+                        + "\(totals.updated) updated); the next compile resumes at batch \(k + 1)")
+                }
+                return outcome
+            }
+            totals.added += added
+            totals.updated += updated
+            totals.dropped += dropped
+        }
+        let inBatches = batches.count > 1 ? " in \(batches.count) batches" : ""
+        log("memory: compiled \(read.entries.count) message(s)\(inBatches): \(totals.added) new fact(s), "
+            + "\(totals.updated) updated, \(totals.dropped) line(s) dropped")
+        return .compiled(added: totals.added, updated: totals.updated, dropped: totals.dropped)
+    }
 
+    /// P6 (the Python-era import): messages that are not in the archive, through the same
+    /// batches, transcript, validator and merge, with the facts tagged `source`. `writer`
+    /// replaces this compiler's own (the import's Claude-alone route); `compiled_through` is
+    /// left as it is. The import's batches fit one transcript; one that does not is compiled in
+    /// turn, stopping at the first that fails. One compile runs at a time, shared with `compile()`.
+    public func compile(entries: [ArchiveEntry], source: String,
+                        writer override: (any AttributedWriting)? = nil) async -> Outcome {
+        guard acquire() else { return .busy }
+        defer { running.withLock { $0 = false } }
+        guard memory.loadFacts() != nil else { return .unreadable }
+        guard entries.contains(where: { $0.role == .user }) else { return .nothingNew }
+        var totals = (added: 0, updated: 0, dropped: 0)
+        for range in FactExtraction.batches(entries) {
+            let outcome = await compileBatch(Array(entries[range]), source: source, writer: override ?? writer,
+                                             through: nil, failure: "memory: a batch was not compiled")
+            guard case .compiled(let added, let updated, let dropped) = outcome else { return outcome }
+            totals.added += added
+            totals.updated += updated
+            totals.dropped += dropped
+        }
+        return .compiled(added: totals.added, updated: totals.updated, dropped: totals.dropped)
+    }
+
+    private func acquire() -> Bool {
+        running.withLock { busy -> Bool in
+            guard !busy else { return false }
+            busy = true
+            return true
+        }
+    }
+
+    /// One batch: the writers read its transcript, and the facts are merged in one atomic write
+    /// that also moves `compiled_through` on to `through`, when given. A batch with nothing from
+    /// the user asks no writer: it only moves the offset. On a writer failure nothing is written,
+    /// and `failure` is logged with the reason.
+    private func compileBatch(_ entries: [ArchiveEntry], source: String, writer: any AttributedWriting,
+                              through: Int?, failure: String) async -> Outcome {
+        if Task.isCancelled { return .cancelled }
+        guard entries.contains(where: { $0.role == .user }) else {
+            guard let through else { return .compiled(added: 0, updated: 0, dropped: 0) }
+            let saved = memory.updateFacts { file in
+                file.compiledThrough = max(file.compiledThrough, through)
+                return true
+            }
+            return saved ? .compiled(added: 0, updated: 0, dropped: 0) : .notSaved
+        }
+        let (transcript, _) = FactExtraction.transcript(entries)
         let written: AttributedText
         do {
             written = try await writer.write(system: FactExtraction.system, user: transcript,
@@ -79,55 +149,7 @@ public final class FactCompiler: Sendable {
         } catch is CancellationError {
             return .cancelled
         } catch {
-            log("memory: facts not compiled (\(PersonaWriterError.reason(error)))")
-            return .writersFailed
-        }
-
-        let vectors = vectors
-        let (candidates, dropped) = Self.candidates(from: written, isSimilar: { vectors.similar($0, $1) })
-        let now = clock.now(), makeID = makeID
-        var counts = (added: 0, updated: 0)
-        let saved = memory.updateFacts { file in
-            counts = FactMerge.merge(candidates, into: &file, source: MemoryFact.conversationSource, now: now,
-                                     isSimilar: { vectors.similar($0, $1) }, makeID: makeID)
-            file.compiledThrough = max(file.compiledThrough, end)
-            return true
-        }
-        guard saved else {
-            log("memory: facts not saved")
-            return .notSaved
-        }
-        let skipped = omitted > 0 ? "; \(omitted) older message(s) were outside the window" : ""
-        log("memory: compiled \(entries.count) message(s): \(counts.added) new fact(s), \(counts.updated) updated, "
-            + "\(dropped) line(s) dropped\(skipped)")
-        return .compiled(added: counts.added, updated: counts.updated, dropped: dropped)
-    }
-
-    /// P6 (the Python-era import): one batch of messages that are not in the archive, through
-    /// the same transcript, validator and merge, with the facts tagged `source`. `writer`
-    /// replaces this compiler's own (the import's Claude-alone route); `compiled_through` is
-    /// left as it is. One compile runs at a time, shared with `compile()`.
-    public func compile(entries: [ArchiveEntry], source: String,
-                        writer override: (any AttributedWriting)? = nil) async -> Outcome {
-        let acquired = running.withLock { busy -> Bool in
-            guard !busy else { return false }
-            busy = true
-            return true
-        }
-        guard acquired else { return .busy }
-        defer { running.withLock { $0 = false } }
-        guard memory.loadFacts() != nil else { return .unreadable }
-        guard entries.contains(where: { $0.role == .user }) else { return .nothingNew }
-        let (transcript, _) = FactExtraction.transcript(entries)
-        let written: AttributedText
-        do {
-            written = try await (override ?? writer).write(system: FactExtraction.system, user: transcript,
-                                                           timeout: FactExtraction.timeout)
-            try Task.checkCancellation()
-        } catch is CancellationError {
-            return .cancelled
-        } catch {
-            log("memory: a batch was not compiled (\(PersonaWriterError.reason(error)))")
+            log("\(failure) (\(PersonaWriterError.reason(error)))")
             return .writersFailed
         }
         let vectors = vectors
@@ -137,6 +159,7 @@ public final class FactCompiler: Sendable {
         let saved = memory.updateFacts { file in
             counts = FactMerge.merge(candidates, into: &file, source: source, now: now,
                                      isSimilar: { vectors.similar($0, $1) }, makeID: makeID)
+            if let through { file.compiledThrough = max(file.compiledThrough, through) }
             return true
         }
         guard saved else { return .notSaved }

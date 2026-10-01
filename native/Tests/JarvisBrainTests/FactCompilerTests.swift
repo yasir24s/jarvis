@@ -230,6 +230,70 @@ struct FactCompilerTests {
         #expect(rig.factsBytes() == nil)
     }
 
+    // MARK: - P6b: nothing is skipped
+
+    /// 30 exchanges of about 640 characters: four batches' worth.
+    static let longChat: [(MemoryRole, String)] = (0..<30).flatMap { k -> [(MemoryRole, String)] in
+        [(.user, "Exchange \(k): " + String(repeating: "tea ", count: 75)),
+         (.jarvis, "Reply \(k): " + String(repeating: "sir ", count: 75))]
+    }
+
+    /// Everything past the offset is compiled, oldest first, one writer call per batch: each
+    /// transcript is a whole batch, none leaves a message out, and together they hold every
+    /// message. The offset ends at the archive's end, so nothing is read twice.
+    @Test func aLongArchiveIsCompiledInBatchesOldestFirst() async throws {
+        let rig = try Rig()
+        defer { rig.sandbox.remove() }
+        rig.converse(Self.longChat)
+        let entries = rig.memory.archive(after: 0).entries
+        let batches = FactExtraction.batches(entries)
+        #expect(batches.map(\.count) == [18, 18, 18, 6])
+        let local = ScriptedWriter(.reply("The user's sister lives in Leeds."), .reply("NONE"),
+                                   .reply("The user keeps bees."), .reply("NONE"))
+        let compiler = rig.compiler(local: local, claude: ScriptedWriter())
+        #expect(await compiler.compile() == .compiled(added: 2, updated: 0, dropped: 0))
+
+        #expect(local.calls.map(\.user) == batches.map { FactExtraction.transcript(Array(entries[$0])).text })
+        for range in batches { #expect(FactExtraction.transcript(Array(entries[range])).omitted == 0) }
+        let read = local.calls.map(\.user).joined(separator: "\n")
+        for k in 0..<30 { #expect(read.contains("User: Exchange \(k): ") && read.contains("JARVIS: Reply \(k): ")) }
+        #expect(rig.memory.loadFacts() == FactsFile(compiledThrough: rig.archiveSize, facts: [
+            Self.fact("fact-1", "The user's sister lives in Leeds.", .local),
+            Self.fact("fact-2", "The user keeps bees.", .local),
+        ]))
+        #expect(rig.logs.lines.last == "memory: compiled 60 message(s) in 4 batches: 2 new fact(s), 0 updated, "
+            + "0 line(s) dropped")
+        #expect(await compiler.compile() == .nothingNew)
+    }
+
+    /// A batch whose writers both fail ends the compile. The batch before it stays compiled,
+    /// with the offset at its end; the next compile starts at the failed batch and finishes.
+    @Test func aFailedBatchStopsTheCompileAndTheNextResumesThere() async throws {
+        let rig = try Rig()
+        defer { rig.sandbox.remove() }
+        rig.converse(Self.longChat)
+        let read = rig.memory.archiveLines(after: 0)
+        let batches = FactExtraction.batches(read.entries)
+        let local = ScriptedWriter(.reply("The user's sister lives in Leeds."), .fail(.localFailed("FakeModelError")))
+        #expect(await rig.compiler(local: local, claude: ScriptedWriter()).compile() == .writersFailed)
+        #expect(local.calls.count == 2)
+        #expect(rig.memory.loadFacts() == FactsFile(compiledThrough: read.ends[batches[0].upperBound - 1], facts: [
+            Self.fact("fact-1", "The user's sister lives in Leeds.", .local),
+        ]))
+        #expect(rig.logs.lines.last == "memory: compiled 1 of 4 batches (1 new fact(s), 0 updated); "
+            + "the next compile resumes at batch 2")
+
+        let retry = ScriptedWriter(.reply("NONE"), .reply("The user keeps bees."), .reply("NONE"))
+        #expect(await rig.compiler(local: retry, claude: ScriptedWriter()).compile()
+            == .compiled(added: 1, updated: 0, dropped: 0))
+        #expect(retry.calls.map(\.user) == batches.dropFirst().map {
+            FactExtraction.transcript(Array(read.entries[$0])).text
+        })
+        #expect(retry.calls.first?.user == local.calls.last?.user)          // the failed batch, read again
+        #expect(rig.memory.loadFacts()?.compiledThrough == rig.archiveSize)
+        #expect(rig.facts.map(\.text) == ["The user's sister lives in Leeds.", "The user keeps bees."])
+    }
+
     // MARK: - Merge duplicates
 
     @Test func aDuplicateInALaterConversationRefreshesTheFact() async throws {

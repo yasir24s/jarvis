@@ -53,17 +53,29 @@ public final class MemoryStore: Sendable {
     /// (a torn final line is left for next time). An offset past the end means the archive was
     /// replaced, so reading starts over. Lines that do not parse are skipped.
     public func archive(after offset: Int) -> (entries: [ArchiveEntry], end: Int) {
-        guard let handle = FileHandle(forReadingAtPath: store.path(.archive)) else { return ([], 0) }
+        let read = archiveLines(after: offset)
+        return (read.entries, read.end)
+    }
+
+    /// `archive(after:)` with, for each entry, the byte offset just past its line (P6b: the
+    /// compile moves `compiled_through` on after each batch it finishes).
+    public func archiveLines(after offset: Int) -> (entries: [ArchiveEntry], ends: [Int], end: Int) {
+        guard let handle = FileHandle(forReadingAtPath: store.path(.archive)) else { return ([], [], 0) }
         defer { try? handle.close() }
-        guard let size = try? handle.seekToEnd() else { return ([], 0) }
+        guard let size = try? handle.seekToEnd() else { return ([], [], 0) }
         let start = offset >= 0 && UInt64(offset) <= size ? UInt64(offset) : 0
         guard (try? handle.seek(toOffset: start)) != nil,
               let data = try? handle.readToEnd(), !data.isEmpty
-        else { return ([], Int(start)) }
-        guard let lastNewline = data.lastIndex(of: 0x0A) else { return ([], Int(start)) }
+        else { return ([], [], Int(start)) }
+        guard let lastNewline = data.lastIndex(of: 0x0A) else { return ([], [], Int(start)) }
         let whole = data[data.startIndex...lastNewline]
-        let entries = whole.split(separator: 0x0A).compactMap { ArchiveEntry(line: Data($0)) }
-        return (entries, Int(start) + whole.count)
+        var entries: [ArchiveEntry] = [], ends: [Int] = []
+        for line in whole.split(separator: 0x0A) {
+            guard let entry = ArchiveEntry(line: Data(line)) else { continue }
+            entries.append(entry)
+            ends.append(Int(start) + whole.distance(from: whole.startIndex, to: line.endIndex) + 1)
+        }
+        return (entries, ends, Int(start) + whole.count)
     }
 
     // MARK: - Facts
