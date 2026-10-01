@@ -5,8 +5,8 @@ import JarvisTools
 /// Builds the brain from its parts (plan: M02-M04 §3.5-§3.11): one confirmation gate, a
 /// gateway that counts and logs, the MCP turn registry and server on the run directory, the
 /// Claude driver, the on-device brain on the same gateway, the backend reporter, the router,
-/// the personality upkeep (P1) and the turn coordinator. `start()` creates
-/// the run directory and starts the server; `stop()` stops it.
+/// the personality upkeep (P1), the long-term memory (P2) and the turn coordinator. `start()`
+/// creates the run directory and starts the server; `stop()` stops it.
 public final class BrainAssembly: Sendable {
     /// `~/Library/Application Support/JARVIS/`, which holds `run/` and `claude-cwd/`
     /// (plan §3.6, §3.7).
@@ -28,6 +28,13 @@ public final class BrainAssembly: Sendable {
     /// collaborative writer. Not started here: the app starts it at launch and stops it
     /// before the lock is released.
     public let personality: PersonalitySchedule
+    /// The long-term memory's fact compile (P2), run after the personality distillation in the
+    /// same background task a dismissal starts, so it shares that task's start and stop. nil
+    /// without a `memory` store.
+    public let facts: FactCompiler?
+    /// The long-term memory's recall (P2), which the router appends to each turn's prompt. nil
+    /// without a `memory` store.
+    public let recall: MemoryRecall?
     /// The `claude` found on the child's PATH, or nil. With none, the driver is given
     /// `~/.local/bin/claude` (where the installer puts it, first on that PATH), so each Claude
     /// turn fails with ENOENT ("Claude Code CLI not found") and falls back to the local model,
@@ -48,12 +55,20 @@ public final class BrainAssembly: Sendable {
     ///     `CollaborativePersonaLLM` over `LocalPersonaLLM` and a `ClaudePersonaLLM` with the
     ///     driver's config, executable, working directory, environment and `online`. Tests pass
     ///     a fake.
+    ///   - memory: the long-term memory (D-51 P2) on the same lease-holding store; nil means
+    ///     none: no archive, no fact compile and no recall.
+    ///   - factWriter: what the fact compile is written by; nil means a `CollaborativePersonaLLM`
+    ///     over the same two writers as the default persona writer, with
+    ///     `FactExtraction.passesCheck` as its validator. Tests pass a fake.
+    ///   - embedding: the sentence vectors for recall and duplicate merging.
     ///   - log: every log line of the parts, with its category. Tests pass their own.
     public init(core: CoreState, research: any ResearchCounting,
                 config: ClaudeConfig, environment: [String: String],
                 runDirectory: URL, claudeWorkingDirectory: URL, claudeExecutable: URL? = nil,
                 localBrain: ((ToolGateway) -> any LocalGenerating)? = nil,
                 personaWriter: (any PersonaLLM)? = nil,
+                memory: MemoryStore? = nil, factWriter: (any AttributedWriting)? = nil,
+                embedding: any SentenceEmbedding = SystemSentenceEmbedding(),
                 textAuthenticator: any ConfirmAuthenticator, fastPath: any FastPathRouting = NoFastPath(),
                 online: @escaping @Sendable () async -> Bool,
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
@@ -74,18 +89,36 @@ public final class BrainAssembly: Sendable {
                               workingDirectory: claudeWorkingDirectory, research: research, backend: backend,
                               parentEnvironment: environment, log: brainLog)
         let local = localBrain?(gateway) ?? LocalBrain(gateway: gateway, log: brainLog)
+        let vectors = FactVectors(embedding: embedding)
+        let recall = memory.map { MemoryRecall(memory: $0, vectors: vectors) }
+        self.recall = recall
         router = BrainRouter(core: core, config: config, claude: driver, local: local, backend: backend,
-                             research: research, log: brainLog)
-        let writer = personaWriter ?? CollaborativePersonaLLM(
-            local: LocalPersonaLLM(),
-            claude: ClaudePersonaLLM(config: config, executable: executable, workingDirectory: claudeWorkingDirectory,
-                                     parentEnvironment: environment, online: online, log: brainLog))
-        let personality = PersonalitySchedule(core: core, writer: writer)
+                             research: research, recall: recall, log: brainLog)
+        // P1's two writers, shared by the persona writer and the fact compile (P2).
+        let localWriter = LocalPersonaLLM()
+        let claudeWriter = ClaudePersonaLLM(config: config, executable: executable,
+                                            workingDirectory: claudeWorkingDirectory,
+                                            parentEnvironment: environment, online: online, log: brainLog)
+        let writer = personaWriter ?? CollaborativePersonaLLM(local: localWriter, claude: claudeWriter)
+        let facts = memory.map {
+            FactCompiler(memory: $0, writer: factWriter ?? CollaborativePersonaLLM(
+                local: localWriter, claude: claudeWriter, validator: FactExtraction.passesCheck, name: "Memory writer"),
+                vectors: vectors)
+        }
+        self.facts = facts
+        // The convenience init's two closures, with the fact compile after the distillation.
+        let personality = PersonalitySchedule(
+            consolidate: { await core.consolidatePersonalityIfDue(using: writer) },
+            distill: {
+                await core.distillPersonalityIfDue(using: writer)
+                await facts?.compile()
+            })
         self.personality = personality
         coordinator = TurnCoordinator(brain: router, fastPath: fastPath, confirmations: confirmations,
                                       textAuthenticator: textAuthenticator, online: online,
                                       onTurnStart: onTurnStart,
-                                      onConversationEnded: { personality.conversationEnded() })
+                                      onConversationEnded: { personality.conversationEnded() },
+                                      archive: memory.map { MemoryArchiver(memory: $0) })
     }
 
     /// Registers the built-in tool bodies on the gateway (the system clock, the system time

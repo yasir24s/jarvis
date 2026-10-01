@@ -170,17 +170,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             SpeakReplies.replyFinished(message, context: context, research: research, speaker: nil,
                                        log: { JarvisLog.log($0, category: .voice) })
         }
+        // P2: the long-term memory in memory/, on the same lease-holding store. Local dates
+        // follow the Mac's time zone as it changes.
+        let memory = MemoryStore(store: store, clock: SystemClock(), timeZone: .autoupdatingCurrent)
         let assembly = BrainAssembly(
             core: core, research: research, config: config, environment: environment,
             runDirectory: folders.run, claudeWorkingDirectory: folders.claudeWorkingDirectory,
+            memory: memory,
             textAuthenticator: authenticator,
             // Python's is_online(): asked only when a turn reaches the brain.
             online: { await Net.isOnline() })
         brain = assembly
         // P1: the hourly consolidation check starts now (first pass in 120 s); the chat's
-        // dismissals reach it through the coordinator once the brain has started.
+        // dismissals reach it through the coordinator once the brain has started. P2's fact
+        // compile runs in the same dismissal task, so stopping the schedule stops it too.
         assembly.personality.start()
         personality = assembly.personality
+        // P2: the facts' sentence vectors are computed in the background, not on the first turn.
+        if let recall = assembly.recall {
+            Task.detached(priority: .utility) {
+                let n = recall.warm()
+                JarvisLog.log("memory: \(n) fact vector(s) ready", category: .state)
+            }
+        }
         Task { @MainActor in
             do {
                 try await assembly.start()
