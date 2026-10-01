@@ -52,6 +52,9 @@ rm -rf "$STAGE"; mkdir -p "$STAGE/Contents/MacOS" "$STAGE/Contents/Resources" "$
     "$STAGE/Contents/Helpers"
 cp "$BIN" "$STAGE/Contents/MacOS/JARVIS"
 cp "$VOICE_BIN/jarvis-voice" "$STAGE/Contents/Helpers/jarvis-voice"
+# U1's update helper (scripts/jarvis-update), which the app starts to swap itself over.
+cp "$NATIVE/scripts/jarvis-update" "$STAGE/Contents/Helpers/jarvis-update"
+chmod 755 "$STAGE/Contents/Helpers/jarvis-update"
 for b in mlx-swift_Cmlx.bundle VoiceHelper_F5TTS.bundle; do
     [[ -d "$VOICE_BIN/$b" ]] || { echo "error: $b is missing from the voice helper build" >&2; exit 1; }
     cp -R "$VOICE_BIN/$b" "$STAGE/Contents/Helpers/$b"
@@ -90,6 +93,11 @@ for h in "$STAGE"/Contents/Helpers/*.bundle "$STAGE/Contents/Helpers/jarvis-voic
     codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$h" 2>/dev/null; done
 codesign --verify --strict "$STAGE/Contents/Helpers/jarvis-voice" 2>/dev/null \
     || { echo "error: codesign --verify --strict failed on the voice helper" >&2; exit 1; }
+# The update helper is a script: signed on its own before the app, its signature kept in its
+# extended attributes. Unsigned, it would fail the app's signature as unsigned nested code.
+codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$STAGE/Contents/Helpers/jarvis-update" 2>/dev/null
+codesign --verify --strict "$STAGE/Contents/Helpers/jarvis-update" 2>/dev/null \
+    || { echo "error: codesign --verify --strict failed on the update helper" >&2; exit 1; }
 # codesign's stderr names the signing identity; keep it off the terminal unless signing fails.
 if ! out="$(codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" \
         --entitlements "$NATIVE/Resources/JARVIS.entitlements" "$STAGE" 2>&1)"; then

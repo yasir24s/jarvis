@@ -242,6 +242,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         JarvisLog.log("update: handing over to \(build.label); exiting for the update helper")
+        let lockFile = lock?.url.path(percentEncoded: false) ?? ""
         // As the SIGTERM path does: nothing that writes outlives the lease.
         research?.stop()   // flushes enqueued bumps while the lease is still held
         personality?.stop()
@@ -251,7 +252,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let process = Process()
         process.executableURL = helper
         process.arguments = ["swap", "--pid", "\(getpid())", "--dist", folders.dist.path(percentEncoded: false),
-                             "--resume", resumeFile.path(percentEncoded: false),
+                             "--resume", resumeFile.path(percentEncoded: false), "--lock", lockFile,
                              "--log", logFile?.path(percentEncoded: false) ?? "/dev/null"]
         process.standardInput = FileHandle.nullDevice
         process.standardOutput = FileHandle.nullDevice
@@ -293,6 +294,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if let chatWindow { chatWindowAppeared(chatWindow) }
         }
         JarvisLog.log(ResumeLaunch.resumedLine(state, now: SystemClock().now(), running: BuildID.running()))
+    }
+
+    /// update-health.json beside resume.json, 30 s after the brain started, if it is still the
+    /// running one: the update helper keeps this build only once it appears (U1).
+    private func reportHealthy(_ resumeFile: URL, assembly: BrainAssembly) {
+        let health = resumeFile.deletingLastPathComponent().appending(path: ResumeState.healthFileName)
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: ResumeLaunch.healthyAfter)
+            guard let self, self.brain === assembly else { return }
+            let report = ResumeLaunch.healthReport(pid: getpid(), build: BuildID.running(), at: SystemClock().now())
+            do {
+                try ResumeState.writePrivately(report, to: health)
+                JarvisLog.log("update: running healthily for 30 s; \(ResumeState.healthFileName) written")
+            } catch {
+                JarvisLog.log("update: cannot write \(ResumeState.healthFileName) (\(error))")
+            }
+        }
     }
 
     /// The chat view reports its window (U1). A frame restored by a live update is applied
@@ -404,6 +422,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             self.chat.connect(assembly.coordinator, lastBackend: { await assembly.backend.last.name })
             self.chat.watchConfirmations(assembly.confirmations, authenticator: authenticator)
+            // U1: a resumed build tells the update helper once it has run 30 s with its brain up.
+            if let launch = Self.resumeAtLaunch { self.reportHealthy(launch.url, assembly: assembly) }
             // P6: on a first launch, JARVIS offers once to learn from the user's files.
             if self.fileLearning.takeFirstRunOffer(memoryFolderExists: memoryFolderExists) {
                 self.chat.post(FileLearningConsent.firstRunOffer)

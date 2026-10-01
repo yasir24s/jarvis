@@ -1,16 +1,39 @@
 #!/bin/bash
-# Live updates (U1): the renames that put a staged build in place. build-app.sh runs this copy
-# from the source tree; the app runs the copy in its own bundle, Contents/Helpers/jarvis-update.
+# Live updates (U1): the renames that put a staged build in place, and the swap the running app
+# hands over to. build-app.sh runs this copy from the source tree; the app runs the copy in its
+# own bundle, Contents/Helpers/jarvis-update.
 #
 #   jarvis-update lock-free <lock file>   exit 0 if .jarvis.lock can be taken, i.e. no JARVIS runs
 #   jarvis-update promote <dist>          staged/JARVIS.app becomes JARVIS.app, renames only
+#   jarvis-update rollback <dist>         previous/JARVIS.app becomes JARVIS.app again
+#   jarvis-update swap --pid <old pid> --dist <dist> --resume <resume.json> --lock <.jarvis.lock>
+#                      [--log <jarvis.log>]
+#       Started detached by the old process as it exits. Waits for that pid to go, promotes the
+#       staged build, opens it with --resume, and waits for update-health.json beside
+#       resume.json, which the new build writes after 30 s of healthy running. With none within
+#       90 s, or once the new process has died, the new build is stopped and moved to failed/,
+#       previous/ becomes current again and is opened with the same --resume.
 #
 # <dist> holds JARVIS.app and version.json, staged/ the build waiting to run, previous/ the build
 # that ran before. Bundles are only ever renamed, never copied or rewritten in place. Paths come
 # from the arguments, $HOME and the bundle; never a literal home folder.
 set -euo pipefail
 
+# Test hooks, never set by the app: the command that opens a bundle, and shorter waits.
+OPEN_APP="${JARVIS_UPDATE_OPEN:-}"
+HEALTH_TIMEOUT="${JARVIS_UPDATE_HEALTH_TIMEOUT:-90}"   # seconds for update-health.json
+LOCK_GRACE="${JARVIS_UPDATE_LOCK_GRACE:-30}"           # seconds for the new build to take the lock
+EXIT_TIMEOUT="${JARVIS_UPDATE_EXIT_TIMEOUT:-30}"       # seconds for a process to exit
+POLL="${JARVIS_UPDATE_POLL:-1}"                         # seconds between looks
+LOG=/dev/null
+
 say() { echo "jarvis-update: $*" >&2; }
+
+# One line in JARVIS's log, in its format ("[JARVIS] <message>").
+note() {
+    say "$*"
+    printf '[JARVIS] update: %s\n' "$*" >> "$LOG" 2>/dev/null || true
+}
 
 # One flock(LOCK_EX | LOCK_NB) probe, released at once: the kernel lock both JARVISes hold for
 # their whole life (InstanceLock). A missing file means nobody has run here yet. A file that
@@ -40,13 +63,186 @@ promote() {
     if [[ -n "$discard" ]]; then rm -rf "$discard"; fi
 }
 
+# The reverse, after a failed start: JARVIS.app (the build that failed) moves to failed/, and
+# previous/ becomes current again. An older failed/ is renamed aside and deleted after.
+rollback() {
+    local dist="$1" discard=""
+    if [[ ! -d "$dist/previous/JARVIS.app" ]]; then
+        say "no previous build in $dist"; return 3
+    fi
+    if [[ -e "$dist/JARVIS.app" ]]; then
+        if [[ -e "$dist/failed" ]]; then discard="$dist/.failed.discard.$$"; mv "$dist/failed" "$discard"; fi
+        mkdir "$dist/failed"
+        mv "$dist/JARVIS.app" "$dist/failed/JARVIS.app"
+        if [[ -f "$dist/version.json" ]]; then mv "$dist/version.json" "$dist/failed/version.json"; fi
+    fi
+    mv "$dist/previous/JARVIS.app" "$dist/JARVIS.app"
+    if [[ -f "$dist/previous/version.json" ]]; then mv "$dist/previous/version.json" "$dist/version.json"; fi
+    rmdir "$dist/previous" 2>/dev/null || true
+    if [[ -n "$discard" ]]; then rm -rf "$discard"; fi
+}
+
+# "<commit>[+dirty] <built>" from a version.json, as the app's BuildID.label.
+label() {
+    local commit dirty built
+    commit="$(plutil -extract commit raw -o - "$1" 2>/dev/null)" || commit=""
+    dirty="$(plutil -extract dirty raw -o - "$1" 2>/dev/null)" || dirty=""
+    built="$(plutil -extract built raw -o - "$1" 2>/dev/null)" || built=""
+    if [[ -z "$commit" ]]; then echo "an unknown build"; return 0; fi
+    if [[ "$dirty" == true ]]; then commit="$commit+dirty"; fi
+    echo "$commit $built"
+}
+
+# Opens a bundle with arguments, in the background: LaunchServices, so the app is its own
+# responsible process and is not brought to the front.
+open_app() {
+    local app="$1"; shift
+    if [[ -n "$OPEN_APP" ]]; then "$OPEN_APP" "$app" "$@"; else /usr/bin/open -n -g "$app" --args "$@"; fi
+}
+
+# The pid of the native JARVIS that took .jarvis.lock at or after <since> (unix time), other
+# than <old pid>, while it is alive; else nothing. Only the lock file's text is read, never the
+# lock itself, so a JARVIS that is starting never finds it taken by this helper.
+new_holder() {
+    local lock="$1" old="$2" since="$3" impl="" pid="" epoch=""
+    read -r impl pid epoch _ < "$lock" 2>/dev/null || true
+    if [[ "$impl" == native && "$pid" =~ ^[0-9]+$ && "$epoch" =~ ^[0-9]+$ && "$pid" != "$old" ]] \
+        && [[ $epoch -ge $since ]] && kill -0 "$pid" 2>/dev/null; then
+        echo "$pid"
+    fi
+}
+
+# Waits up to <seconds> (whole) for <pid> to exit; 0 once it has, 1 if it is still there.
+wait_exit() {
+    local pid="$1" tenths=$(( $2 * 5 )) n=0
+    while kill -0 "$pid" 2>/dev/null; do
+        if [[ $n -ge $tenths ]]; then return 1; fi
+        sleep 0.2
+        n=$((n + 1))
+    done
+    return 0
+}
+
+# Stops a JARVIS that started but is not healthy: SIGTERM (its supported stop), then SIGKILL.
+stop_pid() {
+    local pid="$1"
+    kill -0 "$pid" 2>/dev/null || return 0
+    note "stopping the unhealthy process $pid"
+    kill -TERM "$pid" 2>/dev/null || true
+    if wait_exit "$pid" "$EXIT_TIMEOUT"; then return 0; fi
+    kill -KILL "$pid" 2>/dev/null || true
+    wait_exit "$pid" 5 || true
+}
+
+# Watches the build just opened: 0 once update-health.json appears; 1 when it died (it took the
+# lock and its process is gone), never took the lock within LOCK_GRACE, or HEALTH_TIMEOUT
+# passed. The pid it saw take the lock is left in WATCHED_PID.
+WATCHED_PID=""
+watch_health() {
+    local health="$1" lock="$2" old="$3" start now pid
+    WATCHED_PID=""
+    start="$(date +%s)"
+    while :; do
+        if [[ -f "$health" ]]; then return 0; fi
+        if [[ -z "$WATCHED_PID" ]]; then
+            pid="$(new_holder "$lock" "$old" "$((start - 1))")"
+            if [[ -n "$pid" ]]; then WATCHED_PID="$pid"; fi
+        elif ! kill -0 "$WATCHED_PID" 2>/dev/null; then
+            if [[ -f "$health" ]]; then return 0; fi
+            note "the new process ($WATCHED_PID) exited before it was healthy"; return 1
+        fi
+        now="$(date +%s)"
+        if [[ -z "$WATCHED_PID" && $((now - start)) -ge $LOCK_GRACE ]]; then
+            note "the new build did not take the lock within $LOCK_GRACE s"; return 1
+        fi
+        if [[ $((now - start)) -ge $HEALTH_TIMEOUT ]]; then
+            note "no update-health.json within $HEALTH_TIMEOUT s"; return 1
+        fi
+        sleep "$POLL"
+    done
+}
+
+swap() {
+    local pid="" dist="" resume="" lock=""
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --pid) pid="${2:-}"; shift 2 ;;
+            --dist) dist="${2:-}"; shift 2 ;;
+            --resume) resume="${2:-}"; shift 2 ;;
+            --lock) lock="${2:-}"; shift 2 ;;
+            --log) LOG="${2:-/dev/null}"; shift 2 ;;
+            *) usage ;;
+        esac
+    done
+    [[ "$pid" =~ ^[0-9]+$ && -n "$dist" && -n "$resume" && -n "$lock" ]] || usage
+    local run health keep from to
+    run="$(dirname "$resume")"
+    health="$run/update-health.json"
+    keep="$resume.rollback"   # the new build deletes resume.json; a rollback needs it again
+    from="$(label "$dist/version.json")"
+    to="$(label "$dist/staged/version.json")"
+    note "helper started: from $from to $to, waiting for pid $pid to exit"
+    if [[ -f "$resume" ]]; then (umask 077; cp "$resume" "$keep"); fi
+
+    if ! wait_exit "$pid" "$EXIT_TIMEOUT"; then
+        # It has already handed over and let go of the lock; a JARVIS stuck in its exit is
+        # stopped. Anything else on that pid is left alone, and so is the update.
+        case "$(ps -o comm= -p "$pid" 2>/dev/null)" in
+            */Contents/MacOS/JARVIS)
+                note "pid $pid did not exit within $EXIT_TIMEOUT s; stopping it"
+                stop_pid "$pid" ;;
+        esac
+        if kill -0 "$pid" 2>/dev/null; then
+            note "pid $pid is still running; the update is abandoned and the build stays staged"
+            rm -f "$keep" "$resume"; return 1
+        fi
+    fi
+    if ! lock_free "$lock"; then
+        note "another JARVIS holds .jarvis.lock; the update is abandoned and the build stays staged"
+        rm -f "$keep" "$resume"; return 1   # resume.json holds the chat: never leave it behind
+    fi
+    if ! promote "$dist"; then
+        note "nothing staged to promote; reopening $from"
+        open_app "$dist/JARVIS.app" --resume "$resume" || true
+        rm -f "$keep"; return 1
+    fi
+    rm -f "$health"
+    note "promoted $to; opening it"
+    if open_app "$dist/JARVIS.app" --resume "$resume" && watch_health "$health" "$lock" "$pid"; then
+        note "$to is healthy; the update is done"
+        rm -f "$health" "$keep"
+        return 0
+    fi
+
+    # The new build failed: stop it if it still runs, swap back, and open the previous one.
+    if [[ -n "$WATCHED_PID" ]]; then stop_pid "$WATCHED_PID"; fi
+    if ! rollback "$dist"; then
+        note "the new build $to failed and there is no previous build to roll back to"
+        rm -f "$keep"; return 1
+    fi
+    if [[ -f "$keep" ]]; then mv "$keep" "$resume"; fi
+    rm -f "$health"
+    note "rolled back from $to to $from; the failed build is in failed/, and $from is opened again"
+    if open_app "$dist/JARVIS.app" --resume "$resume" && watch_health "$health" "$lock" "$pid"; then
+        note "$from is running again after the rollback"
+    else
+        note "$from did not report healthy after the rollback either"
+    fi
+    # resume.json holds the chat: never leave it behind.
+    rm -f "$health" "$keep" "$resume"
+    return 2
+}
+
 usage() {
-    say "usage: jarvis-update lock-free <lock file> | promote <dist>"
+    say "usage: jarvis-update lock-free <lock file> | promote <dist> | rollback <dist>"
+    say "       jarvis-update swap --pid <pid> --dist <dist> --resume <file> --lock <file> [--log <file>]"
     exit 64   # EX_USAGE
 }
 
 case "${1:-}" in
     lock-free) [[ $# -eq 2 ]] || usage; lock_free "$2" ;;
     promote)   [[ $# -eq 2 ]] || usage; promote "$2" ;;
+    rollback)  [[ $# -eq 2 ]] || usage; rollback "$2" ;;
+    swap)      shift; swap "$@" ;;
     *)         usage ;;
 esac
