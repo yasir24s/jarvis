@@ -6,4 +6,9 @@ public protocol MemorySearching: Sendable {
     /// The facts that match `query`, best first. Only facts that pass the validator
     /// (`FactExtraction.dropReason`) are searched, as only they are ever recalled.
     func search(_ query: String) -> [MemoryFact]
+
+    /// P6b: the archived messages (`MemoryStore.archivedMessages`) that match `query` by
+    /// keyword, best first. They are what was said, word for word, so the caller shows them as
+    /// information only.
+    func searchConversations(_ query: String) -> [ArchiveEntry]
 }

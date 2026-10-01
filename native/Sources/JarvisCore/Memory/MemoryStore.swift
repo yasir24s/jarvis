@@ -78,6 +78,18 @@ public final class MemoryStore: Sendable {
         return (entries, ends, Int(start) + whole.count)
     }
 
+    /// The archives search_memory reads (P6b), in this order.
+    public static let searchedArchives: [MemoryFile] = [.archive]
+
+    /// P6b: every message in `searchedArchives`, each file's oldest first. Lines that do not
+    /// parse, and a torn final line, are skipped.
+    public func archivedMessages() -> [ArchiveEntry] {
+        Self.searchedArchives.flatMap { file -> [ArchiveEntry] in
+            guard let data = store.read(file) else { return [] }
+            return data.split(separator: 0x0A).compactMap { ArchiveEntry(line: Data($0)) }
+        }
+    }
+
     // MARK: - Facts
 
     /// The facts file: empty when there is none yet, nil when one exists and cannot be read

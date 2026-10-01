@@ -59,7 +59,12 @@ struct M2SecurityTests {
         let cases = try Golden.cases("m2_taint")
         let untrusted = try #require(cases.first(where: { $0.name == "sets/untrusted" }))
         let executor = try #require(cases.first(where: { $0.name == "sets/executor" }))
-        #expect(TaintPolicy.untrusted.sorted() == (untrusted.expected.array("members") ?? []).compactMap(\.stringValue))
+        // P6b: search_memory, a native memory tool, quotes past conversations, so it is untrusted
+        // too; Python has no memory tools, so its set is the rest.
+        let nativeUntrusted: Set<String> = ["search_memory"]
+        #expect(TaintPolicy.untrusted.isSuperset(of: nativeUntrusted))
+        #expect(TaintPolicy.untrusted.subtracting(nativeUntrusted).sorted()
+                == (untrusted.expected.array("members") ?? []).compactMap(\.stringValue))
         // P4's two native memory tools that change memory, and P6's restore_memory, are
         // executors too; Python has no memory tools, so its set is the rest.
         let nativeExecutors: Set<String> = ["forget_memory", "correct_memory", "restore_memory"]

@@ -122,6 +122,25 @@ public final class MemoryRecall: MemorySearching, Sendable {
         }.map(\.fact)
     }
 
+    /// `search_memory`'s search of the conversations (P6b), by keyword alone: every archived
+    /// message that shares a content word with `query` (the same words as `search`), the
+    /// messages sharing the most words first, then the newest. A query with no content word
+    /// matches nothing.
+    public func searchConversations(_ query: String) -> [ArchiveEntry] {
+        let words = Self.contentWords(query)
+        guard !words.isEmpty else { return [] }
+        var scored: [(entry: ArchiveEntry, shared: Int, order: Int)] = []
+        for (order, e) in memory.archivedMessages().enumerated() {
+            let shared = words.intersection(Self.contentWords(e.text)).count
+            if shared > 0 { scored.append((e, shared, order)) }
+        }
+        return scored.sorted { a, b in
+            if a.shared != b.shared { return a.shared > b.shared }
+            if a.entry.timestamp != b.entry.timestamp { return a.entry.timestamp > b.entry.timestamp }
+            return a.order > b.order
+        }.map(\.entry)
+    }
+
     /// `header`, then "\n- <fact>" (`MemoryFact.shown`) for each fact in order while the whole
     /// stays within `budget` estimated tokens. "" when not even one fact fits.
     public static func block(_ facts: [MemoryFact], budget: Int, header: String = header) -> String {
