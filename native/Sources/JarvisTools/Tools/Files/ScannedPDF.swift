@@ -27,7 +27,7 @@ enum ScannedPDF {
         let pages = (1...min(total, pageLimit)).compactMap { document.page(at: $0) }
         guard !pages.isEmpty, !pages.contains(where: hasText) else { return nil }
 
-        let run = Run(), work = Pages(pages: pages)
+        let run = Run(), work = Pages(document: document, pages: pages)
         // Not a child task: a Vision request cannot be cancelled, so at the time limit this is
         // left to end its current page, and its result is dropped.
         Task.detached(priority: .userInitiated) {
@@ -48,9 +48,11 @@ enum ScannedPDF {
         return reply(run.texts, total: total, stopped: run.timedOut)
     }
 
-    /// The pages to read, handed to the reading task. CGPDFDocument and its pages are not
-    /// changed after they are opened, and are only read.
+    /// The pages to read, handed to the reading task with their document, which owns them and
+    /// so lives as long as the task. CGPDFDocument and its pages are not changed after they are
+    /// opened, and are only read.
     private struct Pages: @unchecked Sendable {
+        let document: CGPDFDocument
         let pages: [CGPDFPage]
     }
 

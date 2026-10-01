@@ -150,7 +150,8 @@ public enum FactExtraction {
     /// one. A fact about the user follows `dropReason(_:)`. A note about someone else must name
     /// them (one word of the name is enough), has a plain name and relation (letters, spaces and
     /// `' ’ . -`; at most 60 and 40 characters), passes the same secret, link, command and
-    /// instruction checks, and holds none of that person's health, money or identity details.
+    /// instruction checks, and holds none of that person's health or identity details and no
+    /// identifier (`privateDetail`; their money may stay, the user's decision of 2026-10-01).
     public static func dropReason(_ line: String, about: String, relation: String? = nil) -> Drop? {
         let who = MemoryFact.normalizedAbout(about)
         guard who != MemoryFact.user else { return dropReason(line) }
