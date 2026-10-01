@@ -38,6 +38,8 @@ public enum BuiltInTools {
         await gateway.register(Capped(SearchFiles(spotlight: spotlight)))
         await gateway.register(Capped(FindFiles(spotlight: spotlight)))
         await gateway.register(Capped(ReadFile(home: platform.home, userHome: platform.userHome)))
+        await gateway.register(Capped(RunCommand(runner: platform.commandRunner)))
+        await gateway.register(Capped(RunAppleScript(runner: platform.scriptRunner)))
     }
 
     /// The generated `ToolCatalog` entry for `name`, so no body carries a hand-written schema.
@@ -62,6 +64,9 @@ struct ToolPlatform: Sendable {
     var spotlightRunner: any CommandRunning
     /// `pwd.getpwnam(name).pw_dir`, for read_file's `~name` paths.
     var userHome: @Sendable (String) -> String? = ReadFile.passwdHome
+    /// run_command's `/bin/sh` and run_applescript's osascript, with the agent PATH.
+    var commandRunner: any CommandRunning = BoundedRunner(environment: BoundedRunner.agentEnvironment())
+    var scriptRunner: any StdinCommandRunning = BoundedRunner(environment: BoundedRunner.agentEnvironment())
 
     static var live: ToolPlatform {
         ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard(), screen: LiveScreenCapture(),

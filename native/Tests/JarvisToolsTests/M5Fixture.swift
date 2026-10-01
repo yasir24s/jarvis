@@ -178,6 +178,22 @@ extension ToolPlatform {
                      spotlightRunner: any CommandRunning = FakeRunner(stdout: ""),
                      userHome: @escaping @Sendable (String) -> String? = { _ in nil }) -> ToolPlatform {
         ToolPlatform(system: system, clipboard: clipboard, screen: screen, recognizer: recognizer, home: home,
-                     apps: apps, browser: browser, spotlightRunner: spotlightRunner, userHome: userHome)
+                     apps: apps, browser: browser, spotlightRunner: spotlightRunner, userHome: userHome,
+                     commandRunner: FakeRunner(stdout: ""), scriptRunner: FakeStdinRunner())
+    }
+}
+
+actor FakeStdinRunner: StdinCommandRunning {
+    struct Call: Sendable, Equatable { let argv: [String]; let input: Data; let timeout: Double }
+    var calls: [Call] = []
+    var output: ProcessOutput?
+    init(output: ProcessOutput? = ProcessOutput(stdout: Data(), stderr: Data(), status: 0,
+                                               timedOut: false, truncated: false)) { self.output = output }
+    func run(_ argv: [String], timeout: Double) async -> ProcessOutput? {
+        await run(argv, input: Data(), timeout: timeout)
+    }
+    func run(_ argv: [String], input: Data, timeout: Double) async -> ProcessOutput? {
+        calls.append(Call(argv: argv, input: input, timeout: timeout))
+        return output
     }
 }

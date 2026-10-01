@@ -7,6 +7,36 @@ import Testing
 /// on SuspendingClock.
 @Suite("BoundedRunnerTests")
 struct BoundedRunnerTests {
+    @Test func feedsScriptOnStdin() async throws {
+        let output = try #require(await BoundedRunner().run(["/usr/bin/osascript", "-"],
+                                      input: Data("return \"hello\"".utf8), timeout: 10))
+        #expect(output.completed)
+        #expect(output.stdout == Data("hello\n".utf8))
+    }
+
+    @Test func closesStdinAfterLargeInputWithoutDeadlock() async throws {
+        let input = Data(String(repeating: "# padding\n", count: 20_000).utf8)
+            + Data("printf done".utf8)
+        let output = try #require(await BoundedRunner().run(["/bin/sh"], input: input, timeout: 10))
+        #expect(output.completed)
+        #expect(output.stdout == Data("done".utf8))
+    }
+
+    @Test func childClosingStdinDoesNotSignalParent() async throws {
+        let output = try #require(await BoundedRunner().run(["/bin/sh", "-c", "printf done"],
+                                  input: Data(repeating: 65, count: 1 << 20), timeout: 10))
+        #expect(output.completed)
+        #expect(output.stdout == Data("done".utf8))
+    }
+
+    @Test func unreadStdinStillHonorsDeadline() async throws {
+        let start = SuspendingClock.now
+        let output = try #require(await BoundedRunner().run(["/bin/sleep", "30"],
+                                  input: Data(repeating: 65, count: 1 << 20), timeout: 1))
+        #expect(output.timedOut)
+        #expect(SuspendingClock.now - start < .seconds(10))
+    }
+
     @Test func timeoutKillsTheChild() async throws {
         let clock = SuspendingClock()
         let start = clock.now

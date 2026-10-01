@@ -31,26 +31,45 @@ protocol CommandRunning: Sendable {
     func run(_ argv: [String], timeout: Double) async -> ProcessOutput?
 }
 
+protocol StdinCommandRunning: CommandRunning {
+    func run(_ argv: [String], input: Data, timeout: Double) async -> ProcessOutput?
+}
+
 /// The real runner. Prior art: `GitProbe.run` (poll-based drain, process-group kill) and
 /// `Net` (cancellation bridge). Differences: stdout and stderr are drained together, each is
 /// capped at `cap` bytes, the blocking work runs on a dispatch thread rather than a
 /// cooperative one, and cancelling the calling task kills the child.
-struct BoundedRunner: CommandRunning {
+struct BoundedRunner: StdinCommandRunning {
     /// The largest stream the runner keeps (4 MiB, the MCP connection limit). Every tool
     /// trims its reply far below this; the cap only bounds memory for a runaway child.
     static let defaultCap = 4 << 20
+    /// The PATH Python's LaunchAgent gives every child (plan: M05-M06 §3.4), so `run_command`
+    /// and the blueutil lookup find what Python finds; an app started outside launchd's
+    /// agent has only the system directories.
+    static let agentPATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    /// The app environment with `agentPATH`, for the M5 action runners.
+    static func agentEnvironment(_ base: [String: String] = ProcessInfo.processInfo.environment) -> [String: String] {
+        var environment = base
+        environment["PATH"] = agentPATH
+        return environment
+    }
     /// The child environment. Nil inherits the app's, as Python's `subprocess.run` does.
     var environment: [String: String]? = nil
     var cap: Int = BoundedRunner.defaultCap
 
     func run(_ argv: [String], timeout: Double) async -> ProcessOutput? {
+        await run(argv, input: Data(), timeout: timeout)
+    }
+
+    func run(_ argv: [String], input: Data, timeout: Double) async -> ProcessOutput? {
         let handle = ChildHandle()
         let (environment, cap) = (environment, cap)
         return await withTaskCancellationHandler {
             await withCheckedContinuation { (continuation: CheckedContinuation<ProcessOutput?, Never>) in
                 DispatchQueue.global(qos: .userInitiated).async {
                     continuation.resume(returning: Self.runBlocking(argv, timeout: timeout, cap: cap,
-                                                                    environment: environment, handle: handle))
+                                                                    environment: environment, handle: handle,
+                                                                    input: input))
                 }
             }
         } onCancel: {
@@ -92,7 +111,8 @@ struct BoundedRunner: CommandRunning {
     }
 
     static func runBlocking(_ argv: [String], timeout: Double, cap: Int,
-                            environment: [String: String]?, handle: ChildHandle) -> ProcessOutput? {
+                            environment: [String: String]?, handle: ChildHandle,
+                            input: Data = Data()) -> ProcessOutput? {
         guard let path = argv.first, path.hasPrefix("/"), !handle.isCancelled else { return nil }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: path)
@@ -101,7 +121,12 @@ struct BoundedRunner: CommandRunning {
         let out = Pipe(), err = Pipe()
         process.standardOutput = out
         process.standardError = err
-        process.standardInput = FileHandle.nullDevice
+        let stdin = Pipe()
+        process.standardInput = input.isEmpty ? FileHandle.nullDevice : stdin.fileHandleForReading
+        defer {
+            try? stdin.fileHandleForReading.close()
+            try? stdin.fileHandleForWriting.close()
+        }
         let exited = DispatchSemaphore(value: 0)
         process.terminationHandler = { _ in exited.signal() }
         do {
@@ -112,6 +137,14 @@ struct BoundedRunner: CommandRunning {
             return nil
         }
         let pid = process.processIdentifier
+        try? stdin.fileHandleForReading.close()
+        let writer = stdin.fileHandleForWriting.fileDescriptor
+        var inputOffset = 0
+        var inputOpen = !input.isEmpty
+        if inputOpen {
+            _ = fcntl(writer, F_SETFL, fcntl(writer, F_GETFL) | O_NONBLOCK)
+            _ = fcntl(writer, F_SETNOSIGPIPE, 1)
+        } else { try? stdin.fileHandleForWriting.close() }
         // Process closes the parent's copies of the write ends after the spawn (GitProbe
         // relies on the same), so EOF arrives when the child and its heirs close theirs.
         let readers = [out.fileHandleForReading, err.fileHandleForReading]
@@ -127,7 +160,7 @@ struct BoundedRunner: CommandRunning {
             if flags >= 0 { _ = fcntl(fd, F_SETFL, flags | O_NONBLOCK) }
         }
         var buffer = [UInt8](repeating: 0, count: 65_536)
-        drain: while open.contains(true) {
+        drain: while open.contains(true) || inputOpen {
             let now = DispatchTime.now().uptimeNanoseconds
             guard now < deadline else { timedOut = true; break }
             if handle.isCancelled { break }
@@ -135,12 +168,25 @@ struct BoundedRunner: CommandRunning {
             var fds = readers.indices.filter { open[$0] }.map {
                 pollfd(fd: readers[$0].fileDescriptor, events: Int16(POLLIN), revents: 0)
             }
+            if inputOpen { fds.append(pollfd(fd: writer, events: Int16(POLLOUT), revents: 0)) }
             let ready = poll(&fds, nfds_t(fds.count), millis)
             if ready < 0 {
                 if errno == EINTR { continue }
                 break
             }
             for entry in fds where entry.revents != 0 {
+                if entry.fd == writer {
+                    let count = input.withUnsafeBytes { bytes in
+                        Darwin.write(writer, bytes.baseAddress!.advanced(by: inputOffset),
+                                     min(65_536, input.count - inputOffset))
+                    }
+                    if count > 0 { inputOffset += count }
+                    if inputOffset == input.count || (count < 0 && errno != EAGAIN && errno != EINTR) {
+                        try? stdin.fileHandleForWriting.close()
+                        inputOpen = false
+                    }
+                    continue
+                }
                 guard let i = readers.firstIndex(where: { $0.fileDescriptor == entry.fd }) else { continue }
                 while true {
                     let count = Darwin.read(entry.fd, &buffer, buffer.count)
