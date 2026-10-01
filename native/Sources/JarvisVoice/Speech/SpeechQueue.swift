@@ -4,36 +4,67 @@ import JarvisCore
 /// The only way anything speaks (M8). `say(_:turn:)` takes a finished reply: TextClean, then
 /// chunking, then the clone, with `say` for any part the clone fails, then the player.
 ///
-/// A reply of one sentence is generated whole when it fits `voiceChunkChars` (default 160). In a
-/// reply of two or more sentences the first sentence is a part of its own, so the voice starts
-/// on it sooner, and the rest is grouped at sentence ends into parts of at most that many
-/// characters. Each part is generated while the one before it plays (P5; D-54 generated a reply
-/// of up to 160 characters whole, when F5 at 8 steps made audio about 3.6 times slower than it
-/// plays). A new reply cancels whatever is queued or playing; `cancelAll()` stops everything.
+/// A reply is split at sentence ends only where the split leaves no silence: a part ends at a
+/// boundary when its audio, by `timing`, lasts at least as long as the next part takes to
+/// generate, since the next part generates while it plays. With no such boundary the reply is
+/// spoken whole, or, past `voiceChunkChars` (default 160), in parts of at most that many
+/// characters (P5; D-54 generated a reply of up to 160 characters whole). The log line gives
+/// each gap's predicted and actual length. A new reply cancels whatever is queued or playing;
+/// `cancelAll()` stops everything.
 public actor SpeechQueue {
     /// Where `voiceChunkChars` is read from.
     public static let defaultsSuite = "com.jarvis.assistant"
     public static let chunkCharsKey = "voiceChunkChars"
     public static let defaultChunkChars = 160
 
+    /// How long a part takes to generate and how long its audio lasts, by characters.
+    public struct Timing: Sendable, Equatable {
+        public var generationSeconds: Double
+        public var generationSecondsPerChar: Double
+        public var audioSecondsPerChar: Double
+
+        public init(generationSeconds: Double, generationSecondsPerChar: Double, audioSecondsPerChar: Double) {
+            self.generationSeconds = generationSeconds
+            self.generationSecondsPerChar = generationSecondsPerChar
+            self.audioSecondsPerChar = audioSecondsPerChar
+        }
+
+        public func generation(_ chars: Int) -> Double { generationSeconds + generationSecondsPerChar * Double(chars) }
+        public func audio(_ chars: Int) -> Double { audioSecondsPerChar * Double(chars) }
+        /// The silence before a part of `next` characters, which generates while a part of
+        /// `current` characters plays.
+        public func gap(after current: Int, before next: Int) -> Double { max(0, generation(next) - audio(current)) }
+    }
+
+    /// F5 at 4 steps with the short reference, fitted to the live run of 2026-10-01 with the
+    /// machine under load (1-minute load average about 5): parts of 18, 79 and 97 characters took
+    /// 3.8 to 3.9, 7.2 and 8.5 s to generate (within 0.15 s of the fit) and gave 1.21, 5.16 and
+    /// 6.41 s of audio. F5 makes a part's audio the reference's length per character of its text.
+    public static let f5Timing = Timing(generationSeconds: 2.83, generationSecondsPerChar: 0.0568,
+                                        audioSecondsPerChar: 0.0659)
+
     private let engine: any SpeechEngine
     private let fallback: any SpeechEngine
     private let player: any SpeechPlayer
     private let chunkChars: @Sendable () -> Int
+    private let timing: Timing
     private let helperFootprintMB: @Sendable () -> Int?
     private let log: @Sendable (String) -> Void
     private var current: Task<Void, Never>?
 
     /// - engine: the voice (F5Engine); `fallback` speaks a part it fails (SayEngine).
     /// - helperFootprintMB: the helper's footprint in its last reply, for the log line.
+    /// - timing: what the split rule predicts with (`chunks`).
     public init(engine: any SpeechEngine, fallback: any SpeechEngine, player: any SpeechPlayer,
                 chunkChars: @escaping @Sendable () -> Int = SpeechQueue.chunkCharsFromDefaults,
+                timing: Timing = SpeechQueue.f5Timing,
                 helperFootprintMB: @escaping @Sendable () -> Int? = { nil },
                 log: @escaping @Sendable (String) -> Void) {
         self.engine = engine
         self.fallback = fallback
         self.player = player
         self.chunkChars = chunkChars
+        self.timing = timing
         self.helperFootprintMB = helperFootprintMB
         self.log = log
     }
@@ -47,7 +78,7 @@ public actor SpeechQueue {
             current = nil
             return
         }
-        let parts = Self.chunks(clean, limit: chunkChars())
+        let parts = Self.chunks(clean, limit: chunkChars(), timing: timing)
         current = Task {
             await previous?.value   // the reply before has stopped its audio
             guard !Task.isCancelled else { return }
@@ -86,6 +117,10 @@ public actor SpeechQueue {
         var sayParts = 0
         var stopped = false
         var reportedFallback = false
+        let lengths = parts.map(\.unicodeScalars.count)
+        let predicted = zip(lengths, lengths.dropFirst()).map { timing.gap(after: $0, before: $1) }
+        var actual: [Double] = []
+        var lastEnd: ContinuousClock.Instant?
         var next: Task<Part, Never>? = parts.first.map { generate($0, context) }
         for index in parts.indices {
             guard let pending = next else { break }
@@ -107,12 +142,15 @@ public actor SpeechQueue {
             }
             if part.engine == .say { sayParts += 1 }
             guard let chunk = part.chunk, !chunk.samples.isEmpty else { continue }
-            if firstAudio == nil { firstAudio = ContinuousClock.now - started }
+            let now = ContinuousClock.now
+            if firstAudio == nil { firstAudio = now - started }
+            if let lastEnd { actual.append((now - lastEnd) / .seconds(1)) }
             do {
                 try await player.play(chunk)
             } catch {
                 log("voice: cannot play (\(error))")
             }
+            lastEnd = ContinuousClock.now
             if Task.isCancelled {
                 stopped = true
                 break
@@ -121,7 +159,7 @@ public actor SpeechQueue {
         next?.cancel()
         log(Self.summary(characters: characters, parts: parts.count, firstAudio: firstAudio,
                          generating: generating, helperMB: sayParts < parts.count ? helperFootprintMB() : nil,
-                         sayParts: sayParts, stopped: stopped))
+                         sayParts: sayParts, stopped: stopped, predictedGaps: predicted, actualGaps: actual))
     }
 
     /// Generates one part with the voice, or with the fallback when the voice throws.
@@ -166,10 +204,19 @@ public actor SpeechQueue {
     }
 
     /// `voice: <n> chars in <k> part(s); first audio after <s> s; generated in <g> s; helper <MB> MB`
+    /// With two or more parts, `; gaps predicted <p>/<p> s, actual <a>/<a> s` follows the first
+    /// audio: the silence before each later part, by `timing` and as played.
     static func summary(characters: Int, parts: Int, firstAudio: Duration?, generating: Duration,
-                        helperMB: Int?, sayParts: Int, stopped: Bool) -> String {
+                        helperMB: Int?, sayParts: Int, stopped: Bool,
+                        predictedGaps: [Double] = [], actualGaps: [Double] = []) -> String {
         var line = "voice: \(characters) chars in \(parts) part(s); "
         line += firstAudio.map { "first audio after \(seconds($0)) s" } ?? "no audio"
+        if !predictedGaps.isEmpty {
+            func list(_ gaps: [Double]) -> String {
+                gaps.isEmpty ? "n/a" : gaps.map { String(format: "%.1f", $0) }.joined(separator: "/") + " s"
+            }
+            line += "; gaps predicted \(list(predictedGaps)), actual \(list(actualGaps))"
+        }
         line += "; generated in \(seconds(generating)) s; helper "
         line += helperMB.map { "\($0) MB" } ?? "n/a"
         if sayParts > 0 { line += "; say spoke \(sayParts) part(s)" }
@@ -196,11 +243,12 @@ public actor SpeechQueue {
 
     /// The parts of a cleaned reply, in Unicode scalars (Python `len()`). One sentence of at most
     /// `limit` is one part. Otherwise the text is split after each sentence end (a run of . ! ?
-    /// followed by a space), a sentence longer than `limit` is cut at its last space within the
-    /// limit (pop_sentences' rule) or at the limit itself, the first piece is a part on its own,
-    /// and the pieces after it are packed in order into parts of at most `limit`, joined by one
-    /// space.
-    public static func chunks(_ text: String, limit: Int) -> [String] {
+    /// followed by a space), and a sentence longer than `limit` is cut at its last space within the
+    /// limit (pop_sentences' rule) or at the limit itself. Parts are runs of these pieces joined by
+    /// one space, at most `limit` long. A part ends at the first piece boundary where its audio
+    /// covers the generation of the part after it (`Timing.gap` is 0), judged from the last part
+    /// back; with no such boundary it takes as many pieces as fit, so a reply that fits is whole.
+    public static func chunks(_ text: String, limit: Int, timing: Timing = f5Timing) -> [String] {
         let limit = max(1, limit)
         let u = Array(text.unicodeScalars)
         guard !u.isEmpty else { return [] }
@@ -218,22 +266,36 @@ public actor SpeechQueue {
             }
             if !rest.isEmpty { pieces.append(rest) }
         }
-        // The first piece plays while the rest generates.
-        guard let first = pieces.first else { return [] }
-        var parts = [string(Array(first))]
-        var group: [Unicode.Scalar] = []
-        for piece in pieces.dropFirst() {
-            if group.isEmpty {
-                group = Array(piece)
-            } else if group.count + 1 + piece.count <= limit {
-                group.append(" ")
-                group += piece
-            } else {
-                parts.append(string(group))
-                group = Array(piece)
+        // ends[j]: where the part that starts at piece j ends, decided from the last piece back so
+        // that the part after it is known.
+        let m = pieces.count
+        func length(_ j: Int, _ k: Int) -> Int { pieces[j..<k].reduce(k - j - 1) { $0 + $1.count } }
+        var ends = [Int](repeating: m, count: m + 1)
+        for j in stride(from: m - 1, through: 0, by: -1) {
+            var widest = j + 1
+            var covered: Int?
+            for k in (j + 1)...m {
+                let chars = length(j, k)
+                if k > j + 1, chars > limit { break }
+                widest = k
+                if k < m, timing.gap(after: chars, before: length(k, ends[k])) == 0 {
+                    covered = k
+                    break
+                }
             }
+            ends[j] = covered ?? widest
         }
-        if !group.isEmpty { parts.append(string(group)) }
+        var parts: [String] = []
+        var j = 0
+        while j < m {
+            var part: [Unicode.Scalar] = []
+            for piece in pieces[j..<ends[j]] {
+                if !part.isEmpty { part.append(" ") }
+                part += piece
+            }
+            parts.append(string(part))
+            j = ends[j]
+        }
         return parts
     }
 

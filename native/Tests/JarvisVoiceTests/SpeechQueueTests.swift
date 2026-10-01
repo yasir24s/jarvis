@@ -9,18 +9,38 @@ struct SpeechChunkingTests {
         + "I have also drafted the reply you asked for, and it is waiting in your outbox for review. "
         + "Shall I read it to you now?"
 
-    @Test func aShortOneSentenceReplyIsOnePart() {
+    @Test func aShortReplyIsOnePart() {
         #expect(SpeechQueue.chunks("Hello, sir.", limit: 160) == ["Hello, sir."])
         let exact = String(repeating: "a", count: 160)
         #expect(SpeechQueue.chunks(exact, limit: 160) == [exact])
         #expect(SpeechQueue.chunks("", limit: 160).isEmpty)
+        // Two sentences: 1.2 s of "Good evening, sir." would not cover 3.6 s of generating the rest.
+        #expect(SpeechQueue.chunks("Good evening, sir. It's 3:45 PM.", limit: 160) == ["Good evening, sir. It's 3:45 PM."])
+        let live = "Good evening, sir. I've taken the liberty of silencing your notifications until the meeting ends."
+        #expect(SpeechQueue.chunks(live, limit: 160) == [live])
     }
 
-    @Test func theFirstOfTwoOrMoreSentencesIsAPartOnItsOwn() {
-        #expect(SpeechQueue.chunks("Good evening, sir. It's 3:45 PM.", limit: 160)
-            == ["Good evening, sir.", "It's 3:45 PM."])
-        #expect(SpeechQueue.chunks("Yes, sir. Done. Anything else?", limit: 160)
-            == ["Yes, sir.", "Done. Anything else?"])
+    /// F5's timing: 83 characters play for 5.5 s, longer than the 4.9 s that 36 take to generate.
+    @Test func aReplyIsSplitWhereThePartsAudioCoversTheNextPartsGeneration() {
+        let first = "I've taken the liberty of silencing your notifications until the meeting ends, sir."
+        let second = "Shall I also alert the fire brigade?"
+        #expect(SpeechQueue.chunks(first + " " + second, limit: 160) == [first, second])
+        #expect(SpeechQueue.f5Timing.gap(after: 83, before: 36) == 0)
+        #expect(SpeechQueue.f5Timing.gap(after: 18, before: 79) > 6)
+    }
+
+    /// The first boundary that passes is used, so the voice starts as early as it can.
+    @Test func theEarliestBoundaryWithNoGapIsUsed() {
+        let instant = SpeechQueue.Timing(generationSeconds: 0, generationSecondsPerChar: 0, audioSecondsPerChar: 0.07)
+        #expect(SpeechQueue.chunks("One. Two. Three.", limit: 160, timing: instant) == ["One.", "Two.", "Three."])
+        let never = SpeechQueue.Timing(generationSeconds: 60, generationSecondsPerChar: 0, audioSecondsPerChar: 0.07)
+        #expect(SpeechQueue.chunks("One. Two. Three.", limit: 160, timing: never) == ["One. Two. Three."])
+        // Generating takes 1 s + 0.01 s a character. "Alpha beta." (11 characters, 0.77 s of audio)
+        // cannot cover "Gamma delta epsilon." (1.2 s); the two together (32, 2.24 s) cover "Zeta."
+        // (1.05 s).
+        let some = SpeechQueue.Timing(generationSeconds: 1, generationSecondsPerChar: 0.01, audioSecondsPerChar: 0.07)
+        #expect(SpeechQueue.chunks("Alpha beta. Gamma delta epsilon. Zeta.", limit: 160, timing: some)
+            == ["Alpha beta. Gamma delta epsilon.", "Zeta."])
     }
 
     @Test func aLongReplyIsSplitAtSentenceEndsIntoPartsWithinTheLimit() {
@@ -30,16 +50,19 @@ struct SpeechChunkingTests {
         #expect(parts.joined(separator: " ") == Self.long)
         // Every part ends at a sentence end.
         #expect(parts.allSatisfy { $0.last.map { ".?!".contains($0) } ?? false })
+        // The last two sentences split: 89 characters play for 5.9 s, covering the 4.4 s that
+        // the last 27 take to generate. No other boundary within the limit leaves no gap.
         #expect(parts == [
-            "Good evening, sir.",
-            "The weather today is mild, with light rain expected after four. Your first meeting starts at ten, and the second one has been moved to the afternoon.",
-            "I have also drafted the reply you asked for, and it is waiting in your outbox for review. Shall I read it to you now?",
+            "Good evening, sir. The weather today is mild, with light rain expected after four.",
+            "Your first meeting starts at ten, and the second one has been moved to the afternoon.",
+            "I have also drafted the reply you asked for, and it is waiting in your outbox for review.",
+            "Shall I read it to you now?",
         ])
     }
 
     @Test func sentencesArePackedUpToTheLimit() {
-        let parts = SpeechQueue.chunks("One. Two. Three. Four.", limit: 11)
-        #expect(parts == ["One.", "Two. Three.", "Four."])
+        let parts = SpeechQueue.chunks("One. Two. Three. Four.", limit: 10)
+        #expect(parts == ["One. Two.", "Three.", "Four."])
     }
 
     @Test func aSentenceLongerThanTheLimitIsCutAtItsLastSpace() {
@@ -58,11 +81,8 @@ struct SpeechChunkingTests {
 
     @Test func lengthsAreUnicodeScalars() {
         // "👍🏽" is two scalars: 4 + 1 + 2 = 7 fits a limit of 7.
-        #expect(SpeechQueue.chunks("Ok. Yes. 👍🏽", limit: 7) == ["Ok.", "Yes. 👍🏽"])
-        #expect(SpeechQueue.chunks("Ok. Yes. 👍🏽", limit: 6) == ["Ok.", "Yes.", "👍🏽"])
-        // One sentence of 3 + 1 + 2 = 6 fits a limit of 6, not 5.
-        #expect(SpeechQueue.chunks("Yes 👍🏽", limit: 6) == ["Yes 👍🏽"])
-        #expect(SpeechQueue.chunks("Yes 👍🏽", limit: 5) == ["Yes", "👍🏽"])
+        #expect(SpeechQueue.chunks("Yes. 👍🏽", limit: 7) == ["Yes. 👍🏽"])
+        #expect(SpeechQueue.chunks("Yes. 👍🏽", limit: 6) == ["Yes.", "👍🏽"])
     }
 
     @Test func theLimitComesFromTheDefaultsWith160AsTheDefault() throws {
@@ -88,6 +108,11 @@ struct SpeechChunkingTests {
         let fallback = SpeechQueue.summary(characters: 5, parts: 1, firstAudio: nil, generating: .zero,
                                            helperMB: nil, sayParts: 1, stopped: true)
         #expect(fallback == "voice: 5 chars in 1 part(s); no audio; generated in 0.0 s; helper n/a; say spoke 1 part(s); stopped")
+        let split = SpeechQueue.summary(characters: 119, parts: 3, firstAudio: .milliseconds(7_700),
+                                        generating: .milliseconds(12_040), helperMB: 1005, sayParts: 0, stopped: false,
+                                        predictedGaps: [0, 2.26], actualGaps: [0.31])
+        #expect(split == "voice: 119 chars in 3 part(s); first audio after 7.7 s; gaps predicted 0.0/2.3 s, "
+                + "actual 0.3 s; generated in 12.0 s; helper 1005 MB")
     }
 }
 
@@ -100,8 +125,8 @@ struct SpeechQueueTests {
     }
 
     private func queue(_ engine: FakeEngine, _ fallback: FakeEngine, _ player: FakePlayer, _ log: LogLines,
-                       limit: Int = 160) -> SpeechQueue {
-        SpeechQueue(engine: engine, fallback: fallback, player: player, chunkChars: { limit },
+                       limit: Int = 160, timing: SpeechQueue.Timing = SpeechQueue.f5Timing) -> SpeechQueue {
+        SpeechQueue(engine: engine, fallback: fallback, player: player, chunkChars: { limit }, timing: timing,
                     helperFootprintMB: { 1050 }, log: { log.append($0) })
     }
 
@@ -156,12 +181,15 @@ struct SpeechQueueTests {
         #expect(log.all.last?.hasPrefix("voice: 26 chars in 3 part(s); first audio after ") == true)
     }
 
+    /// With a voice fast enough that the first sentence covers the rest, the first sentence plays
+    /// while the rest generates, and the log line gives the gap predicted and played.
     @Test func theFirstSentencePlaysWhileTheRestGenerates() async {
         let f5 = FakeEngine(.f5, respond: Self.quick)
         let say = FakeEngine(.say, respond: Self.quick)
         let player = FakePlayer(hold: true)
         let log = LogLines()
-        let speech = queue(f5, say, player, log)
+        let fast = SpeechQueue.Timing(generationSeconds: 0, generationSecondsPerChar: 0.01, audioSecondsPerChar: 0.07)
+        let speech = queue(f5, say, player, log, timing: fast)
         await speech.say("Good evening, sir. The weather is mild, with rain after four.", turn: turn)
         #expect(await eventually { await player.waiting == 1 })
         #expect(await player.played == [18])
@@ -173,7 +201,9 @@ struct SpeechQueueTests {
         await player.finish()
         await speech.idle()
         #expect(await player.played == [18, 42])
-        #expect(log.all.last?.hasPrefix("voice: 61 chars in 2 part(s); first audio after ") == true, "\(log.all)")
+        let line = log.all.last ?? ""
+        #expect(line.hasPrefix("voice: 61 chars in 2 part(s); first audio after "), "\(line)")
+        #expect(line.contains("; gaps predicted 0.0 s, actual "), "\(line)")
     }
 
     @Test func aNewReplyCancelsWhatIsPlayingAndQueued() async {
