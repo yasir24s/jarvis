@@ -1,6 +1,11 @@
 #!/bin/bash
 # Build, assemble and sign native/dist/JARVIS.app (plan: M00 §3.3).
 #
+# Live updates (U1): the signed build goes to native/dist/staged/JARVIS.app, with version.json
+# beside it. If no JARVIS holds .jarvis.lock it is promoted at once (scripts/jarvis-update:
+# JARVIS.app moves to previous/, staged/ moves in, renames only). If one is running, the build
+# stays staged and the running app swaps itself over when it is idle.
+#
 # Signed with the PYTHON app's stable identity (~/jarvis/.signing/config) so both bundles share
 # one designated requirement, i.e. one TCC client. Never ad-hoc (`codesign -s -`: new DR every
 # build, TCC grants reset), never --deep, never --options runtime (library validation would
@@ -59,6 +64,10 @@ COMMIT="$(git -C "$REPO" rev-parse --short HEAD)"
 if [[ -n "$(git -C "$REPO" status --porcelain)" ]]; then DIRTY=true; else DIRTY=false; fi
 /usr/libexec/PlistBuddy -c "Add :JARVISBuildChannel string $CHANNEL" -c "Add :JARVISGitCommit string $COMMIT" \
     -c "Add :JARVISGitDirty bool $DIRTY" "$STAGE/Contents/Info.plist"
+# The build's identity for live updates (U1): sealed inside the bundle, and copied beside the
+# staged bundle once it is signed. Two builds of one dirty commit differ by their build time.
+printf '{"commit": "%s", "dirty": %s, "built": "%s"}\n' "$COMMIT" "$DIRTY" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    > "$STAGE/Contents/Resources/version.json"
 printf 'APPL????' > "$STAGE/Contents/PkgInfo"
 # The Dock icon (D-43; M00 deferred jarvis_icon.png → .icns to M4): every size iconutil wants,
 # scaled from the 1024 px source. Info.plist names it (CFBundleIconFile AppIcon).
@@ -107,5 +116,20 @@ if [[ -d "$PY_APP" ]]; then
     fi
 fi
 
-rm -rf "$APP"; mv "$STAGE" "$APP"                   # swap only after a verified signature
-if [[ "$CONFIGURATION" == debug ]]; then echo "Built: $APP (debug configuration)"; else echo "Built: $APP"; fi
+# Stage only after a verified signature, and never overwrite the app that may be running. The
+# staged version.json goes last: the app and the update helper treat a stage without it as
+# unfinished.
+STAGED="$NATIVE/dist/staged"
+rm -f "$STAGED/version.json"; rm -rf "$STAGED/JARVIS.app"; mkdir -p "$STAGED"
+mv "$STAGE" "$STAGED/JARVIS.app"
+cp "$STAGED/JARVIS.app/Contents/Resources/version.json" "$STAGED/.version.json.tmp"
+mv "$STAGED/.version.json.tmp" "$STAGED/version.json"
+LABEL=""
+if [[ "$CONFIGURATION" == debug ]]; then LABEL=" (debug configuration)"; fi
+if "$NATIVE/scripts/jarvis-update" lock-free "${JARVIS_HOME:-$REPO}/.jarvis.lock"; then
+    "$NATIVE/scripts/jarvis-update" promote "$NATIVE/dist"
+    echo "Built: $APP$LABEL"
+else
+    echo "Built and staged: $STAGED/JARVIS.app$LABEL"
+    echo "JARVIS is running, so the build waits there: he swaps over when idle, or use Update Now."
+fi

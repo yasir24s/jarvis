@@ -1,0 +1,52 @@
+#!/bin/bash
+# Live updates (U1): the renames that put a staged build in place. build-app.sh runs this copy
+# from the source tree; the app runs the copy in its own bundle, Contents/Helpers/jarvis-update.
+#
+#   jarvis-update lock-free <lock file>   exit 0 if .jarvis.lock can be taken, i.e. no JARVIS runs
+#   jarvis-update promote <dist>          staged/JARVIS.app becomes JARVIS.app, renames only
+#
+# <dist> holds JARVIS.app and version.json, staged/ the build waiting to run, previous/ the build
+# that ran before. Bundles are only ever renamed, never copied or rewritten in place. Paths come
+# from the arguments, $HOME and the bundle; never a literal home folder.
+set -euo pipefail
+
+say() { echo "jarvis-update: $*" >&2; }
+
+# One flock(LOCK_EX | LOCK_NB) probe, released at once: the kernel lock both JARVISes hold for
+# their whole life (InstanceLock). A missing file means nobody has run here yet. A file that
+# cannot be opened counts as held: never promote under a running app.
+lock_free() {
+    local lock="$1"
+    [[ -e "$lock" ]] || return 0
+    /usr/bin/perl -MFcntl=:flock -e \
+        'open(my $fh, "<", $ARGV[0]) or exit 2; exit(flock($fh, LOCK_EX | LOCK_NB) ? 0 : 1)' "$lock"
+}
+
+# JARVIS.app (and its version.json) moves to previous/, then staged/ moves in. The build before
+# last is renamed aside first and deleted only once the new one is in place.
+promote() {
+    local dist="$1" discard=""
+    if [[ ! -d "$dist/staged/JARVIS.app" || ! -f "$dist/staged/version.json" ]]; then
+        say "nothing staged in $dist"; return 3
+    fi
+    if [[ -e "$dist/JARVIS.app" ]]; then
+        if [[ -e "$dist/previous" ]]; then discard="$dist/.previous.discard.$$"; mv "$dist/previous" "$discard"; fi
+        mkdir "$dist/previous"
+        mv "$dist/JARVIS.app" "$dist/previous/JARVIS.app"
+        if [[ -f "$dist/version.json" ]]; then mv "$dist/version.json" "$dist/previous/version.json"; fi
+    fi
+    mv "$dist/staged/JARVIS.app" "$dist/JARVIS.app"
+    mv "$dist/staged/version.json" "$dist/version.json"
+    if [[ -n "$discard" ]]; then rm -rf "$discard"; fi
+}
+
+usage() {
+    say "usage: jarvis-update lock-free <lock file> | promote <dist>"
+    exit 64   # EX_USAGE
+}
+
+case "${1:-}" in
+    lock-free) [[ $# -eq 2 ]] || usage; lock_free "$2" ;;
+    promote)   [[ $# -eq 2 ]] || usage; promote "$2" ;;
+    *)         usage ;;
+esac
