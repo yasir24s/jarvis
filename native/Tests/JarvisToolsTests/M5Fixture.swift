@@ -73,9 +73,26 @@ struct FakeSystemProbe: SystemProbing {
     func processTable() async -> String? { table }
 }
 
+/// A canned pasteboard: the plain-text flavor bytes, or nil for none. Counts its reads.
+final class FakeClipboard: ClipboardReading, @unchecked Sendable {
+    private let lock = NSLock()
+    private let data: Data?
+    private var count = 0
+
+    init(_ data: Data?) { self.data = data }
+
+    var reads: Int { lock.withLock { count } }
+
+    func plainTextData() async -> Data? {
+        lock.withLock { count += 1 }
+        return data
+    }
+}
+
 extension ToolPlatform {
     /// Fakes for everything; each test swaps in the reader it exercises.
-    static func fake(system: any SystemProbing = FakeSystemProbe()) -> ToolPlatform {
-        ToolPlatform(system: system)
+    static func fake(system: any SystemProbing = FakeSystemProbe(),
+                     clipboard: any ClipboardReading = FakeClipboard(nil)) -> ToolPlatform {
+        ToolPlatform(system: system, clipboard: clipboard)
     }
 }

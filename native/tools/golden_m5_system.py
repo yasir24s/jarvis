@@ -17,11 +17,13 @@ m5_sysinfo  input {tool, battery, cpu, wifi, memory, disk, cycle, boot, ps, now}
   cpu_value is the load top's field stands for: top prints the hundredths unpadded (4.08 is
   "4.8"), so where the field and "%.2f" of the value differ the native reply differs too and
   the case carries deviation "DEV-M5-01" with the native text beside Python's.
-m5_clipboard  input {pbpaste} -> expected {text}: execute_tool("read_clipboard") over a canned
-  pbpaste stdout (bytes as latin-1 code points, decoded by subprocess's text=True).
+m5_clipboard  input {pbpaste_hex} -> expected {text}: execute_tool("read_clipboard") over a canned
+  pbpaste stdout, decoded by subprocess's own text=True path. The native reader returns the
+  same bytes (the pasteboard's public.utf8-plain-text flavor); pbpaste_hex null means the
+  pasteboard holds no plain text, where pbpaste prints nothing and the native reader has no
+  flavor to return.
 """
 import contextlib
-import io
 import subprocess
 import sys
 import types
@@ -74,8 +76,9 @@ class _Runner:
             raise FileNotFoundError(2, "No such file or directory", argv[0])
         out = self.outputs[key]
         if isinstance(out, bytes) and text:
-            # subprocess text=True: locale (UTF-8) strict decode + universal newlines.
-            out = io.TextIOWrapper(io.BytesIO(out), encoding="utf-8").read()
+            # subprocess's own text=True path: strict decode in the locale encoding (UTF-8 in
+            # the child), then "\r\n" and "\r" to "\n". A decode error raises, as it would.
+            out = subprocess.Popen._translate_newlines(None, out, "utf-8", "strict")
         return subprocess.CompletedProcess(argv, 0, stdout=out, stderr="" if text else b"")
 
 
@@ -248,4 +251,52 @@ def sysinfo(ctx):
                     raise RuntimeError(f"{name}: the CPU sentence is not in the reply")
         cases.append({"name": name, "input": inp, "expected": expected})
     _assert_guard_live("m5_sysinfo")
+    return cases
+
+
+def _clipboard_rows():
+    x = "x"
+    return [
+        ("plain", b"hello world"),
+        ("empty", b""),
+        ("no_plain_text", None),
+        ("crlf", b"a\r\nb\r\nc"),
+        ("lone_cr", b"a\rb\rc"),
+        ("cr_crlf_mix", b"a\r\r\nb\n\rc"),
+        ("trailing_cr", b"abc\r"),
+        ("unicode", "Café — naïve ☕".encode()),
+        ("emoji_astral", ("😀" * 10).encode()),
+        ("bom_kept", b"\xef\xbb\xbfhi"),
+        ("nul", b"a\x00b"),
+        ("other_line_breaks_kept", "a\u2028b\x85c\x0bd\x0ce".encode()),
+        ("exactly_3500", (x * 3500).encode()),
+        ("over_3500", (x * 3600).encode()),
+        ("astral_at_boundary", (x * 3499 + "😀" + "tail").encode()),
+        ("combining_split_at_boundary", (x * 3499 + "e\u0301").encode()),
+        ("crlf_at_boundary", (x * 3499 + "\r\ny").encode()),
+        ("translation_before_slice", ("\r\n" * 3000 + "end").encode()),
+        ("flags_cut_mid_pair", ("x" + "🇬🇧" * 2000).encode()),
+        ("large", ("y" * 20000).encode()),
+        ("invalid_utf8", b"abc\xff"),
+        ("utf8_surrogate", b"\xed\xa0\x80"),
+        ("overlong", b"\xc0\xaf"),
+        ("truncated_sequence", b"ok\xe2\x82"),
+    ]
+
+
+@suite("m5_clipboard")
+def clipboard(ctx):
+    J = ctx.J
+    _assert_guard_live("m5_clipboard")
+    cases = []
+    for name, raw in _clipboard_rows():
+        runner = _Runner({("pbpaste",): raw if raw is not None else b""})
+        with _patched(J, subprocess=runner):
+            text = J.execute_tool("read_clipboard", {})
+        if runner.calls != [["pbpaste"]]:
+            raise RuntimeError(f"{name}: expected one pbpaste call, got {runner.calls}")
+        cases.append({"name": f"clipboard/{name}",
+                      "input": {"pbpaste_hex": raw.hex() if raw is not None else None},
+                      "expected": {"text": text}})
+    _assert_guard_live("m5_clipboard")
     return cases

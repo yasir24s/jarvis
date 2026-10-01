@@ -3,7 +3,7 @@ import JarvisCore
 
 /// The tool bodies that exist so far (B4: `get_time`; D-50: `personality_note` and
 /// `personality_rewrite`; M5 T5.5: `get_battery`, `get_cpu_usage`, `get_wifi_status`,
-/// `run_diagnostics`), registered on a gateway in one call, so JarvisBrain and JarvisApp
+/// `run_diagnostics`; T5.6: `read_clipboard`), registered on a gateway in one call, so JarvisBrain and JarvisApp
 /// never name a tool type. Every other catalog tool stays listed with no body, and the gateway
 /// answers it with its unknown-tool text until M5 or M6 adds one.
 public enum BuiltInTools {
@@ -26,6 +26,7 @@ public enum BuiltInTools {
         await gateway.register(GetCPUUsage(probe: platform.system))
         await gateway.register(GetWiFiStatus(probe: platform.system))
         await gateway.register(RunDiagnostics(probe: platform.system, clock: clock))
+        await gateway.register(ReadClipboard(clipboard: platform.clipboard))
     }
 
     /// The generated `ToolCatalog` entry for `name`, so no body carries a hand-written schema.
@@ -38,8 +39,9 @@ public enum BuiltInTools {
 /// build one from fakes, so no test reads the real battery, pasteboard, screen or network.
 struct ToolPlatform: Sendable {
     var system: any SystemProbing
+    var clipboard: any ClipboardReading
 
     static var live: ToolPlatform {
-        ToolPlatform(system: LiveSystemProbe())
+        ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard())
     }
 }
