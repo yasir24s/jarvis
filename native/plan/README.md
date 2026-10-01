@@ -524,6 +524,19 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
   spike (D-48) is `voices/jarvis_en.wav` (83 s, 16-bit stereo, 44.1 kHz; `voices/` is
   git-ignored and in the pre-commit denylist), from the JARVIS-ChatGPT repository's
   `Assistant/voices/`. The spike cuts a clean 5 to 15 s reference from it.
+- **D-53. DEV-M5-01 to 03 approved, junk topics cleared, the voice is an F5 clone** (user,
+  2026-10-01). DEV-M5-01, DEV-M5-02 and DEV-M5-03 are approved as proposed.
+  - **Junk topics.** Python's research loop web-searched the literal words of commands and
+    chat ("close app", "yes", "you're fine") and saved whatever came back as topics. 20 of
+    the 23 topics in `knowledge.json` were of that kind and are removed. "drake", "who is
+    drake" and "eiffel tower" stay, and the queue is untouched. A copy of the file from
+    before is kept outside the repository, and `research/annotations.jsonl` records the
+    change as the `kb-junk-cleanup` intervention, since `counts.kb_topics` drops with it.
+  - **Voice.** The user chose to clone the D-52 clip with F5-TTS in Swift instead of using
+    Kokoro's stock voices, knowing the clip is Bettany in an interview. The four downloads F5
+    needs are approved: the Metal Toolchain, `swift-numerics`, F5's `vocab.txt` and the
+    vocoder's `config.json`. The spike measures F5 against M8's budget and the 8 GB limit;
+    Kokoro stays the measured fallback.
 
 ## Open user decisions
 
