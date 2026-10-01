@@ -49,6 +49,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var sigterm: DispatchSourceSignal?
     /// Opens the chat window. Set by the window each time it appears, for the Dock icon.
     var openChat: (() -> Void)?
+    /// U1: the chat window, whose frame a live update saves, and the frame a resumed launch
+    /// puts back once the window is there.
+    private weak var chatWindow: NSWindow?
+    private var pendingFrame: NSRect?
+    /// U1: this state root's run folder, where resume.json is written before a swap, and the
+    /// log the update helper appends to.
+    private var runFolder: URL?
+    private var logFile: URL?
+    /// U1: the hand-over this launch was opened with (`--resume <path>`), read once: the path,
+    /// and its contents unless they were missing or did not parse.
+    static let resumeAtLaunch: (url: URL, state: ResumeState?)? = ResumeLaunch.path(arguments: CommandLine.arguments)
+        .map { ($0, ResumeState.read($0)) }
     /// get_wifi_status reads the network name through CoreWLAN, which returns none without
     /// Location Services. Kept alive for the app's life, as CLLocationManager must be.
     private let location = CLLocationManager()
@@ -93,6 +105,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 let held = await InstanceLock.acquireWaiting(at: paths.lockFile, repoRoot: paths.root) { holder in
                     JarvisLog.log("Another JARVIS (\(Self.describe(holder))) holds .jarvis.lock — waiting.",
                                   category: .lock)
+                }
+                self.lockAcquired(held, paths: paths)
+            }
+            return
+        }
+        if Self.resumeAtLaunch != nil {
+            // U1: a live update's new build; the old process may still be letting go of the lock.
+            model.lockHolder = "waiting"
+            Task { @MainActor in
+                let held = await ResumeLaunch.retry(timeout: ResumeLaunch.lockWait, every: .milliseconds(250)) {
+                    () -> InstanceLock? in
+                    if case .acquired(let lock) = InstanceLock.tryAcquire(at: paths.lockFile, repoRoot: paths.root) {
+                        return lock
+                    }
+                    return nil
+                }
+                guard let held else {
+                    self.exitHeld("\(Self.describe(InstanceLock.readHolder(at: paths.lockFile))), still after 15 s")
                 }
                 self.lockAcquired(held, paths: paths)
             }
@@ -166,6 +196,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func lockAcquired(_ held: InstanceLock, paths: StatePaths) {
         lock = held
         model.lockHolder = Self.describe(InstanceLock.readHolder(at: paths.lockFile))
+        runFolder = RunFolders(stateRoot: paths.root, defaultRoot: Self.defaultRoot(ProcessInfo.processInfo.environment)).run
+        logFile = paths.logFile
+        // U1: a live update's chat is back before anything else is shown in it.
+        if let launch = Self.resumeAtLaunch { resume(launch) }
         startBrain(lock: held, paths: paths)
         // U1: from here a staged build is noticed, even when the brain did not start.
         updates.start(signals: { [weak self] in self?.updateSignals() ?? Self.busySignals },
@@ -187,9 +221,89 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private static let busySignals = UpdateRule.Signals(turnInFlight: true, speechActive: false,
                                                         confirmationPending: false, lastUse: .infinity)
 
-    /// The swap-over itself (U1): for now only logged.
+    /// The swap-over (U1). resume.json first, while everything is still running; then the
+    /// background work stops as on SIGTERM and the lock is let go; then the update helper is
+    /// started, detached, and this process exits. The helper waits for the exit, promotes the
+    /// staged build and opens it with `--resume`.
     private func swapOver(to build: BuildID) {
-        JarvisLog.log("update: \(build.label) may swap in now")
+        let helper = Bundle.main.bundleURL.appending(path: UpdateFolders.helperPath)
+        guard let folders = updates.folders, let runFolder,
+              FileManager.default.isExecutableFile(atPath: helper.path(percentEncoded: false)) else {
+            JarvisLog.log("update: cannot swap (no run folder or update helper); staying on this build")
+            return
+        }
+        let resumeFile = runFolder.appending(path: ResumeState.fileName)
+        let state = ResumeState(from: BuildID.running(), to: build, written: SystemClock().now(),
+                                chat: chat.resumeSnapshot(), window: chatWindowState())
+        do {
+            try state.write(to: resumeFile)
+        } catch {
+            JarvisLog.log("update: cannot write resume.json (\(error)); staying on this build")
+            return
+        }
+        JarvisLog.log("update: handing over to \(build.label); exiting for the update helper")
+        // As the SIGTERM path does: nothing that writes outlives the lease.
+        research?.stop()   // flushes enqueued bumps while the lease is still held
+        personality?.stop()
+        idleCompile?.stop()
+        files?.cancel()
+        lock = nil   // closes the fd: releases the flock before the helper starts
+        let process = Process()
+        process.executableURL = helper
+        process.arguments = ["swap", "--pid", "\(getpid())", "--dist", folders.dist.path(percentEncoded: false),
+                             "--resume", resumeFile.path(percentEncoded: false),
+                             "--log", logFile?.path(percentEncoded: false) ?? "/dev/null"]
+        process.standardInput = FileHandle.nullDevice
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+        } catch {
+            // No helper: this same build is opened again with the hand-over, so nothing is lost.
+            JarvisLog.log("update: cannot start the update helper (\(error)); reopening this build")
+            let reopen = Process()
+            reopen.executableURL = URL(filePath: "/usr/bin/open")
+            reopen.arguments = ["-n", "-g", Bundle.main.bundleURL.path(percentEncoded: false), "--args",
+                                ResumeLaunch.flag, resumeFile.path(percentEncoded: false)]
+            try? reopen.run()
+        }
+        exit(0)
+    }
+
+    /// The chat window as resume.json records it: open or not, and its frame.
+    private func chatWindowState() -> ResumeState.Window {
+        guard let window = chatWindow else { return ResumeState.Window(open: false, frame: nil) }
+        let f = window.frame
+        return ResumeState.Window(open: window.isVisible,
+                                  frame: [f.origin.x, f.origin.y, f.size.width, f.size.height])
+    }
+
+    /// The new build's side of a live update (U1): the chat, draft and scroll go back into the
+    /// chat, the window frame waits for the window, resume.json is deleted, and the swap's
+    /// length is logged. The launch is not counted as a start (`ResearchScheduler`).
+    private func resume(_ launch: (url: URL, state: ResumeState?)) {
+        defer { try? FileManager.default.removeItem(at: launch.url) }
+        guard let state = launch.state else {
+            JarvisLog.log("update: \(launch.url.lastPathComponent) is missing or unreadable; nothing to restore")
+            return
+        }
+        chat.restore(state.chat)
+        if let f = state.window.frame, f.count == 4 {
+            pendingFrame = NSRect(x: f[0], y: f[1], width: f[2], height: f[3])
+            if let chatWindow { chatWindowAppeared(chatWindow) }
+        }
+        JarvisLog.log(ResumeLaunch.resumedLine(state, now: SystemClock().now(), running: BuildID.running()))
+    }
+
+    /// The chat view reports its window (U1). A frame restored by a live update is applied
+    /// once, on the next turn of the run loop, after SwiftUI's own placement, and only when it
+    /// is still on a screen.
+    func chatWindowAppeared(_ window: NSWindow) {
+        chatWindow = window
+        guard let frame = pendingFrame else { return }
+        pendingFrame = nil
+        guard NSScreen.screens.contains(where: { $0.visibleFrame.intersects(frame) }) else { return }
+        DispatchQueue.main.async { window.setFrame(frame, display: true) }
     }
 
     /// Builds the brain once, on the state this lock guards. The chat is connected only after
@@ -219,7 +333,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let scheduler = AppResearch.scheduler(
             store: research, paths: researchPaths, here: paths.root, core: core,
             runtime: AppResearch.runtime(processStarted: Self.processStarted, claudeEnabled: config.enabled))
-        scheduler.start()
+        scheduler.start(countingLaunch: Self.resumeAtLaunch == nil)   // U1: an update is not a start
         self.research = scheduler
         // The owner check a typed confirmation must pass (plan §3.4), counted as it runs.
         let authenticator = CountingTextAuthenticator(LAConfirmAuthenticator(), research: research)

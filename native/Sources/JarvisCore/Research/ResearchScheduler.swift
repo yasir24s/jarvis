@@ -6,7 +6,8 @@ import Foundation
 // T10 names Sources/JarvisApp/Research/; it lives here because test targets cannot import the
 // JarvisApp executable.
 //
-//   start  bumps starts_swift_<build> at once; a detached utility task then sleeps 90 s and
+//   start  bumps starts_swift_<build> at once (not on a live update's relaunch, U1); a
+//          detached utility task then sleeps 90 s and
 //          runs a check every 3600 s, research_log_loop's timing (jarvis.py 2569–2578), on the
 //          SuspendingClock so system sleep does not count toward the hour. A check bumps
 //          alive_hours, then snapshots only if metrics.jsonl's last row is not dated today,
@@ -92,14 +93,16 @@ public final class ResearchScheduler {
     }
 
     /// Bumps the launch counter, then starts the check loop. Once per scheduler (one per app
-    /// launch): a second call does nothing.
-    public func start() {
+    /// launch): a second call does nothing. `countingLaunch` is false for a live update's
+    /// relaunch (U1): the same run in a new build, not a start, so the counter is not bumped.
+    public func start(countingLaunch: Bool = true) {
         guard !started else { return }
         started = true
         let key = ResearchKey.starts(build: build)
-        logger.bump(key)
+        if countingLaunch { logger.bump(key) }
         if let intervalNote { log("Research: \(intervalNote)") }
-        log("Research scheduler started (\(build.rawValue) build): \(key) bumped; first check in "
+        log("Research scheduler started (\(build.rawValue) build): \(key) "
+            + (countingLaunch ? "bumped" : "not bumped (a live update)") + "; first check in "
             + "\(Self.seconds(Self.firstCheck)) s, then every \(Self.seconds(interval)) s")
         if !logger.mayWrite {
             log("Research scheduler: the state lease is not held, so research/ is not written (D-36)")

@@ -126,6 +126,23 @@ struct ResearchSchedulerTests {
         #expect(try rig.rows().isEmpty)
     }
 
+    /// U1: a live update's relaunch is the same run in a new build, so it bumps no start; the
+    /// checks run as on any launch.
+    @Test func aLiveUpdatesRelaunchIsNotCountedAsAStart() async throws {
+        let box = try Sandbox()
+        defer { box.remove() }
+        let rig = try SchedulerRig(root: box.root, at: schedulerMorning, budget: 1)
+        rig.scheduler.start(countingLaunch: false)
+        defer { rig.scheduler.stop() }
+        try await until("the scheduler to use its 1 sleep") { rig.sleeper.isParked }
+        rig.scheduler.stop()
+        try await until("the scheduler's loop to end after stop()") { rig.sleeper.released }
+
+        #expect(described(try rig.counters("2026-09-29")) == ["alive_hours=1"])
+        #expect(rig.lines.all.first == "Research scheduler started (dev build): "
+                + "starts_swift_dev not bumped (a live update); first check in 90 s, then every 3600 s")
+    }
+
     @Test func theTickOverrideSetsThePeriodInADevBuild() async throws {
         let box = try Sandbox()
         defer { box.remove() }

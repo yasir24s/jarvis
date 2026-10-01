@@ -15,9 +15,11 @@ struct JarvisSwiftUIApp: App {
         Window("JARVIS", id: ChatView.windowID) {
             ChatView(model: appDelegate.chat, onAppear: { openWindow in
                 appDelegate.openChat = { openWindow(id: ChatView.windowID) }
-            })
+            }, onWindow: { appDelegate.chatWindowAppeared($0) })
         }
-        .defaultLaunchBehavior(ChatLaunch.opensWindow(arguments: CommandLine.arguments) ? .presented : .suppressed)
+        // U1: after a live update the window is open only if it was before the swap.
+        .defaultLaunchBehavior(ChatLaunch.opensWindow(arguments: CommandLine.arguments,
+                                                      resume: AppDelegate.resumeAtLaunch?.state) ? .presented : .suppressed)
         .restorationBehavior(.disabled)
         .commands {
             // The app menu's "Stop Speaking" (M8), the same as the menu-bar item.

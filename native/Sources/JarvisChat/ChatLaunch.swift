@@ -11,3 +11,11 @@ public enum ChatLaunch {
         !arguments.dropFirst().contains(backgroundFlag)
     }
 }
+
+extension ChatLaunch {
+    /// After a live update (U1) the window is as it was before the swap: open only if it was.
+    public static func opensWindow(arguments: [String], resume: ResumeState?) -> Bool {
+        if let resume { return resume.window.open }
+        return opensWindow(arguments: arguments)
+    }
+}

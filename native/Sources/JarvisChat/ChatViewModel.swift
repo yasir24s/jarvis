@@ -46,6 +46,12 @@ public final class ChatViewModel: ReplySink {
     /// When the user last typed in the composer or sent from this window, by `clock`; nil
     /// before either. A live update never swaps within 10 minutes of it (U1, `UpdateRule`).
     @ObservationIgnored public private(set) var lastUse: Double?
+    /// Kept by the chat view as the user scrolls (U1 hands them over): the row at the top of
+    /// the transcript, and whether it is scrolled to the bottom.
+    @ObservationIgnored public var scrollTop: UUID?
+    @ObservationIgnored public var scrolledToBottom = true
+    /// A scroll position a live update restored, for the chat view to apply once.
+    public private(set) var scrollRequest: ChatScrollRequest?
 
     /// The speak policy's hook (plan §3.12 `SpeakPolicy`): each finished assistant row of a
     /// turn, with that turn's summary (its data sources and taint). Rows made here without a
@@ -117,6 +123,21 @@ public final class ChatViewModel: ReplySink {
     /// The composer's text changed: the user is typing (`lastUse`).
     public func noteTyping() {
         lastUse = clock.now()
+    }
+
+    /// The restored scroll position, once: the chat view applies it and it is gone.
+    public func takeScrollRequest() -> ChatScrollRequest? {
+        defer { scrollRequest = nil }
+        return scrollRequest
+    }
+
+    /// A live update's restore (Resume.swift): the rows it hands over, and where to scroll.
+    func replaceMessages(_ rows: [ChatMessage]) {
+        messages = rows
+    }
+
+    func requestScroll(_ request: ChatScrollRequest) {
+        scrollRequest = request
     }
 
     /// Shows `gate`'s pending confirmation on the card from now on (plan §3.4, §3.12).

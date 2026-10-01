@@ -1,3 +1,4 @@
+import AppKit
 import JarvisChat
 import JarvisTools
 import SwiftUI
@@ -11,6 +12,8 @@ struct ChatView: View {
     /// Hands the app this window's opener each time the window appears, so the Dock icon can
     /// reopen it (D-43).
     var onAppear: (OpenWindowAction) -> Void = { _ in }
+    /// Hands the app the window this view is in (U1 saves and restores its frame).
+    var onWindow: (NSWindow) -> Void = { _ in }
     @Environment(\.openWindow) private var openWindow
     @Environment(\.appearsActive) private var appearsActive
 
@@ -24,11 +27,30 @@ struct ChatView: View {
                                 .id(message.id)
                         }
                     }
+                    .scrollTargetLayout()   // U1: lets scrollPosition report the top row
                     .padding(16)
+                }
+                // U1: where the transcript is scrolled, for a live update to hand over.
+                .scrollPosition(id: $model.scrollTop, anchor: .top)
+                .onScrollGeometryChange(for: Bool.self) { geometry in
+                    geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height - 24
+                } action: { _, atBottom in
+                    model.scrolledToBottom = atBottom
                 }
                 .onChange(of: model.messages.last?.text) {
                     if let last = model.messages.last {
                         proxy.scrollTo(last.id, anchor: .bottom)
+                    }
+                }
+                // U1: a restored scroll position, applied once the restored rows are laid out.
+                .onChange(of: model.scrollRequest, initial: true) {
+                    guard let request = model.takeScrollRequest() else { return }
+                    DispatchQueue.main.async {
+                        if request.atBottom, let last = model.messages.last {
+                            proxy.scrollTo(last.id, anchor: .bottom)
+                        } else if let row = request.row {
+                            proxy.scrollTo(row, anchor: .top)
+                        }
                     }
                 }
             }
@@ -52,6 +74,7 @@ struct ChatView: View {
                 .onChange(of: model.draft.text) { model.noteTyping() }   // U1: typing holds an update back
         }
         .frame(minWidth: 420, minHeight: 360)
+        .background(WindowReader(onWindow: onWindow))
         .onAppear {
             onAppear(openWindow)
         }
@@ -133,6 +156,34 @@ private struct MessageRow: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
+        }
+    }
+}
+
+/// Reports the NSWindow its view is placed in (U1: the chat window's frame is saved before a
+/// live update and restored after it).
+private struct WindowReader: NSViewRepresentable {
+    let onWindow: (NSWindow) -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        Reader(onWindow: onWindow)
+    }
+
+    func updateNSView(_ view: NSView, context: Context) {}
+
+    final class Reader: NSView {
+        let onWindow: (NSWindow) -> Void
+
+        init(onWindow: @escaping (NSWindow) -> Void) {
+            self.onWindow = onWindow
+            super.init(frame: .zero)
+        }
+
+        required init?(coder: NSCoder) { nil }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if let window { onWindow(window) }
         }
     }
 }
