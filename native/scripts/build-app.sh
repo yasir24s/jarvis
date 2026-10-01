@@ -34,10 +34,23 @@ swift build -c "$CONFIGURATION" --package-path "$NATIVE" --product JARVIS -j "$J
     -Xlinker -rpath -Xlinker @executable_path/../Frameworks \
     ${ORT_LIB:+-Xlinker -L"$ORT_LIB"}               # ORT_LIB set only from M10
 BIN="$(swift build -c "$CONFIGURATION" --package-path "$NATIVE" --show-bin-path)/JARVIS"
+# M8's voice helper (D-54) is a package of its own, so the main build never compiles MLX. It is
+# always release, built with -j 3 (VOICE_JOBS), and runs from Contents/Helpers/ beside its two
+# resource bundles, where MLX and the helper look for them: mlx-swift_Cmlx.bundle holds
+# default.metallib, VoiceHelper_F5TTS.bundle holds mel_filters.npy.
+VOICE="$NATIVE/VoiceHelper"
+swift build -c release --package-path "$VOICE" --product jarvis-voice -j "${VOICE_JOBS:-3}"
+VOICE_BIN="$(swift build -c release --package-path "$VOICE" --show-bin-path)"
 
 STAGE="$NATIVE/dist/.JARVIS.app.staging"; APP="$NATIVE/dist/JARVIS.app"
-rm -rf "$STAGE"; mkdir -p "$STAGE/Contents/MacOS" "$STAGE/Contents/Resources" "$STAGE/Contents/Frameworks"
+rm -rf "$STAGE"; mkdir -p "$STAGE/Contents/MacOS" "$STAGE/Contents/Resources" "$STAGE/Contents/Frameworks" \
+    "$STAGE/Contents/Helpers"
 cp "$BIN" "$STAGE/Contents/MacOS/JARVIS"
+cp "$VOICE_BIN/jarvis-voice" "$STAGE/Contents/Helpers/jarvis-voice"
+for b in mlx-swift_Cmlx.bundle VoiceHelper_F5TTS.bundle; do
+    [[ -d "$VOICE_BIN/$b" ]] || { echo "error: $b is missing from the voice helper build" >&2; exit 1; }
+    cp -R "$VOICE_BIN/$b" "$STAGE/Contents/Helpers/$b"
+done
 cp "$NATIVE/Resources/Info.plist" "$STAGE/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(git -C "$REPO" rev-list --count HEAD)" "$STAGE/Contents/Info.plist"
 # The code that runs, for the dataset's runtime block (RuntimeInfo): the commit, and whether the
@@ -63,6 +76,11 @@ fi
 security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
 for d in "$STAGE"/Contents/Frameworks/*.dylib; do [[ -e "$d" ]] || continue
     codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$d" 2>/dev/null; done   # inner first, no --deep
+# The voice helper's nested code, also inner first: its resource bundles, then the helper.
+for h in "$STAGE"/Contents/Helpers/*.bundle "$STAGE/Contents/Helpers/jarvis-voice"; do
+    codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$h" 2>/dev/null; done
+codesign --verify --strict "$STAGE/Contents/Helpers/jarvis-voice" 2>/dev/null \
+    || { echo "error: codesign --verify --strict failed on the voice helper" >&2; exit 1; }
 # codesign's stderr names the signing identity; keep it off the terminal unless signing fails.
 if ! out="$(codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" \
         --entitlements "$NATIVE/Resources/JARVIS.entitlements" "$STAGE" 2>&1)"; then

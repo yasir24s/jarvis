@@ -7,7 +7,7 @@ public struct SpeakContext: Sendable {
     let chatWindowIsKey: Bool; let speakToggleOn: Bool; let userIdleSeconds: Double
     let voiceConversationActive: Bool; let replyCharCount: Int
     let turn: TurnSummary            // dataSources/tainted — sensitive content awareness
-    let ttsBackend: String           // "elevenlabs" | "piper" (M8)
+    let ttsBackend: String           // "f5" | "say" (M8, D-54); "elevenlabs" is a cloud voice
 
     public init(chatWindowIsKey: Bool, speakToggleOn: Bool, userIdleSeconds: Double,
                 voiceConversationActive: Bool, replyCharCount: Int, turn: TurnSummary, ttsBackend: String) {

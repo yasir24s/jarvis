@@ -5,6 +5,7 @@ import JarvisBrain
 import JarvisChat
 import JarvisCore
 import JarvisTools
+import JarvisVoice
 
 /// What the menu shows. Written only by AppDelegate, on the main actor.
 @MainActor
@@ -37,6 +38,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The background reading of the user's files (P3), started once the brain has started
     /// and stopped at quit before the lock is released: its index and facts writes need the lease.
     private var files: FileScanner?
+    /// M8's voice (AppVoice), built with the brain. Its helper starts only when a reply is spoken.
+    private var voice: AppVoice?
     private var sigterm: DispatchSourceSignal?
     /// Opens the chat window. Set by the window each time it appears, for the Dock icon.
     var openChat: (() -> Void)?
@@ -114,15 +117,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Quit stops the brain first: the MCP server closes its socket. The app exits once that
-    /// is done.
+    /// is done. Speech stops at once, and the voice helper's stdin is closed last, with up to
+    /// 2 s for it to exit.
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        guard let brain else { return .terminateNow }
+        let voice = self.voice
+        self.voice = nil
+        voice?.stop()
+        guard let brain else {
+            guard let voice else { return .terminateNow }
+            Task { @MainActor in
+                await voice.shutdown()
+                sender.reply(toApplicationShouldTerminate: true)
+            }
+            return .terminateLater
+        }
         self.brain = nil
         let files = self.files
         self.files = nil
         Task { @MainActor in
             await files?.stop()   // its last index save happens while the lease is still held
             await brain.stop()
+            await voice?.shutdown()
             sender.reply(toApplicationShouldTerminate: true)
         }
         return .terminateLater
@@ -176,14 +191,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.research = scheduler
         // The owner check a typed confirmation must pass (plan §3.4), counted as it runs.
         let authenticator = CountingTextAuthenticator(LAConfirmAuthenticator(), research: research)
-        // Each finished typed reply goes to the user's speak policy (plan §3.12). No speaker
-        // exists before M8, so nothing is spoken yet.
+        // Each finished typed reply goes to the user's speak policy (plan §3.12), and a yes
+        // hands it to M8's voice: the F5 clone, or `say` while F5 is unavailable (D-54). Both
+        // are local, so the policy's cloud rule does not hold back personal sources.
+        let voice = AppVoice()
+        self.voice = voice
         chat.onReplyFinished = { [weak self] message, turn in
             guard let self else { return }
             let context = SpeakReplies.context(for: message, turn: turn, toggle: self.speakReplies,
                                                chatWindowIsKey: self.chat.windowIsKey,
-                                               userIdleSeconds: Self.userIdleSeconds())
-            SpeakReplies.replyFinished(message, context: context, research: research, speaker: nil,
+                                               userIdleSeconds: Self.userIdleSeconds(),
+                                               ttsBackend: voice.backend)
+            SpeakReplies.replyFinished(message, context: context, research: research,
+                                       speaker: { text, turn in voice.speak(text, turn: turn.turnID) },
                                        log: { JarvisLog.log($0, category: .voice) })
         }
         // P2: the long-term memory in memory/, on the same lease-holding store. Local dates
@@ -229,6 +249,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             scanner.start()
             self.files = scanner
         }
+    }
+
+    /// The menus' "Stop Speaking": the reply being spoken stops, and so does anything queued.
+    func stopSpeaking() {
+        voice?.stop()
     }
 
     #if DEBUG

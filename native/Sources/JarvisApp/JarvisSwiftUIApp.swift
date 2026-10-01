@@ -19,13 +19,21 @@ struct JarvisSwiftUIApp: App {
         }
         .defaultLaunchBehavior(ChatLaunch.opensWindow(arguments: CommandLine.arguments) ? .presented : .suppressed)
         .restorationBehavior(.disabled)
+        .commands {
+            // The app menu's "Stop Speaking" (M8), the same as the menu-bar item.
+            CommandGroup(after: .appInfo) {
+                Button("Stop Speaking") { appDelegate.stopSpeaking() }
+            }
+        }
 
         MenuBarExtra("JARVIS", systemImage: "circle.hexagongrid.fill") {
             #if DEBUG
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
+                        stopSpeaking: { appDelegate.stopSpeaking() },
                         testConfirmation: { appDelegate.stashTestConfirmation() })
             #else
-            MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies)
+            MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
+                        stopSpeaking: { appDelegate.stopSpeaking() })
             #endif
         }
         .menuBarExtraStyle(.menu)

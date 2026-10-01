@@ -28,7 +28,7 @@ let package = Package(
 
         .executableTarget(
             name: "JarvisApp",
-            dependencies: ["JarvisCore", "JarvisTools", "JarvisBrain", "JarvisChat"]
+            dependencies: ["JarvisCore", "JarvisTools", "JarvisBrain", "JarvisChat", "JarvisVoice"]
         ),
 
         // M4 text chat (plan: M02-M04 §3.12): the chat window's logic, so it tests headless.

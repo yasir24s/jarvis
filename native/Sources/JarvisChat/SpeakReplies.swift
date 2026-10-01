@@ -31,20 +31,22 @@ public final class SpeakRepliesToggle {
 public enum SpeakReplies {
     /// Bumped once per typed reply handed to the speaker (plan §3.12; additive, native only).
     public static let spokenCounter = "text_reply_spoken"
-    /// `SpeakContext.ttsBackend` until M8 brings a speaker.
+    /// `SpeakContext.ttsBackend` when no speaker is given.
     public static let noTTSBackend = "none"
 
     public typealias Policy = @MainActor (Channel, String, SpeakContext) -> Bool
     public typealias Speaker = @MainActor (String, TurnSummary) -> Void
 
     /// The policy's input for one finished row: the toggle's state, the row's length (Python
-    /// `len()`, in scalars) and its turn. No voice conversation runs before M8.
+    /// `len()`, in scalars), its turn and the voice that would speak it (M8: "f5", or "say" while
+    /// F5 is unavailable). No voice conversation runs before M11.
     @MainActor
     public static func context(for message: ChatMessage, turn: TurnSummary, toggle: SpeakRepliesToggle,
-                               chatWindowIsKey: Bool, userIdleSeconds: Double) -> SpeakContext {
+                               chatWindowIsKey: Bool, userIdleSeconds: Double,
+                               ttsBackend: String = noTTSBackend) -> SpeakContext {
         SpeakContext(chatWindowIsKey: chatWindowIsKey, speakToggleOn: toggle.isOn, userIdleSeconds: userIdleSeconds,
                      voiceConversationActive: false, replyCharCount: message.text.unicodeScalars.count,
-                     turn: turn, ttsBackend: noTTSBackend)
+                     turn: turn, ttsBackend: ttsBackend)
     }
 
     /// Asks `policy` (the user's `shouldSpeakReply`) about `message`, and returns its answer.
