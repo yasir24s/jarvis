@@ -45,5 +45,6 @@ pkg/offline-resources/
 # Native Swift build output, vendored runtime binaries, single-instance lock
 native/.build/
 native/.swiftpm/
+native/VoiceHelper/.swiftpm/
 native/Vendor/onnxruntime/lib/
 .jarvis.lock
