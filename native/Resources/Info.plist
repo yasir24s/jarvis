@@ -45,11 +45,11 @@
 	<key>NSContactsUsageDescription</key>
 	<string>JARVIS looks up a contact's number or email when you ask.</string>
 	<key>NSDesktopFolderUsageDescription</key>
-	<string>JARVIS reads, moves and saves files there when you ask.</string>
+	<string>JARVIS reads, moves and saves files there when you ask, and reads your documents in the background to learn about you (long ones with Claude). What he learns is kept on this Mac.</string>
 	<key>NSDocumentsFolderUsageDescription</key>
-	<string>JARVIS reads, moves and saves files there when you ask.</string>
+	<string>JARVIS reads, moves and saves files there when you ask, and reads your documents in the background to learn about you (long ones with Claude). What he learns is kept on this Mac.</string>
 	<key>NSDownloadsFolderUsageDescription</key>
-	<string>JARVIS reads, moves and saves files there when you ask.</string>
+	<string>JARVIS reads, moves and saves files there when you ask, and reads your documents in the background to learn about you (long ones with Claude). What he learns is kept on this Mac.</string>
 	<key>NSRemovableVolumesUsageDescription</key>
 	<string>JARVIS reads, moves and saves files there when you ask.</string>
 	<key>NSNetworkVolumesUsageDescription</key>
