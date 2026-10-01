@@ -12,6 +12,9 @@ public protocol ExchangeArchiving: Sendable {
 /// when there is one (a confirmation's result, the dismissal reply, a fast-path answer or the
 /// brain's reply). Two small O_APPEND writes under the lease. One log line per exchange, with
 /// counts only.
+///
+/// Voice input (M9) comes later: what the user says aloud must reach this same archive, through
+/// `record` with the voice channel, so it is compiled, searched and backed up like typed chat.
 public struct MemoryArchiver: ExchangeArchiving {
     private let memory: MemoryStore
     private let log: @Sendable (String) -> Void

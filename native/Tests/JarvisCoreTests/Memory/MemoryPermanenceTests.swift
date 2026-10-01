@@ -354,7 +354,7 @@ struct MemoryPermanenceTests {
         let rig = try Rig()
         defer { rig.sb.remove() }
         let report = rig.memory.checkAtLaunch()
-        #expect(report == [.facts: .fine, .personality: .fine, .profile: .fine])
+        #expect(report == Dictionary(uniqueKeysWithValues: BackedUpFile.allCases.map { ($0, .fine) }))
         #expect(!FileManager.default.fileExists(atPath: rig.path("memory")))
     }
 
@@ -366,5 +366,84 @@ struct MemoryPermanenceTests {
         #expect(rig.store.write(facts, to: .facts))
         #expect(rig.memory.checkAtLaunch()[.facts] == .fine)
         #expect(rig.backupNames() == [MemoryBackups.name(.facts, stamp: Int64(epoch))])
+    }
+
+    // MARK: - The archive (P6b)
+
+    /// An archive append is followed by the hourly copy: the whole file, owner-only, named
+    /// `.jsonl`, at most one an hour.
+    @Test func archiveAppendsAreCopiedAtMostOnceAnHour() throws {
+        let rig = try Rig()
+        defer { rig.sb.remove() }
+        #expect(rig.memory.archive("I grow invented chillies.", role: .user, channel: "text"))
+        let first = MemoryBackups.name(.archive, stamp: Int64(epoch))
+        #expect(first == "archive-\(Int64(epoch)).jsonl")
+        #expect(rig.backupNames() == [first])
+        #expect(bytes(rig.backupDir + "/" + first) == bytes(rig.path("memory/archive.jsonl")))
+        #expect(mode(rig.backupDir + "/" + first) == 0o600)
+        rig.clock.advance(1_800)
+        #expect(rig.memory.archive("Splendid, sir.", role: .jarvis, channel: "text"))
+        #expect(rig.backupNames() == [first])                           // within the hour: no copy
+        rig.clock.advance(1_800)
+        #expect(rig.memory.archive("They are very hot.", role: .user, channel: "text"))
+        let second = MemoryBackups.name(.archive, stamp: Int64(epoch) + 3_600)
+        #expect(rig.backupNames() == [first, second])
+        let copied = try #require(bytes(rig.backupDir + "/" + second))
+        #expect(copied == bytes(rig.path("memory/archive.jsonl")))
+        #expect(BackedUpFile.archive.entries(in: copied) == 3)
+        #expect(MemoryBackups.stamp(second, of: .archive) == Int64(epoch) + 3_600)
+        #expect(MemoryBackups.stamp(second, of: .facts) == nil)
+    }
+
+    /// Without the lease neither the message nor a copy is written.
+    @Test func withoutTheLeaseNoArchiveCopyIsWritten() throws {
+        let lease = HandLease(false)
+        let rig = try Rig(lease: lease)
+        defer { rig.sb.remove() }
+        #expect(!rig.memory.archive("I grow invented chillies.", role: .user, channel: "text"))
+        #expect(rig.backupNames().isEmpty)
+    }
+
+    /// An archive's entries are its messages; one with lines of which none is a message cannot be
+    /// read, and an empty one holds none.
+    @Test func anArchivesEntriesAreItsMessages() {
+        let line = ArchiveEntry(timestamp: epoch, date: "2026-09-28", channel: "text", role: .user, text: "Hello.").line
+        #expect(BackedUpFile.archive.entries(in: Data((line + "\n" + line + "\n").utf8)) == 2)
+        #expect(BackedUpFile.archive.entries(in: Data((line + "\n{\"timestamp\": 17").utf8)) == 1)   // a torn end
+        #expect(BackedUpFile.archive.entries(in: Data()) == 0)
+        #expect(BackedUpFile.archive.entries(in: Data("not an archive\n".utf8)) == nil)
+    }
+
+    /// The launch check covers the archive like the others: a torn last line is fine; one that
+    /// cannot be read is put back from the newest readable copy, its bytes kept aside; and more
+    /// than 10% fewer messages than the newest copy is a warning, with both kept.
+    @Test func theLaunchCheckCoversTheArchive() throws {
+        let rig = try Rig()
+        defer { rig.sb.remove() }
+        for k in 0..<10 { #expect(rig.memory.archive("Invented message \(k).", role: .user, channel: "text")) }
+        let archive = rig.path("memory/archive.jsonl")
+        let good = try #require(bytes(archive))
+        rig.clock.advance(3_600)
+        #expect(rig.memory.checkAtLaunch()[.archive] == .fine)              // and a copy of all ten
+        let copy = Int64(epoch) + 3_600
+        #expect(rig.memory.backups.newestReadable(.archive)?.stamp == copy)
+        #expect(rig.memory.backups.newestReadable(.archive)?.entries == 10)
+
+        try (good + Data("{\"timestamp\": 17".utf8)).write(to: URL(fileURLWithPath: archive))
+        #expect(rig.memory.checkAtLaunch()[.archive] == .fine)
+
+        try Data("not an archive\n".utf8).write(to: URL(fileURLWithPath: archive))
+        rig.clock.advance(60)
+        #expect(rig.memory.checkAtLaunch()[.archive] == .restored(stamp: copy))
+        #expect(bytes(archive) == good)
+        #expect(bytes(rig.backupDir + "/archive-\(copy + 60).unreadable") == Data("not an archive\n".utf8))
+        #expect(rig.lines.all.contains(
+            "memory: memory/archive.jsonl was unreadable; restored the backup from 2026-09-28 09:00 (10 entries)"))
+
+        let eight = good.split(separator: 0x0A).prefix(8).reduce(Data()) { $0 + Data($1) + Data([0x0A]) }
+        try eight.write(to: URL(fileURLWithPath: archive))
+        #expect(rig.memory.checkAtLaunch()[.archive] == .shrank(from: 10, to: 8, stamp: copy))
+        #expect(bytes(archive) == eight)
+        #expect(bytes(rig.backupDir + "/archive-\(copy).kept.jsonl") == good)
     }
 }

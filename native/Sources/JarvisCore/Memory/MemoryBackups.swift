@@ -4,14 +4,16 @@ import Synchronization
 // P6 (DEV-P6-02, proposed): memory that can't be lost. Owner-only copies of facts.json,
 // personality.json and profile.json in memory/backups/, at most one an hour per file, so a bad
 // write, a wipe or a damaged file can be undone. personality.json and profile.json are shared
-// with Python: they are copied byte for byte and their own format never changes. Logs carry
-// file names and counts only, never what the files hold.
+// with Python: they are copied byte for byte and their own format never changes. P6b: the
+// conversation archive too, copied whole after an append. Logs carry file names and counts
+// only, never what the files hold.
 
 /// A file the backups cover.
 public enum BackedUpFile: String, CaseIterable, Sendable {
     case facts
     case personality
     case profile
+    case archive                    // P6b: memory/archive.jsonl, append-only
 
     /// The file's path under the state root.
     public var relativePath: String {
@@ -19,6 +21,15 @@ public enum BackedUpFile: String, CaseIterable, Sendable {
         case .facts: MemoryFile.facts.rawValue
         case .personality: StateFile.personality.rawValue
         case .profile: StateFile.profile.rawValue
+        case .archive: MemoryFile.archive.rawValue
+        }
+    }
+
+    /// The extension of its copies: the file's own.
+    public var fileExtension: String {
+        switch self {
+        case .facts, .personality, .profile: "json"
+        case .archive: "jsonl"
         }
     }
 
@@ -32,9 +43,14 @@ public enum BackedUpFile: String, CaseIterable, Sendable {
     }
 
     /// How many entries the bytes hold, nil when they cannot be read as this file: facts.json's
-    /// facts; personality.json's core lines and learned notes; profile.json's facts.
+    /// facts; personality.json's core lines and learned notes; profile.json's facts; an
+    /// archive's messages (nil when it has lines and not one of them is a message).
     public func entries(in data: Data) -> Int? {
         switch self {
+        case .archive:
+            let lines = data.split(separator: 0x0A)
+            let messages = lines.filter { ArchiveEntry(line: Data($0)) != nil }.count
+            return messages == 0 && !lines.isEmpty ? nil : messages
         case .facts:
             return FactsFile(data: data)?.facts.count
         case .personality:
@@ -47,9 +63,10 @@ public enum BackedUpFile: String, CaseIterable, Sendable {
     }
 }
 
-/// The rotation in memory/backups/: `<file>-<unix seconds>.json`, at most one an hour per file,
-/// the newest `hourlyKept` and the newest of each of the last `dailyKept` days kept. A copy put
-/// aside by the launch check (`.kept.json`, `.unreadable`) is never rotated out.
+/// The rotation in memory/backups/: `<file>-<unix seconds>.json` (`.jsonl` for an archive), at
+/// most one an hour per file, the newest `hourlyKept` and the newest of each of the last
+/// `dailyKept` days kept. A copy put aside by the launch check (`.kept.json`, `.unreadable`) is
+/// never rotated out.
 public final class MemoryBackups: Sendable {
     public static let folder = "memory/backups"
     public static let interval: Double = 3600
@@ -74,12 +91,12 @@ public final class MemoryBackups: Sendable {
 
     /// A rotating backup's name.
     public static func name(_ file: BackedUpFile, stamp: Int64) -> String {
-        "\(file.rawValue)-\(stamp).json"
+        "\(file.rawValue)-\(stamp).\(file.fileExtension)"
     }
 
     /// The stamp in a rotating backup's name; nil for any other name.
     public static func stamp(_ name: String, of file: BackedUpFile) -> Int64? {
-        let head = file.rawValue + "-", tail = ".json"
+        let head = file.rawValue + "-", tail = "." + file.fileExtension
         guard name.hasPrefix(head), name.hasSuffix(tail), name.count > head.count + tail.count else { return nil }
         let digits = name.dropFirst(head.count).dropLast(tail.count)
         guard digits.allSatisfy({ $0.isASCII && $0.isNumber }) else { return nil }
@@ -109,18 +126,30 @@ public final class MemoryBackups: Sendable {
     /// hour, then the rotation. False when no copy was due or it could not be written.
     @discardableResult
     public func afterWrite(_ file: BackedUpFile, data: Data) -> Bool {
-        lock.withLock { _ in
-            let now = clock.now()
-            let existing = stamps(file)
-            if let newest = existing.first, now - Double(newest) < Self.interval, Double(newest) <= now { return false }
-            let stamp = Int64(now.rounded(.down))
-            guard writeCopy(data, name: Self.name(file, stamp: stamp)) else { return false }
-            let keep = Self.kept([stamp] + existing, timeZone: timeZone)
-            for old in existing where !keep.contains(old) {
-                try? FileManager.default.removeItem(atPath: StateStore.join(directory, Self.name(file, stamp: old)))
-            }
-            return true
+        lock.withLock { _ in copyIfDue(file) { data } }
+    }
+
+    /// P6b: after an append to `file` (an archive), `afterWrite` with the whole file, which
+    /// `read` gives only when a copy is due. False when none was due, or the file could not be
+    /// read or copied.
+    @discardableResult
+    public func afterAppend(_ file: BackedUpFile, read: () -> Data?) -> Bool {
+        lock.withLock { _ in copyIfDue(file, read) }
+    }
+
+    /// The copy and the rotation, under `lock`.
+    private func copyIfDue(_ file: BackedUpFile, _ data: () -> Data?) -> Bool {
+        let now = clock.now()
+        let existing = stamps(file)
+        if let newest = existing.first, now - Double(newest) < Self.interval, Double(newest) <= now { return false }
+        guard let data = data() else { return false }
+        let stamp = Int64(now.rounded(.down))
+        guard writeCopy(data, name: Self.name(file, stamp: stamp)) else { return false }
+        let keep = Self.kept([stamp] + existing, timeZone: timeZone)
+        for old in existing where !keep.contains(old) {
+            try? FileManager.default.removeItem(atPath: StateStore.join(directory, Self.name(file, stamp: old)))
         }
+        return true
     }
 
     /// The stamps the rotation keeps: the newest `hourlyKept`, and the newest of each of the

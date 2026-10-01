@@ -6,7 +6,8 @@ import Synchronization
 /// lease. Message and fact text is never logged; callers log counts only.
 ///
 /// P6 (DEV-P6-02, proposed): every successful facts write is followed by `MemoryBackups`' hourly
-/// copy, and so is every save of personality.json and profile.json on the same `StateStore`. A
+/// copy, and so is every save of personality.json and profile.json on the same `StateStore` and
+/// (P6b) every archive append. A
 /// write that would drop more than `dropLimit` facts, or more than `dropShare` of them, is
 /// refused and logged, unless it removes exactly the ids forget_memory was given. Forgotten facts
 /// go to the forgotten bin first (DEV-P6-03), and `checkAtLaunch` repairs or flags the files.
@@ -42,11 +43,15 @@ public final class MemoryStore: Sendable {
     // MARK: - Archive
 
     /// Appends one message, stamped now. False when the lease is not held or the write failed.
+    /// P6b: a successful append is followed by the hourly backup of the whole archive.
     @discardableResult
     public func archive(_ text: String, role: MemoryRole, channel: String) -> Bool {
         let entry = ArchiveEntry(timestamp: clock.now(), timeZone: timeZone, channel: channel,
                                  role: role, text: text)
-        return store.appendLine(entry.line, to: .archive)
+        guard store.appendLine(entry.line, to: .archive) else { return false }
+        let store = store
+        backups.afterAppend(.archive) { store.read(.archive) }
+        return true
     }
 
     /// The whole archive lines after byte `offset`, and the offset just past the last of them
@@ -244,12 +249,14 @@ public final class MemoryStore: Sendable {
         case shrank(from: Int, to: Int, stamp: Int64)   // kept as it is, and so is that backup
     }
 
-    /// Run once at launch, before anything writes. For facts.json, personality.json and
-    /// profile.json: an unreadable file (empty, damaged, or not that file's shape) is replaced by
-    /// its newest readable backup and logged, its bytes put aside as `<file>-<now>.unreadable`. A
-    /// file holding more than `dropShare` fewer entries than its newest backup, beyond the facts
+    /// Run once at launch, before anything writes. For facts.json, personality.json,
+    /// profile.json and (P6b) the archive: an unreadable file (empty, damaged, or not that file's
+    /// shape; for the archive, lines of which not one is a message) is replaced by its newest
+    /// readable backup and logged, its bytes put aside as `<file>-<now>.unreadable`. A file
+    /// holding more than `dropShare` fewer entries than its newest backup, beyond the facts
     /// forgotten since that backup, is logged as a warning and both are kept: the backup is put
-    /// aside as `<file>-<stamp>.kept.json`, out of the rotation. A missing file counts as empty.
+    /// aside as `<file>-<stamp>.kept.json` (`.kept.jsonl` for the archive), out of the rotation.
+    /// A missing file counts as empty.
     /// Then the forgotten bin drops what is past 30 days, and each readable file that has no
     /// backup from the last hour gets one. Shared files are copied byte for byte.
     @discardableResult
@@ -289,6 +296,7 @@ public final class MemoryStore: Sendable {
             case .facts: store.write(backup.data, to: .facts)
             case .personality: store.restore(.personality, bytes: backup.data)
             case .profile: store.restore(.profile, bytes: backup.data)
+            case .archive: store.write(backup.data, to: .archive)
             }
             guard restored else {
                 log("memory: \(name) is unreadable and its backup could not be put back; left as it is")
@@ -303,7 +311,7 @@ public final class MemoryStore: Sendable {
         let forgotten = file == .facts ? forgottenCount(since: Double(newest.stamp)) : 0
         let unexplained = newest.entries - current - forgotten
         guard Double(unexplained) > Self.dropShare * Double(newest.entries) else { return .fine }
-        let aside = "\(file.rawValue)-\(newest.stamp).kept.json"
+        let aside = "\(file.rawValue)-\(newest.stamp).kept.\(file.fileExtension)"
         let kept = backups.keepAside(newest.data, name: aside)
         log("memory: WARNING \(name) holds \(current) entries, \(newest.entries - current) fewer than the backup "
             + "from \(when(newest.stamp)) (\(newest.entries)), with \(forgotten) forgotten since; both kept"
