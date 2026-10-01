@@ -558,6 +558,12 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
     only transcripts check them. M8 compares them with the reference implementation. It may
     also measure the short reference with 4 steps, or with `cfg` 0, if the user likes how
     they sound.
+  - **Checked the same day:** the official `F5TTS_v1_Base.yaml` sets `pe_attn_head: null`
+    (rotary on every head) and `text_mask_padding: True`. Those are the spike's two fixes.
+- **D-55. DEV-M5-04 and DEV-M5-05 approved** (user, 2026-10-01). These are the two deviations
+  from M5's tools that act. `move_file` names the real folder when the source path ends in
+  `/`. `type_text` and the brightness keys post CGEvents under Accessibility instead of
+  System Events scripts.
 
 ## Open user decisions
 
