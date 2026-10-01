@@ -9,11 +9,20 @@ public protocol SpeechPlayer: Sendable {
     func stop() async
 }
 
-/// The one AVAudioEngine with an AVAudioPlayerNode, fed 24 kHz mono float32 buffers; the main
-/// mixer converts them to the output device's rate. Output only: the input node is never touched,
-/// so playing asks for no microphone access.
+/// The one AVAudioEngine with an AVAudioPlayerNode, fed 24 kHz float32 buffers; the main mixer
+/// converts them to the output device's rate. Output only: the input node is never touched, so
+/// playing asks for no microphone access.
+///
+/// Every part gets the gain `Loudness.gain` gives it, so the output reads `Loudness.targetLUFS`.
+/// The node takes two equal channels, not the mono part itself. Rendered offline, the main mixer
+/// played a mono node 3.01 dB down on each channel when its output ran at 44.1 kHz, and at full
+/// level at the other rates tried (16 to 96 kHz); two equal channels played at full level at every
+/// one. Two equal channels read 3.01 dB louder than the mono part (BS.1770 adds the channels'
+/// power), which `outputLiftDB` takes off the gain.
 public actor EnginePlayer: SpeechPlayer {
     public static let sampleRate = 24_000.0
+    /// How much louder the output reads than the mono part: 10 log10(2) dB, for two equal channels.
+    static let outputLiftDB = 10 * log10(2.0)
     /// How long past a chunk's own length `play` waits for its completion callback. A device change
     /// can drop scheduled buffers without calling back.
     static let completionSlack = Duration.seconds(2)
@@ -25,9 +34,19 @@ public actor EnginePlayer: SpeechPlayer {
     private var playing: PlaybackWait?
 
     public init() {
-        // Float32, 24 kHz, mono, deinterleaved: a format AVAudioFormat always accepts.
-        format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: Self.sampleRate, channels: 1,
+        // Float32, 24 kHz, two channels, deinterleaved: a format AVAudioFormat always accepts.
+        format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: Self.sampleRate, channels: 2,
                                interleaved: false)!
+    }
+
+    /// For tests: the same player with its engine in offline manual rendering mode, rendering to
+    /// `output`, so nothing reaches a device and `renderOffline` pulls what it plays. Offline,
+    /// AVAudioPlayerNode never calls back `.dataPlayedBack`, so a `play` ends with `stop()` (or the
+    /// watchdog).
+    init(offline output: AVAudioFormat) throws {
+        format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: Self.sampleRate, channels: 2,
+                               interleaved: false)!
+        try engine.enableManualRenderingMode(.offline, format: output, maximumFrameCount: Self.offlineFrames)
     }
 
     public func play(_ chunk: PCMChunk) async throws {
@@ -44,11 +63,14 @@ public actor EnginePlayer: SpeechPlayer {
             try engine.start()
         }
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(chunk.samples.count)),
-              let channel = buffer.floatChannelData?[0] else {
+              let channels = buffer.floatChannelData else {
             throw SpeechEngineError(.error, "cannot allocate \(chunk.samples.count) frames")
         }
         buffer.frameLength = AVAudioFrameCount(chunk.samples.count)
-        chunk.samples.withUnsafeBufferPointer { channel.update(from: $0.baseAddress!, count: $0.count) }
+        let gain = Loudness.gain(for: chunk.samples, sampleRate: Self.sampleRate, lift: Self.outputLiftDB)
+        for c in 0..<Int(format.channelCount) {
+            for i in chunk.samples.indices { channels[c][i] = chunk.samples[i] * gain }
+        }
 
         let wait = PlaybackWait()
         playing = wait
@@ -76,6 +98,26 @@ public actor EnginePlayer: SpeechPlayer {
         playing?.resume()
         playing = nil
         if attached { node.stop() }
+    }
+
+    static let offlineFrames: AVAudioFrameCount = 4096
+
+    /// For tests: the next `frames` (at most `offlineFrames`) of an offline engine's output, one
+    /// array per channel; nothing while no `play` has started the engine.
+    func renderOffline(frames: AVAudioFrameCount) throws -> [[Float]] {
+        guard engine.isRunning else { return [] }
+        let output = engine.manualRenderingFormat
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: output, frameCapacity: frames),
+              let channels = buffer.floatChannelData else {
+            throw SpeechEngineError(.error, "cannot allocate \(frames) frames")
+        }
+        let status = try engine.renderOffline(frames, to: buffer)
+        guard status == .success else {
+            throw SpeechEngineError(.error, "offline rendering returned \(status.rawValue)")
+        }
+        return (0..<Int(output.channelCount)).map {
+            Array(UnsafeBufferPointer(start: channels[$0], count: Int(buffer.frameLength)))
+        }
     }
 }
 
