@@ -20,17 +20,38 @@ struct M1PromptGoldenTests {
     static let files = ["personality.json", "emotions.json", "profile.json", "knowledge.json",
                         "corrections.json", "history.json"]
 
+    /// DEV-P5-01 (proposed): a rewrite keeps the seed's identity line, and its Tone and Humour
+    /// lines when no new line covers them. In these scenarios native must equal Python with the
+    /// rewrite guarded (`PersonaGuardGolden`); Python's own prompts and bytes are a known issue.
+    static let personaGuardCases: Set<String> = ["scenario/style_notes"]
+
     @Test(arguments: try Golden.cases(suite))
     func matchesPython(_ c: GoldenCase) async throws {
-        for m in try await Self.check(c) { Issue.record(Comment(rawValue: "\(c.name): \(m)")) }
+        guard Self.personaGuardCases.contains(c.name) else {
+            for m in try await Self.check(c) { Issue.record(Comment(rawValue: "\(c.name): \(m)")) }
+            return
+        }
+        for m in try await Self.scenario(c, guardRewrites: true) { Issue.record(Comment(rawValue: "\(c.name): \(m)")) }
+        let python = try await Self.check(c)
+        withKnownIssue("DEV-P5-01: Python lets a rewrite drop the identity, Tone and Humour lines") {
+            for m in python { Issue.record(Comment(rawValue: "\(c.name): \(m)")) }
+        }
     }
 
-    /// M01 §5 A5: the number of golden cases asserted, printed per suite.
+    /// M01 §5 A5: the number of golden cases asserted, printed per suite. A DEV-P5-01 case
+    /// counts when native equals the guarded expectation and Python's verdict differs.
     @Test func allCasesAsserted() async throws {
         let cases = try Golden.cases(Self.suite)
         var passed = 0
-        for c in cases where try await Self.check(c).isEmpty { passed += 1 }
-        print("\(Self.suite): \(passed)/\(cases.count)")
+        for c in cases {
+            if Self.personaGuardCases.contains(c.name) {
+                if try await Self.scenario(c, guardRewrites: true).isEmpty, try await !Self.check(c).isEmpty { passed += 1 }
+            } else if try await Self.check(c).isEmpty {
+                passed += 1
+            }
+        }
+        print("\(Self.suite): \(passed)/\(cases.count)"
+              + " (known divergences: DEV-P5-01 × \(Self.personaGuardCases.count))")
         #expect(passed == cases.count)
     }
 
@@ -52,7 +73,9 @@ struct M1PromptGoldenTests {
         return out
     }
 
-    static func scenario(_ c: GoldenCase) async throws -> [String] {
+    /// With `guardRewrites`, the expectation after a rewrite is Python's with the rewrite's lines
+    /// guarded (DEV-P5-01).
+    static func scenario(_ c: GoldenCase, guardRewrites: Bool = false) async throws -> [String] {
         guard let before = c.input.object("files_before"), let steps = c.input.array("steps"),
               let expected = c.expected.array("steps"), steps.count == expected.count, !steps.isEmpty,
               let now0 = PersonaGolden.double(steps[0].objectValue?["now"]) else {
@@ -73,6 +96,7 @@ struct M1PromptGoldenTests {
         let front = FrontAppStub()
         var core = CoreState(store: store, clock: clock, research: counter, frontApp: front)
         var out: [String] = []
+        var rewritten: [String]? = nil            // the last accepted rewrite's lines (DEV-P5-01)
 
         for (k, (s, e)) in zip(steps, expected).enumerated() {
             guard let so = s.objectValue, let eo = e.objectValue, let op = so.string("op"),
@@ -100,7 +124,8 @@ struct M1PromptGoldenTests {
                         if let d = diff(text, eo.string("text") ?? "<missing>") { out.append("\(tag): applied text \(d)") }
                     }
                     let prompt = try await core.beginTurn(text, online: online)
-                    let want = captured.replacingOccurrences(of: homeToken, with: root, options: .literal)
+                    var want = captured.replacingOccurrences(of: homeToken, with: root, options: .literal)
+                    if guardRewrites { want = PersonaGuardGolden.prompt(want, rewritten: rewritten) }
                     if let d = diff(online ? prompt.claudeSystem : prompt.system, want) {
                         out.append("\(tag): \(online ? "claude" : "local") system prompt \(d)")
                     }
@@ -124,6 +149,9 @@ struct M1PromptGoldenTests {
                     result = .string(try await core.personalityNoteTool(so.string("note") ?? ""))
                 case "rewrite":
                     result = .string(await core.personalityRewriteTool(so.string("core") ?? ""))
+                    if guardRewrites, let lines = PersonalityLogic.rewriteLines(so.string("core") ?? "") {
+                        rewritten = lines
+                    }
                 case "restart":                    // a new process: module state reset, history reloaded
                     core = CoreState(store: store, clock: clock, research: counter, frontApp: front)
                     result = .null
@@ -156,7 +184,10 @@ struct M1PromptGoldenTests {
                     continue
                 }
                 let data = try? Data(contentsOf: sb.root.appending(path: f, directoryHint: .notDirectory))
-                let want = filesAfter[f]?.stringValue.flatMap { Data(base64Encoded: $0) }
+                var want = filesAfter[f]?.stringValue.flatMap { Data(base64Encoded: $0) }
+                if guardRewrites, f == "personality.json" {
+                    want = PersonaGuardGolden.personalityBytes(want, rewritten: rewritten)
+                }
                 if data != want {
                     let text = data.map { String(decoding: $0, as: UTF8.self) } ?? "<absent>"
                     let pyText = want.map { String(decoding: $0, as: UTF8.self) } ?? "<absent>"

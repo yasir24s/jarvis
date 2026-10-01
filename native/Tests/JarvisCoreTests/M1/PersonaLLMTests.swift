@@ -107,6 +107,8 @@ struct M1PersonaLLMTests {
                              research: counter, frontApp: NoFrontApp())
         let llm = CannedLLM(core: core)
         var lengthRequest: [String] = []           // DEV-P4-03's Python differences
+        var guardedRewrite: [String] = []          // DEV-P5-01's Python differences
+        var rewritten: [String]? = nil             // the last accepted rewrite's lines
         for (k, (s, e)) in zip(steps, expected).enumerated() {
             guard let so = s.objectValue, let eo = e.objectValue, let op = so.string("op"),
                   let args = so.object("args"), let now = PersonaGolden.double(so["now"]),
@@ -120,6 +122,10 @@ struct M1PersonaLLMTests {
             clock.set(now)
             counter.reset()
             llm.arm(reply: args.string("reply"), fail: args["fail"] == .bool(true), during: args.object("during"))
+            if let during = args.object("during"), during.string("op") == "rewrite_tool",
+               let lines = PersonalityLogic.rewriteLines(during.string("core") ?? "") {
+                rewritten = lines
+            }
             switch op {
             case "consolidate": await core.consolidatePersonalityIfDue(using: llm)
             case "distill": await core.distillPersonalityIfDue(using: llm)
@@ -139,7 +145,14 @@ struct M1PersonaLLMTests {
             for f in files {
                 let data = try? Data(contentsOf: sb.root.appending(path: f, directoryHint: .notDirectory))
                 let got = data?.base64EncodedString()
-                if got != filesAfter.string(f) {
+                // DEV-P5-01: after a rewrite, native must write Python's file with the lines guarded.
+                var want = filesAfter.string(f)
+                if f == "personality.json", let python = want.flatMap({ Data(base64Encoded: $0) }),
+                   let guarded = PersonaGuardGolden.personalityBytes(python, rewritten: rewritten), guarded != python {
+                    want = guarded.base64EncodedString()
+                    if got != filesAfter.string(f) { guardedRewrite.append("\(tag): \(f) bytes differ from Python's") }
+                }
+                if got != want {
                     let text = data.map { String(decoding: $0, as: UTF8.self) } ?? "<absent>"
                     out.append("\(tag): \(f) bytes differ; native wrote \(text.debugDescription.prefix(400))")
                 }
@@ -160,6 +173,10 @@ struct M1PersonaLLMTests {
         if !lengthRequest.isEmpty {
             report.knownPython += lengthRequest
             report.divergence = [report.divergence, "DEV-P4-03"].compactMap { $0 }.joined(separator: "; ")
+        }
+        if !guardedRewrite.isEmpty {
+            report.knownPython += guardedRewrite
+            report.divergence = [report.divergence, "DEV-P5-01"].compactMap { $0 }.joined(separator: "; ")
         }
         return report
     }

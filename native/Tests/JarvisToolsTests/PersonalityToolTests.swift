@@ -96,7 +96,12 @@ struct PersonalityToolTests {
         #expect(result.text == Self.rewriteDone)
         #expect(!result.isError)
         #expect(result.record.outcome == .ran)
-        #expect(Self.core(sandbox) == ["Dry wit.", "Loyal to a fault.", "Precise."])
+        // DEV-P5-01: the seed's identity line comes back as line 1. "Dry wit." is about his
+        // humour, so the seed's Tone and Humour lines do not.
+        #expect(Self.core(sandbox) == [PersonalityLogic.identityLine, "Dry wit.", "Loyal to a fault.", "Precise."])
+        withKnownIssue("DEV-P5-01: Python stores the rewrite's lines alone") {
+            #expect(Self.core(sandbox) == ["Dry wit.", "Loyal to a fault.", "Precise."])
+        }
         #expect(Self.learned(sandbox).map { $0["note"]?.stringValue } == ["Skip the pleasantries at night"])
     }
 

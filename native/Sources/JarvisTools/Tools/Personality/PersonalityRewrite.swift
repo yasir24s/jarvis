@@ -5,8 +5,10 @@ import JarvisCore
 /// Python's `execute_tool` returns `personality_rewrite_tool(args.get("core", ""))`, and
 /// `CoreState.personalityRewriteTool` is that function: 3 to 12 trait lines replace "core"
 /// (learned notes survive), anything else is "Rewrite rejected — give me 3 to 12 trait lines,
-/// one per line." A missing or non-string `core` counts as "". An executor (TaintPolicy), so a
-/// tainted turn never reaches it.
+/// one per line." A missing or non-string `core` counts as "". The seed's identity line stays
+/// line 1, with its Tone and Humour lines when no new line covers them
+/// (`PersonalityLogic.guardedCore`, DEV-P5-01). An executor (TaintPolicy), so a tainted turn
+/// never reaches it.
 struct PersonalityRewrite: ToolImpl {
     static let name = "personality_rewrite"
     static let schema = BuiltInTools.catalogSchema(named: name)

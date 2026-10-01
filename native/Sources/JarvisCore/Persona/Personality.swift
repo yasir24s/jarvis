@@ -130,12 +130,33 @@ public enum PersonalityLogic {
         return lines.map { Py.prefix($0, 300) }
     }
 
-    /// `personality_rewrite_tool` on a loaded object: replaces "core" (learned notes and every
-    /// other key survive). Returns the reply; nil = rejected (`p` untouched, the caller replies
-    /// `rewriteRejected` and Python does not load or save).
+    /// The seed's identity line, `_PERSONALITY_SEED["core"][0]`.
+    public static let identityLine = seedCore[0]
+    /// The seed's Tone and Humour lines, `_PERSONALITY_SEED["core"][1]` and `[2]`.
+    public static let toneAndHumourLines = Array(seedCore[1...2])
+    /// A word that makes a line one about his humour, tone or "sir" butler manner.
+    public static let mannerPattern = compile(
+        #"\b(?:humou?r\w*|funny|jok\w*|wit|witty|wry|banter\w*|sarcas\w*|iron(?:y|ic\w*)|deadpan|tone|sir|butler\w*)\b"#,
+        ignoreCase: true)
+
+    /// DEV-P5-01 (proposed): the core a rewrite's lines make. A rewrite may change his traits but
+    /// not who he is: `identityLine` is always line 1, put back when the rewrite leaves it out,
+    /// and when none of the rewrite's other lines is about his humour, tone or "sir" butler
+    /// manner (`mannerPattern`), the seed's Tone and Humour lines follow it. Python stores the
+    /// lines as they are, so one rewrite could swap J.A.R.V.I.S. for a generic assistant.
+    public static func guardedCore(_ lines: [String]) -> [String] {
+        let traits = lines.filter { $0 != identityLine }
+        let mannerKept = traits.contains { mannerPattern.search($0) != nil }
+        return [identityLine] + (mannerKept ? [] : toneAndHumourLines) + traits
+    }
+
+    /// `personality_rewrite_tool` on a loaded object: replaces "core" with `guardedCore` of the
+    /// rewrite's lines (learned notes and every other key survive). Returns the reply; nil =
+    /// rejected (`p` untouched, the caller replies `rewriteRejected` and Python does not load or
+    /// save).
     public static func rewrite(_ core: String, in p: inout JSONObject) -> String? {
         guard let lines = rewriteLines(core) else { return nil }
-        p["core"] = .array(lines.map { .string($0) })
+        p["core"] = .array(guardedCore(lines).map { .string($0) })
         return rewriteDone
     }
 
@@ -311,11 +332,11 @@ public extension PersonalityLogic {
         return noteSaved
     }
 
-    /// `personality_rewrite_tool(core)`.
+    /// `personality_rewrite_tool(core)`, with the core `guardedCore` makes (DEV-P5-01).
     static func rewriteTool(_ core: String, store: StateStore) -> String {
         guard let lines = rewriteLines(core) else { return rewriteRejected }
         var p = load(store.load(.personality))
-        p["core"] = .array(lines.map { .string($0) })
+        p["core"] = .array(guardedCore(lines).map { .string($0) })
         store.save(.personality, .object(p))
         return rewriteDone
     }
