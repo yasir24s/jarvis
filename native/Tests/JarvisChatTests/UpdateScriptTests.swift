@@ -246,7 +246,7 @@ struct UpdateScriptTests {
     if [[ -n "$resume" && -f "$resume" ]]; then found="$(cat "$resume")"; fi
     old=gone
     if [[ -n "${FAKE_OLD_PID:-}" ]] && kill -0 "$FAKE_OLD_PID" 2>/dev/null; then old=running; fi
-    echo "launched $name pid=$$ found=$found old=$old resume=$resume" >> "$FAKE_RECORD"
+    echo "launched $name pid=$$ found=$found old=$old home=${JARVIS_HOME:-none} hooks=${JARVIS_UPDATE_POLL:-none} resume=$resume" >> "$FAKE_RECORD"
     if [[ "$behavior" == crash ]]; then exit 1; fi
     exec /usr/bin/perl -MFcntl=:flock -e '
         my ($lock, $resume, $behavior) = @ARGV;
@@ -264,11 +264,21 @@ struct UpdateScriptTests {
     ' "$FAKE_LOCK" "$resume" "$behavior"
     """#
 
-    /// Opens a fake bundle as LaunchServices would: detached, in the background.
+    /// Stands in for /usr/bin/open (`-n -g [--env K=V]... <app> --args <args>`) and opens a fake
+    /// bundle as LaunchServices would: detached, in the background, and with a fresh environment
+    /// that has only what --env passes (and what the fake needs to report).
     static let fakeOpener = #"""
     #!/bin/bash
-    app="$1"; shift
-    nohup "$app/Contents/MacOS/JARVIS" "$@" > /dev/null 2>&1 &
+    envs=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -n|-g) shift ;;
+            --env) envs+=("$2"); shift 2 ;;
+            --args) shift; break ;;
+            *) app="$1"; shift ;;
+        esac
+    done
+    nohup /usr/bin/env -i HOME="$HOME" PATH=/usr/bin:/bin FAKE_RECORD="$FAKE_RECORD" FAKE_LOCK="$FAKE_LOCK"         FAKE_OLD_PID="${FAKE_OLD_PID:-}" ${envs[@]+"${envs[@]}"} "$app/Contents/MacOS/JARVIS" "$@" > /dev/null 2>&1 &
     """#
 
     /// A fake dist for the swap: the current build, the staged one, a run folder with a
@@ -304,8 +314,9 @@ struct UpdateScriptTests {
 
         var logText: String { (try? String(contentsOf: log, encoding: .utf8)) ?? "" }
 
-        /// Runs `swap` for the old process `oldPID`, with short waits.
-        func swap(oldPID: Int32) throws -> (status: Int32, output: String) {
+        /// Runs `swap` for the old process `oldPID`, with short waits. `environment` is added to
+        /// the helper's, as the old process's own environment would be.
+        func swap(oldPID: Int32, environment: [String: String] = [:]) throws -> (status: Int32, output: String) {
             try UpdateScriptTests.run(UpdateScriptTests.script, [
                 "swap", "--pid", "\(oldPID)", "--dist", fake.dist.path(percentEncoded: false),
                 "--resume", resume.path(percentEncoded: false), "--lock", lock.path(percentEncoded: false),
@@ -316,7 +327,7 @@ struct UpdateScriptTests {
                 "JARVIS_UPDATE_EXIT_TIMEOUT": "3", "JARVIS_UPDATE_POLL": "0.2",
                 "FAKE_RECORD": record.path(percentEncoded: false), "FAKE_LOCK": lock.path(percentEncoded: false),
                 "FAKE_OLD_PID": "\(oldPID)",
-            ], in: fake.root)
+            ].merging(environment) { $1 }, in: fake.root)
         }
 
         /// Stops every fake app still running, then removes the folder.
@@ -377,6 +388,18 @@ struct UpdateScriptTests {
         #expect(log.contains("[JARVIS] update: helper started: from old 2026-10-01T00:00:00Z to new 2026-10-01T00:00:00Z"))
         #expect(log.contains("[JARVIS] update: promoted new 2026-10-01T00:00:00Z; opening it"))
         #expect(log.contains("[JARVIS] update: new 2026-10-01T00:00:00Z is healthy; the update is done"))
+    }
+
+    @Test("JARVIS's own settings reach the new build through open --env; the helper's test hooks do not")
+    func swapPassesTheEnvironment() throws {
+        let rig = try SwapRig(current: "healthy", staged: "healthy")
+        defer { rig.remove() }
+        let home = rig.fake.root.appending(path: "state root").path(percentEncoded: false)
+        let result = try rig.swap(oldPID: try Self.exitedPID(), environment: ["JARVIS_HOME": home])
+        #expect(result.status == 0, "\(result.output)")
+        let launch = try #require(rig.launches.first)
+        #expect(launch.contains("home=\(home) "), "\(launch)")
+        #expect(launch.contains(" hooks=none "), "JARVIS_UPDATE_POLL stays with the helper: \(launch)")
     }
 
     @Test("a build that crashes at once is rolled back, and the previous one gets the same --resume")

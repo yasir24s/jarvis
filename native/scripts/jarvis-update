@@ -19,7 +19,7 @@
 # from the arguments, $HOME and the bundle; never a literal home folder.
 set -euo pipefail
 
-# Test hooks, never set by the app: the command that opens a bundle, and shorter waits.
+# Test hooks, never set by the app: a stand-in for /usr/bin/open, and shorter waits.
 OPEN_APP="${JARVIS_UPDATE_OPEN:-}"
 HEALTH_TIMEOUT="${JARVIS_UPDATE_HEALTH_TIMEOUT:-90}"   # seconds for update-health.json
 LOCK_GRACE="${JARVIS_UPDATE_LOCK_GRACE:-30}"           # seconds for the new build to take the lock
@@ -94,10 +94,19 @@ label() {
 }
 
 # Opens a bundle with arguments, in the background: LaunchServices, so the app is its own
-# responsible process and is not brought to the front.
+# responsible process and is not brought to the front. LaunchServices gives it the login
+# session's environment, not this one, so JARVIS's own settings (JARVIS_*, such as JARVIS_HOME)
+# are passed on with --env. This helper's test hooks (JARVIS_UPDATE_*) are not.
 open_app() {
-    local app="$1"; shift
-    if [[ -n "$OPEN_APP" ]]; then "$OPEN_APP" "$app" "$@"; else /usr/bin/open -n -g "$app" --args "$@"; fi
+    local app="$1" name envs=()
+    shift
+    for name in $(compgen -e); do
+        case "$name" in
+            JARVIS_UPDATE_*) ;;
+            JARVIS_*) envs+=(--env "$name=${!name}") ;;
+        esac
+    done
+    "${OPEN_APP:-/usr/bin/open}" -n -g ${envs[@]+"${envs[@]}"} "$app" --args "$@"
 }
 
 # The pid of the native JARVIS that took .jarvis.lock at or after <since> (unix time), other
