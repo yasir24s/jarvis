@@ -10,10 +10,16 @@ import Foundation
 /// or below the relative gate (10 LU under the loudness of the blocks left). A part shorter than
 /// one block is measured as a single block.
 enum Loudness {
-    /// What every part is brought to, in LUFS.
-    static let targetLUFS = -14.0
+    /// What every part is brought to at the output, in LUFS. -11 rather than the usual -14: at
+    /// -14 the 4-step voice plays only 1.5 to 2.5 dB louder than the 8-step voice the user could
+    /// barely hear on a 48 kHz device, because its raw parts are loud and mostly turned down.
+    static let targetLUFS = -11.0
     /// The highest sample peak a part may have after the limiter, in dBFS.
     static let peakCeilingDBFS = -1.0
+    /// Where the limiter actually holds peaks: 0.1 dB under the ceiling. At -11 LUFS the limiter
+    /// is busy, and the device's rate converter drew peaks 0.001 dB over a limit set exactly at
+    /// the ceiling.
+    static let limiterCeilingDBFS = peakCeilingDBFS - 0.1
     /// The limiter's look-ahead, which is also its attack: the gain ramps down over this long
     /// before a peak and is at the peak's level when it arrives.
     static let lookAheadSeconds = 0.005
@@ -123,8 +129,8 @@ enum Loudness {
     /// so the curve meets every peak at or below its need, after a linear L-sample attack.
     static func limited(_ samples: [Float], sampleRate: Double) -> [Float] {
         // The largest Float at or below the ceiling, so a sample at the limit reads -1 dBFS or less.
-        var limit = Float(pow(10, peakCeilingDBFS / 20))
-        if Double(limit) > pow(10, peakCeilingDBFS / 20) { limit = limit.nextDown }
+        var limit = Float(pow(10, limiterCeilingDBFS / 20))
+        if Double(limit) > pow(10, limiterCeilingDBFS / 20) { limit = limit.nextDown }
         let ceiling = Double(limit)
         // Values between samples rise above the samples by a few dB at most.
         guard samples.contains(where: { abs($0) > limit / 2 }) else { return samples }

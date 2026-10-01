@@ -3,7 +3,7 @@ import Foundation
 import Testing
 @testable import JarvisVoice
 
-/// BS.1770 measurement, and every part played at -14 LUFS with its peak at or below -1 dBFS.
+/// BS.1770 measurement, and every part played at -11 LUFS with its peak at or below -1 dBFS.
 /// The played tests run the real EnginePlayer with its engine in offline manual rendering mode
 /// and measure what comes out of the main mixer.
 @Suite("P5 voice loudness")
@@ -129,9 +129,10 @@ struct LoudnessTests {
         let out = Loudness.normalized(part, sampleRate: Self.rate, lift: EnginePlayer.outputLiftDB)
         #expect(Self.dB(Loudness.samplePeak(out)) <= Loudness.peakCeilingDBFS)
         #expect(!out.contains { abs($0) > 1 })
-        // The bursts are limited, not the part: it still reads the target, less the lift.
+        // The bursts are limited, not the part: it still reads the target, less the lift, within
+        // 1 LU. At -11 LUFS the limiter takes about 0.5 LU off a part this spiky.
         let lufs = try #require(Loudness.integrated([out], sampleRate: Self.rate))
-        #expect(abs(lufs - (Loudness.targetLUFS - EnginePlayer.outputLiftDB)) < 0.5, "\(lufs)")
+        #expect(abs(lufs - (Loudness.targetLUFS - EnginePlayer.outputLiftDB)) <= 1, "\(lufs)")
     }
 
     @Test func theLimiterOnlyTouchesTheSamplesAroundAPeak() {
