@@ -294,6 +294,87 @@ struct FactCompilerTests {
         #expect(rig.facts.map(\.text) == ["The user's sister lives in Leeds.", "The user keeps bees."])
     }
 
+    /// W1 part 7b: a long compile yields to the user. Each batch first waits while a turn runs,
+    /// with TurnActivity's wait (as the file scan's reads do): a compile that starts during a
+    /// turn asks no writer until it ends, and a turn that begins between batches holds the next.
+    @Test func eachBatchWaitsWhileATurnRuns() async throws {
+        let rig = try Rig()
+        defer { rig.sandbox.remove() }
+        rig.converse(Self.longChat)
+        let entries = rig.memory.archive(after: 0).entries
+        #expect(FactExtraction.batches(entries).count == 4)
+        let turns = TurnActivity(clock: rig.clock)
+        let events = Events()
+        turns.begin()                                                // the compile starts mid-turn
+        let writer = EventWriter(events: events, onCall: { call in
+            if call == 1 { turns.begin() }                           // the user speaks during batch 1
+        })
+        let ids = rig.ids
+        let compiler = FactCompiler(memory: rig.memory, writer: writer, vectors: FactVectors(embedding: nil),
+                                    turns: turns,
+                                    sleep: { _ in
+                                        let polls = events.append("poll")
+                                        if polls == 2 || polls == 5 { turns.end() }
+                                    },
+                                    clock: rig.clock, makeID: { ids.next() }, log: rig.logs.function)
+        #expect(await compiler.compile() == .compiled(added: 0, updated: 0, dropped: 0))
+        #expect(events.all == ["poll", "poll", "write 1", "poll", "poll", "poll", "write 2", "write 3", "write 4"])
+        #expect(rig.memory.loadFacts()?.compiledThrough == rig.archiveSize)
+        #expect(!turns.isRunning)
+    }
+
+    /// Cancelled while it waits for a turn, the compile stops before asking a writer and writes
+    /// nothing; the offset stays where it was.
+    @Test func aCompileCancelledWhileWaitingWritesNothing() async throws {
+        let rig = try Rig()
+        defer { rig.sandbox.remove() }
+        rig.converse(Self.conversation)
+        let turns = TurnActivity(clock: rig.clock)
+        turns.begin()
+        let events = Events()
+        let compiler = FactCompiler(memory: rig.memory, writer: EventWriter(events: events, onCall: { _ in }),
+                                    vectors: FactVectors(embedding: nil), turns: turns,
+                                    sleep: { _ in _ = events.append("poll"); throw CancellationError() },
+                                    clock: rig.clock, log: rig.logs.function)
+        #expect(await compiler.compile() == .cancelled)
+        #expect(events.all == ["poll"])
+        #expect(rig.memory.loadFacts()?.compiledThrough == 0)
+        #expect(rig.facts.isEmpty)
+    }
+
+    /// Without a TurnActivity (the one-time Python import), nothing waits.
+    @Test func withoutTurnActivityNothingWaits() async throws {
+        let rig = try Rig()
+        defer { rig.sandbox.remove() }
+        rig.converse(Self.conversation)
+        let events = Events()
+        let compiler = rig.compiler(writer: EventWriter(events: events, onCall: { _ in }))
+        #expect(await compiler.compile() == .compiled(added: 0, updated: 0, dropped: 0))
+        #expect(events.all == ["write 1"])
+    }
+
+    /// What happened, in order: the waits' polls and the writer's calls.
+    final class Events: Sendable {
+        private let list = Mutex<[String]>([])
+        /// Appends `event`; returns how many polls there have been, this one included.
+        @discardableResult func append(_ event: String) -> Int {
+            list.withLock { $0.append(event); return $0.filter { $0 == "poll" }.count }
+        }
+        var all: [String] { list.withLock { $0 } }
+    }
+
+    /// Answers NONE as the on-device draft, noting each call ("write k") and running `onCall(k)`.
+    struct EventWriter: AttributedWriting {
+        let events: Events
+        let onCall: @Sendable (Int) -> Void
+        func write(system: String, user: String, timeout: Duration) async throws -> AttributedText {
+            let k = events.all.filter { $0.hasPrefix("write") }.count + 1
+            events.append("write \(k)")
+            onCall(k)
+            return AttributedText(text: "NONE", author: .local)
+        }
+    }
+
     // MARK: - Merge duplicates
 
     @Test func aDuplicateInALaterConversationRefreshesTheFact() async throws {

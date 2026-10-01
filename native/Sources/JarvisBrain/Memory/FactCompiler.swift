@@ -19,6 +19,10 @@ import Synchronization
 /// A batch whose writers both fail writes nothing and ends the compile: the batches before it
 /// stay compiled, and the next compile starts at that batch. One compile runs at a time. Logs
 /// carry counts only.
+///
+/// W1 part 7b: a long compile yields to the user. Given a `TurnActivity`, each batch first
+/// waits while a turn runs, with the same wait the file scan uses (`waitUntilIdle`); cancelled
+/// while it waits, the compile stops there with the batches before it saved.
 public final class FactCompiler: Sendable {
     /// Embedding cosine at or above which two facts are the same fact.
     public static let duplicateSimilarity = 0.9
@@ -40,14 +44,20 @@ public final class FactCompiler: Sendable {
     private let makeID: @Sendable () -> String
     private let log: @Sendable (String) -> Void
     private let running = Mutex(false)
+    private let turns: TurnActivity?
+    private let sleep: TurnActivity.Sleep
 
     public init(memory: MemoryStore, writer: any AttributedWriting, vectors: FactVectors,
+                turns: TurnActivity? = nil,
+                sleep: @escaping TurnActivity.Sleep = { try await Task.sleep(for: $0, clock: .suspending) },
                 clock: any JarvisClock = SystemClock(),
                 makeID: @escaping @Sendable () -> String = { UUID().uuidString.lowercased() },
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .state) }) {
         self.memory = memory
         self.writer = writer
         self.vectors = vectors
+        self.turns = turns
+        self.sleep = sleep
         self.clock = clock
         self.makeID = makeID
         self.log = log
@@ -132,6 +142,9 @@ public final class FactCompiler: Sendable {
     private func compileBatch(_ entries: [ArchiveEntry], source: String, writer: any AttributedWriting,
                               through: Int?, failure: String) async -> Outcome {
         if Task.isCancelled { return .cancelled }
+        if let turns {                                 // W1 part 7b: yield while a turn runs
+            do { try await turns.waitUntilIdle(sleep: sleep) } catch { return .cancelled }
+        }
         guard entries.contains(where: { $0.role == .user }) else {
             guard let through else { return .compiled(added: 0, updated: 0, dropped: 0) }
             let saved = memory.updateFacts { file in

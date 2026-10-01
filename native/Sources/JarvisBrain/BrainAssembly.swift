@@ -143,13 +143,13 @@ public final class BrainAssembly: Sendable {
                                             workingDirectory: claudeWorkingDirectory,
                                             parentEnvironment: environment, online: online, log: brainLog)
         let writer = personaWriter ?? CollaborativePersonaLLM(local: localWriter, claude: claudeWriter)
-        let facts = memory.map {
-            FactCompiler(memory: $0, writer: factWriter ?? Self.factWriter(local: localWriter, claude: claudeWriter),
-                         vectors: vectors)
-        }
-        self.facts = facts
         let turns = TurnActivity()
         turnActivity = turns
+        let facts = memory.map {
+            FactCompiler(memory: $0, writer: factWriter ?? Self.factWriter(local: localWriter, claude: claudeWriter),
+                         vectors: vectors, turns: turns)
+        }
+        self.facts = facts
         idleCompile = memory.flatMap { memory in facts.map { IdleCompile(compiler: $0, memory: memory, turns: turns) } }
         fileScanner = memory.flatMap { memory in
             files.map { files in
