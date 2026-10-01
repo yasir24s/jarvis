@@ -129,10 +129,11 @@ struct GoldenTrees {
         }
     }
 
+    /// Removes this instance's two UUID folders only. The shared jarvis-golden parents stay:
+    /// removing one when it looked empty raced another test creating its own folder in it.
     func remove() {
         for root in roots {
             try? FileManager.default.removeItem(atPath: root)
-            rmdir((root as NSString).deletingLastPathComponent)   // jarvis-golden, when now empty
         }
     }
 
