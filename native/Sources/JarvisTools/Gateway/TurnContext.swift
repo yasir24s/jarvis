@@ -118,6 +118,8 @@ public actor TurnContext {
 
     public var isOpen: Bool { open }
     public var tainted: Bool { isTainted }
+    /// What tainted the turn, in order: tool names, or "paste" (W1 part 7a, taint by source).
+    public var taintedBy: [String] { taintSources }
 
     func enqueue<T: Sendable>(_ operation: @escaping @Sendable () async -> T) async -> T {
         await fifo.enqueue(operation)

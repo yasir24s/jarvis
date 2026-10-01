@@ -77,7 +77,9 @@ public actor ToolGateway {
             return await result(GuardStrings.unknownTool(name), name: name, origin: origin,
                                 outcome: .unknown, error: false, turn: turn)
         }
-        if TaintPolicy.executors.contains(name), await turn.tainted {
+        // Taint by source (W1 part 7a): a memory tool still runs when the only read was
+        // search_memory; any other source, and every other executor, is refused as before.
+        if await turn.tainted, TaintPolicy.blocks(name, taintedBy: await turn.taintedBy) {
             log("BLOCKED \(name) after untrusted-content ingestion (injection guard)")
             research?.bump("taint_block", by: 1)
             let text: String

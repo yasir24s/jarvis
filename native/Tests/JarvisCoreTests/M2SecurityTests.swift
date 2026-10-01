@@ -79,6 +79,41 @@ struct M2SecurityTests {
         #expect(GuardStrings.appleScriptRefused == "I won't run that script, sir — it could shell out or automate unsafely.")
     }
 
+    /// W1 part 7a, taint by source: after a memory search alone, the three memory tools run and
+    /// every other executor is refused. Each untrusted source on its own, a paste, and each of
+    /// them alongside the search, still refuses every executor, memory's own included.
+    @Test
+    func taintBySourceAllowsMemoryToolsAfterAMemorySearchOnly() {
+        let memory = TaintPolicy.memoryExecutors
+        #expect(memory == ["forget_memory", "correct_memory", "restore_memory"])
+        #expect(memory.isSubset(of: TaintPolicy.executors))
+        let others = TaintPolicy.executors.subtracting(memory)
+        #expect(others.count == 12)
+        for tool in memory {
+            #expect(!TaintPolicy.blocks(tool, taintedBy: ["search_memory"]), "\(tool) after search_memory")
+            #expect(!TaintPolicy.blocks(tool, taintedBy: ["search_memory", "search_memory"]))
+        }
+        for tool in others {
+            #expect(TaintPolicy.blocks(tool, taintedBy: ["search_memory"]), "\(tool) stays blocked after search_memory")
+        }
+        let sources = TaintPolicy.untrusted.subtracting(["search_memory"]).sorted() + ["paste"]
+        #expect(sources == ["get_messages", "get_news", "read_clipboard", "read_file", "see_screen",
+                            "summarize_page", "web_search", "paste"])
+        for source in sources {
+            for tool in TaintPolicy.executors {
+                #expect(TaintPolicy.blocks(tool, taintedBy: [source]), "\(tool) after \(source)")
+                #expect(TaintPolicy.blocks(tool, taintedBy: ["search_memory", source]), "\(tool) after search, \(source)")
+                #expect(TaintPolicy.blocks(tool, taintedBy: [source, "search_memory"]), "\(tool) after \(source), search")
+            }
+        }
+        for tool in TaintPolicy.executors {
+            #expect(TaintPolicy.blocks(tool, taintedBy: []), "a tainted turn with no recorded source fails closed")
+        }
+        for tool in ["search_memory", "get_time", "read_file", "web_search", "open_app"] {
+            #expect(!TaintPolicy.blocks(tool, taintedBy: ["read_file"]), "\(tool) is not an executor")
+        }
+    }
+
     @Test
     func defaultShellPolicyMatchesPython() {
         #expect(ShellPolicy.verdict("echo hi").tier == .ok)

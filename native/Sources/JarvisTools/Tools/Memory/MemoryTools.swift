@@ -5,8 +5,9 @@ import JarvisCore
 // NativeToolCatalog's. They read and write memory/facts.json through `MemoryStore`, so every
 // write is atomic and holds the lease. forget_memory and correct_memory are executors
 // (TaintPolicy): a turn that has read untrusted content never reaches them. P6b: search_memory
-// also quotes the conversations, so it is untrusted itself. Nothing here logs a fact's text, or
-// a message's.
+// also quotes the conversations, so it is untrusted itself. W1 part 7a: a turn whose only read
+// was search_memory still reaches the memory tools (`TaintPolicy.blocks`), never another
+// executor. Nothing here logs a fact's text, or a message's.
 
 /// What the three replies share.
 enum MemoryToolText {
@@ -58,7 +59,8 @@ enum MemoryToolText {
 /// (`MemorySearching.searchConversations`), at most `messageLimit`, each with its date, who
 /// said it and at most `quoteLimit` characters, headed as information only. Secrets are masked
 /// first (P3's `Redactor`). It quotes raw text, so it is in `TaintPolicy.untrusted`: a turn that
-/// searched reaches no executor. A blank query lists no messages.
+/// searched reaches no executor but the three memory tools (W1 part 7a). A blank query lists no
+/// messages.
 ///
 /// P6b part 5: then, apart again, the task journal's calls that match (`searchJournal`), at most
 /// `messageLimit`, each with its date and time, tool, outcome, what it was given and the start
