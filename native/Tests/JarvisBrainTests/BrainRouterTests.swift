@@ -141,7 +141,8 @@ struct BrainRouterTests {
         let rig = try Rig(claude: nil)
         defer { rig.harness.remove() }
         let (head, preamble) = try await Self.oracle(rig)
-        let expected = head.system + ChannelAddendum.textChat + preamble
+        // P4: the self-knowledge comes first; with no recall neither brain is told of search_memory.
+        let expected = head.system + SelfKnowledge.withoutMemoryTools + ChannelAddendum.textChat + preamble
         _ = await rig.run(.text)
         let claudeCall = try #require(await rig.claude.calls.first)
         let localCall = try #require(await rig.local.calls.first)

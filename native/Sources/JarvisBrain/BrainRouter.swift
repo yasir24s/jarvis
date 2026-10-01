@@ -46,12 +46,14 @@ public struct BrainRouter: Sendable {
         self.log = log
     }
 
-    /// The system prompt a brain gets: `system + ChannelAddendum.text(channel) + memory +
-    /// preamble` (steps 10 and 11, and the D-51 memory block). `claudeSystem` is `system +
-    /// preamble`, so for voice, whose addendum is empty, with no memory this is `claudeSystem`
-    /// itself, byte for byte.
-    public static func prompt(_ head: CoreState.TurnPrompt, channel: Channel, memory: String = "") -> String {
-        let addendum = ChannelAddendum.text(channel) + memory
+    /// The system prompt a brain gets: `system + SelfKnowledge.text(channel) +
+    /// ChannelAddendum.text(channel) + memory + preamble` (steps 10 and 11, P4's self-knowledge
+    /// and the D-51 memory block). `memoryTools` picks the self-knowledge that names
+    /// search_memory. `claudeSystem` is `system + preamble`, so for voice, whose self-knowledge
+    /// and addendum are empty, with no memory this is `claudeSystem` itself, byte for byte.
+    public static func prompt(_ head: CoreState.TurnPrompt, channel: Channel, memory: String = "",
+                              memoryTools: Bool = true) -> String {
+        let addendum = SelfKnowledge.text(channel, memoryTools: memoryTools) + ChannelAddendum.text(channel) + memory
         guard !addendum.isEmpty else { return head.claudeSystem }
         let system = Array(head.system.utf8), full = Array(head.claudeSystem.utf8)
         guard full.starts(with: system) else {
@@ -78,9 +80,9 @@ public struct BrainRouter: Sendable {
             research.bump(ResearchKey.interactionsText, by: 1)                       // step 5
         }
         let memory = recall?.appendix(for: text) ?? .none                              // D-51 P2
-        let system = Self.prompt(head, channel: channel, memory: memory.claude)       // step 10
-        let localSystem = memory.local == memory.claude ? system
-            : Self.prompt(head, channel: channel, memory: memory.local)
+        let system = Self.prompt(head, channel: channel, memory: memory.claude,      // step 10
+                                 memoryTools: recall != nil)
+        let localSystem = Self.prompt(head, channel: channel, memory: memory.local, memoryTools: false)
 
         if config.enabled && online {                                                  // step 11
             // Python's `if reply:`: nil and "" both fall through to the local model.
