@@ -25,9 +25,22 @@ struct M1PromptGoldenTests {
     /// rewrite guarded (`PersonaGuardGolden`); Python's own prompts and bytes are a known issue.
     static let personaGuardCases: Set<String> = ["scenario/style_notes"]
 
+    /// DEV-P6-01 (proposed): the prompt's core is the seed's 8 lines, then the file's other core
+    /// lines. In these scenarios Python's core is not the seed at some turn, so native must equal
+    /// Python's prompt with that core made native's (`PersonaBaseGolden`, which `scenario`
+    /// applies); Python's own prompts are a known issue.
+    static let personaBaseCases: Set<String> = ["scenario/seeded_state", "scenario/style_notes"]
+
     @Test(arguments: try Golden.cases(suite))
     func matchesPython(_ c: GoldenCase) async throws {
-        guard Self.personaGuardCases.contains(c.name) else {
+        let guarded = Self.personaGuardCases.contains(c.name)
+        if Self.personaBaseCases.contains(c.name) {
+            let python = try await Self.scenario(c, guardRewrites: guarded, baseLayer: false)
+            withKnownIssue("DEV-P6-01: Python's prompt core is the file's alone") {
+                for m in python { Issue.record(Comment(rawValue: "\(c.name): \(m)")) }
+            }
+        }
+        guard guarded else {
             for m in try await Self.check(c) { Issue.record(Comment(rawValue: "\(c.name): \(m)")) }
             return
         }
@@ -39,19 +52,24 @@ struct M1PromptGoldenTests {
     }
 
     /// M01 §5 A5: the number of golden cases asserted, printed per suite. A DEV-P5-01 case
-    /// counts when native equals the guarded expectation and Python's verdict differs.
+    /// counts when native equals the guarded expectation and Python's verdict differs; a
+    /// DEV-P6-01 case also needs Python's own prompts to differ.
     @Test func allCasesAsserted() async throws {
         let cases = try Golden.cases(Self.suite)
         var passed = 0
         for c in cases {
-            if Self.personaGuardCases.contains(c.name) {
+            let guarded = Self.personaGuardCases.contains(c.name)
+            if Self.personaBaseCases.contains(c.name),
+               try await Self.scenario(c, guardRewrites: guarded, baseLayer: false).isEmpty { continue }
+            if guarded {
                 if try await Self.scenario(c, guardRewrites: true).isEmpty, try await !Self.check(c).isEmpty { passed += 1 }
             } else if try await Self.check(c).isEmpty {
                 passed += 1
             }
         }
         print("\(Self.suite): \(passed)/\(cases.count)"
-              + " (known divergences: DEV-P5-01 × \(Self.personaGuardCases.count))")
+              + " (known divergences: DEV-P5-01 × \(Self.personaGuardCases.count),"
+              + " DEV-P6-01 × \(Self.personaBaseCases.count))")
         #expect(passed == cases.count)
     }
 
@@ -74,8 +92,9 @@ struct M1PromptGoldenTests {
     }
 
     /// With `guardRewrites`, the expectation after a rewrite is Python's with the rewrite's lines
-    /// guarded (DEV-P5-01).
-    static func scenario(_ c: GoldenCase, guardRewrites: Bool = false) async throws -> [String] {
+    /// guarded (DEV-P5-01). With `baseLayer`, a turn's prompt is Python's with its PERSONALITY
+    /// core made native's (DEV-P6-01); without, it is Python's own.
+    static func scenario(_ c: GoldenCase, guardRewrites: Bool = false, baseLayer: Bool = true) async throws -> [String] {
         guard let before = c.input.object("files_before"), let steps = c.input.array("steps"),
               let expected = c.expected.array("steps"), steps.count == expected.count, !steps.isEmpty,
               let now0 = PersonaGolden.double(steps[0].objectValue?["now"]) else {
@@ -125,6 +144,10 @@ struct M1PromptGoldenTests {
                     }
                     let prompt = try await core.beginTurn(text, online: online)
                     var want = captured.replacingOccurrences(of: homeToken, with: root, options: .literal)
+                    if baseLayer {
+                        let python = filesAfter.string("personality.json").flatMap { Data(base64Encoded: $0) }
+                        want = PersonaBaseGolden.prompt(want, pythonFile: python)
+                    }
                     if guardRewrites { want = PersonaGuardGolden.prompt(want, rewritten: rewritten) }
                     if let d = diff(online ? prompt.claudeSystem : prompt.system, want) {
                         out.append("\(tag): \(online ? "claude" : "local") system prompt \(d)")

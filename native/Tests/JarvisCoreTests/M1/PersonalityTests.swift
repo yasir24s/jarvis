@@ -29,6 +29,21 @@ struct M1PersonalityTests {
         "rewrite_corrupt_file",
     ]
 
+    /// DEV-P6-01 (proposed): the prompt's core is the seed's 8 lines, then the file's other core
+    /// lines (`PersonalityLogic.promptCore`). In these cases Python's core at a `context` step is
+    /// not the seed, so native must equal Python's context with that core made native's
+    /// (`PersonaBaseGolden`, which `check` applies); Python's own context is its verdict, a known
+    /// issue. Every other case equals Python with no adjustment (`PersonaBaseTests`).
+    static let personaBaseCases: Set<String> = [
+        "load_core_string", "load_core_dict", "load_missing_learned", "load_extra_keys",
+        "load_learned_empty_string", "load_note_missing_outside_last8", "load_float_edges",
+        "learn_dedupe_punctuation", "learn_toggle_sequence", "learn_cap_existing_15",
+        "rewrite_2_lines", "rewrite_3_lines", "rewrite_12_lines", "rewrite_13_lines", "rewrite_empty",
+        "rewrite_bullets", "rewrite_blank_lines", "rewrite_crlf", "rewrite_line_breaks",
+        "rewrite_301_char_line", "rewrite_unicode", "context_0_notes", "context_1_notes",
+        "context_8_notes", "context_9_notes", "context_unicode", "style_profanity_on_off_on",
+    ]
+
     @Test(arguments: try Golden.cases(suite))
     func matchesPython(_ c: GoldenCase) throws {
         let issues = try Self.check(c)
@@ -43,24 +58,38 @@ struct M1PersonalityTests {
         } else {
             for m in issues { Issue.record(Comment(rawValue: "\(c.name): \(m)")) }
         }
+        if Self.personaBaseCases.contains(c.name) {
+            let python = try Self.check(c, baseLayer: false)
+            withKnownIssue("DEV-P6-01: Python's prompt core is the file's alone") {
+                for m in python { Issue.record(Comment(rawValue: "\(c.name): \(m)")) }
+            }
+        }
     }
 
-    /// M01 §5 A5: the number of golden cases asserted, printed per suite. A DEV-P4-03 or
-    /// DEV-P5-01 case counts when Python's verdict differs, as the deviation says it must.
+    /// M01 §5 A5: the number of golden cases asserted, printed per suite. A DEV-P4-03, DEV-P5-01
+    /// or DEV-P6-01 case counts when Python's verdict differs, as the deviation says it must.
     @Test func allCasesAsserted() throws {
         let cases = try Golden.cases(Self.suite)
         let known = Self.noteCutCases.union(Self.personaGuardCases)
         var passed = 0
-        for c in cases where try Self.check(c).isEmpty != known.contains(c.name) { passed += 1 }
+        for c in cases where try Self.check(c).isEmpty != known.contains(c.name) {
+            if Self.personaBaseCases.contains(c.name), try Self.check(c, baseLayer: false).isEmpty { continue }
+            passed += 1
+        }
         print("\(Self.suite): \(passed)/\(cases.count)"
               + " (known divergences: DEV-P4-03 × \(Self.noteCutCases.count),"
-              + " DEV-P5-01 × \(Self.personaGuardCases.count))")
+              + " DEV-P5-01 × \(Self.personaGuardCases.count),"
+              + " DEV-P6-01 × \(Self.personaBaseCases.count))")
         #expect(passed == cases.count)
     }
 
-    static func check(_ c: GoldenCase) throws -> [String] {
+    /// With `baseLayer` (DEV-P6-01), a `context` step's expectation is Python's with its core
+    /// made native's; without, it is Python's own.
+    static func check(_ c: GoldenCase, baseLayer: Bool = true) throws -> [String] {
         if c.name == "literals" { return literals(c.expected) }
-        let report = try PersonaGolden.run(c, files: ["personality.json"]) { op, args, now, env in
+        var adjust: ((String, JSONObject, JSONObject) -> JSONObject)?
+        if baseLayer { adjust = PersonaBaseGolden.adjust }
+        let report = try PersonaGolden.run(c, files: ["personality.json"], adjust: adjust) { op, args, now, env in
             let store = env.store
             switch op {
             case "load":
@@ -183,7 +212,10 @@ enum PersonaGolden {
         return o.string("repr") == PyFloat.repr(d) ? d : nil
     }
 
+    /// `adjust` maps a step's Python result to native's expectation, given the op and Python's
+    /// files after the step (DEV-P6-01's context steps); nil compares with Python's own.
     static func run(_ c: GoldenCase, files: [String],
+                    adjust: ((String, JSONObject, JSONObject) -> JSONObject)? = nil,
                     step: (String, JSONObject, Double, Env) throws -> Step) throws -> Report {
         guard let before = c.input.object("files_before"), let steps = c.input.array("steps"),
               let expected = c.expected.array("steps"), steps.count == expected.count, !steps.isEmpty,
@@ -216,7 +248,8 @@ enum PersonaGolden {
             let tag = "step \(k) \(op)"
             env.counter.reset()
             let got = try step(op, args, now, env)
-            if let m = compare(got.outcome, result, root: root) { out.append("\(tag): \(m)") }
+            let wanted = adjust?(op, result, filesAfter) ?? result
+            if let m = compare(got.outcome, wanted, root: root) { out.append("\(tag): \(m)") }
             if eo.has("action"), got.action != eo["action"] {
                 out.append("\(tag): action \(String(describing: got.action)) != Python \(String(describing: eo["action"]))")
             }

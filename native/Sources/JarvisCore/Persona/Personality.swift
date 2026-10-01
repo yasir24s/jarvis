@@ -162,10 +162,22 @@ public enum PersonalityLogic {
 
     // MARK: - personality_context
 
-    /// `personality_context()`: the core traits, the last 8 learned notes, and the
-    /// self-authoring sentence embedding `personalityPath` (PERSONALITY_FILE).
+    /// DEV-P6-01 (proposed): the core traits the prompt shows. His character is compiled in: the
+    /// seed's 8 lines always come first, then each of the file's core lines that is not one of them
+    /// (a trait the user or a rewrite added), in the file's order. A missing, unreadable or
+    /// rewritten personality.json cannot remove his character. When the file's core is the seed,
+    /// this is the seed, so the prompt is Python's byte for byte. Lines compare by code point, as
+    /// Python's `==` does.
+    public static func promptCore(_ fileCore: [String]) -> [String] {
+        seedCore + fileCore.filter { line in !seedCore.contains { Py.eq($0, line) } }
+    }
+
+    /// `personality_context()`: the core traits (`promptCore` of the file's, DEV-P6-01), the last
+    /// 8 learned notes, and the self-authoring sentence embedding `personalityPath`
+    /// (PERSONALITY_FILE).
     public static func context(_ p: JSONObject, personalityPath: String) throws(StateShapeError) -> String {
-        var out = " PERSONALITY — " + (try joined(p["core"] ?? .array([]), separator: " "))
+        let core = try coreItems(p["core"] ?? .array([]))
+        var out = " PERSONALITY — " + promptCore(core).joined(separator: " ")
         let notes = try lastNotes(p["learned"] ?? .array([]), 8)
         if !notes.isEmpty {
             out += " Style notes learned from past conversations (honour these): "
@@ -271,8 +283,9 @@ public enum PersonalityLogic {
         return s
     }
 
-    /// `sep.join(v)`: a list of str, the code points of a str, or the keys of a dict.
-    private static func joined(_ v: JSONValue, separator: String) throws(StateShapeError) -> String {
+    /// What `sep.join(v)` joins: a list of str, the code points of a str, or the keys of a dict;
+    /// anything else raises, as the join does.
+    private static func coreItems(_ v: JSONValue) throws(StateShapeError) -> [String] {
         switch v {
         case .array(let a):
             var parts: [String] = []
@@ -280,11 +293,11 @@ public enum PersonalityLogic {
                 guard case .string(let s) = x else { throw shape("\"core\" holds a non-str (TypeError)") }
                 parts.append(s)
             }
-            return parts.joined(separator: separator)
+            return parts
         case .string(let s):
-            return s.unicodeScalars.map { String($0) }.joined(separator: separator)
+            return s.unicodeScalars.map { String($0) }
         case .object(let o):
-            return o.keys.joined(separator: separator)
+            return o.keys
         default:
             throw shape("\"core\" is not iterable (TypeError)")
         }
