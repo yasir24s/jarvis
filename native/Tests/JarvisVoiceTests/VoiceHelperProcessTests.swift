@@ -57,7 +57,7 @@ struct VoiceHelperProcessTests {
         let setup = VoiceHelperSetup.inApp(bundle: .main, log: nil)
         #expect(setup.executable.path(percentEncoded: false).hasSuffix("/Contents/Helpers/jarvis-voice"))
         #expect(setup.assets.path(percentEncoded: false).hasSuffix("/Library/Application Support/JARVIS/voice/"))
-        #expect(Array(setup.arguments.suffix(6)) == ["--cache-limit-mb", "512", "--steps", "8", "--idle-exit", "300"])
+        #expect(Array(setup.arguments.suffix(6)) == ["--cache-limit-mb", "512", "--steps", "4", "--idle-exit", "300"])
         #expect(setup.arguments[0] == "--assets")
         #expect(setup.arguments[2] == "--out-dir")
     }

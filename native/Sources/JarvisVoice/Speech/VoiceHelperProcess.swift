@@ -2,8 +2,10 @@ import Foundation
 
 /// The jarvis-voice helper JARVIS.app carries in `Contents/Helpers/` (build-app.sh) and the voice
 /// assets `native/scripts/install-voice-assets.sh` puts in `~/Library/Application Support/JARVIS/voice/`.
-/// The arguments are D-54's: MLX's cache capped at 512 MB, F5's 8 steps, and an exit after
-/// 5 idle minutes, which hands the helper's memory back to the system.
+/// The arguments are D-54's: MLX's cache capped at 512 MB, F5 at 4 steps, and an exit after
+/// 5 idle minutes, which hands the helper's memory back to the system. D-54 had 8 steps; the
+/// user chose 4 on 2026-10-01, when one 5.8 s sentence took 7.7 s at 4 against 18.0 s at 8
+/// with the words exact at both. A `cfg` of 0 garbled the words, so cfg keeps its default.
 public struct VoiceHelperSetup: VoiceHelperLauncher {
     /// What the helper loads from `assets` (install-voice-assets.sh copies exactly these).
     public static let assetFiles = [
@@ -11,7 +13,7 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
         "reference/reference.wav", "reference/reference.txt",
     ]
     public static let cacheLimitMB = 512
-    public static let steps = 8
+    public static let steps = 4
     public static let idleExitSeconds = 300
 
     public let executable: URL
