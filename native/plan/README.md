@@ -537,6 +537,27 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
     needs are approved: the Metal Toolchain, `swift-numerics`, F5's `vocab.txt` and the
     vocoder's `config.json`. The spike measures F5 against M8's budget and the 8 GB limit;
     Kokoro stays the measured fallback.
+- **D-54. The voice is the short-reference F5 clone, slow as it is** (user, 2026-10-01).
+  After hearing the nine F5 samples, the user judged the short-reference clone best and chose
+  it over Kokoro, knowing it takes a median of 11.2 s per sentence (16.7 s at worst) on this
+  Mac. M8's 600 ms sentence budget does not apply to this voice: M8 measures and reports
+  its latency instead. Choosing a Kokoro voice is deferred. How M8 carries F5:
+  - **A helper process** runs F5: mlx-swift 0.29.1 with swift-numerics, plus f5-tts-swift
+    and vocos-swift with the spike's patches. It loads on the first reply that is spoken,
+    stays warm while a conversation lasts and quits after a few idle minutes, which returns
+    its memory to the system. A crash in it costs one spoken reply, not the app.
+  - **MLX's buffer cache is capped at 512 MB** from launch: about 1.05 GB between calls and
+    2.1 GB at peak, against 4.7 to 5.2 GB uncapped.
+  - **Short replies are generated whole.** F5 makes audio about 3.6 times slower than it
+    plays, so speaking sentence by sentence would leave a pause between sentences.
+  - **The reference** is the spike's 4.28 s cut with its transcript. The weights (452 MB,
+    downloaded and checked in the spike) move to Application Support. The Metal Toolchain
+    stays installed, because MLX's shaders need it to build.
+  - **The reply text shows at once,** and the speech follows when it is ready.
+  - **Open:** the spike wrote its two v1 forward-pass fixes without the reference code, so
+    only transcripts check them. M8 compares them with the reference implementation. It may
+    also measure the short reference with 4 steps, or with `cfg` 0, if the user likes how
+    they sound.
 
 ## Open user decisions
 
