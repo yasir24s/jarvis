@@ -47,12 +47,13 @@ public enum SpeakReplies {
     /// The policy's input for one finished row: the toggle's state, the row's length (Python
     /// `len()`, in scalars), its turn and the voice that would speak it (M8: "f5", or "say" while
     /// F5 is unavailable). No voice conversation runs before M11.
+    /// - speakAnyway: M11's Mic Only Mode, which speaks every reply whatever the toggle says.
     @MainActor
     public static func context(for message: ChatMessage, turn: TurnSummary, toggle: SpeakRepliesToggle,
                                chatWindowIsKey: Bool, userIdleSeconds: Double,
-                               ttsBackend: String = noTTSBackend) -> SpeakContext {
+                               ttsBackend: String = noTTSBackend, speakAnyway: Bool = false) -> SpeakContext {
         toggle.refresh()   // U1 part 5: the setting as it is now, not as it was at launch
-        return SpeakContext(chatWindowIsKey: chatWindowIsKey, speakToggleOn: toggle.isOn,
+        return SpeakContext(chatWindowIsKey: chatWindowIsKey, speakToggleOn: speakAnyway || toggle.isOn,
                             userIdleSeconds: userIdleSeconds, voiceConversationActive: false,
                             replyCharCount: message.text.unicodeScalars.count, turn: turn, ttsBackend: ttsBackend)
     }

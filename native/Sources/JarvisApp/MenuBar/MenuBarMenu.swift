@@ -47,6 +47,7 @@ struct MenuBarMenu: View {
         }
         FileLearningToggle(consent: learn)
         ShowHUDToggle(setting: showHUD, hud: hud)
+        HandsFreeMenuItems()   // M11 part 5
         UpdateMenuItems(updates: updates)
         Divider()
         Text("State: \(model.stateRoot)")
@@ -90,6 +91,7 @@ struct AppMenuItems: View {
         ChatGPTSignInItem(account: chatgpt)
         FileLearningToggle(consent: learn)
         ShowHUDToggle(setting: showHUD, hud: hud)
+        HandsFreeMenuItems()   // M11 part 5
         UpdateMenuItems(updates: updates)
     }
 }

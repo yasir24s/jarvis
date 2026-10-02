@@ -18,6 +18,8 @@ import Synchronization
 ///   directly. The greeting is said on the first start in a launch only.
 /// - Barge-in (part 4): while he speaks, ten voiced frames that match the voiceprint stop him
 ///   through UI1's stop (`BargeInWatcher`); `JARVIS_BARGE_IN=0` turns it off.
+/// - While it listens, idle system sleep is held off (`JARVIS_KEEP_AWAKE`, default 1, J:5459-5470),
+///   so he hears the wake word with the screen locked.
 /// - The startup watchdog (J:5482-5490): if the loop is not listening within 240 s, Python exits
 ///   with 86 and launchd starts it again. The app does so only when launchd runs it
 ///   (`com.jarvis.assistant`); otherwise it logs, stops listening and keeps the chat.
@@ -44,6 +46,12 @@ final class AppHandsFree {
     private var guardTask: Task<Void, Never>?
     private let bargeIn: BargeInWatcher?
     private var watching: Task<Void, Never>?
+    /// What the HUD shows of a confirmation waiting for a spoken "yes" (Mic Only Mode), or nil.
+    private let prompt: @MainActor () -> String?
+    /// Push-to-talk is listening: its words are its own turn, so the loop takes no command then.
+    private let pushToTalkOn: @MainActor () -> Bool
+    /// `JARVIS_KEEP_AWAKE` (J:5462): while listening, idle system sleep is held off.
+    private var awake: (any NSObjectProtocol)?
     private var greeted = false
     /// Hands-free listening is running.
     private(set) var isOn = false
@@ -60,6 +68,8 @@ final class AppHandsFree {
          recognizer: any SpeechRecognizing = AppleSpeechRecognizer(),
          assets: VendoredAssets = .appBundle(), hub: AudioHub = .shared,
          exitForRelaunch: @escaping @Sendable () -> Never? = AppHandsFree.launchdExit,
+         prompt: @escaping @MainActor () -> String? = { nil },
+         pushToTalkOn: @escaping @MainActor () -> Bool = { false },
          log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .voice) }) {
         self.core = core
         self.research = research
@@ -71,6 +81,8 @@ final class AppHandsFree {
         self.assets = assets
         self.hub = hub
         self.exitForRelaunch = exitForRelaunch
+        self.prompt = prompt
+        self.pushToTalkOn = pushToTalkOn
         self.log = log
         mic = MicCapture(makeInput: makeInput, log: log)
         chimes = Chimes(hub: hub, log: log)
@@ -115,6 +127,10 @@ final class AppHandsFree {
         }
         isOn = true
         voice.onAudio = { [weak self] playing in self?.audio(playing) }
+        if ProcessInfo.processInfo.environment["JARVIS_KEEP_AWAKE", default: "1"] == "1" {
+            awake = ProcessInfo.processInfo.beginActivity(options: .idleSystemSleepDisabled,
+                                                          reason: "JARVIS is listening for “Hey Jarvis”")
+        }
         let hud = self.hud
         meter = Task.detached(priority: .utility) {
             for await frame in levels {
@@ -148,6 +164,8 @@ final class AppHandsFree {
         guard isOn else { return }
         isOn = false
         voice.onAudio = nil
+        if let awake { ProcessInfo.processInfo.endActivity(awake) }
+        awake = nil
         watching?.cancel()
         watching = nil
         guardTask?.cancel()
@@ -227,7 +245,9 @@ final class AppHandsFree {
     fileprivate func show(_ state: LoopState) {
         switch state {
         case .idle: hud.state(.idle)
-        case .listening: hud.listening()
+        case .listening:
+            hud.listening()
+            if let prompt = prompt() { hud.caption(prompt) }
         case .thinking: hud.state(.thinking)
         case .speaking: hud.state(.speaking)
         }
@@ -241,6 +261,10 @@ final class AppHandsFree {
 
     /// `handle_one`: Tink, then the turn; back when its reply has been spoken.
     fileprivate func handle(_ command: String) async {
+        guard !pushToTalkOn() else {
+            log("hands-free: push-to-talk is listening; the loop's command is dropped")
+            return
+        }
         await chimes.play(.tink)
         guard let turn = chat.sendVoice(command) else { return }
         await turn.value

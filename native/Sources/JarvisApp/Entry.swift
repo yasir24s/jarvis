@@ -32,6 +32,10 @@ enum Entry {
         if arguments.first == AECSelfTest.flag {
             exit(AECSelfTest.run(arguments: Array(arguments.dropFirst())))
         }
+        // M11 part 5: listening's idle cost (the microphone open, nothing played).
+        if arguments.first == ListenSelfTest.flag {
+            exit(ListenSelfTest.run(arguments: Array(arguments.dropFirst())))
+        }
         #endif
         if arguments.contains("--version") {
             print("JARVIS \(infoString("CFBundleShortVersionString")) (\(infoString("CFBundleVersion")))")

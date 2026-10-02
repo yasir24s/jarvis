@@ -17,9 +17,11 @@ struct JarvisSwiftUIApp: App {
                 appDelegate.openChat = { openWindow(id: ChatView.windowID) }
             }, onWindow: { appDelegate.chatWindowAppeared($0) })
         }
-        // U1: after a live update the window is open only if it was before the swap.
+        // U1: after a live update the window is open only if it was before the swap. M11: Mic
+        // Only Mode keeps it closed.
         .defaultLaunchBehavior(ChatLaunch.opensWindow(arguments: CommandLine.arguments,
-                                                      resume: AppDelegate.resumeAtLaunch?.state) ? .presented : .suppressed)
+                                                      resume: AppDelegate.resumeAtLaunch?.state)
+                               && !HandsFreeSettings.micOnlyAtLaunch() ? .presented : .suppressed)
         .restorationBehavior(.disabled)
         .commands {
             // The app menu's "Stop Speaking" (M8), M9a's "Brain", P6's file learning, UI1's

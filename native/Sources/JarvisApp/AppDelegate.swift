@@ -61,6 +61,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let talk = PushToTalkModel()
     /// M11: "Hey Jarvis" and the conversation after it; built with the brain.
     private(set) var handsFree: AppHandsFree?
+    /// M11 part 5: "Listen for “Hey Jarvis”" and "Mic Only Mode", in both menus.
+    let handsFreeSettings = HandsFreeSettings.shared
+    private var handsFreeApplying: Task<Void, Never>?
     private var talkKeys: PushToTalkKeys?
     private var talkHotKey: GlobalHotKey?
     /// U1: watches dist/staged/ for a new build and swaps over when JARVIS is not in use. It
@@ -117,6 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { await chatgptAccount.refresh() }   // B2 part 6: "Signed in to ChatGPT" or not
         startHUD()
         startPushToTalk()
+        startHandsFreeControls()   // M11 part 5
         // Asked once: macOS shows the prompt only while the user has not decided.
         if location.authorizationStatus == .notDetermined {
             location.requestWhenInUseAuthorization()
@@ -424,7 +428,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let context = SpeakReplies.context(for: message, turn: turn, toggle: self.speakReplies,
                                                chatWindowIsKey: self.chat.windowIsKey,
                                                userIdleSeconds: Self.userIdleSeconds(),
-                                               ttsBackend: voice.backend)
+                                               ttsBackend: voice.backend,
+                                               speakAnyway: self.handsFreeSettings.micOnly)   // M11 part 5
             SpeakReplies.replyFinished(message, context: context, research: research,
                                        speaker: { text, turn in voice.speak(text, turn: turn.turnID) },
                                        log: { JarvisLog.log($0, category: .voice) })
@@ -523,7 +528,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if let voice = self.voice {
                 self.handsFree = AppHandsFree(core: core, research: research, voiceprint: self.speaker, voice: voice,
                                               chat: self.chat, hud: self.hud,
-                                              conversationOver: { assembly.personality.conversationEnded() })
+                                              conversationOver: { assembly.personality.conversationEnded() },
+                                              prompt: { [weak self] in self?.confirmationPrompt() },
+                                              pushToTalkOn: { [weak self] in self?.talk.isOn ?? false })
+                self.applyHandsFree()
             }
             // U1: a resumed build tells the update helper once it has run 30 s with its brain up.
             if let launch = Self.resumeAtLaunch { self.reportHealthy(launch.url, assembly: assembly) }
@@ -602,7 +610,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// heard is sent as a voice turn, whose reply is always spoken.
     private func startPushToTalk() {
         talk.onStart = { [weak self] in _ = self?.chat.stop() }
-        talk.onListening = { [weak self] in self?.hud.listening() }
+        talk.onListening = { [weak self] in
+            self?.hud.listening()
+            if let prompt = self?.confirmationPrompt() { self?.hud.caption(prompt) }   // M11 part 5
+        }
         talk.onLevel = { [weak self] in self?.hud.level($0) }
         talk.onEnded = { [weak self] sent in
             if !sent { self?.hud.listeningEnded() }
@@ -632,15 +643,96 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// ⌃⌥J: the chat window comes forward and listening toggles.
+    /// ⌃⌥J: the chat window comes forward and listening toggles. In Mic Only Mode (M11 part 5)
+    /// listening toggles and the window stays hidden.
     private func pushToTalkHotKey() {
-        NSApp.activate()
-        if let window = chatWindow {
-            window.makeKeyAndOrderFront(nil)
-        } else {
-            openChat?()
+        if !handsFreeSettings.micOnly {
+            NSApp.activate()
+            if let window = chatWindow {
+                window.makeKeyAndOrderFront(nil)
+            } else {
+                openChat?()
+            }
         }
         talk.toggle()
+    }
+
+    // MARK: - M11 part 5: hands-free listening and Mic Only Mode
+
+    /// The menus' items act through the settings; a voice enrolled or forgotten moves the
+    /// listening default.
+    private func startHandsFreeControls() {
+        handsFreeSettings.onChange = { [weak self] in self?.applyHandsFree() }
+        handsFreeSettings.onMicOnly = { [weak self] on in self?.setMicOnly(on) }
+        handsFreeSettings.onTalk = { [weak self] in self?.pushToTalkHotKey() }
+        observeEnrolment()
+    }
+
+    private func observeEnrolment() {
+        handsFreeSettings.enrolled = voiceStatus.enrolled
+        withObservationTracking { _ = voiceStatus.enrolled } onChange: { [weak self] in
+            Task { @MainActor in self?.observeEnrolment() }
+        }
+    }
+
+    /// Starts or stops hands-free listening as the settings say, one change at a time. Starting
+    /// asks for the microphone and speech recognition first, as push-to-talk does.
+    private func applyHandsFree() {
+        guard let handsFree else { return }
+        let previous = handsFreeApplying
+        handsFreeApplying = Task { @MainActor [weak self] in
+            await previous?.value
+            guard let self else { return }
+            guard self.handsFreeSettings.listening else {
+                await handsFree.stop()
+                return
+            }
+            switch await ListeningPermissions.ask(SystemPermissions()) {
+            case .granted:
+                await handsFree.start()
+            case .microphoneDenied:
+                JarvisLog.log("hands-free: microphone access is denied", category: .voice)
+                if let text = PushToTalkModel.explanation(.microphoneDenied) { self.chat.post(text) }
+            case .speechRecognitionDenied:
+                JarvisLog.log("hands-free: speech recognition is denied", category: .voice)
+                if let text = PushToTalkModel.explanation(.speechRecognitionDenied) { self.chat.post(text) }
+            }
+        }
+    }
+
+    /// In Mic Only Mode the chat window, with its confirmation card, is hidden: the HUD shows a
+    /// waiting confirmation while JARVIS listens for the "yes" (which still needs Touch ID).
+    private func confirmationPrompt() -> String? {
+        guard handsFreeSettings.micOnly, let pending = chat.pending else { return nil }
+        return "Confirm: \(pending.desc) — say yes"
+    }
+
+    /// Mic Only Mode on: the chat window closes, the HUD shows, listening starts. Off: the
+    /// window, Show HUD and the listening choice as they were.
+    private func setMicOnly(_ on: Bool) {
+        if on {
+            guard !handsFreeSettings.micOnly else { return }
+            let restore = MicOnlyRestore(chatWindowOpen: chatWindow?.isVisible ?? false, showHUD: showHUD.isOn,
+                                         listenChoice: handsFreeSettings.listenChoice)
+            chatWindow?.close()
+            showHUD.isOn = true
+            hud.enabled = true
+            handsFreeSettings.enterMicOnly(restore)
+            JarvisLog.log("hands-free: Mic Only Mode on", category: .voice)
+        } else {
+            guard let restore = handsFreeSettings.leaveMicOnly() else { return }
+            showHUD.isOn = restore.showHUD
+            hud.enabled = restore.showHUD
+            if restore.chatWindowOpen {
+                NSApp.activate()
+                if let window = chatWindow {
+                    window.makeKeyAndOrderFront(nil)
+                } else {
+                    openChat?()
+                }
+            }
+            JarvisLog.log("hands-free: Mic Only Mode off", category: .voice)
+        }
     }
 
     #if DEBUG

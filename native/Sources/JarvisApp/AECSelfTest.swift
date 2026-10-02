@@ -41,7 +41,7 @@ enum AECSelfTest {
         var report: [String: any Sendable] = [:]
         let hub = AudioHub(voiceProcessing: true, log: { FileHandle.standardError.write(Data("\($0)\n".utf8)) })
         let player = EnginePlayer(hub: hub)
-        let assets = VendoredAssets.appBundle()
+        let assets = ListenSelfTest.assets()
         var chunks: [PCMChunk] = []
         do {
             let say = SayEngine()
