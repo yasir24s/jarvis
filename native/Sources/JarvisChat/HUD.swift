@@ -70,7 +70,7 @@ public struct CaptionTimeline: Sendable, Equatable {
 /// `state`, `caption`, `hide` and `level`, and what drives them now: a turn makes him think, with
 /// the user's message as the caption; the reply's audio makes him speak, its caption advancing
 /// sentence by sentence; when both are over he goes idle, which hides the HUD 2.6 s later.
-/// Listening arrives with the microphone (M9); `listening()` is its hook.
+/// Listening comes from push-to-talk (M9a): `listening()`, `level` per frame, `listeningEnded()`.
 @MainActor
 @Observable
 public final class HUDModel {
@@ -199,11 +199,18 @@ public final class HUDModel {
         }
     }
 
-    /// M9's microphone, when it comes: listening.
+    /// M9a: the microphone opened (push-to-talk): listening. The bars follow `level` from here.
     public func listening() {
         stopCaptions()
         state(.listening)
         caption(nil)
+    }
+
+    /// M9a: listening ended and nothing was sent: idle, unless a turn or his speech has already
+    /// taken over.
+    public func listeningEnded() {
+        guard state == .listening else { return }
+        settle()
     }
 
     private func settle() {

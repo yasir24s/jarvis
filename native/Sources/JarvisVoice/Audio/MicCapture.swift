@@ -20,6 +20,16 @@ public struct MicFrame: Sendable, Equatable {
         self.hostTime = hostTime
     }
 
+    /// The frame's loudness for a meter, 0...1: its rms from -55 dBFS (0) to -15 dBFS (1).
+    /// Speech a little way from a laptop's microphone reads about -30 dBFS, so about 0.6, the
+    /// level hud.html gives listening.
+    public var level: Double {
+        let r = Double(rms)
+        guard r > 0 else { return 0 }
+        let dBFS = 20 * log10(r / 32768)
+        return min(1, max(0, (dBFS + 55) / 40))
+    }
+
     /// `audioop.rms`: the square root of the mean square, truncated to an integer (§3.4).
     public var rms: Int {
         guard !samples.isEmpty else { return 0 }
@@ -233,19 +243,30 @@ public actor MicCapture {
         return stream
     }
 
-    /// Opens the microphone. Does nothing when it is already open.
+    /// Opens the microphone. Does nothing when it is already open. When it cannot open, every
+    /// subscriber's stream finishes, as at `stop()`.
     public func start() throws(MicError) {
         guard input == nil else { return }
         let device = makeInput()
-        let format = try device.inputFormat()
-        let converter = try MicConverter(from: format)
-        let (stream, continuation) = AsyncStream.makeStream(of: MicFrame.self,
+        let format: AVAudioFormat
+        let continuation: AsyncStream<MicFrame>.Continuation
+        let stream: AsyncStream<MicFrame>
+        do throws(MicError) {
+            format = try device.inputFormat()
+            let converter = try MicConverter(from: format)
+            (stream, continuation) = AsyncStream.makeStream(of: MicFrame.self,
                                                             bufferingPolicy: .bufferingNewest(Self.bufferedFrames))
-        let state = TapState(converter: converter, out: continuation)
-        do {
-            try device.start { buffer, hostTime in state.process(buffer, hostTime: hostTime) }
+            let state = TapState(converter: converter, out: continuation)
+            do throws(MicError) {
+                try device.start { buffer, hostTime in state.process(buffer, hostTime: hostTime) }
+            } catch {
+                continuation.finish()
+                throw error
+            }
         } catch {
-            continuation.finish()
+            for c in subscribers.values { c.finish() }
+            subscribers.removeAll()
+            log("mic: cannot open (\(error))")
             throw error
         }
         input = device

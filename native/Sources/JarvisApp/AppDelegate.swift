@@ -33,6 +33,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let showHUD = ShowHUDSetting()
     let hud = HUDModel()
     private var hudController: HUDController?
+    /// M9a: push-to-talk. The mic button and ⌥Space in the chat window and ⌃⌥J anywhere drive
+    /// it; it listens once the brain has started (`AppListening`).
+    let talk = PushToTalkModel()
+    private var talkKeys: PushToTalkKeys?
+    private var talkHotKey: GlobalHotKey?
     /// U1: watches dist/staged/ for a new build and swaps over when JARVIS is not in use. It
     /// sees nothing unless this bundle runs as dist/JARVIS.app with its update helper.
     let updates = UpdateWatcher(folders: UpdateFolders.of(bundle: Bundle.main.bundleURL))
@@ -85,6 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         installSIGTERMHandler()
         startHUD()
+        startPushToTalk()
         // Asked once: macOS shows the prompt only while the user has not decided.
         if location.authorizationStatus == .notDetermined {
             location.requestWhenInUseAuthorization()
@@ -477,6 +483,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             self.chat.connect(assembly.coordinator, lastBackend: { await assembly.backend.last.name })
             self.chat.watchConfirmations(assembly.confirmations, authenticator: authenticator)
+            // M9a: push-to-talk listens once turns can run.
+            self.talk.connect(AppListening(core: core, research: research))
             // U1: a resumed build tells the update helper once it has run 30 s with its brain up.
             if let launch = Self.resumeAtLaunch { self.reportHealthy(launch.url, assembly: assembly) }
             // P6: on a first launch, JARVIS offers once to learn from the user's files.
@@ -513,6 +521,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return }
             self.hud.turnEnded(speechFollows: (self.voice?.repliesPending ?? 0) > 0)
         }
+    }
+
+    /// M9a: push-to-talk's hooks, keys and global shortcut. Starting to talk stops his speech and
+    /// any reply being written (UI1's stop); the HUD listens with the microphone's level; what is
+    /// heard goes into the composer.
+    private func startPushToTalk() {
+        talk.onStart = { [weak self] in _ = self?.chat.stop() }
+        talk.onListening = { [weak self] in self?.hud.listening() }
+        talk.onLevel = { [weak self] in self?.hud.level($0) }
+        talk.onEnded = { [weak self] sent in
+            if !sent { self?.hud.listeningEnded() }
+        }
+        talk.onHeard = { [weak self] text in
+            guard let self else { return }
+            self.hud.listeningEnded()
+            let draft = self.chat.draft.text
+            self.chat.draft.text = draft.isEmpty ? text : draft + " " + text
+        }
+        talkKeys = PushToTalkKeys(talk: talk, chatWindow: { [weak self] in self?.chatWindow })
+        talkHotKey = GlobalHotKey { [weak self] in self?.pushToTalkHotKey() }
+        if talkHotKey == nil {
+            JarvisLog.log("push-to-talk: ⌃⌥J could not be registered (another app may hold it)", category: .voice)
+        }
+    }
+
+    /// ⌃⌥J: the chat window comes forward and listening toggles.
+    private func pushToTalkHotKey() {
+        NSApp.activate()
+        if let window = chatWindow {
+            window.makeKeyAndOrderFront(nil)
+        } else {
+            openChat?()
+        }
+        talk.toggle()
     }
 
     #if DEBUG

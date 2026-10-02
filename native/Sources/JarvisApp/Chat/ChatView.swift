@@ -9,6 +9,8 @@ struct ChatView: View {
     static let windowID = "chat"
 
     @Bindable var model: ChatViewModel
+    /// M9a: push-to-talk (the mic button, and the live text while it listens); nil hides it.
+    var talk: PushToTalkModel? = nil
     /// Hands the app this window's opener each time the window appears, so the Dock icon can
     /// reopen it (D-43).
     var onAppear: (OpenWindowAction) -> Void = { _ in }
@@ -75,6 +77,16 @@ struct ChatView: View {
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
             }
+            // M9a: why nothing was sent, for a few seconds, or that access is off.
+            if let notice = talk?.notice {
+                Text(notice)
+                    .font(JarvisTheme.small)
+                    .foregroundStyle(JarvisTheme.gold.color)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+            }
+            let listening = (talk?.phase ?? .idle) != .idle
             HStack(alignment: .bottom, spacing: 8) {
                 Composer(text: $model.draft.text, onPaste: { model.notePaste() }, onSubmit: { _ = model.send() },
                          onFocus: { composerFocused = $0 },
@@ -84,6 +96,13 @@ struct ChatView: View {
                              return true
                          })
                     .frame(minHeight: 36, idealHeight: 56, maxHeight: 120)
+                    // M9a: while the microphone is open the live text shows in the composer's
+                    // place; the draft underneath is kept as it was.
+                    .opacity(listening ? 0 : 1)
+                    .overlay {
+                        if listening, let talk { ListeningText(text: talk.preview) }
+                    }
+                if let talk { MicButton(talk: talk) }
                 // UI1 part 4: Send, or Stop while a reply is being written or spoken.
                 SendButton(canStop: model.canStop, canSend: model.isConnected && model.draft.input != nil,
                            onSend: { _ = model.send() }, onStop: { _ = model.stop() })
@@ -94,8 +113,8 @@ struct ChatView: View {
             .background(JarvisTheme.panel.color, in: .rect(cornerRadius: 8))
             .overlay {
                 RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(composerFocused ? JarvisTheme.cyan.color : JarvisTheme.cyanDim.color,
-                                  lineWidth: composerFocused ? 1.5 : 1)
+                    .strokeBorder(composerFocused || listening ? JarvisTheme.cyan.color : JarvisTheme.cyanDim.color,
+                                  lineWidth: composerFocused || listening ? 1.5 : 1)
             }
             .padding(8)
             .onChange(of: model.draft.text) { model.noteTyping() }   // U1: typing holds an update back

@@ -13,7 +13,7 @@ struct JarvisSwiftUIApp: App {
         // (ChatLaunch), and is not restored from the last launch. Closing it leaves JARVIS
         // running; the Dock icon and the menu's Open Chat bring it back.
         Window("JARVIS", id: ChatView.windowID) {
-            ChatView(model: appDelegate.chat, onAppear: { openWindow in
+            ChatView(model: appDelegate.chat, talk: appDelegate.talk, onAppear: { openWindow in
                 appDelegate.openChat = { openWindow(id: ChatView.windowID) }
             }, onWindow: { appDelegate.chatWindowAppeared($0) })
         }

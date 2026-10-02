@@ -89,9 +89,26 @@ struct MicCaptureTests {
         let fake = FakeMicInput(format: AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 1)!,
                                 failFormat: true)
         let mic = MicCapture(makeInput: { fake })
+        let frames = await mic.frames()
         await #expect(throws: MicError.self) { try await mic.start() }
         #expect(await mic.isOpen == false)
         #expect(fake.starts == 0)
+        // The subscriber's stream finished: nothing waits on a microphone that never opened.
+        var count = 0
+        for await _ in frames { count += 1 }
+        #expect(count == 0)
+        #expect(await mic.subscriberCount == 0)
+    }
+
+    @Test("the meter reads -55 dBFS as 0, -15 dBFS as 1, and -35 dBFS in between")
+    func level() {
+        func frame(_ amplitude: Double) -> MicFrame {
+            MicFrame(samples: [Int16](repeating: Int16(amplitude), count: MicFrame.sampleCount), index: 0)
+        }
+        #expect(frame(0).level == 0)
+        #expect(frame(32768 * pow(10, -60.0 / 20)).level == 0)
+        #expect(frame(32767).level == 1)
+        #expect(abs(frame(32768 * pow(10, -35.0 / 20)).level - 0.5) < 0.01)
     }
 
     @Test("the mic is open only between start and stop, and every subscriber gets every frame")
