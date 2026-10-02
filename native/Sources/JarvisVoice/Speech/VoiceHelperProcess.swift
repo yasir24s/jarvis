@@ -1,3 +1,4 @@
+import AVFAudio
 import Foundation
 
 /// The jarvis-voice helper JARVIS.app carries in `Contents/Helpers/` (build-app.sh) and the voice
@@ -8,8 +9,8 @@ import Foundation
 /// with the words exact at both. A `cfg` of 0 garbled the words, so cfg keeps its default.
 /// The speed is the `voiceSpeed` setting (P5): at F5's own speed of 1 the clone spoke about 140
 /// words a minute, under conversation's 155 to 165. The app reads the setting for each reply
-/// (U1 part 5): SpeechQueue times the reply with it, and when it changed since the last reply
-/// it releases the helper, which the next request starts again with the new `--speed`.
+/// (U1 part 5): when it changed since the last reply SpeechQueue releases the helper, which the
+/// next request starts again with the new `--speed`.
 public struct VoiceHelperSetup: VoiceHelperLauncher {
     /// What the helper loads from `assets` (install-voice-assets.sh copies exactly these).
     public static let assetFiles = [
@@ -89,6 +90,25 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
         ["--assets", assets.path(percentEncoded: false), "--out-dir", outDirectory.path(percentEncoded: false),
          "--cache-limit-mb", String(Self.cacheLimitMB), "--steps", String(Self.steps),
          "--speed", String(speed), "--idle-exit", String(Self.idleExitSeconds)]
+    }
+
+    /// F5's frames for `text` by the helper's own rule (`Voice.frames`): the reference's frames
+    /// (its samples over a hop of 256), plus its frames per UTF-8 byte of reference text times
+    /// the text's bytes, over the speed. nil when the reference cannot be read.
+    public func frames(forSpokenText text: String) -> Int? {
+        let reference = assets.appending(path: "reference", directoryHint: .isDirectory)
+        guard let samples = try? AVAudioFile(forReading: reference.appending(path: "reference.wav")).length,
+              let words = try? String(contentsOf: reference.appending(path: "reference.txt"), encoding: .utf8)
+        else { return nil }
+        return Self.frames(referenceSamples: Int(samples),
+                           referenceTextBytes: words.trimmingCharacters(in: .whitespacesAndNewlines).utf8.count,
+                           textBytes: text.utf8.count, speed: speed)
+    }
+
+    public static func frames(referenceSamples: Int, referenceTextBytes: Int, textBytes: Int, speed: Double) -> Int {
+        let referenceFrames = referenceSamples / 256
+        return referenceFrames
+            + Int(Double(referenceFrames) / Double(max(1, referenceTextBytes)) * Double(textBytes) / speed)
     }
 
     public func isInstalled() -> Bool {

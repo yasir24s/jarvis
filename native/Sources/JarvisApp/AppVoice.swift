@@ -27,7 +27,7 @@ final class AppVoice {
         let f5 = F5Engine(launcher: setup)
         self.f5 = f5
         queue = SpeechQueue(engine: f5, fallback: SayEngine(), player: EnginePlayer(),
-                            timing: SpeechQueue.f5Timing, speed: VoiceHelperSetup.speedFromDefaults,
+                            speed: VoiceHelperSetup.speedFromDefaults, tooLong: { f5.tooLong($0) },
                             helperFootprintMB: { f5.lastFootprintMB },
                             log: { JarvisLog.log($0, category: .voice) })
     }

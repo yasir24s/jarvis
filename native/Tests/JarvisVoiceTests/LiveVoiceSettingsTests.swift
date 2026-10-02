@@ -4,8 +4,9 @@ import Testing
 @testable import JarvisVoice
 
 /// U1 part 5: the voice settings are read when they are used, never once for the life of the
-/// process. voiceSpeed for each reply and at each helper launch; voiceChunkChars for each reply.
-/// The settings come through injected closures here: nothing reads or writes the app's defaults.
+/// process: voiceSpeed for each reply and at each helper launch. (V1 part 2 removed
+/// voiceChunkChars: every reply is generated whole.) The settings come through injected closures
+/// here: nothing reads or writes the app's defaults.
 @Suite("U1 voice settings are read live")
 struct LiveVoiceSettingsTests {
     /// A setting the test changes between replies.
@@ -20,8 +21,6 @@ struct LiveVoiceSettingsTests {
         [Float](repeating: 0.1, count: max(1, text.unicodeScalars.count))
     }
 
-    /// 83 + 1 + 36 characters: at speed 1 the first part's audio covers the second's generation,
-    /// so they are two parts; at 1.4 it does not, and the reply is one part.
     static let first = "I've taken the liberty of silencing your notifications until the meeting ends, sir."
     static let second = "Shall I also alert the fire brigade?"
 
@@ -44,29 +43,26 @@ struct LiveVoiceSettingsTests {
         #expect(argument(fixed.arguments) == String(VoiceHelperSetup.defaultSpeed))
     }
 
-    @Test func eachReplyIsTimedAtTheSpeedReadForIt() async {
-        #expect(SpeechQueue.chunks(Self.first + " " + Self.second, limit: 160) == [Self.first, Self.second])
-        #expect(SpeechQueue.chunks(Self.first + " " + Self.second, limit: 160,
-                                   timing: SpeechQueue.f5Timing.at(speed: 1.4)) == [Self.first + " " + Self.second])
+    /// V1 part 2: the speed no longer decides any split; at every speed the reply is one request.
+    @Test func eachReplyIsWholeAtTheSpeedReadForIt() async {
         let f5 = FakeEngine(.f5, respond: Self.quick)
         let speed = Setting(1.0)
         let speech = SpeechQueue(engine: f5, fallback: FakeEngine(.say, respond: Self.quick), player: FakePlayer(),
-                                 chunkChars: { 160 }, timing: SpeechQueue.f5Timing, speed: { speed.current },
-                                 log: { _ in })
+                                 speed: { speed.current }, log: { _ in })
         await speech.say(Self.first + " " + Self.second, turn: UUID())
         await speech.idle()
-        #expect(await f5.asked == [Self.first, Self.second])
         speed.set(1.4)
         await speech.say(Self.first + " " + Self.second, turn: UUID())
         await speech.idle()
-        #expect(await f5.asked == [Self.first, Self.second, Self.first + " " + Self.second])
+        #expect(await f5.asked == [Self.first + " " + Self.second, Self.first + " " + Self.second])
+        #expect(await f5.releases == 1)
     }
 
     @Test func aNewSpeedReleasesTheVoiceOnceSoItStartsAgainAtIt() async {
         let f5 = FakeEngine(.f5, respond: Self.quick)
         let speed = Setting(1.15)
         let speech = SpeechQueue(engine: f5, fallback: FakeEngine(.say, respond: Self.quick), player: FakePlayer(),
-                                 chunkChars: { 160 }, speed: { speed.current }, log: { _ in })
+                                 speed: { speed.current }, log: { _ in })
         await speech.say("Good evening, sir.", turn: UUID())
         await speech.idle()
         #expect(await f5.releases == 0, "the first reply starts the voice at the speed it reads")
@@ -83,31 +79,15 @@ struct LiveVoiceSettingsTests {
         #expect(await f5.asked.count == 4)
     }
 
-    @Test func withoutASpeedTheQueueKeepsItsTimingAndNeverReleases() async {
+    @Test func withoutASpeedTheQueueNeverReleases() async {
         let f5 = FakeEngine(.f5, respond: Self.quick)
         let speech = SpeechQueue(engine: f5, fallback: FakeEngine(.say, respond: Self.quick), player: FakePlayer(),
-                                 chunkChars: { 160 }, log: { _ in })
+                                 log: { _ in })
         await speech.say(Self.first + " " + Self.second, turn: UUID())
         await speech.idle()
         await speech.say("Once more.", turn: UUID())
         await speech.idle()
-        #expect(await f5.asked == [Self.first, Self.second, "Once more."])
+        #expect(await f5.asked == [Self.first + " " + Self.second, "Once more."])
         #expect(await f5.releases == 0)
-    }
-
-    @Test func theChunkLimitIsReadForEachReply() async {
-        let f5 = FakeEngine(.f5, respond: Self.quick)
-        let limit = Setting(160)
-        let speech = SpeechQueue(engine: f5, fallback: FakeEngine(.say, respond: Self.quick), player: FakePlayer(),
-                                 chunkChars: { limit.current }, timing: SpeechQueue.f5Timing.at(speed: 1.4),
-                                 log: { _ in })
-        let reply = "One two three. Four five six."
-        await speech.say(reply, turn: UUID())
-        await speech.idle()
-        #expect(await f5.asked == [reply])
-        limit.set(20)
-        await speech.say(reply, turn: UUID())
-        await speech.idle()
-        #expect(await f5.asked == [reply, "One two three.", "Four five six."])
     }
 }
