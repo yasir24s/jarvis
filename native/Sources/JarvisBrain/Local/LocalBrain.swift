@@ -73,6 +73,9 @@ public actor LocalBrain: LocalGenerating {
         self.log = log
     }
 
+    /// MEM1 part 1: the model's context size, for the memory block's budget.
+    public var contextSize: Int { get async { await model.contextSize } }
+
     /// `temperature 0.6`; 200 response tokens for voice, 600 for text.
     public static func options(for channel: Channel) -> GenerationOptions {
         GenerationOptions(temperature: temperature,

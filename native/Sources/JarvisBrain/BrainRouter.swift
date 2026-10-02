@@ -118,7 +118,11 @@ public struct BrainRouter: Sendable {
         if channel == .text {
             research.bump(ResearchKey.interactionsText, by: 1)                       // step 5
         }
-        let memory = recall?.appendix(for: text) ?? .none                              // D-51 P2
+        // D-51 P2; MEM1 part 1: the on-device block fits that model's real context.
+        var memory = MemoryRecall.Appendix.none
+        if let recall {
+            memory = recall.appendix(for: text, localContextSize: await local.contextSize)
+        }
         let system = Self.prompt(head, channel: channel, memory: memory.claude,      // step 10
                                  memoryTools: recall != nil)
         let localSystem = Self.prompt(head, channel: channel, memory: memory.local, memoryTools: false)

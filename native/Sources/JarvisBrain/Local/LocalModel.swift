@@ -17,6 +17,13 @@ public protocol LocalLanguageModel: Sendable {
                budget: LocalCallBudget) async -> [DynamicTool]
     /// A new session holding `instructions` and `tools`, for one turn only.
     func session(instructions: String, tools: [DynamicTool]) async -> any LocalModelSession
+    /// MEM1 part 1: the tokens the model's context holds.
+    var contextSize: Int { get async }
+}
+
+public extension LocalLanguageModel {
+    /// A fake that does not say has the context the budgets were first sized for.
+    var contextSize: Int { get async { MemoryRecall.referenceContextSize } }
 }
 
 /// One turn's conversation. Each element of the stream is the whole reply so far
@@ -56,6 +63,9 @@ public struct SystemLocalModel: LocalLanguageModel {
     public func session(instructions: String, tools: [DynamicTool]) async -> any LocalModelSession {
         FoundationSession(session: LanguageModelSession(model: model, tools: tools, instructions: instructions))
     }
+
+    /// `SystemLanguageModel.contextSize` (back-deployed: 4,096 before macOS 27).
+    public var contextSize: Int { get async { model.contextSize } }
 }
 
 /// A `LanguageModelSession` behind `LocalModelSession`. Stopping the stream early (the

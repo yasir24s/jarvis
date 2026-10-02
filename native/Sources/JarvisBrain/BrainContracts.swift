@@ -31,6 +31,12 @@ public enum LocalOutcome: Sendable, Equatable {
 public protocol LocalGenerating: Sendable {
     func generate(system: String, user: String, channel: Channel, turn: TurnContext,
                   sink: ReplySink) async -> LocalOutcome
+    /// MEM1 part 1: the tokens the on-device model's context holds, which sizes its memory block.
+    var contextSize: Int { get async }
+}
+
+public extension LocalGenerating {
+    var contextSize: Int { get async { MemoryRecall.referenceContextSize } }
 }
 
 /// T3.4 is the Claude brain BrainRouter calls.

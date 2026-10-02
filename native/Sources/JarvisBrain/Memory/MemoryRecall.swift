@@ -12,8 +12,8 @@ import JarvisCore
 ///   hand-edited or file-sourced fact that reads as an instruction never reaches a prompt.
 /// - A note about someone else (P4) is shown as about that person (`MemoryFact.shown`), never
 ///   as the user's.
-/// - Budget: the whole block, header included, is at most `localBudget` estimated tokens for
-///   the on-device model and `claudeBudget` for Claude. The estimate is
+/// - Budget: the whole block, header included, is at most `localBudget(contextSize:)` estimated
+///   tokens for the on-device model and `claudeBudget` for Claude (and ChatGPT). The estimate is
 ///   `estimatedTokens`: UTF-8 bytes / 4, rounded up. Facts are taken in relevance order and
 ///   the first one that would overflow ends the block.
 /// - No fact, or none relevant, adds nothing: the prompt is then byte-identical to the one
@@ -23,9 +23,20 @@ public final class MemoryRecall: MemorySearching, Sendable {
     /// question scored 0.34-0.47 against its fact, unrelated commands 0.22-0.40 against their
     /// closest fact.
     public static let embeddingThreshold = 0.3
-    /// Estimated tokens for the whole block.
+    /// Estimated tokens for the whole block, for a model with `referenceContextSize` tokens.
     public static let localBudget = 200
     public static let claudeBudget = 800
+    /// The context size `localBudget` was sized for.
+    public static let referenceContextSize = 4096
+
+    /// MEM1 part 1: the on-device block's budget for a model whose context holds `contextSize`
+    /// tokens: `localBudget` at 4,096, in proportion to the context beyond it (400 at 8,192), and
+    /// never above `claudeBudget`. The block is part of the instructions L2 counts, so a larger
+    /// block leaves L2 fewer tokens for tools; it never pushes out more than it adds.
+    public static func localBudget(contextSize: Int) -> Int {
+        guard contextSize > 0 else { return localBudget }
+        return min(claudeBudget, localBudget * contextSize / referenceContextSize)
+    }
     /// Claude's block's first line, after the blank line that separates it from what precedes
     /// it. P4: it says plainly that the block holds only a few notes, and that search_memory
     /// finds the rest, so a stored fact the block leaves out is never denied.
@@ -76,12 +87,14 @@ public final class MemoryRecall: MemorySearching, Sendable {
         return file.facts.filter { vectors.vector(forFact: $0.text) != nil }.count
     }
 
-    /// The appendix both brains get for `message`.
-    public func appendix(for message: String) -> Appendix {
+    /// The appendix the brains get for `message`; the on-device block fits a model with
+    /// `localContextSize` tokens of context.
+    public func appendix(for message: String, localContextSize: Int = MemoryRecall.referenceContextSize) -> Appendix {
         let facts = relevant(to: message)
         guard !facts.isEmpty else { return .none }
         return Appendix(claude: Self.block(facts, budget: Self.claudeBudget),
-                        local: Self.block(facts, budget: Self.localBudget, header: Self.localHeader))
+                        local: Self.block(facts, budget: Self.localBudget(contextSize: localContextSize),
+                                          header: Self.localHeader))
     }
 
     /// The facts at or above the threshold, most relevant first.
