@@ -16,14 +16,18 @@ actor AppListening: VoiceListening {
     private let permissions: any PermissionAsking
     private var session: Task<TranscriptOutcome, Never>?
 
+    /// - makeInput, recognizer and permissions: the device, Apple's transcriber and TCC in the
+    ///   app; tests pass fakes.
     init(core: CoreState, research: any ResearchCounting, permissions: any PermissionAsking = SystemPermissions(),
+         makeInput: @escaping @Sendable () -> any MicInput = { EngineMicInput() },
+         recognizer: any SpeechRecognizing = AppleSpeechRecognizer(),
          log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .voice) }) {
         self.core = core
         self.log = log
         self.permissions = permissions
-        mic = MicCapture(log: log)
+        mic = MicCapture(makeInput: makeInput, log: log)
         transcriber = Transcriber(
-            recognizer: AppleSpeechRecognizer(), research: research,
+            recognizer: recognizer, research: research,
             corrections: { text in
                 do {
                     return try await core.applyCorrections(text)

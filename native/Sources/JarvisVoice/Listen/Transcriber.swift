@@ -64,10 +64,11 @@ public enum ConfidenceGuard {
     /// came back as "Java" once and "Zander" once, at 0.688 and 0.674). White noise alone made the
     /// model hallucinate "Yeah, it's - it's - it's ..." at 0.048 (about -20 dBFS, unseeded) and at
     /// 0.042 and 0.037 (-10 dBFS, seeds 1 and 4); silence, hum, a chord melody and the other noise
-    /// clips gave no result at all. 0.3 sits in that gap with room on
-    /// both sides, and is Whisper's own floor (`avg_logprob < -1.2`, J:946) read as a probability:
-    /// exp(-1.2) = 0.30. The user's own voice through the Mac's microphone is not measured yet; each
-    /// utterance's log line gives its confidence for that.
+    /// clips gave no result at all; a fragment cut off mid-word where a session ended read 0.27
+    /// (`ListeningMeasureTests`). 0.3 drops the hallucinations and the clipped fragment and keeps
+    /// every whole sentence, with room above it, and is Whisper's own floor (`avg_logprob < -1.2`,
+    /// J:946) read as a probability: exp(-1.2) = 0.30. The user's own voice through the Mac's
+    /// microphone is not measured yet; each utterance's log line gives its confidence for that.
     public static let defaultMinimum = 0.3
 
     /// `JARVIS_STT_MIN_CONF` (the plan's proposed name) when it parses as a number in 0...1.
