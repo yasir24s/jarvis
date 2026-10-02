@@ -537,6 +537,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return }
             if self.chat.sendVoice(text) == nil { self.hud.listeningEnded() }
         }
+        // Part 5: the first time the microphone or speech recognition is found denied, the chat
+        // says how to allow it in System Settings.
+        talk.onDenied = { [weak self] access in
+            if let text = PushToTalkModel.explanation(access) { self?.chat.post(text) }
+        }
         talkKeys = PushToTalkKeys(talk: talk, chatWindow: { [weak self] in self?.chatWindow })
         talkHotKey = GlobalHotKey { [weak self] in self?.pushToTalkHotKey() }
         if talkHotKey == nil {

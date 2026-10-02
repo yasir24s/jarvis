@@ -13,12 +13,14 @@ actor AppListening: VoiceListening {
     private let transcriber: Transcriber
     private let core: CoreState
     private let log: @Sendable (String) -> Void
+    private let permissions: any PermissionAsking
     private var session: Task<TranscriptOutcome, Never>?
 
-    init(core: CoreState, research: any ResearchCounting,
+    init(core: CoreState, research: any ResearchCounting, permissions: any PermissionAsking = SystemPermissions(),
          log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .voice) }) {
         self.core = core
         self.log = log
+        self.permissions = permissions
         mic = MicCapture(log: log)
         transcriber = Transcriber(
             recognizer: AppleSpeechRecognizer(), research: research,
@@ -33,8 +35,19 @@ actor AppListening: VoiceListening {
             log: log)
     }
 
+    /// M9a part 5: the microphone's prompt and then speech recognition's, the first time each is
+    /// needed; a refusal is logged and the chat explains it.
     func access() async -> ListeningAccess {
-        .granted
+        switch await ListeningPermissions.ask(permissions) {
+        case .granted:
+            return .granted
+        case .microphoneDenied:
+            log("push-to-talk: microphone access is denied")
+            return .microphoneDenied
+        case .speechRecognitionDenied:
+            log("push-to-talk: speech recognition is denied")
+            return .speechRecognitionDenied
+        }
     }
 
     func begin(level: @escaping @Sendable (Double) -> Void,

@@ -47,8 +47,13 @@ struct OptionSpaceTests {
 /// A listener for the snapshots: opens at once, and the test sends its level and live text.
 final class SnapshotListener: VoiceListening, @unchecked Sendable {
     private let hooks = Mutex<((@Sendable (Double) -> Void)?, (@Sendable (String) -> Void)?)>((nil, nil))
+    let answer: ListeningAccess
 
-    func access() async -> ListeningAccess { .granted }
+    init(access: ListeningAccess = .granted) {
+        answer = access
+    }
+
+    func access() async -> ListeningAccess { answer }
 
     func begin(level: @escaping @Sendable (Double) -> Void,
                preview: @escaping @Sendable (String) -> Void) async throws {
@@ -106,6 +111,26 @@ struct PushToTalkSnapshotTests {
         await Self.settle { quiet.notice != nil }
         url = try await UISnapshot.write(ChatView(model: model, talk: quiet), size: CGSize(width: 560, height: 420),
                                          name: "m9-part3-mic-nothing-heard")
+        print("M9 snapshot \(url.path)")
+    }
+
+    /// Part 5: the microphone denied. The composer says so, and the chat explains it once.
+    @Test func microphoneDenied() async throws {
+        let model = await ChatSnapshotTests.model()
+        let talk = PushToTalkModel(sleep: { _ in try await Task.sleep(for: .seconds(600)) })
+        talk.onDenied = { access in
+            if let text = PushToTalkModel.explanation(access) { model.post(text) }
+        }
+        talk.connect(SnapshotListener(access: .microphoneDenied))
+        talk.buttonDown()
+        talk.buttonUp()
+        await Self.settle { talk.notice != nil }
+        talk.buttonDown()
+        talk.buttonUp()
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(model.messages.filter { $0.text == PushToTalkModel.explanation(.microphoneDenied) }.count == 1)
+        let url = try await UISnapshot.write(ChatView(model: model, talk: talk), size: CGSize(width: 560, height: 520),
+                                             name: "m9-part5-microphone-denied")
         print("M9 snapshot \(url.path)")
     }
 
