@@ -92,9 +92,17 @@ final class MicConverter {
     init(from input: AVAudioFormat) throws(MicError) {
         guard input.sampleRate > 0, input.channelCount > 0 else { throw .noInputDevice("\(input)") }
         guard let c = AVAudioConverter(from: input, to: Self.target) else { throw .cannotConvert("\(input)") }
+        // With voice processing on, the input has 5 to 7 channels at 96 kHz, each carrying the
+        // processed microphone (seen on a MacBook Pro, M11 part 1). Channel 0 is the one taken,
+        // never a mix of them.
+        if input.channelCount > 1 { c.channelMap = [0] }
         converter = c
+        format = input
         ratio = MicFrame.sampleRate / input.sampleRate
     }
+
+    /// The input format this converter takes.
+    let format: AVAudioFormat
 
     /// The buffer's audio at 16 kHz. Empty when the converter fails (the caller logs nothing per
     /// buffer: a failing converter would fail on every one).
@@ -129,76 +137,40 @@ final class StreamingInput: @unchecked Sendable {
     }
 }
 
-/// The hardware side of `MicCapture`. The app uses `EngineMicInput`; tests use a fake that
-/// pushes generated buffers, so no test opens the microphone.
+/// The hardware side of `MicCapture`. The app uses `HubMicInput`, the microphone through the one
+/// `AudioHub`; tests use a fake that pushes generated buffers, so no test opens the microphone.
 public protocol MicInput: AnyObject {
-    /// The format the tap will deliver. Throws when there is no usable input device.
+    /// Opens the input and returns the format the tap will deliver. Throws when there is no usable
+    /// input device.
     func inputFormat() throws(MicError) -> AVAudioFormat
-    /// Delivers buffers in `inputFormat()` to `tap`, on a thread of the input's choosing, until `stop()`.
+    /// Delivers buffers to `tap`, on a thread of the input's choosing, until `stop()`. A device
+    /// change can change their format.
     func start(tap: @escaping @Sendable (AVAudioPCMBuffer, UInt64) -> Void) throws(MicError)
     /// Stops delivering and lets the device go.
     func stop()
 }
 
-/// An AVAudioEngine of its own with a tap on the input node. It is a separate engine from the
-/// speech player's (`EnginePlayer`), which never touches its input node, so V1's output path is
-/// unchanged. No voice processing yet: push-to-talk stops his speech before it listens.
-/// The engine is created on `inputFormat()` and released on `stop()`, so nothing holds the
-/// microphone between sessions.
-public final class EngineMicInput: MicInput {
-    /// The plan's tap size (§3.3): about 43 ms at 48 kHz.
-    static let tapFrames: AVAudioFrameCount = 2048
-    private var engine: AVAudioEngine?
-
-    public init() {}
-
-    public func inputFormat() throws(MicError) -> AVAudioFormat {
-        let e = engine ?? AVAudioEngine()
-        engine = e
-        let format = e.inputNode.outputFormat(forBus: 0)
-        guard format.sampleRate > 0, format.channelCount > 0 else {
-            engine = nil
-            throw .noInputDevice("\(format)")
-        }
-        return format
-    }
-
-    public func start(tap: @escaping @Sendable (AVAudioPCMBuffer, UInt64) -> Void) throws(MicError) {
-        let format = try inputFormat()
-        guard let e = engine else { throw .noInputDevice("no engine") }
-        e.inputNode.installTap(onBus: 0, bufferSize: Self.tapFrames, format: format) { buffer, when in
-            tap(buffer, when.hostTime)
-        }
-        e.prepare()
-        do {
-            try e.start()
-        } catch {
-            e.inputNode.removeTap(onBus: 0)
-            engine = nil
-            throw .cannotStart("\(error)")
-        }
-    }
-
-    public func stop() {
-        guard let e = engine else { return }
-        e.inputNode.removeTap(onBus: 0)
-        e.stop()
-        engine = nil
-    }
-}
-
 /// The tap's own state: touched only from the tap's thread, one buffer at a time.
 private final class TapState: @unchecked Sendable {
-    private let converter: MicConverter
+    private var converter: MicConverter?
+    private var format: AVAudioFormat
     private var slicer = FrameSlicer()
     private let out: AsyncStream<MicFrame>.Continuation
 
     init(converter: MicConverter, out: AsyncStream<MicFrame>.Continuation) {
         self.converter = converter
+        format = converter.format
         self.out = out
     }
 
     func process(_ buffer: AVAudioPCMBuffer, hostTime: UInt64) {
+        // After a device change the hub's engine is rebuilt, and its buffers can come in another
+        // format: a converter for it, or nothing while there is none.
+        if buffer.format != format {
+            format = buffer.format
+            converter = try? MicConverter(from: buffer.format)
+        }
+        guard let converter else { return }
         for frame in slicer.append(converter.convert(buffer), hostTime: hostTime) { out.yield(frame) }
     }
 }
@@ -220,7 +192,7 @@ public actor MicCapture {
     private var pump: Task<Void, Never>?
     private var subscribers: [UUID: AsyncStream<MicFrame>.Continuation] = [:]
 
-    public init(makeInput: @escaping @Sendable () -> any MicInput = { EngineMicInput() },
+    public init(makeInput: @escaping @Sendable () -> any MicInput = { HubMicInput() },
                 log: @escaping @Sendable (String) -> Void = { _ in }) {
         self.makeInput = makeInput
         self.log = log
@@ -264,6 +236,8 @@ public actor MicCapture {
                 throw error
             }
         } catch {
+            // The input may have opened before the converter or the tap failed: let it go.
+            device.stop()
             for c in subscribers.values { c.finish() }
             subscribers.removeAll()
             log("mic: cannot open (\(error))")

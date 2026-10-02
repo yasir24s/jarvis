@@ -9,8 +9,9 @@ public protocol SpeechPlayer: Sendable {
     func stop() async
 }
 
-/// The one AVAudioEngine with an AVAudioPlayerNode, fed 24 kHz float32 buffers; the main mixer
-/// converts them to the output device's rate. Output only: the input node is never touched, so
+/// His speech on `AudioHub`'s speech player (M11 part 1: the one engine, so voice processing
+/// hears him and cancels him from the microphone), fed 24 kHz float32 buffers; the main mixer
+/// converts them to the output device's rate. While nothing listens the hub is output only, so
 /// playing asks for no microphone access.
 ///
 /// Every part goes through `Loudness.expanded` (V1 part 3: the quiet tail after each word drops
@@ -30,26 +31,18 @@ public actor EnginePlayer: SpeechPlayer {
     /// can drop scheduled buffers without calling back.
     static let completionSlack = Duration.seconds(2)
 
-    private let engine = AVAudioEngine()
-    private let node = AVAudioPlayerNode()
-    private let format: AVAudioFormat
-    private var attached = false
-    private var playing: PlaybackWait?
+    private let hub: AudioHub
 
-    public init() {
-        // Float32, 24 kHz, two channels, deinterleaved: a format AVAudioFormat always accepts.
-        format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: Self.sampleRate, channels: 2,
-                               interleaved: false)!
+    public init(hub: AudioHub = .shared) {
+        self.hub = hub
     }
 
-    /// For tests: the same player with its engine in offline manual rendering mode, rendering to
-    /// `output`, so nothing reaches a device and `renderOffline` pulls what it plays. Offline,
-    /// AVAudioPlayerNode never calls back `.dataPlayedBack`, so a `play` ends with `stop()` (or the
-    /// watchdog).
+    /// For tests: the same player on a hub whose engine is in offline manual rendering mode,
+    /// rendering to `output`, so nothing reaches a device and `renderOffline` pulls what it plays.
+    /// Offline, AVAudioPlayerNode never calls back `.dataPlayedBack`, so a `play` ends with
+    /// `stop()` (or the watchdog).
     init(offline output: AVAudioFormat) throws {
-        format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: Self.sampleRate, channels: 2,
-                               interleaved: false)!
-        try engine.enableManualRenderingMode(.offline, format: output, maximumFrameCount: Self.offlineFrames)
+        hub = try AudioHub(offline: output)
     }
 
     public func play(_ chunk: PCMChunk) async throws {
@@ -57,70 +50,21 @@ public actor EnginePlayer: SpeechPlayer {
         guard chunk.sampleRate == Self.sampleRate else {
             throw SpeechEngineError(.error, "the player takes 24 kHz audio, not \(chunk.sampleRate) Hz")
         }
-        if !attached {
-            engine.attach(node)
-            engine.connect(node, to: engine.mainMixerNode, format: format)
-            attached = true
-        }
-        if !engine.isRunning {
-            try engine.start()
-        }
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(chunk.samples.count)),
-              let channels = buffer.floatChannelData else {
-            throw SpeechEngineError(.error, "cannot allocate \(chunk.samples.count) frames")
-        }
-        buffer.frameLength = AVAudioFrameCount(chunk.samples.count)
         let part = Loudness.normalized(chunk.samples, sampleRate: Self.sampleRate, lift: Self.outputLiftDB)
-        for c in 0..<Int(format.channelCount) {
-            part.withUnsafeBufferPointer { channels[c].update(from: $0.baseAddress!, count: $0.count) }
-        }
-
-        let wait = PlaybackWait()
-        playing = wait
         let limit = Duration.seconds(Double(chunk.samples.count) / Self.sampleRate) + Self.completionSlack
-        let watchdog = Task {
-            try? await Task.sleep(for: limit)
-            wait.resume()
-        }
-        await withTaskCancellationHandler {
-            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-                wait.set(continuation)
-                node.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { _ in wait.resume() }
-                node.play()
-            }
-        } onCancel: {
-            wait.resume()
-        }
-        watchdog.cancel()
-        if playing === wait { playing = nil }
-        // A cancelled chunk is silenced here, on the actor, before the caller moves on.
-        if Task.isCancelled { node.stop() }
+        try await hub.play(HubAudio(channels: [part, part], sampleRate: Self.sampleRate), on: .speech, limit: limit)
     }
 
     public func stop() {
-        playing?.resume()
-        playing = nil
-        if attached { node.stop() }
+        hub.stop(.speech)
     }
 
-    static let offlineFrames: AVAudioFrameCount = 4096
+    static let offlineFrames = SystemHubEngine.offlineFrames
 
     /// For tests: the next `frames` (at most `offlineFrames`) of an offline engine's output, one
     /// array per channel; nothing while no `play` has started the engine.
     func renderOffline(frames: AVAudioFrameCount) throws -> [[Float]] {
-        guard engine.isRunning else { return [] }
-        let output = engine.manualRenderingFormat
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: output, frameCapacity: frames),
-              let channels = buffer.floatChannelData else {
-            throw SpeechEngineError(.error, "cannot allocate \(frames) frames")
-        }
-        let status = try engine.renderOffline(frames, to: buffer)
-        guard status == .success else {
-            throw SpeechEngineError(.error, "offline rendering returned \(status.rawValue)")
-        }
-        return (0..<Int(output.channelCount)).map {
-            Array(UnsafeBufferPointer(start: channels[$0], count: Int(buffer.frameLength)))
-        }
+        try hub.renderOffline(frames: frames)
     }
 }
 

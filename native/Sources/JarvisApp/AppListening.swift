@@ -21,7 +21,7 @@ actor AppListening: VoiceListening {
     /// - makeInput, recognizer and permissions: the device, Apple's transcriber and TCC in the
     ///   app; tests pass fakes.
     init(core: CoreState, research: any ResearchCounting, permissions: any PermissionAsking = SystemPermissions(),
-         makeInput: @escaping @Sendable () -> any MicInput = { EngineMicInput() },
+         makeInput: @escaping @Sendable () -> any MicInput = { HubMicInput() },
          recognizer: any SpeechRecognizing = AppleSpeechRecognizer(),
          log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .voice) }) {
         self.core = core

@@ -70,10 +70,10 @@ public actor TakeRecorder {
     private let timeout: Duration
     private let log: @Sendable (String) -> Void
 
-    /// - makeInput: the device in the app (`EngineMicInput`); tests pass a fake.
+    /// - makeInput: the microphone through the app's one `AudioHub` (`HubMicInput`); tests pass a fake.
     /// - timeout: how long a take may take before the microphone is closed: the take's 3.92 s
     ///   and 3 s to spare.
-    public init(makeInput: @escaping @Sendable () -> any MicInput = { EngineMicInput() },
+    public init(makeInput: @escaping @Sendable () -> any MicInput = { HubMicInput() },
                 timeout: Duration = .seconds(7), log: @escaping @Sendable (String) -> Void = { _ in }) {
         self.makeInput = makeInput
         self.timeout = timeout
