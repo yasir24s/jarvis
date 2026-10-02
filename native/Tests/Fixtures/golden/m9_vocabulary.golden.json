@@ -1,0 +1,234 @@
+{
+ "schema": 1,
+ "suite": "m9_vocabulary",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "default_prompt",
+   "input": {},
+   "expected": {
+    "whisper_prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis."
+   }
+  },
+  {
+   "name": "no_files",
+   "input": {
+    "base": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.",
+    "profile": null,
+    "corrections": null
+   },
+   "expected": {
+    "prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis."
+   }
+  },
+  {
+   "name": "name_only",
+   "input": {
+    "base": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.",
+    "profile": "{\n \"facts\": {\n  \"name\": {\n   \"value\": \"Ada\",\n   \"updated\": 1790582400.0\n  }\n }\n}",
+    "corrections": null
+   },
+   "expected": {
+    "prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis. Also: Ada."
+   }
+  },
+  {
+   "name": "empty_name",
+   "input": {
+    "base": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.",
+    "profile": "{\n \"facts\": {\n  \"name\": {\n   \"value\": \"\",\n   \"updated\": 1790582400.0\n  }\n }\n}",
+    "corrections": null
+   },
+   "expected": {
+    "prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis."
+   }
+  },
+  {
+   "name": "no_name_fact",
+   "input": {
+    "base": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.",
+    "profile": "{\n \"facts\": {\n  \"city\": {\n   \"value\": \"Leeds\"\n  }\n }\n}",
+    "corrections": null
+   },
+   "expected": {
+    "prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis."
+   }
+  },
+  {
+   "name": "name_not_object",
+   "input": {
+    "base": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.",
+    "profile": "{\n \"facts\": {\n  \"name\": \"Ada\"\n }\n}",
+    "corrections": null
+   },
+   "expected": {
+    "prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis."
+   }
+  },
+  {
+   "name": "corrupt_profile",
+   "input": {
+    "base": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.",
+    "profile": "{not json",
+    "corrections": "[\n {\n  \"heard\": \"heard 0\",\n  \"meant\": \"Safari\",\n  \"at\": 1790582400.0\n }\n]"
+   },
+   "expected": {
+    "prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis. Also: Safari."
+   }
+  },
+  {
+   "name": "three_corrections",
+   "input": {
+    "base": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.",
+    "profile": null,
+    "corrections": "[\n {\n  \"heard\": \"heard 0\",\n  \"meant\": \"Grace Hopper\",\n  \"at\": 1790582400.0\n },\n {\n  \"heard\": \"heard 1\",\n  \"meant\": \"Zanzibar\",\n  \"at\": 1790582401.0\n },\n {\n  \"heard\": \"heard 2\",\n  \"meant\": \"kettle\",\n  \"at\": 1790582402.0\n }\n]"
+   },
+   "expected": {
+    "prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis. Also: Grace Hopper, Zanzibar, kettle."
+   }
+  },
+  {
+   "name": "fifteen_corrections",
+   "input": {
+    "base": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.",
+    "profile": "{\n \"facts\": {\n  \"name\": {\n   \"value\": \"Ada\",\n   \"updated\": 1790582400.0\n  }\n }\n}",
+    "corrections": "[\n {\n  \"heard\": \"heard 0\",\n  \"meant\": \"word00\",\n  \"at\": 1790582400.0\n },\n {\n  \"heard\": \"heard 1\",\n  \"meant\": \"word01\",\n  \"at\": 1790582401.0\n },\n {\n  \"heard\": \"heard 2\",\n  \"meant\": \"word02\",\n  \"at\": 1790582402.0\n },\n {\n  \"heard\": \"heard 3\",\n  \"meant\": \"word03\",\n  \"at\": 1790582403.0\n },\n {\n  \"heard\": \"heard 4\",\n  \"meant\": \"word04\",\n  \"at\": 1790582404.0\n },\n {\n  \"heard\": \"heard 5\",\n  \"meant\": \"word05\",\n  \"at\": 1790582405.0\n },\n {\n  \"heard\": \"heard 6\",\n  \"meant\": \"word06\",\n  \"at\": 1790582406.0\n },\n {\n  \"heard\": \"heard 7\",\n  \"meant\": \"word07\",\n  \"at\": 1790582407.0\n },\n {\n  \"heard\": \"heard 8\",\n  \"meant\": \"word08\",\n  \"at\": 1790582408.0\n },\n {\n  \"heard\": \"heard 9\",\n  \"meant\": \"word09\",\n  \"at\": 1790582409.0\n },\n {\n  \"heard\": \"heard 10\",\n  \"meant\": \"word10\",\n  \"at\": 1790582410.0\n },\n {\n  \"heard\": \"heard 11\",\n  \"meant\": \"word11\",\n  \"at\": 1790582411.0\n },\n {\n  \"heard\": \"heard 12\",\n  \"meant\": \"word12\",\n  \"at\": 1790582412.0\n },\n {\n  \"heard\": \"heard 13\",\n  \"meant\": \"word13\",\n  \"at\": 1790582413.0\n },\n {\n  \"heard\": \"heard 14\",\n  \"meant\": \"word14\",\n  \"at\": 1790582414.0\n }\n]"
+   },
+   "expected": {
+    "prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis. Also: Ada, word03, word04, word05, word06, word07, word08, word09, word10, word11, word12, word13, word14."
+   }
+  },
+  {
+   "name": "repeats",
+   "input": {
+    "base": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.",
+    "profile": "{\n \"facts\": {\n  \"name\": {\n   \"value\": \"Ada\",\n   \"updated\": 1790582400.0\n  }\n }\n}",
+    "corrections": "[\n {\n  \"heard\": \"heard 0\",\n  \"meant\": \"kettle\",\n  \"at\": 1790582400.0\n },\n {\n  \"heard\": \"heard 1\",\n  \"meant\": \"Ada\",\n  \"at\": 1790582401.0\n },\n {\n  \"heard\": \"heard 2\",\n  \"meant\": \"kettle\",\n  \"at\": 1790582402.0\n },\n {\n  \"heard\": \"heard 3\",\n  \"meant\": \"toaster\",\n  \"at\": 1790582403.0\n },\n {\n  \"heard\": \"heard 4\",\n  \"meant\": \"Ada\",\n  \"at\": 1790582404.0\n }\n]"
+   },
+   "expected": {
+    "prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis. Also: Ada, kettle, toaster."
+   }
+  },
+  {
+   "name": "meant_in_prompt",
+   "input": {
+    "base": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.",
+    "profile": "{\n \"facts\": {\n  \"name\": {\n   \"value\": \"Jarvis\",\n   \"updated\": 1790582400.0\n  }\n }\n}",
+    "corrections": "[\n {\n  \"heard\": \"heard 0\",\n  \"meant\": \"calendar\",\n  \"at\": 1790582400.0\n },\n {\n  \"heard\": \"heard 1\",\n  \"meant\": \"Chrome\",\n  \"at\": 1790582401.0\n }\n]"
+   },
+   "expected": {
+    "prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis. Also: Jarvis, calendar, Chrome."
+   }
+  },
+  {
+   "name": "dropped_entries",
+   "input": {
+    "base": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.",
+    "profile": null,
+    "corrections": "[\n {\n  \"heard\": \"x y\",\n  \"meant\": \"\"\n },\n {\n  \"heard\": \"\",\n  \"meant\": \"lost\"\n },\n \"not a pair\",\n {\n  \"meant\": \"no heard\"\n },\n {\n  \"heard\": \"kept one\",\n  \"meant\": \"Pembrokeshire\"\n }\n]"
+   },
+   "expected": {
+    "prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis. Also: Pembrokeshire."
+   }
+  },
+  {
+   "name": "accents",
+   "input": {
+    "base": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.",
+    "profile": "{\n \"facts\": {\n  \"name\": {\n   \"value\": \"Zo\\u00eb\",\n   \"updated\": 1790582400.0\n  }\n }\n}",
+    "corrections": "[\n {\n  \"heard\": \"heard 0\",\n  \"meant\": \"caf\\u00e9\",\n  \"at\": 1790582400.0\n },\n {\n  \"heard\": \"heard 1\",\n  \"meant\": \"cafe\\u0301\",\n  \"at\": 1790582401.0\n },\n {\n  \"heard\": \"heard 2\",\n  \"meant\": \"caf\\u00e9\",\n  \"at\": 1790582402.0\n }\n]"
+   },
+   "expected": {
+    "prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis. Also: Zoë, café, café."
+   }
+  },
+  {
+   "name": "unicode_name",
+   "input": {
+    "base": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis.",
+    "profile": "{\n \"facts\": {\n  \"name\": {\n   \"value\": \"\\u674e\\u534e\",\n   \"updated\": 1790582400.0\n  }\n }\n}",
+    "corrections": "[\n {\n  \"heard\": \"heard 0\",\n  \"meant\": \"na\\u00efve\",\n  \"at\": 1790582400.0\n }\n]"
+   },
+   "expected": {
+    "prompt": "A short voice command spoken to JARVIS, a personal assistant. Vocabulary: Jarvis, calendar, reminder, alarm, timer, volume, brightness, screenshot, weather, news, Safari, Chrome, thank you, that's all Jarvis. Also: 李华, naïve."
+   }
+  },
+  {
+   "name": "custom_prompt",
+   "input": {
+    "base": "Words for the decoder. Vocabulary: Ada, Lovelace.",
+    "profile": "{\n \"facts\": {\n  \"name\": {\n   \"value\": \"Grace\",\n   \"updated\": 1790582400.0\n  }\n }\n}",
+    "corrections": null
+   },
+   "expected": {
+    "prompt": "Words for the decoder. Vocabulary: Ada, Lovelace. Also: Grace."
+   }
+  },
+  {
+   "name": "no_vocabulary_label",
+   "input": {
+    "base": "Just a sentence about JARVIS.",
+    "profile": null,
+    "corrections": "[\n {\n  \"heard\": \"heard 0\",\n  \"meant\": \"kettle\",\n  \"at\": 1790582400.0\n }\n]"
+   },
+   "expected": {
+    "prompt": "Just a sentence about JARVIS. Also: kettle."
+   }
+  },
+  {
+   "name": "two_labels",
+   "input": {
+    "base": "Vocabulary: one, two. Vocabulary: three , four.",
+    "profile": null,
+    "corrections": null
+   },
+   "expected": {
+    "prompt": "Vocabulary: one, two. Vocabulary: three , four."
+   }
+  },
+  {
+   "name": "odd_spacing",
+   "input": {
+    "base": "Vocabulary:  alpha ,beta.. , ,  gamma .",
+    "profile": null,
+    "corrections": null
+   },
+   "expected": {
+    "prompt": "Vocabulary:  alpha ,beta.. , ,  gamma ."
+   }
+  },
+  {
+   "name": "empty_prompt",
+   "input": {
+    "base": "",
+    "profile": "{\n \"facts\": {\n  \"name\": {\n   \"value\": \"Ada\",\n   \"updated\": 1790582400.0\n  }\n }\n}",
+    "corrections": null
+   },
+   "expected": {
+    "prompt": " Also: Ada."
+   }
+  },
+  {
+   "name": "empty_prompt_no_extras",
+   "input": {
+    "base": "",
+    "profile": null,
+    "corrections": null
+   },
+   "expected": {
+    "prompt": ""
+   }
+  }
+ ]
+}

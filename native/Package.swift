@@ -44,7 +44,8 @@ let package = Package(
         .testTarget(name: "JarvisBrainTests", dependencies: ["JarvisBrain", "JarvisTools", "JarvisTestSupport"]),
 
         // M8 voice out (plan: M08-M13 §3.2, D-54): the F5 clone through the jarvis-voice helper,
-        // `say` as the fallback, the speech queue and the one player. Foundation and AVFAudio only.
+        // `say` as the fallback, the speech queue and the one player. Foundation and AVFAudio only,
+        // and (M9) Speech for the on-device transcriber.
         // The helper is a package of its own (VoiceHelper/), so this package never depends on MLX.
         // M10 speaker verification (§3.5) adds the ORT C API and dlopens webrtcvad's .so.
         .target(name: "JarvisVoice", dependencies: ["JarvisCore", "COnnxRuntime"]),

@@ -102,7 +102,7 @@ final class MicConverter {
 
 /// Hands the converter one buffer, then `.noDataNow` rather than `.endOfStream`: the converter
 /// keeps the samples it holds back for resampling and carries on with the next buffer.
-private final class StreamingInput: @unchecked Sendable {
+final class StreamingInput: @unchecked Sendable {
     private let buffer: AVAudioPCMBuffer
     private var given = false
 
