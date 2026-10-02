@@ -147,6 +147,12 @@ Line numbers refer to jarvis.py @ 68cd112.
 | DEV-V1-05 | V1 | (P5) Speed 1.15 | Speed 1.2 (176 to 195 words a minute; 1.25 garbled 5 of 12 takes) | The user: faster and more human | `LiveVoiceSettingsTests` | `proposed` | V1 report part 4 |
 | DEV-V1-06 | V1 | The file scan reads while he speaks | The scan and its reader wait while speech is generated or played | Speech and the scan shared the GPU | `TurnActivityTests`, `FileScannerTests` | `proposed` | V1 report part 5 |
 | DEV-V1-07 | V1 | (M8) The helper idles out after 5 minutes and keeps MLX's cache | It loads on typing (Speak replies on), idles out after 10 minutes, and clears MLX's cache after each reply (992 MB between replies became 479 MB) | Faster first reply, less memory | `F5EngineTests`, `VoiceLiveTests` (gated) | `proposed` | V1 report part 5 |
+| DEV-UI1-01 | UI1 | The HUD shows for voice turns only, with the app as an accessory (no Dock icon) | The HUD also shows for typed turns (thinking, then speaking with sentence captions), with Show HUD on by default; JARVIS stays a regular app (D-43) | The user: bring the Python HUD back (D-58) | `HUDTests`, `HUDPanelTests` | `proposed` | UI1 report part 3 |
+| DEV-UI1-02 | UI1 | (D-10) Return during the chat's own turn neither sends nor queues | It stops the reply and sends the message afterwards as added context for the same request; voice-busy turns are still refused | The user: interrupt to add context, as in Claude | `StopTests`, `ChatViewModelTests` | `proposed` | UI1 report part 4 |
+| DEV-UI1-03 | UI1 | No stop | A stopped turn closes (the gateway refuses later tool calls), stops speech, has no local fallback, keeps the text shown so far in history (Python pops the user's message on a local failure), drops its stashed confirmation, and shows or speaks nothing more | Stop and Esc, as in Claude | `StopTurnTests` | `proposed` | UI1 report part 4 |
+| DEV-UI1-04 | UI1 | `history.json` is append-and-trim only | An edit rewinds it to before the replaced turns, within the 12-turn window, in the same format | Edit and re-run | `SupersedeTests` | `proposed` | UI1 report part 5 |
+| DEV-UI1-05 | UI1 | (P2) Archive lines have no turn id | Each message line ends with a turn id, an edit appends a supersede line, and the compile, the file search and the index skip superseded turns | Edited-away turns never become memory | `SupersedeTests`, `MemoryArchiveTurnTests` | `proposed` | UI1 report part 5 |
+| DEV-UI1-06 | UI1 | No stop, edit or added context | The dataset still counts real turns and decrements nothing. A stopped turn counts as an interaction; a stopped Claude turn with text bumps the `claude (partial)` backend counter; an edit's re-run counts as a new interaction; an edit or added-context message within 30 s and over 0.65 similar bumps `rephrase_suspected` | Recorded so the analysis can read them | `StopTests`, `SupersedeTests` | `proposed` | UI1 report part 5 |
 
 The M7 table gives one fixture for all 15 `DEV-M7-*` / `DEV-M14-*` rows (§8.1 heading:
 "fixture §4.2"). For the `DEV-M14-*` rows that marker was carried over as written; the
@@ -154,15 +160,15 @@ loop behaviours may need their own tests at M14.
 
 ## Counts
 
-124 entries: 60 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
+130 entries: 60 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
 DEV-M7-01, DEV-M7-02, DEV-M7-05, R9 → D-18, DEV-M0-01 to DEV-M0-03, DEV-M1-01 to DEV-M1-04, D1a,
 D1b, D1c, D5a, R8-str-float, R8-load-not-dict, R8-nan-sort, R8-kb-summary-not-str,
 R8-list-content, DEV-M3-01 to DEV-M3-14, DEV-M4-01, DEV-M4-02, DEV-P1-01, DEV-P1-02, DEV-P2-01,
 DEV-P3-01, DEV-M5-01 to DEV-M5-05, R11, R12, R13), 1 `approved (overage kill-switch only)`
-(X-10), 1 `rejected` (X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 61 proposed: 20 `proposed —
+(X-10), 1 `rejected` (X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 67 proposed: 20 `proposed —
 decide at milestone start`, plus DEV-M8-01 to DEV-M8-04, DEV-P4-01 to DEV-P4-06, DEV-P5-01,
 DEV-P6-01 to DEV-P6-06, DEV-P6b-01 to DEV-P6b-06, DEV-U1-01 to DEV-U1-02, DEV-W1-01 to
-DEV-W1-09 and DEV-V1-01 to DEV-V1-07.
+DEV-W1-09, DEV-V1-01 to DEV-V1-07 and DEV-UI1-01 to DEV-UI1-06.
 
 ## Not registered: differences mentioned only in the M05 §3.5 tool table
 
