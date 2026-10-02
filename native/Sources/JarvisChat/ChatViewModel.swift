@@ -60,6 +60,8 @@ public final class ChatViewModel: ReplySink {
     /// V1 part 1: each typed message the composer sends, with the moment it was sent, before
     /// its turn starts (the voice's acknowledgement). A refused confirmation is not sent.
     @ObservationIgnored public var onSend: ((String, ContinuousClock.Instant) -> Void)?
+    /// V1 part 5: each change to the composer's text (the voice warms up while the user types).
+    @ObservationIgnored public var onTyping: (() -> Void)?
 
     @ObservationIgnored private var submitter: (any TurnSubmitting)?
     @ObservationIgnored private var backendName: (@Sendable () async -> String)?
@@ -123,9 +125,10 @@ public final class ChatViewModel: ReplySink {
         draft.notePaste()
     }
 
-    /// The composer's text changed: the user is typing (`lastUse`).
+    /// The composer's text changed: the user is typing (`lastUse`, and `onTyping`).
     public func noteTyping() {
         lastUse = clock.now()
+        onTyping?()
     }
 
     /// The restored scroll position, once: the chat view applies it and it is gone.

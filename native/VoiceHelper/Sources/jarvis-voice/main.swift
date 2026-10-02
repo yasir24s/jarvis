@@ -15,8 +15,12 @@ import Vocos
 //        where path is a raw float32 little-endian mono file in --out-dir (the caller deletes it)
 //     -> {"id", "ok": false, "error"}
 //   {"cmd": "ping"} -> {"cmd": "ping", "ok": true, "loaded", "footprint_mb"}
-// The model loads on the first request and stays loaded. The helper exits on stdin EOF, or
-// after --idle-exit seconds with no request, which hands its memory back to the system.
+//   {"cmd": "load"} -> {"cmd": "load", "ok": true, "loaded": true, "footprint_mb"}, or ok false
+//     with an error: loads the model now (V1 part 5, so it is ready before the first request)
+// The model loads on the first request or load and stays loaded. After each reply MLX's buffer
+// cache is cleared (V1 part 5), so between replies the helper holds the model and little else;
+// stderr logs the footprint before and after. The helper exits on stdin EOF, or after
+// --idle-exit seconds with no request, which hands its memory back to the system.
 //
 // --render <list> (V1 part 1): each line of <list> is "<name>\t<text>"; the text is rendered and
 // written to <out-dir>/<name>.wav (32-bit float, 24 kHz mono), then the helper exits, 0 when
@@ -330,11 +334,21 @@ func handle(line: Data) {
         return
     }
     if let cmd = request.cmd {
-        guard cmd == "ping" else {
+        switch cmd {
+        case "ping":
+            send(Reply(id: request.id, cmd: "ping", ok: true, footprintMb: Int(footprintMB().now.rounded()),
+                       loaded: voice != nil))
+        case "load":
+            do {
+                _ = try loadedVoice()
+                send(Reply(id: request.id, cmd: "load", ok: true, footprintMb: Int(footprintMB().now.rounded()),
+                           loaded: true))
+            } catch {
+                send(Reply(id: request.id, cmd: "load", ok: false, error: "\(error)"))
+            }
+        default:
             send(Reply(id: request.id, cmd: cmd, ok: false, error: "unknown cmd \(cmd)"))
-            return
         }
-        send(Reply(id: request.id, cmd: "ping", ok: true, footprintMb: Int(footprintMB().now.rounded()), loaded: voice != nil))
         return
     }
     guard let id = request.id, let uuid = UUID(uuidString: id) else {
@@ -352,12 +366,27 @@ func handle(line: Data) {
         let genMs = Int((seconds(ContinuousClock.now - start) * 1000).rounded())
         let file = outDir.appendingPathComponent("\(uuid.uuidString).f32")
         try writeRawFloat32(samples, to: file)
+        let after = clearCache()
         send(Reply(
             id: id, ok: true, path: file.path, samples: samples.count, rate: F5TTS.sampleRate,
-            genMs: genMs, footprintMb: Int(footprintMB().now.rounded())))
+            genMs: genMs, footprintMb: Int(after.rounded())))
     } catch {
+        clearCache()
         send(Reply(id: id, ok: false, error: "\(error)"))
     }
+}
+
+/// Hands MLX's cached buffers back (V1 part 5), logs the footprint before and after, and returns
+/// the footprint after, in MB.
+@discardableResult
+func clearCache() -> Double {
+    let before = footprintMB()
+    let c0 = ContinuousClock.now
+    MLX.GPU.clearCache()
+    let after = footprintMB()
+    log(String(format: "reply done: footprint %.0f MB, %.0f MB after clearing the cache in %.1f ms (peak %.0f MB)",
+               before.now, after.now, seconds(ContinuousClock.now - c0) * 1000, after.peak))
+    return after.now
 }
 
 do {

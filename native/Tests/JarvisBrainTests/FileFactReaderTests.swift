@@ -172,6 +172,25 @@ struct FileFactReaderTests {
         #expect(rig.local.calls.count == 1)
     }
 
+    /// V1 part 5: the voice speaking holds a read back as a turn does.
+    @Test func everyReadWaitsWhileTheVoiceSpeaks() async throws {
+        let polls = Mutex(0)
+        let rig = try Rig(local: ScriptedWriter(.reply("The user keeps bees.")),
+                          sleep: { _ in
+                              polls.withLock { $0 += 1 }
+                              try await Task.sleep(for: .milliseconds(5), clock: .suspending)
+                          })
+        defer { rig.sandbox.remove() }
+        rig.turns.speechBegan()
+        let reader = rig.reader
+        let read = Task { await reader.read("Bees.", kind: .plainText, digest: digest) }
+        while polls.withLock({ $0 }) < 5 { try await Task.sleep(for: .milliseconds(5), clock: .suspending) }
+        #expect(rig.local.calls.isEmpty)                                   // still waiting
+        rig.turns.speechEnded()
+        #expect(await read.value == .read(.local, added: 1, updated: 0, dropped: 0))
+        #expect(rig.local.calls.count == 1)
+    }
+
     @Test func aTurnBetweenClaudesPartsHoldsTheNextPart() async throws {
         let rig = try Rig(claude: ScriptedWriter(.reply("NONE"), .reply("NONE")))
         defer { rig.sandbox.remove() }

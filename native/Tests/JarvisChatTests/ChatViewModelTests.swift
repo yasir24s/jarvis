@@ -288,6 +288,17 @@ struct ChatViewModelTests {
         #expect(turns.map(\.channel) == [.text])
     }
 
+    @Test("V1: each change to the composer's text calls the typing hook")
+    func typingHookSeesEachChange() {
+        let model = ChatViewModel()
+        var typed = 0
+        model.onTyping = { typed += 1 }
+        model.noteTyping()
+        model.noteTyping()
+        #expect(typed == 2)
+        #expect(model.lastUse != nil)
+    }
+
     @Test("V1: the send hook sees each sent message once, as shown, and nothing that was not sent")
     func sendHookSeesEachSentMessage() async throws {
         let outcomes = Outcomes([.reply("It is three o'clock, sir."), .reply("Done, sir.")])

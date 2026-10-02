@@ -50,6 +50,8 @@ final class FakeHelperConnection: VoiceHelperConnection {
 
     struct State {
         var requests: [[String: String]] = []
+        /// `cmd` lines (V1 part 5's "load"), answered ok.
+        var commands: [String] = []
         var closedGracefully = false
         var terminated = false
         var exited = false
@@ -62,11 +64,22 @@ final class FakeHelperConnection: VoiceHelperConnection {
     }
 
     var requests: [[String: String]] { state.withLock { $0.requests } }
+    var commands: [String] { state.withLock { $0.commands } }
     var closedGracefully: Bool { state.withLock { $0.closedGracefully } }
     var terminated: Bool { state.withLock { $0.terminated } }
 
     func send(_ line: String) throws {
         let object = try JSONSerialization.jsonObject(with: Data(line.utf8))
+        if let command = (object as? [String: String])?["cmd"] {
+            let alive = state.withLock { state -> Bool in
+                guard !state.exited else { return false }
+                state.commands.append(command)
+                return true
+            }
+            guard alive else { throw CocoaError(.fileWriteUnknown) }
+            yield(["cmd": command, "ok": true, "loaded": true, "footprint_mb": 900])
+            return
+        }
         guard let request = object as? [String: String], let id = request["id"], let text = request["text"] else {
             throw CocoaError(.coderInvalidValue)
         }
@@ -146,6 +159,7 @@ final class FakeLauncher: VoiceHelperLauncher {
     var connections: [FakeHelperConnection] { state.withLock { $0.connections } }
     var launches: Int { state.withLock { $0.connections.count } }
     var requests: [[String: String]] { connections.flatMap(\.requests) }
+    var commands: [String] { connections.flatMap(\.commands) }
 
     func setInstalled(_ installed: Bool) { state.withLock { $0.installed = installed } }
     func setLaunchFails(_ fails: Bool) { state.withLock { $0.launchFails = fails } }
@@ -251,6 +265,11 @@ actor FakeEngine: SpeechEngine {
     private(set) var releases = 0
 
     func release() async { releases += 1 }
+
+    /// How many times the queue warmed this engine (V1 part 5).
+    private(set) var warms = 0
+
+    func warm() async { warms += 1 }
 }
 
 /// Collects log lines.

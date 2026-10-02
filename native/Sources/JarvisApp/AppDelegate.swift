@@ -385,6 +385,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard self.speakReplies.isOn else { return }
             voice.acknowledge(text, sentAt: sentAt)
         }
+        // V1 part 5: typing with Speak replies on starts the voice, so the reply does not wait for it.
+        chat.onTyping = { [weak self] in
+            guard let self else { return }
+            self.speakReplies.refresh()
+            guard self.speakReplies.isOn else { return }
+            voice.warm()
+        }
         // P2: the long-term memory in memory/, on the same lease-holding store. Local dates
         // follow the Mac's time zone as it changes.
         // P6: a first launch has no memory folder yet (looked at before anything writes). The
@@ -415,6 +422,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Python's is_online(): asked only when a turn reaches the brain.
             online: { await Net.isOnline() })
         brain = assembly
+        voice.activity = assembly.turnActivity   // V1 part 5: speech holds the file scan back
         // P1: the hourly consolidation check starts now (first pass in 120 s); the chat's
         // dismissals reach it through the coordinator once the brain has started. P2's fact
         // compile runs in the same dismissal task, so stopping the schedule stops it too.

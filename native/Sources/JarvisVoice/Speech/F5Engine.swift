@@ -62,6 +62,8 @@ public actor F5Engine: SpeechEngine {
     private var waiting: [String: CheckedContinuation<HelperReply, any Error>] = [:]
     private var timers: [String: Task<Void, Never>] = [:]
     private var failuresInARow = 0
+    /// The helper that has loaded the model, or been asked to (`warm`, or a reply).
+    private var loadedConnection: Int?
 
     public init(launcher: any VoiceHelperLauncher, timeout: Duration = F5Engine.defaultTimeout,
                 now: @escaping @Sendable () -> ContinuousClock.Instant = { ContinuousClock.now }) {
@@ -109,6 +111,18 @@ public actor F5Engine: SpeechEngine {
             }
             continuation.onTermination = { _ in task.cancel() }
         }
+    }
+
+    /// V1 part 5: starts the helper, if none is running, and has it load the model now
+    /// (`{"cmd": "load"}`), so the reply after the message being typed waits for neither. Nothing
+    /// when F5 is unavailable or this helper has already loaded it or been asked to. A helper
+    /// that cannot start is not counted as a failure here: the request that follows meets it.
+    public func warm() async {
+        guard isAvailable else { return }
+        if connection != nil, loadedConnection == connectionNumber { return }
+        guard let helper = try? connect() else { return }
+        loadedConnection = connectionNumber
+        try? helper.send(#"{"cmd":"load"}"#)
     }
 
     /// Closes the helper's stdin and waits up to 2 s for it to exit (idle, or quit).
@@ -175,6 +189,7 @@ public actor F5Engine: SpeechEngine {
             throw SpeechEngineError(.error, "cannot read the voice helper's audio: \(error)")
         }
         failuresInARow = 0
+        if number == connectionNumber { loadedConnection = number }
         return samples
     }
 

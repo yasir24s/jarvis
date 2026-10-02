@@ -4,7 +4,8 @@ import Foundation
 /// The jarvis-voice helper JARVIS.app carries in `Contents/Helpers/` (build-app.sh) and the voice
 /// assets `native/scripts/install-voice-assets.sh` puts in `~/Library/Application Support/JARVIS/voice/`.
 /// The arguments are D-54's: MLX's cache capped at 512 MB, F5 at 4 steps, and an exit after
-/// 5 idle minutes, which hands the helper's memory back to the system. D-54 had 8 steps; the
+/// 10 idle minutes (V1 part 5; D-54 had 5), which hands the helper's memory back to the system.
+/// The helper also clears MLX's cache after each reply. D-54 had 8 steps; the
 /// user chose 4 on 2026-10-01, when one 5.8 s sentence took 7.7 s at 4 against 18.0 s at 8
 /// with the words exact at both. A `cfg` of 0 garbled the words, so cfg keeps its default.
 /// The speed is the `voiceSpeed` setting (P5): at F5's own speed of 1 the clone spoke about 140
@@ -23,7 +24,7 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
     ]
     public static let cacheLimitMB = 512
     public static let steps = 4
-    public static let idleExitSeconds = 300
+    public static let idleExitSeconds = 600
     /// Where `voiceSpeed` is read from: SpeechQueue's suite.
     public static let speedKey = "voiceSpeed"
     public static let defaultSpeed = 1.2

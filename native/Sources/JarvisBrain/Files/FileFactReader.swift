@@ -146,7 +146,7 @@ public final class ClaudeReadQuota: Sendable {
 /// 1. The text is redacted (`Redactor`) before either model sees it.
 /// 2. It goes to the on-device model alone when it fits `LocalFileBudget`, else to Claude in
 ///    parts of `FileReading.claudePartCharacters`, if `ClaudeReadQuota` has room.
-/// 3. Every call first waits while a turn runs.
+/// 3. Every call first waits while a turn runs or the voice speaks (V1 part 5).
 /// 4. Every reply line passes P2's validator; the kept lines are merged by `FactMerge` with
 ///    `source: file:<digest>`, in one atomic write under the lease.
 /// 5. (P4) The readers are told the user's name and whose document counts as the user's. A
@@ -217,12 +217,12 @@ public struct FileFactReader: Sendable {
         do {
             switch route {
             case .local:
-                try await turns.waitUntilIdle(sleep: sleep)
+                try await turns.waitUntilQuiet(sleep: sleep)
                 replies = [try await local.complete(system: FileReading.system(userName: userName),
                                                     user: FileReading.prompt(clean, kind: kind),
                                                     timeout: FileReading.timeout)]
             case .claude(let count):
-                try await turns.waitUntilIdle(sleep: sleep)
+                try await turns.waitUntilQuiet(sleep: sleep)
                 guard quota.take() else { return .overClaudeQuota }
                 replies = try await readWithClaude(FileReading.parts(clean), kind: kind, count: count)
             }
@@ -277,12 +277,12 @@ public struct FileFactReader: Sendable {
         return (measure.fits ? .local : .claude(parts: FileReading.parts(clean).count), measure)
     }
 
-    /// Each part in turn, each after any running turn. Claude never starting (off, offline)
+    /// Each part in turn, each after any running turn or speech. Claude never starting (off, offline)
     /// gives the hour's read back.
     private func readWithClaude(_ parts: [String], kind: DocumentKind, count: Int) async throws -> [String] {
         var replies: [String] = []
         for (index, part) in parts.enumerated() {
-            if index > 0 { try await turns.waitUntilIdle(sleep: sleep) }
+            if index > 0 { try await turns.waitUntilQuiet(sleep: sleep) }
             do {
                 replies.append(try await claude.complete(
                     system: FileReading.system(userName: userName),

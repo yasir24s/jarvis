@@ -347,6 +347,25 @@ struct FileScannerTests {
         #expect(rig.logs.all.contains("files: learning from files was switched on"))
         await scanner.stop()
     }
+
+    /// V1 part 5: a read waits while the voice speaks, as it does while a turn runs.
+    @Test func aPassWaitsWhileTheVoiceSpeaks() async throws {
+        let rig = try ScanRig(local: ScriptedWriter(.reply("The user keeps bees.")))
+        defer { rig.remove() }
+        try rig.home.write("Documents/bees.md", "Hive notes for the summer.")
+        rig.turns.speechBegan()
+        #expect(!rig.turns.isRunning, "speech is not a turn")
+        let scanner = rig.scanner()
+        let pass = Task { await scanner.pass() }
+        func polls() -> Int { rig.sleeps.withLock { $0.filter { $0 == TurnActivity.pollInterval }.count } }
+        try await waitUntil("the pass to wait for the voice") { polls() >= 5 }
+        #expect(rig.extractor.paths.isEmpty, "nothing opened while the voice speaks")
+        #expect(rig.local.calls.isEmpty)
+        rig.turns.speechEnded()
+        let summary = await pass.value
+        #expect(summary.completed && summary.readOnDevice == 1)
+        #expect(rig.facts.map(\.text) == ["The user keeps bees."])
+    }
 }
 
 /// A consent the test switches by hand.

@@ -60,4 +60,11 @@ public protocol SpeechEngine: Actor {
     func synthesize(_ sentence: String, context: SynthesisContext) -> AsyncThrowingStream<PCMChunk, Error>
     /// Drops models and processes (idle, or quit).
     func release() async
+    /// V1 part 5: gets ready for a request that is coming (the user is typing): starts a process
+    /// and loads a model, without waiting for either. Engines with nothing to start do nothing.
+    func warm() async
+}
+
+extension SpeechEngine {
+    public func warm() async {}
 }

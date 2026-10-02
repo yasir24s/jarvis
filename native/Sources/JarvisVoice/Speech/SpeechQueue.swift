@@ -115,6 +115,18 @@ public actor SpeechQueue {
         }
     }
 
+    /// V1 part 5: has the voice get ready for a reply that is coming (the user is typing). When
+    /// the speed or the reference changed since the last reply nothing is done: that reply
+    /// releases the voice first, and a voice warmed now would be released with it.
+    public func warm() async {
+        let speed = self.speed?()
+        let reference = self.reference?()
+        let changed = (speed != nil && lastSpeed != nil && speed != lastSpeed)
+            || (reference != nil && lastReference != nil && reference != lastReference)
+        guard !changed else { return }
+        await engine.warm()
+    }
+
     /// Stops everything: the acknowledgement, and the reply being generated or played.
     public func cancelAll() async {
         let running = current

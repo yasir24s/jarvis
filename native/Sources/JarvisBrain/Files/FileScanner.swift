@@ -16,7 +16,8 @@ import Synchronization
 ///    read: the index is saved before a pass starts.
 ///
 /// Between files it backs off while the thermal state is serious or Low Power Mode is on,
-/// and every read waits while a turn runs. After a pass, files left waiting for Claude's
+/// and every read waits while a turn runs or the voice speaks (V1 part 5:
+/// `TurnActivity.waitUntilQuiet`). After a pass, files left waiting for Claude's
 /// hourly allowance are read as it frees up; the next walk starts `rewalkInterval` after the
 /// pass ended and reads only new or changed files. Logs carry counts and digest prefixes,
 /// never a path, text or fact.
@@ -271,7 +272,7 @@ public actor FileScanner {
         }
         do {
             try await paced()
-            try await turns.waitUntilIdle(sleep: sleep)
+            try await turns.waitUntilQuiet(sleep: sleep)
         } catch {
             return .stop
         }

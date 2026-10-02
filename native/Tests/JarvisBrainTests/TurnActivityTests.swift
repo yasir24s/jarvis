@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 @testable import JarvisBrain
 import JarvisCore
 import JarvisTestSupport
@@ -45,5 +46,34 @@ struct TurnActivityTests {
         activity.end()
         activity.end()                                                    // never below zero
         #expect(!activity.isRunning)
+    }
+
+    /// V1 part 5: speech holds the file scan back (`waitUntilQuiet`) but is not a turn: the idle
+    /// compile's `waitUntilIdle` and `lastActivity` do not see it.
+    @Test func speechHoldsTheQuietWaitButIsNotATurn() async throws {
+        let clock = ManualClock(1_790_582_400)
+        let activity = TurnActivity(clock: clock)
+        activity.speechBegan()
+        #expect(activity.isSpeaking && !activity.isRunning)
+        #expect(activity.lastActivity == nil)
+        try await activity.waitUntilIdle(sleep: { _ in Issue.record("waitUntilIdle slept for speech") })
+        let slept = Mutex(0)
+        let waiter = Task {
+            try await activity.waitUntilQuiet(sleep: { _ in
+                slept.withLock { $0 += 1 }
+                try await Task.sleep(for: .milliseconds(2))
+            })
+        }
+        while slept.withLock({ $0 }) < 3 { try await Task.sleep(for: .milliseconds(2)) }
+        activity.speechEnded()
+        try await waiter.value
+        activity.begin()                                                   // a turn holds it too
+        let turnWaiter = Task { try await activity.waitUntilQuiet(sleep: { _ in try await Task.sleep(for: .milliseconds(2)) }) }
+        try await Task.sleep(for: .milliseconds(20))
+        activity.end()
+        try await turnWaiter.value
+        activity.speechEnded()                                             // never below zero
+        #expect(!activity.isSpeaking)
+        try await activity.waitUntilQuiet(sleep: { _ in Issue.record("slept while quiet") })
     }
 }

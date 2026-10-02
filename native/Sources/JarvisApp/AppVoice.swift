@@ -1,12 +1,15 @@
 import Foundation
+import JarvisBrain
 import JarvisCore
 import JarvisVoice
 
 /// The app's voice (M8, D-54): the F5 clone through the jarvis-voice helper in
 /// `Contents/Helpers/`, macOS `say` as the fallback, and the one player, all behind SpeechQueue.
-/// Nothing starts until a reply is spoken: the helper is launched by its first request and exits
-/// after 5 idle minutes. Its stderr goes to `jarvis-voice/helper.log` in the temporary folder.
-/// V1 part 1: a typed message is acknowledged at once with a line the clone rendered at install.
+/// Nothing starts until the user types with Speak replies on (V1 part 5: the helper is launched
+/// and loads the model then) or a reply is spoken, and the helper exits after 10 idle minutes.
+/// Its stderr goes to `jarvis-voice/helper.log` in the temporary folder. V1 part 1: a typed
+/// message is acknowledged at once with a line the clone rendered at install. V1 part 5: while
+/// anything is spoken, `activity` holds the file scan back.
 @MainActor
 final class AppVoice {
     let f5: F5Engine
@@ -19,6 +22,9 @@ final class AppVoice {
     /// Clips read so far, by file.
     private var clips: [URL: PCMChunk] = [:]
     private var reportedMissingClip = false
+    /// The brain's turn activity, set once the brain is built: speech holds the file scan back.
+    var activity: TurnActivity?
+    private var lastWarm: ContinuousClock.Instant?
 
     init() {
         let folder = FileManager.default.temporaryDirectory.appending(path: "jarvis-voice", directoryHint: .isDirectory)
@@ -58,13 +64,27 @@ final class AppVoice {
         guard let clip = clip(url) else { return }
         recentAcknowledgements = Array((recentAcknowledgements + [line.name]).suffix(Acknowledgement.recentLimit))
         let queue = self.queue
+        let activity = self.activity
         inFlight += 1
+        activity?.speechBegan()
         Task {
             await queue.acknowledge(clip, line: line.text, sentAt: sentAt)
             await queue.idle()
+            activity?.speechEnded()
             self.inFlight -= 1
             self.lastSpoke = SystemClock().now()
         }
+    }
+
+    /// V1 part 5: the user is typing with Speak replies on: the helper starts and loads the
+    /// model now, so the reply waits for neither. At most every 5 s; the engine skips a helper
+    /// that has already loaded it.
+    func warm() {
+        let now = ContinuousClock.now
+        if let lastWarm, now - lastWarm < .seconds(5) { return }
+        lastWarm = now
+        let queue = self.queue
+        Task { await queue.warm() }
     }
 
     private func clip(_ url: URL) -> PCMChunk? {
@@ -86,10 +106,13 @@ final class AppVoice {
     /// Speaks a finished reply; a new reply cancels whatever is queued or playing.
     func speak(_ text: String, turn: UUID) {
         let queue = self.queue
+        let activity = self.activity
         inFlight += 1
+        activity?.speechBegan()
         Task {
             await queue.say(text, turn: turn)
             await queue.idle()   // this reply, or one that replaced it, is over
+            activity?.speechEnded()
             self.inFlight -= 1
             self.lastSpoke = SystemClock().now()
         }
