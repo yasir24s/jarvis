@@ -16,6 +16,20 @@ public struct VendoredAssets: Sendable, Equatable {
 
     public static let webrtcvadFile = "_webrtcvad.cpython-314-darwin.so"
     public static let speakerModelFile = "resemblyzer.onnx"
+    /// openWakeWord 0.6's three models (M11), beside the speaker model.
+    public static let wakeMelFile = "melspectrogram.onnx"
+    public static let wakeEmbeddingFile = "embedding_model.onnx"
+    public static let wakeClassifierFile = "hey_jarvis_v0.1.onnx"
+
+    /// The wake word's melspectrogram, embedding and "hey jarvis" models: build-app.sh and
+    /// vendor-voice-assets.sh put them in the same folder as the speaker model.
+    public var wakeMelModel: URL { speakerModel.deletingLastPathComponent().appendingPathComponent(Self.wakeMelFile) }
+    public var wakeEmbeddingModel: URL {
+        speakerModel.deletingLastPathComponent().appendingPathComponent(Self.wakeEmbeddingFile)
+    }
+    public var wakeClassifierModel: URL {
+        speakerModel.deletingLastPathComponent().appendingPathComponent(Self.wakeClassifierFile)
+    }
 
     public init(onnxRuntime: URL, pyStubs: URL, webrtcvad: URL, speakerModel: URL) {
         self.onnxRuntime = onnxRuntime

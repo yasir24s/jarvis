@@ -1,0 +1,2048 @@
+{
+ "schema": 1,
+ "suite": "m11_phrases",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "wake_words",
+   "input": {},
+   "expected": {
+    "WAKE_WORDS": [
+     "jarvis",
+     "hey jarvis",
+     "ok jarvis",
+     "j.a.r.v.i.s",
+     "jervis",
+     "jarvis."
+    ]
+   }
+  },
+  {
+   "name": "None",
+   "input": {
+    "text": null
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": null
+   }
+  },
+  {
+   "name": "''",
+   "input": {
+    "text": ""
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "' '",
+   "input": {
+    "text": " "
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvis'",
+   "input": {
+    "text": "jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'Jarvis'",
+   "input": {
+    "text": "Jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'JARVIS'",
+   "input": {
+    "text": "JARVIS"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hey jarvis'",
+   "input": {
+    "text": "hey jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'Hey Jarvis'",
+   "input": {
+    "text": "Hey Jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hey  jarvis'",
+   "input": {
+    "text": "hey  jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'ok jarvis'",
+   "input": {
+    "text": "ok jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'okay jarvis'",
+   "input": {
+    "text": "okay jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'OK Jarvis, open Safari'",
+   "input": {
+    "text": "OK Jarvis, open Safari"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "open safari",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarviss'",
+   "input": {
+    "text": "jarviss"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "s",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jervis'",
+   "input": {
+    "text": "jervis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'j.a.r.v.i.s'",
+   "input": {
+    "text": "j.a.r.v.i.s"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'J.A.R.V.I.S.'",
+   "input": {
+    "text": "J.A.R.V.I.S."
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvis.'",
+   "input": {
+    "text": "jarvis."
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "\"jarvis, what's the time\"",
+   "input": {
+    "text": "jarvis, what's the time"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "what's the time",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'Jarvis. Close Safari.'",
+   "input": {
+    "text": "Jarvis. Close Safari."
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "close safari.",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "\"hey jarvis what's the weather\"",
+   "input": {
+    "text": "hey jarvis what's the weather"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "what's the weather",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'can you hear me jarvis'",
+   "input": {
+    "text": "can you hear me jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "can you hear me",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'can you hear me, jarvis?'",
+   "input": {
+    "text": "can you hear me, jarvis?"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "can you hear me ?",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'open safari jarvis please'",
+   "input": {
+    "text": "open safari jarvis please"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "open safari please",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'what time is it jarvis and the date'",
+   "input": {
+    "text": "what time is it jarvis and the date"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "what time is it and the date",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'they jarvis open mail'",
+   "input": {
+    "text": "they jarvis open mail"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "open mail",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hey, jarvis, stop'",
+   "input": {
+    "text": "hey, jarvis, stop"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "stop",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'ok, jarvis'",
+   "input": {
+    "text": "ok, jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'okay. jarvis. lights'",
+   "input": {
+    "text": "okay. jarvis. lights"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "lights",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hockey jarvis'",
+   "input": {
+    "text": "hockey jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "hockey",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'say hey jarvis'",
+   "input": {
+    "text": "say hey jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "say",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvisx'",
+   "input": {
+    "text": "jarvisx"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "x",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'xjarvis'",
+   "input": {
+    "text": "xjarvis"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "x",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvis_1'",
+   "input": {
+    "text": "jarvis_1"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "_1",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvis1'",
+   "input": {
+    "text": "jarvis1"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "1",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarv is'",
+   "input": {
+    "text": "jarv is"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "jarv is",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'j.arvis'",
+   "input": {
+    "text": "j.arvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "j.arvis",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'ja.rvis'",
+   "input": {
+    "text": "ja.rvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "ja.rvis",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jar.v.i.s'",
+   "input": {
+    "text": "jar.v.i.s"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "jar.v.i.s",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'j a r v i s'",
+   "input": {
+    "text": "j a r v i s"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "j a r v i s",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'the jarvis'",
+   "input": {
+    "text": "the jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "the",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvis jarvis'",
+   "input": {
+    "text": "jarvis jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "jarvis",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hey jarvis jarvis'",
+   "input": {
+    "text": "hey jarvis jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "jarvis",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvis hey'",
+   "input": {
+    "text": "jarvis hey"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "hey",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvis;'",
+   "input": {
+    "text": "jarvis;"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "';jarvis'",
+   "input": {
+    "text": ";jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvis,,, open'",
+   "input": {
+    "text": "jarvis,,, open"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "open",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvis . . open'",
+   "input": {
+    "text": "jarvis . . open"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "open",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'  jarvis  open safari  '",
+   "input": {
+    "text": "  jarvis  open safari  "
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "open safari",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'\\tjarvis\\n'",
+   "input": {
+    "text": "\tjarvis\n"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvis\\xa0open'",
+   "input": {
+    "text": "jarvis open"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "open",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hey\\xa0jarvis'",
+   "input": {
+    "text": "hey jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hey\\u3000jarvis'",
+   "input": {
+    "text": "hey　jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'Ｊarvis'",
+   "input": {
+    "text": "Ｊarvis"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "ｊarvis",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvís'",
+   "input": {
+    "text": "jarvís"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "jarvís",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarviś'",
+   "input": {
+    "text": "jarviś"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "́",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'İ jarvis'",
+   "input": {
+    "text": "İ jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "i̇",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'JARVİS'",
+   "input": {
+    "text": "JARVİS"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "jarvi̇s",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hey travis'",
+   "input": {
+    "text": "hey travis"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "hey travis",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "\"java's great\"",
+   "input": {
+    "text": "java's great"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "java's great",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'the weather tomorrow'",
+   "input": {
+    "text": "the weather tomorrow"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "the weather tomorrow",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'nervous'",
+   "input": {
+    "text": "nervous"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "nervous",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'harvest'",
+   "input": {
+    "text": "harvest"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "harvest",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvisjarvis'",
+   "input": {
+    "text": "jarvisjarvis"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "jarvis",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hey jervis'",
+   "input": {
+    "text": "hey jervis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "hey jervis",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'ok jervis open'",
+   "input": {
+    "text": "ok jervis open"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "ok jervis open",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'j.a.r.v.i.s. open'",
+   "input": {
+    "text": "j.a.r.v.i.s. open"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "open",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvis.open'",
+   "input": {
+    "text": "jarvis.open"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "open",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvis. open'",
+   "input": {
+    "text": "jarvis. open"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "open",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hey jarvis.'",
+   "input": {
+    "text": "hey jarvis."
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'okay'",
+   "input": {
+    "text": "okay"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "okay",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hey'",
+   "input": {
+    "text": "hey"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "hey",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'ok'",
+   "input": {
+    "text": "ok"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "ok",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'they'",
+   "input": {
+    "text": "they"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "they",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'foo hey jarvis bar'",
+   "input": {
+    "text": "foo hey jarvis bar"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "foo bar",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'foo okay jarvis'",
+   "input": {
+    "text": "foo okay jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "foo",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'foo bar okay jarvis baz'",
+   "input": {
+    "text": "foo bar okay jarvis baz"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "foo bar baz",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'a\\u2003hey jarvis b'",
+   "input": {
+    "text": "a hey jarvis b"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "b",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'foo\\u2003bar hey jarvis'",
+   "input": {
+    "text": "foo bar hey jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "foo bar",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'set a timer jarvis'",
+   "input": {
+    "text": "set a timer jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "set a timer",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'jarvis, set a timer for ten minutes'",
+   "input": {
+    "text": "jarvis, set a timer for ten minutes"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "set a timer for ten minutes",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'learn my voice'",
+   "input": {
+    "text": "learn my voice"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "learn my voice",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'Learn my voice'",
+   "input": {
+    "text": "Learn my voice"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "learn my voice",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'learn my voice.'",
+   "input": {
+    "text": "learn my voice."
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "learn my voice.",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'learn my'",
+   "input": {
+    "text": "learn my"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "learn my",
+    "is_enroll": true,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'learn voice'",
+   "input": {
+    "text": "learn voice"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "learn voice",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'please learn my voice'",
+   "input": {
+    "text": "please learn my voice"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "please learn my voice",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'set up voice recognition'",
+   "input": {
+    "text": "set up voice recognition"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "set up voice recognition",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'voice recognition'",
+   "input": {
+    "text": "voice recognition"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "voice recognition",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'remember my voice jarvis'",
+   "input": {
+    "text": "remember my voice jarvis"
+   },
+   "expected": {
+    "contains_wake_word": true,
+    "extract_command": "remember my voice",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'enroll my voice'",
+   "input": {
+    "text": "enroll my voice"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "enroll my voice",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'calibrate my voice'",
+   "input": {
+    "text": "calibrate my voice"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "calibrate my voice",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'register my voice'",
+   "input": {
+    "text": "register my voice"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "register my voice",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'recognize my voice'",
+   "input": {
+    "text": "recognize my voice"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "recognize my voice",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'recognise my voice'",
+   "input": {
+    "text": "recognise my voice"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "recognise my voice",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'learn my voice please'",
+   "input": {
+    "text": "learn my voice please"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "learn my voice please",
+    "is_enroll": true,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'learn your voice'",
+   "input": {
+    "text": "learn your voice"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "learn your voice",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'learn'",
+   "input": {
+    "text": "learn"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "learn",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'my voice'",
+   "input": {
+    "text": "my voice"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "my voice",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "' learn my voice '",
+   "input": {
+    "text": " learn my voice "
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "learn my voice",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'LEARN MY VOICE'",
+   "input": {
+    "text": "LEARN MY VOICE"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "learn my voice",
+    "is_enroll": true,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'enrol my voice'",
+   "input": {
+    "text": "enrol my voice"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "enrol my voice",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'remind me to'",
+   "input": {
+    "text": "remind me to"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "remind me to",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'remind me to,'",
+   "input": {
+    "text": "remind me to,"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "remind me to,",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'remind me and'",
+   "input": {
+    "text": "remind me and"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "remind me and",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'I want to buy milk and'",
+   "input": {
+    "text": "I want to buy milk and"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "i want to buy milk and",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'open safari'",
+   "input": {
+    "text": "open safari"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "open safari",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "\"what's the weather\"",
+   "input": {
+    "text": "what's the weather"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "what's the weather",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'call mum because'",
+   "input": {
+    "text": "call mum because"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "call mum because",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'turn the'",
+   "input": {
+    "text": "turn the"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "turn the",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'turn the lights'",
+   "input": {
+    "text": "turn the lights"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "turn the lights",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'send it to'",
+   "input": {
+    "text": "send it to"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "send it to",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'give it to my'",
+   "input": {
+    "text": "give it to my"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "give it to my",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'is it yours'",
+   "input": {
+    "text": "is it yours"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "is it yours",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'ask your'",
+   "input": {
+    "text": "ask your"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "ask your",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'for'",
+   "input": {
+    "text": "for"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "for",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'and'",
+   "input": {
+    "text": "and"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "and",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'AND'",
+   "input": {
+    "text": "AND"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "and",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'And'",
+   "input": {
+    "text": "And"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "and",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'um'",
+   "input": {
+    "text": "um"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "um",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'uh'",
+   "input": {
+    "text": "uh"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "uh",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'er'",
+   "input": {
+    "text": "er"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "er",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'erm'",
+   "input": {
+    "text": "erm"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "erm",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'so'",
+   "input": {
+    "text": "so"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "so",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'then'",
+   "input": {
+    "text": "then"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "then",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'I'",
+   "input": {
+    "text": "I"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "i",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'i'",
+   "input": {
+    "text": "i"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "i",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'you'",
+   "input": {
+    "text": "you"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "you",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'please'",
+   "input": {
+    "text": "please"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "please",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'the'",
+   "input": {
+    "text": "the"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "the",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'a'",
+   "input": {
+    "text": "a"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "a",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'an'",
+   "input": {
+    "text": "an"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "an",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'my'",
+   "input": {
+    "text": "my"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "my",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'of'",
+   "input": {
+    "text": "of"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "of",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'in'",
+   "input": {
+    "text": "in"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "in",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'on'",
+   "input": {
+    "text": "on"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "on",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'at'",
+   "input": {
+    "text": "at"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "at",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'that'",
+   "input": {
+    "text": "that"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "that",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'with'",
+   "input": {
+    "text": "with"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "with",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'but'",
+   "input": {
+    "text": "but"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "but",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'or'",
+   "input": {
+    "text": "or"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "or",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'because'",
+   "input": {
+    "text": "because"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "because",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'to'",
+   "input": {
+    "text": "to"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "to",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'theory'",
+   "input": {
+    "text": "theory"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "theory",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'band'",
+   "input": {
+    "text": "band"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "band",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hand'",
+   "input": {
+    "text": "hand"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "hand",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'brand'",
+   "input": {
+    "text": "brand"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "brand",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'tomato'",
+   "input": {
+    "text": "tomato"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "tomato",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'panda'",
+   "input": {
+    "text": "panda"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "panda",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "','",
+   "input": {
+    "text": ","
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": ",",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'hello,'",
+   "input": {
+    "text": "hello,"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "hello,",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'hello ,'",
+   "input": {
+    "text": "hello ,"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "hello ,",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'hello, '",
+   "input": {
+    "text": "hello, "
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "hello,",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hello and\\n'",
+   "input": {
+    "text": "hello and\n"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "hello and",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'hello and \\n'",
+   "input": {
+    "text": "hello and \n"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "hello and",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'hello and\\n\\n'",
+   "input": {
+    "text": "hello and\n\n"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "hello and",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'and.'",
+   "input": {
+    "text": "and."
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "and.",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'and!'",
+   "input": {
+    "text": "and!"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "and!",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'and?'",
+   "input": {
+    "text": "and?"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "and?",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'x and'",
+   "input": {
+    "text": "x and"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "x and",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'x_and'",
+   "input": {
+    "text": "x_and"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "x_and",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'x-and'",
+   "input": {
+    "text": "x-and"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "x-and",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "\"x'and\"",
+   "input": {
+    "text": "x'and"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "x'and",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "'1and'",
+   "input": {
+    "text": "1and"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "1and",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'ẞand'",
+   "input": {
+    "text": "ẞand"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "ßand",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'the end'",
+   "input": {
+    "text": "the end"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "the end",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'please and thank you'",
+   "input": {
+    "text": "please and thank you"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "please and thank you",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  },
+  {
+   "name": "\"I'll\"",
+   "input": {
+    "text": "I'll"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "i'll",
+    "is_enroll": false,
+    "incomplete_tail": false
+   }
+  },
+  {
+   "name": "'say um'",
+   "input": {
+    "text": "say um"
+   },
+   "expected": {
+    "contains_wake_word": false,
+    "extract_command": "say um",
+    "is_enroll": false,
+    "incomplete_tail": true
+   }
+  }
+ ]
+}

@@ -1,0 +1,94 @@
+{
+ "macos": "27.2",
+ "build": "26B5091g",
+ "rate": 16000,
+ "lead_s": 1.0,
+ "tail_s": 3.0,
+ "floor_dbfs": -60.0,
+ "files": {
+  "neg_java.wav": {
+   "kind": "negative",
+   "say": "say -v Samantha -r 200 --file-format=WAVE --data-format=LEI16@16000 -o <file> \"Java's great\"",
+   "samples": 78664,
+   "sha256": "a7728db0b1dc926e4dba8ebe14aa47a7de978e5495a6547c727270c6195811ef",
+   "top_score": 0.059624
+  },
+  "neg_travis.wav": {
+   "kind": "negative",
+   "say": "say -v Daniel -r 200 --file-format=WAVE --data-format=LEI16@16000 -o <file> 'Hey Travis'",
+   "samples": 79721,
+   "sha256": "e7f04223ee45056ff08018f1aa07ca78b3f2fe2e03b03a98ff4a7fb93c0f46de",
+   "top_score": 0.366419
+  },
+  "neg_weather.wav": {
+   "kind": "negative",
+   "say": "say -v Karen -r 200 --file-format=WAVE --data-format=LEI16@16000 -o <file> 'the weather tomorrow'",
+   "samples": 81581,
+   "sha256": "cf42e5ec83e60a0342bc7fe1808b8f346cd6a630342de929c3d24e77e78fed51",
+   "top_score": 0.117963
+  },
+  "noise_m40dbfs.wav": {
+   "kind": "noise",
+   "say": null,
+   "samples": 48000,
+   "sha256": "106e7d9e7c674e4d7d9d1787484f39d2366788973f581f7d9351e806af07bf99",
+   "top_score": 0.271992
+  },
+  "wake_bare_karen_200.wav": {
+   "kind": "bare",
+   "say": "say -v Karen -r 200 --file-format=WAVE --data-format=LEI16@16000 -o <file> 'Jarvis'",
+   "samples": 75963,
+   "sha256": "2da54259aea24f0c28969f0df05c3f94a52a82b7df7b9613b16b98054e9d0ae4",
+   "top_score": 0.150557
+  },
+  "wake_bare_kathy_200.wav": {
+   "kind": "bare",
+   "say": "say -v Kathy -r 200 --file-format=WAVE --data-format=LEI16@16000 -o <file> 'Jarvis'",
+   "samples": 72301,
+   "sha256": "263852cd9e7884a84f9adc735047f06100ca05f82264b60c2812c03b7122c9fd",
+   "top_score": 0.405754
+  },
+  "wake_bare_ralph_200.wav": {
+   "kind": "bare",
+   "say": "say -v Ralph -r 200 --file-format=WAVE --data-format=LEI16@16000 -o <file> 'Jarvis'",
+   "samples": 72301,
+   "sha256": "f9999860a823517e4e2f30adf911ad83568daf5ece65b9a28a898cd5a68947bc",
+   "top_score": 0.481885
+  },
+  "wake_bare_samantha_200.wav": {
+   "kind": "bare",
+   "say": "say -v Samantha -r 200 --file-format=WAVE --data-format=LEI16@16000 -o <file> 'Jarvis'",
+   "samples": 74724,
+   "sha256": "36b92189e80ea5d0645854cd50e905b7a437190ceb1d2d3c8c4adbd42c38274f",
+   "top_score": 0.995967
+  },
+  "wake_close_kathy_200.wav": {
+   "kind": "close",
+   "say": "say -v Kathy -r 200 --file-format=WAVE --data-format=LEI16@16000 -o <file> 'Jarvis. Close Safari'",
+   "samples": 90506,
+   "sha256": "ff6197f404f9397d9df0f2cab90aff7eec4723bde6e668f3e70b3d17425ef476",
+   "top_score": 0.447833
+  },
+  "wake_hey_daniel_200.wav": {
+   "kind": "hey",
+   "say": "say -v Daniel -r 200 --file-format=WAVE --data-format=LEI16@16000 -o <file> 'Hey Jarvis'",
+   "samples": 79535,
+   "sha256": "63b02777b00498c8dfcd48b8735a2005a5be86847c1a1df55f756d27387b97f2",
+   "top_score": 0.998392
+  },
+  "wake_hey_samantha_200.wav": {
+   "kind": "hey",
+   "say": "say -v Samantha -r 200 --file-format=WAVE --data-format=LEI16@16000 -o <file> 'Hey Jarvis'",
+   "samples": 77919,
+   "sha256": "cb2624af7041a5dce060eaa24c9d9aeb8407b2407f6ca82592f1064ee5b6ef00",
+   "top_score": 0.999335
+  },
+  "wake_time_daniel_200.wav": {
+   "kind": "time",
+   "say": "say -v Daniel -r 200 --file-format=WAVE --data-format=LEI16@16000 -o <file> \"Hey Jarvis, what's the time\"",
+   "samples": 95628,
+   "sha256": "0cf09059e0dbc18c9928e81404d611fe266db3388ee125f15685a9543f3171ce",
+   "top_score": 0.998192
+  }
+ }
+}

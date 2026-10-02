@@ -1,0 +1,407 @@
+{
+ "schema": 1,
+ "suite": "m11_wake_watch",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "hey_daniel",
+   "input": {
+    "clip": "wake_hey_daniel_200",
+    "soft": true,
+    "heard": []
+   },
+   "expected": {
+    "kind": "hard",
+    "reads": 42,
+    "samples": 28160,
+    "text": null,
+    "confirms": [
+     {
+      "after_read": 41,
+      "samples": 52480
+     }
+    ],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAL42ACAyOABgrzkAWl87AKeMPEDVaj2gBG090IwRPQAdDjsAIIc5AIAIOAAAxzYAAPA1AACQNoB7VDvYzpc+/3YrPw==",
+    "dead_stream": false,
+    "read_error": false
+   }
+  },
+  {
+   "name": "hey_samantha",
+   "input": {
+    "clip": "wake_hey_samantha_200",
+    "soft": true,
+    "heard": [
+     "Hey Jarvis."
+    ]
+   },
+   "expected": {
+    "kind": "hard",
+    "reads": 22,
+    "samples": 28160,
+    "text": null,
+    "confirms": [],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAGY2AACGNwBwsTgAgNk5APLwOkBnSjwAZJE8ACxFPACofjsAb+06AASCOQDA2TcAAJw2AABwNgAKuzqwp1A91kV7Pw==",
+    "dead_stream": false,
+    "read_error": false
+   }
+  },
+  {
+   "name": "time_daniel",
+   "input": {
+    "clip": "wake_time_daniel_200",
+    "soft": true,
+    "heard": [
+     "hey jarvis what's the time"
+    ]
+   },
+   "expected": {
+    "kind": "soft",
+    "reads": 41,
+    "samples": 52480,
+    "text": "hey jarvis what's the time",
+    "confirms": [
+     {
+      "after_read": 41,
+      "samples": 52480
+     }
+    ],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAF42AABWNwAATDgAHJs5AOqKOkDM8Dvg42I8ELbFPIAlrzsAuaA6APglOQAAqjcAAME2AADHNoDRyzuemS4+",
+    "dead_stream": false,
+    "read_error": false
+   }
+  },
+  {
+   "name": "bare_samantha",
+   "input": {
+    "clip": "wake_bare_samantha_200",
+    "soft": false,
+    "heard": []
+   },
+   "expected": {
+    "kind": "hard",
+    "reads": 20,
+    "samples": 25600,
+    "text": null,
+    "confirms": [],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAFY2AIBuNwAAtjgA/DU6ABQDO6CQADxgM1o8QMCKOwCo8zkAUIg4AAAUNwAA4DYAQMM4gClVOwR8Zj8=",
+    "dead_stream": false,
+    "read_error": false
+   }
+  },
+  {
+   "name": "bare_ralph_confirmed",
+   "input": {
+    "clip": "wake_bare_ralph_200",
+    "soft": true,
+    "heard": [
+     "Jarvis?"
+    ]
+   },
+   "expected": {
+    "kind": "soft",
+    "reads": 40,
+    "samples": 51200,
+    "text": "jarvis?",
+    "confirms": [
+     {
+      "after_read": 40,
+      "samples": 51200
+     }
+    ],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAK82AMBfOADw8TmAKu47YJrjPDB7Wj1QumI98HkYPUCjDjwAMt86AGyFOQC0mTkACaM6AEWCO0iZKj4=",
+    "dead_stream": false,
+    "read_error": false
+   }
+  },
+  {
+   "name": "bare_ralph_off",
+   "input": {
+    "clip": "wake_bare_ralph_200",
+    "soft": false,
+    "heard": []
+   },
+   "expected": {
+    "kind": "false",
+    "reads": 56,
+    "samples": 0,
+    "text": null,
+    "confirms": [],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAK82AMBfOADw8TmAKu47YJrjPDB7Wj1QumI98HkYPUCjDjwAMt86AGyFOQC0mTkACaM6AEWCO0iZKj6vufY+OMbGPVXNwT4E5M0+2toEPkBhvz0ABJ46AED2NwAAszcAgKQ3AICeNwDAtTcAAHY3AADvNgAAljYAAJg2AADCNgAAUzcAwL43AMAxOABgADgAQNA3AGAqOABQtDgA6Ac5ACDxOABgFTkA8Bs5AHDHOAAgxTgAcKw4AMBvOAAADTgAgNw3AIDeNwAA7zc=",
+    "dead_stream": false,
+    "read_error": true
+   }
+  },
+  {
+   "name": "bare_kathy_not_wake",
+   "input": {
+    "clip": "wake_bare_kathy_200",
+    "soft": true,
+    "heard": [
+     "Travis"
+    ]
+   },
+   "expected": {
+    "kind": "false",
+    "reads": 56,
+    "samples": 0,
+    "text": null,
+    "confirms": [
+     {
+      "after_read": 40,
+      "samples": 51200
+     }
+    ],
+    "seed_draws": 3,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAGw2AIAxNwBAGjgA4C85AESIOQBqajqASlU7AIhaOwC47jkAUNY4AICXNwAAiTcAUFs5gJiWO0N8oD4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAgjYAgDs3AJCFOACkljkAxpI6EPibPKimMD34xUk9mKTlPbzFNj40TII9",
+    "dead_stream": false,
+    "read_error": true
+   }
+  },
+  {
+   "name": "bare_kathy_failed",
+   "input": {
+    "clip": "wake_bare_kathy_200",
+    "soft": true,
+    "heard": [
+     null
+    ]
+   },
+   "expected": {
+    "kind": "false",
+    "reads": 56,
+    "samples": 0,
+    "text": null,
+    "confirms": [
+     {
+      "after_read": 40,
+      "samples": 51200
+     }
+    ],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAGw2AIAxNwBAGjgA4C85AESIOQBqajqASlU7AIhaOwC47jkAUNY4AICXNwAAiTcAUFs5gJiWO0N8oD7+TtE+5hgWPrL8aT4Mhj8+EIQaPWjvAz3AXoI7AIDiNwCAXzcAAGU3AMCgNwAA3jcAgMM3AICGNwAAszcAwLU3",
+    "dead_stream": false,
+    "read_error": true
+   }
+  },
+  {
+   "name": "close_kathy",
+   "input": {
+    "clip": "wake_close_kathy_200",
+    "soft": true,
+    "heard": [
+     " Jarvis. Close Safari. "
+    ]
+   },
+   "expected": {
+    "kind": "soft",
+    "reads": 41,
+    "samples": 52480,
+    "text": "jarvis. close safari.",
+    "confirms": [
+     {
+      "after_read": 41,
+      "samples": 52480
+     }
+    ],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAJE2AIC6NwBwHDkAyAI6AFp/OoB5GjtAJJk7AO81OwDmBToAINY4AECuNwCgeTgA6kk6YFJlPAjy2T2kUNU+",
+    "dead_stream": false,
+    "read_error": false
+   }
+  },
+  {
+   "name": "bare_karen",
+   "input": {
+    "clip": "wake_bare_karen_200",
+    "soft": true,
+    "heard": [
+     "jarvis"
+    ]
+   },
+   "expected": {
+    "kind": "soft",
+    "reads": 41,
+    "samples": 52480,
+    "text": "jarvis",
+    "confirms": [
+     {
+      "after_read": 41,
+      "samples": 52480
+     }
+    ],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAEw2AIBCNwCwsjgA4nE6QMDaO+BfQT0wnmk9kPfAPED9hTsAGhs6AOBPOACABDcAYBU4AHDrOZAgDD2KKxo+",
+    "dead_stream": false,
+    "read_error": false
+   }
+  },
+  {
+   "name": "neg_travis",
+   "input": {
+    "clip": "neg_travis",
+    "soft": true,
+    "heard": [
+     "hey travis"
+    ]
+   },
+   "expected": {
+    "kind": "false",
+    "reads": 62,
+    "samples": 0,
+    "text": null,
+    "confirms": [
+     {
+      "after_read": 31,
+      "samples": 39680
+     }
+    ],
+    "seed_draws": 3,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAFA2AIBUNwD4ETmAdTc7YNQ0PXwxPj4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAhjYAAGc3AECbOAAwfzkANjo6AHfVOsC5izuABhY7QK2yO4CQHjzAFI87AMJyOgDksDkAcD05ADBuOQBYlzkAAG85AIgROQBgBTgAgDE3AACqNgAAuDYAAO42AAADNwCAOzcAgKE3",
+    "dead_stream": false,
+    "read_error": true
+   }
+  },
+  {
+   "name": "neg_java",
+   "input": {
+    "clip": "neg_java",
+    "soft": true,
+    "heard": [
+     "java's great"
+    ]
+   },
+   "expected": {
+    "kind": "false",
+    "reads": 61,
+    "samples": 0,
+    "text": null,
+    "confirms": [],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAII2AMCRNwCArTgA6C05AFSuOQA4tDoA29Y6AMTvOQCQFDkAUJQ4AACbNwAA0jYAQD04AIqhOvg3dD0gHD08gDZCOwAs7zoA0LM5ABhPOQDwsDgAAEg3AAB0NgAAxDYAACU3AACFNwBA2DcAgPM3AMC+NwAgBDgAQOg3AMArOAAg/jgAELo4AEANOABACTgAgMI3AACPNwAACTcAAPI2AAAtNwCAYzcAgBo3AIAdNwAAIzcAAFU3AADGNwDggTgAoJI4AFDuOADgTDkAIMM5AFSAOQBAMzkAAPo4AGAXOQ==",
+    "dead_stream": false,
+    "read_error": true
+   }
+  },
+  {
+   "name": "neg_weather",
+   "input": {
+    "clip": "neg_weather",
+    "soft": true,
+    "heard": []
+   },
+   "expected": {
+    "kind": "false",
+    "reads": 63,
+    "samples": 0,
+    "text": null,
+    "confirms": [],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAE42AIBtNwCgnTgAtLo6gB4qPAz7rD1olvE9UJVTPSBACjwAQ586ALDhOAAArDcAADc3AADBNgAAxDYAALQ2AABoNgAANjYAAIc2AACRNgAAlTYAAJg2AADxNgAAAzcAgDA3AIAxNwCAFzcAAPc2AIAMNwCAMTcAgFU3AICFNwDAhjgAwN44AGC0OABwqjgA0N44ABATOQBgnzgAoFo4AOASOADAuTcAgK83AIDDNwCgKjgAQEs4AIBkOABgWzgA4D44AABNOAAgGzgAoAQ4AADBNwDApzcAgH83AACFNwAALTcAAAM3",
+    "dead_stream": false,
+    "read_error": true
+   }
+  },
+  {
+   "name": "noise",
+   "input": {
+    "clip": "noise_m40dbfs",
+    "soft": true,
+    "heard": [
+     "",
+     ""
+    ]
+   },
+   "expected": {
+    "kind": "false",
+    "reads": 37,
+    "samples": 0,
+    "text": null,
+    "confirms": [
+     {
+      "after_read": 34,
+      "samples": 43520
+     }
+    ],
+    "seed_draws": 3,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAJw2AEC/NwB4TjkAXpo6gJUmO5DKAT3oTTM9IO+zPSLJUj4AAAAAAAAAAAAAAAA=",
+    "dead_stream": false,
+    "read_error": true
+   }
+  },
+  {
+   "name": "dead",
+   "input": {
+    "clip": "silence_21s",
+    "soft": true,
+    "heard": []
+   },
+   "expected": {
+    "kind": "false",
+    "reads": 250,
+    "samples": 0,
+    "text": null,
+    "confirms": [],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAEY2AAC6NgCAZzcAIAM4AAA0OAAQtDgAELI4AEBMOAAAVzgAIAQ4AIAyNwAAvzYAAKQ2AACeNgAAmzYAAJE2AACONgAAkzYAAKE2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2",
+    "dead_stream": true,
+    "read_error": false
+   }
+  },
+  {
+   "name": "dead_min",
+   "input": {
+    "clip": "min_every_100",
+    "soft": true,
+    "heard": []
+   },
+   "expected": {
+    "kind": "false",
+    "reads": 250,
+    "samples": 0,
+    "text": null,
+    "confirms": [],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAIo2AIChNwCAUDgAsJQ4AJCROAAgXzkA3KU5AGBxOQDUlDkAjIc5AKCtOADAxTcAAG43AAD0NgAA2zYAAN42AAD0NgAA+jYAAOc2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2AADkNgAA5DYAAOI2AADmNgAA5DYAAOQ2AADkNgAA4jYAAOY2AADkNgAA5DYAAOQ2AADiNgAA5jYAAOQ2",
+    "dead_stream": true,
+    "read_error": false
+   }
+  },
+  {
+   "name": "not_dead",
+   "input": {
+    "clip": "silence_gap",
+    "soft": true,
+    "heard": []
+   },
+   "expected": {
+    "kind": "false",
+    "reads": 260,
+    "samples": 0,
+    "text": null,
+    "confirms": [],
+    "seed_draws": 2,
+    "scores": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAEY2AAC6NgCAZzcAIAM4AAA0OAAQtDgAELI4AEBMOAAAVzgAIAQ4AIAyNwAAvzYAAKQ2AACeNgAAmzYAAJE2AACONgAAkzYAAKE2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAEo2AABCNgAAJDYAABA2AAAONgAAIDYAAIs2AACjNgAACTcAAHE3AOAwOADwhTgAoJ84AJC4OACg8jgAAD84AIAtNwAAujYAAJo2AAChNgAApDYAAKE2AACKNgAAjDYAAJ82AACsNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzYAAKs2AACrNgAAqzY=",
+    "dead_stream": false,
+    "read_error": true
+   }
+  }
+ ]
+}
