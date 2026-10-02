@@ -32,6 +32,8 @@ struct ChatView: View {
                     .scrollTargetLayout()   // U1: lets scrollPosition report the top row
                     .padding(16)
                 }
+                // UI1 part 2: the arc reactor, faint and still behind the scrolling transcript.
+                .background { ReactorBackdrop() }
                 // U1: where the transcript is scrolled, for a live update to hand over.
                 .scrollPosition(id: $model.scrollTop, anchor: .top)
                 .onScrollGeometryChange(for: Bool.self) { geometry in

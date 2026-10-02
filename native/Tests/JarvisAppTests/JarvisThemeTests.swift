@@ -57,6 +57,20 @@ struct JarvisThemeTests {
         }
     }
 
+    /// UI1 part 2: text that sits on the window, not in a message, can pass over the reactor
+    /// behind the transcript. Its brightest point is the core's white centre, at the backdrop's
+    /// opacity; the brief allows up to 0.12, so that is checked too.
+    @Test func textOverTheReactorKeepsAA() {
+        for alpha in [ReactorBackdrop.opacity, 0.12] {
+            let brightest = T.RGB(hex: 0xFFFFFF).over(T.navy, alpha: alpha)
+            for (name, text) in [("ice", T.ice), ("notes, muted", T.muted), ("gold", T.gold)] {
+                let ratio = T.contrast(text, brightest)
+                print(String(format: "UI1 contrast %5.2f:1  %@ over the reactor's core at %.2f", ratio, name, alpha))
+                #expect(ratio >= 4.5, "\(name) at \(alpha): \(ratio)")
+            }
+        }
+    }
+
     static let outlinePairs: [(String, T.RGB, T.RGB)] = [
         ("your messages' outline: dim cyan on navy", T.cyanDim, T.navy),
         ("your messages' outline: dim cyan on the panel", T.cyanDim, T.panel),
