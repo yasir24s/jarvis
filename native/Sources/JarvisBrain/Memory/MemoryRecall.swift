@@ -53,11 +53,19 @@ public final class MemoryRecall: MemorySearching, Sendable {
     /// W1 part 7c: the conversations and the journal, indexed; nil means each search reads the
     /// whole files, as before.
     public let index: MemoryIndex?
+    /// W1 part 3: the pages JARVIS has read; nil means none.
+    public let web: WebMemory?
 
-    public init(memory: MemoryStore, vectors: FactVectors, index: MemoryIndex? = nil) {
+    public init(memory: MemoryStore, vectors: FactVectors, index: MemoryIndex? = nil, web: WebMemory? = nil) {
         self.memory = memory
         self.vectors = vectors
         self.index = index
+        self.web = web
+    }
+
+    /// W1 part 3: search_memory's fourth part, the pages read (`WebMemory.search`).
+    public func searchWeb(_ query: String, limit: Int) -> (best: [WebMemoryHit], total: Int) {
+        web?.search(query, limit: limit) ?? ([], 0)
     }
 
     /// Computes and caches every fact's vector (about 5 ms each with NLEmbedding, measured), so
@@ -235,7 +243,7 @@ public final class MemoryRecall: MemorySearching, Sendable {
         return out
     }
 
-    private static let stopWords: Set<String> = [
+    static let stopWords: Set<String> = [
         "the", "and", "but", "are", "was", "were", "been", "being", "does", "did", "have", "has", "had",
         "you", "your", "she", "her", "his", "him", "its", "our", "their", "them", "they", "this", "that",
         "these", "those", "what", "which", "who", "whom", "when", "where", "why", "how", "for", "with",

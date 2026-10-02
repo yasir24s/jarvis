@@ -62,6 +62,11 @@ public final class BrainAssembly: Sendable {
     /// W1: the search database in memory/web/ (the conversations' index, part 7c). nil without a
     /// `memory` store.
     public let database: MemoryDatabase?
+    /// W1 part 3: every page JARVIS reads, in the same database. nil without a `memory` store.
+    public let webMemory: WebMemory?
+    /// W1 part 3: what summarises those pages: the on-device model within P3's budget, else the
+    /// page's first sentences. Never Claude.
+    public let pageSummarizer: any PageSummarizing
     /// P6: the fact compile after 30 idle minutes, beside the dismissal's. nil without a
     /// `memory` store. Not started here: the app starts it once the brain has started and stops
     /// it at quit, before the lock is released.
@@ -136,10 +141,14 @@ public final class BrainAssembly: Sendable {
         let local = localBrain?(gateway) ?? LocalBrain(gateway: gateway, log: brainLog)
         let vectors = FactVectors(embedding: embedding)
         // W1 part 7c: search_memory reads the conversations and the journal from the index.
+        // W1 part 3: and the pages JARVIS has read, from the web memory in the same database.
         let database = memory.map { MemoryDatabase(memory: $0) }
         self.database = database
+        let webMemory = database.map { WebMemory(database: $0, embedding: embedding) }
+        self.webMemory = webMemory
         let recall = memory.map { store in
-            MemoryRecall(memory: store, vectors: vectors, index: database.map { MemoryIndex(database: $0, memory: store) })
+            MemoryRecall(memory: store, vectors: vectors, index: database.map { MemoryIndex(database: $0, memory: store) },
+                         web: webMemory)
         }
         self.recall = recall
         memoryTools = memory.flatMap { store in recall.map { BuiltInTools.Memory(store: store, search: $0) } }
@@ -151,6 +160,7 @@ public final class BrainAssembly: Sendable {
                                             workingDirectory: claudeWorkingDirectory,
                                             parentEnvironment: environment, online: online, log: brainLog)
         let writer = personaWriter ?? CollaborativePersonaLLM(local: localWriter, claude: claudeWriter)
+        pageSummarizer = FallbackSummarizer(LocalPageSummarizer(model: localWriter, budget: .system()))
         let turns = TurnActivity()
         turnActivity = turns
         let facts = memory.map {

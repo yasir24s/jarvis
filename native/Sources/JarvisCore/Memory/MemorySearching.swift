@@ -22,6 +22,11 @@ public protocol MemorySearching: Sendable {
 
     /// W1 part 7c: the best `limit` of `searchJournal(query)`, and how many match in all.
     func searchJournal(_ query: String, limit: Int) -> (best: [JournalEntry], total: Int)
+
+    /// W1 part 3: the pages JARVIS has read that match `query`, best first: the best `limit`
+    /// and how many match in all. They came from the web, so the caller shows them as
+    /// untrusted information.
+    func searchWeb(_ query: String, limit: Int) -> (best: [WebMemoryHit], total: Int)
 }
 
 extension MemorySearching {
@@ -34,4 +39,7 @@ extension MemorySearching {
         let all = searchJournal(query)
         return (Array(all.prefix(max(0, limit))), all.count)
     }
+
+    /// No web memory: nothing matches.
+    public func searchWeb(_ query: String, limit: Int) -> (best: [WebMemoryHit], total: Int) { ([], 0) }
 }

@@ -97,6 +97,14 @@ public final class MemoryDatabase: Sendable {
         CREATE INDEX IF NOT EXISTS lines_by_file ON lines (file, ord);
         CREATE VIRTUAL TABLE IF NOT EXISTS line_words USING fts5 (
             words, tokenize = 'ascii', content = '', contentless_delete = 1);
+        CREATE TABLE IF NOT EXISTS web_pages (
+            id INTEGER PRIMARY KEY, url TEXT NOT NULL UNIQUE, requested TEXT NOT NULL, title TEXT NOT NULL,
+            read_at REAL NOT NULL, source TEXT NOT NULL, query TEXT, text TEXT, bytes INTEGER NOT NULL,
+            summary TEXT NOT NULL DEFAULT '', points TEXT NOT NULL DEFAULT '[]', summarized_by TEXT,
+            vector BLOB, compacted INTEGER NOT NULL DEFAULT 0, packed BLOB);
+        CREATE INDEX IF NOT EXISTS web_pages_by_read ON web_pages (read_at);
+        CREATE VIRTUAL TABLE IF NOT EXISTS web_words USING fts5 (
+            title, summary, points, body, tokenize = 'porter unicode61', content = '', contentless_delete = 1);
         """
 }
 
