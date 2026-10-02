@@ -133,14 +133,15 @@ public actor FileScanner {
     /// Starts the background loop: `startDelay`, a pass, the waiting files, then a pass every
     /// `rewalkInterval` after the last one ended. Once per scanner; nothing after `stop()`.
     public nonisolated func start() {
-        let started = life.withLock { l -> Bool in
-            guard l.task == nil, !l.stopped else { return false }
+        life.withLock { l in
+            guard l.task == nil, !l.stopped else { return }
+            // Logged before the task exists, so no line of the loop can come first. `log` runs
+            // under the lock: it must not call back into this scanner.
+            log("files: scanner started; first pass in \(Self.startDelay.components.seconds) s")
             l.task = Task.detached(priority: .background) { [self] in
                 await self.run()
             }
-            return true
         }
-        if started { log("files: scanner started; first pass in \(Self.startDelay.components.seconds) s") }
     }
 
     /// Cancels the loop and waits for it to save the index and end (at quit, before the lock

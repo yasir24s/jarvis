@@ -76,10 +76,15 @@ public final class PersonalitySchedule: Sendable {
     public func start() {
         let consolidate = consolidate, clock = clock, sleep = sleep, log = log
         let first = Self.firstCheck, period = Self.period
-        let started = state.withLock { s -> Bool in
-            guard !s.started, !s.stopped else { return false }
+        state.withLock { s in
+            guard !s.started, !s.stopped else { return }
             s.started = true
             let t0 = clock.now()
+            // Logged before the task exists, so no line of the loop can come first, and under the
+            // lock that stop() also takes, so "stopped" cannot come first either. `log` runs under
+            // the lock for that reason: it must not call back into this schedule.
+            log("Personality schedule started: first consolidation check in \(first.components.seconds) s, "
+                + "then every \(period.components.seconds) s")
             s.loop = Task.detached(priority: .utility) {
                 do {
                     try await sleep(first)
@@ -94,11 +99,7 @@ public final class PersonalitySchedule: Sendable {
                     // The sleep throws once stop() has cancelled the task: the loop is over.
                 }
             }
-            return true
         }
-        guard started else { return }
-        log("Personality schedule started: first consolidation check in \(first.components.seconds) s, "
-            + "then every \(period.components.seconds) s")
     }
 
     /// The conversation ended (the TurnCoordinator's hook): runs the distillation in the

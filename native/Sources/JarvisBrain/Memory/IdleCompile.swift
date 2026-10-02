@@ -69,9 +69,13 @@ public final class IdleCompile: Sendable {
 
     /// Starts the loop. Once: a second call, or one after `stop()`, does nothing.
     public func start() {
-        let started = state.withLock { s -> Bool in
-            guard s.started == nil, !s.stopped else { return false }
+        state.withLock { s in
+            guard s.started == nil, !s.stopped else { return }
             s.started = clock.now()
+            // Logged before the task exists, so no line of the loop can come first, and under the
+            // lock that stop() also takes, so "stopped" cannot come first either. `log` runs under
+            // the lock for that reason: it must not call back into this object.
+            log("Idle compile started: chats are compiled after \(Int(Self.idleAfter / 60)) idle minutes")
             s.loop = Task.detached(priority: .utility) { [weak self] in
                 do {
                     while !Task.isCancelled {
@@ -83,10 +87,7 @@ public final class IdleCompile: Sendable {
                     // The sleep throws once stop() has cancelled the task: the loop is over.
                 }
             }
-            return true
         }
-        guard started else { return }
-        log("Idle compile started: chats are compiled after \(Int(Self.idleAfter / 60)) idle minutes")
     }
 
     /// One look. When no turn runs, the chat has been idle `idleAfter` since its last activity
