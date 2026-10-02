@@ -2,7 +2,10 @@ import AppKit
 import Carbon.HIToolbox
 import Foundation
 @testable import JarvisApp
+import JarvisBrain
 import JarvisChat
+import JarvisCore
+import JarvisTools
 import Synchronization
 import SwiftUI
 import Testing
@@ -134,6 +137,22 @@ struct PushToTalkSnapshotTests {
         print("M9 snapshot \(url.path)")
     }
 
+    /// Part 6: a spoken yes on a pending card. The chat notes the owner check; denied, the card
+    /// is back with its countdown.
+    @Test func spokenConfirmation() async throws {
+        let gate = ConfirmationGate()
+        let check = SheetSaysNo()
+        let model = ChatViewModel(submitter: ConfirmingSubmitter(gate: gate, check: check), minimumGap: .zero)
+        model.watchConfirmations(gate, authenticator: check)
+        await gate.stash(desc: "Empty the Trash (14 items)", action: { "Emptied, sir." }, turn: TurnContext(channel: .text))
+        await Self.settle { model.pending != nil }
+        await model.sendVoice("Yes")?.value
+        await Self.settle { model.pending != nil }
+        let url = try await UISnapshot.write(ChatView(model: model), size: CGSize(width: 560, height: 360),
+                                             name: "m9-part6-spoken-yes-denied")
+        print("M9 snapshot \(url.path)")
+    }
+
     @Test func hudListening() async throws {
         let sleepLong: HUDModel.Sleep = { _ in try await Task.sleep(for: .seconds(600)) }
         for (name, level) in [("quiet", 0.05), ("speech", 0.75)] {
@@ -145,5 +164,37 @@ struct PushToTalkSnapshotTests {
                                                  settle: .milliseconds(900))
             print("M9 snapshot \(url.path)")
         }
+    }
+}
+
+/// The owner check, as if the user cancelled the system sheet.
+struct SheetSaysNo: TextConfirmAuthenticator {
+    func canAuthenticate() -> Bool { true }
+    func authenticate(reason: String) async -> Bool { false }
+}
+
+/// Confirms as TurnCoordinator does: a spoken turn through the voice port with the owner check.
+actor ConfirmingSubmitter: TurnSubmitting {
+    let gate: ConfirmationGate
+    let check: any TextConfirmAuthenticator
+
+    init(gate: ConfirmationGate, check: any TextConfirmAuthenticator) {
+        self.gate = gate
+        self.check = check
+    }
+
+    func submit(_ input: UserInput, sink: any ReplySink,
+                accepted: (@Sendable (TurnContext) async -> Void)?) async -> TurnOutcome {
+        let turn = TurnContext(channel: input.channel)
+        await accepted?(turn)
+        let port: InputPort = input.channel == .text ? .text(authenticator: check) : .voice(confirming: .ownerCheck(check))
+        if case .handled(let result) = await gate.consume(input.text, via: port, runIn: turn) {
+            await sink.sentence(result)
+            await turn.close()
+            return .confirmation(result)
+        }
+        await sink.sentence("It is three o'clock, sir.")
+        await turn.close()
+        return .reply("It is three o'clock, sir.")
     }
 }

@@ -19,6 +19,11 @@ public enum TextConfirmation {
 
     /// The reply when the owner check cannot run on this Mac (no login password).
     public static let cannotVerify = "I can't verify it's you at the keyboard, sir — say 'confirm' instead."
+    /// M9a part 6: the same refusal for a spoken confirmation, which needs the same check (D-41).
+    public static let cannotVerifySpoken = "I can't verify it's you at the keyboard, sir, so I can't take a spoken confirmation."
+    /// M9a part 6: the chat's note under a spoken "yes" that meets a pending card: the owner check
+    /// is up.
+    public static let spokenNote = "Confirm in the chat with Touch ID"
     /// The local row the card's Cancel button leaves.
     public static let cancelled = "Cancelled."
     /// What the card's Confirm button sends, as if it were typed. It is an `Affirmation`.

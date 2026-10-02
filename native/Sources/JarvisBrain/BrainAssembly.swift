@@ -139,6 +139,7 @@ public final class BrainAssembly: Sendable {
                 textAuthenticator: any ConfirmAuthenticator, fastPath: any FastPathRouting = NoFastPath(),
                 online: @escaping @Sendable () async -> Bool,
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
+                voiceConfirmation: VoiceConfirmation? = nil,
                 log: @escaping @Sendable (String, LogCategory) -> Void = { JarvisLog.log($0, category: $1) }) {
         let brainLog: @Sendable (String) -> Void = { log($0, .brain) }
         self.core = core
@@ -235,7 +236,8 @@ public final class BrainAssembly: Sendable {
                                       textAuthenticator: textAuthenticator, online: online,
                                       onTurnStart: onTurnStart,
                                       onConversationEnded: { personality.conversationEnded() },
-                                      archive: memory.map { MemoryArchiver(memory: $0) }, activity: turns)
+                                      archive: memory.map { MemoryArchiver(memory: $0) }, activity: turns,
+                                      voiceConfirmation: voiceConfirmation)
     }
 
     /// Registers the built-in tool bodies on the gateway (the system clock, the system time

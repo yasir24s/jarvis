@@ -90,11 +90,14 @@ struct BrainRouterWiringTests {
         #expect(gated.record.outcome == .gated)
         #expect(await rig.assembly.confirmations.pending != nil)
         let outcome = await rig.assembly.coordinator.submit(UserInput(text: "yes", channel: .voice), sink: RecordingSink())
-        guard case .confirmation = outcome else {
+        guard case .confirmation(let reply) = outcome else {
             Issue.record("expected the coordinator to consume the gateway's confirmation, got \(outcome)")
             return
         }
-        #expect(await rig.assembly.confirmations.pending == nil)
+        // M9a part 6 (D-41): a spoken yes passes the owner check, which this rig's authenticator
+        // refuses: not confirmed, and the same card is back on the shared gate.
+        #expect(reply == VoiceConfirmation.notConfirmed)
+        #expect(await rig.assembly.confirmations.pending?.desc != nil)
         await rig.remove()
     }
 

@@ -123,4 +123,80 @@ struct VoiceTurnTests {
     }
 
     static let done = ChatMessage(role: .assistant, text: "Done, sir.", phase: .finished)
+
+    // MARK: - Part 6: a spoken confirmation passes the owner check (D-41)
+
+    /// A coordinator that confirms as TurnCoordinator does: typed turns through the text port,
+    /// spoken ones through the voice port with the owner check.
+    static func confirming(_ gate: ConfirmationGate, _ authenticator: any TextConfirmAuthenticator) -> FakeCoordinator {
+        FakeCoordinator { input, sink in
+            let turn = TurnContext(channel: input.channel)
+            let port: InputPort = input.channel == .text ? .text(authenticator: authenticator)
+                : .voice(confirming: .ownerCheck(authenticator))
+            if case .handled(let result) = await gate.consume(Py.strip(input.text), via: port, runIn: turn) {
+                if !result.isEmpty { await sink.sentence(result) }
+                return .confirmation(result)
+            }
+            await sink.sentence("It is three o'clock, sir.")
+            return .reply("It is three o'clock, sir.")
+        }
+    }
+
+    static func card(_ authenticator: FakeTextAuthenticator, actions: ActionLog)
+        async -> (ChatViewModel, ConfirmationGate, FakeCoordinator) {
+        let gate = ConfirmationGate()
+        let coordinator = Self.confirming(gate, authenticator)
+        let model = ChatViewModel(submitter: coordinator, minimumGap: .zero)
+        model.watchConfirmations(gate, authenticator: authenticator)
+        await gate.stash(desc: "delete test.txt permanently", action: { await actions.ran(); return "Done, sir." },
+                         turn: TurnContext(channel: .text))
+        _ = await eventually { model.pending != nil }
+        return (model, gate, coordinator)
+    }
+
+    @Test("a spoken yes on a pending card asks for the owner check, and the chat says so", arguments: [true, false])
+    func spokenYes(approve: Bool) async {
+        let authenticator = FakeTextAuthenticator(answer: approve)
+        let actions = ActionLog()
+        let (model, gate, coordinator) = await Self.card(authenticator, actions: actions)
+        await model.sendVoice("Yes")?.value
+        #expect(await coordinator.inputs.map(\.channel) == [.voice])
+        #expect(authenticator.reasons == ["delete test.txt permanently"])
+        #expect(model.messages.map(\.text) == ["Yes", TextConfirmation.spokenNote,
+                                                approve ? "Done, sir." : VoiceConfirmation.notConfirmed])
+        #expect(model.messages[1].role == .system)
+        #expect(TextConfirmation.spokenNote == "Confirm in the chat with Touch ID")
+        #expect(await actions.runs == (approve ? 1 : 0))
+        // Denied: the card is back until its deadline.
+        #expect(await eventually { (model.pending != nil) == !approve })
+        #expect((await gate.pending != nil) == !approve)
+    }
+
+    @Test("with no owner check on this Mac, a spoken yes is refused as a typed one is, and the card stays")
+    func spokenYesUnavailable() async {
+        let authenticator = FakeTextAuthenticator(available: false, answer: true)
+        let actions = ActionLog()
+        let (model, gate, coordinator) = await Self.card(authenticator, actions: actions)
+        #expect(model.sendVoice("go ahead") == nil)
+        #expect(model.messages.map(\.text) == ["go ahead", TextConfirmation.cannotVerifySpoken])
+        #expect(await coordinator.inputs.isEmpty)
+        #expect(authenticator.reasons.isEmpty)
+        #expect(await actions.runs == 0)
+        #expect(model.pending != nil)
+        #expect(await gate.pending != nil)
+    }
+
+    @Test("a spoken no on a pending card declines it with no check and no note")
+    func spokenNo() async {
+        let authenticator = FakeTextAuthenticator(answer: true)
+        let actions = ActionLog()
+        let (model, gate, coordinator) = await Self.card(authenticator, actions: actions)
+        await model.sendVoice("no")?.value
+        #expect(await coordinator.inputs.map(\.text) == ["no"])
+        #expect(authenticator.reasons.isEmpty)
+        #expect(model.messages.map(\.text) == ["no", "It is three o'clock, sir."])
+        #expect(await actions.runs == 0)
+        #expect(await gate.pending == nil)
+        #expect(await eventually { model.pending == nil })
+    }
 }

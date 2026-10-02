@@ -4,18 +4,48 @@ import JarvisCore
 public struct InputPort: Sendable {
     public let channel: Channel
     public let authenticator: (any ConfirmAuthenticator)?
+    /// M9a part 6: what a spoken affirmation must pass on this port; nil on the unchecked voice
+    /// port.
+    public let voiceConfirmation: VoiceConfirmation?
 
-    internal init(channel: Channel, authenticator: (any ConfirmAuthenticator)? = nil) {
+    internal init(channel: Channel, authenticator: (any ConfirmAuthenticator)? = nil,
+                  voiceConfirmation: VoiceConfirmation? = nil) {
         self.channel = channel
         self.authenticator = authenticator
+        self.voiceConfirmation = voiceConfirmation
     }
 
-    /// Test and voice-loop construction point. Text UI code should use the coordinator's
-    /// authenticated port instead of manufacturing one from model input.
+    /// The unchecked voice port, for tests of the tools behind a confirmation. Every spoken turn
+    /// goes through TurnCoordinator, whose voice port carries a `VoiceConfirmation`.
     public static var voice: InputPort { InputPort(channel: .voice) }
+
+    /// The voice port a spoken turn confirms through (M9a part 6).
+    public static func voice(confirming check: VoiceConfirmation) -> InputPort {
+        InputPort(channel: .voice, voiceConfirmation: check)
+    }
 
     public static func text(authenticator: any ConfirmAuthenticator) -> InputPort {
         InputPort(channel: .text, authenticator: authenticator)
+    }
+}
+
+/// How a spoken affirmation proves it is the owner's (M9a part 6, D-41: native security wins over
+/// Python's voiceprint-only gate, which passes anyone while no voiceprint is enrolled). This is
+/// the one seam: until a voiceprint exists a spoken "yes" must pass the owner check a typed one
+/// passes. M10 adds its route here (a matching voice, failing closed).
+public enum VoiceConfirmation: Sendable {
+    /// Touch ID or the login password, the same check as a typed confirmation.
+    case ownerCheck(any ConfirmAuthenticator)
+
+    /// The reply when the check says no: nothing ran, and the card stays until its deadline.
+    public static let notConfirmed = "Not confirmed, sir."
+
+    /// True when the owner of the Mac approved `desc`.
+    func approves(_ desc: String) async -> Bool {
+        switch self {
+        case .ownerCheck(let authenticator):
+            await authenticator.authenticate(reason: desc)
+        }
     }
 }
 
@@ -75,6 +105,16 @@ public actor ConfirmationGate {
             guard let authenticator = port.authenticator,
                   await authenticator.authenticate(reason: current.publicValue.desc) else {
                 return .handled("Confirmation cancelled, sir.")
+            }
+        } else if let check = port.voiceConfirmation {
+            guard await check.approves(current.publicValue.desc) else {
+                // M9a part 6: not confirmed, and the card comes back until its deadline, unless
+                // another confirmation took the slot while the check was up.
+                if pendingAction == nil, ContinuousClock().now <= current.publicValue.deadline {
+                    pendingAction = current
+                    continuation.yield(current.publicValue)
+                }
+                return .handled(VoiceConfirmation.notConfirmed)
             }
         }
         do {

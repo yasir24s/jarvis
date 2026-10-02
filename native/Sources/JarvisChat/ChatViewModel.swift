@@ -240,10 +240,18 @@ public final class ChatViewModel: ReplySink {
         if responding && interrupted == nil { return nil }
         if speaking { stopSpeech() }
         busy = false
+        // M9a part 6: a spoken "yes" that meets a pending card needs the owner check a typed one
+        // does (D-41). Refused here, as a typed one is, when the check cannot run on this Mac;
+        // otherwise the chat notes that the check is up.
+        if refusesConfirmation(shown, now: .now) {
+            addLocalReply(to: shown, TextConfirmation.cannotVerifySpoken)
+            return nil
+        }
+        let note = meetsPending(shown, now: .now) ? TextConfirmation.spokenNote : nil
         // Put back in front of whatever is in the composer, as a refused typed message is.
         let back = ComposerDraft(text: draft.text.isEmpty ? shown : shown + " ")
         return start(UserInput(text: shown, channel: .voice), shown: shown, restoring: back,
-                     via: submitter, after: interrupted)
+                     via: submitter, after: interrupted, note: note)
     }
 
     /// UI1 part 4: Stop, the send button's other face, and Esc. Speech stops. A reply being
@@ -443,7 +451,8 @@ public final class ChatViewModel: ReplySink {
     /// UI1 part 4: `previous` is a stopped turn this one follows: it is sent once that has ended.
     /// Stopped before then, it is never sent and its text goes back to the composer.
     private func start(_ input: UserInput, shown: String, restoring sent: ComposerDraft?,
-                       via submitter: any TurnSubmitting, after previous: Task<Void, Never>? = nil) -> Task<Void, Never> {
+                       via submitter: any TurnSubmitting, after previous: Task<Void, Never>? = nil,
+                       note: String? = nil) -> Task<Void, Never> {
         responding = true
         generation += 1
         let mine = generation
@@ -454,7 +463,7 @@ public final class ChatViewModel: ReplySink {
                 return
             }
             let outcome = await submitter.submit(input, sink: self, accepted: { @MainActor turn in
-                self.accept(shown, turn: turn, id: await turn.turnID)
+                self.accept(shown, turn: turn, id: await turn.turnID, note: note)
             })
             let summary = await self.live?.turn.summary()
             self.finish(outcome, restoring: sent, summary: summary, generation: mine)
@@ -503,7 +512,7 @@ public final class ChatViewModel: ReplySink {
 
     /// The coordinator took the turn: the user row, then the live assistant row. UI1 part 5: both
     /// carry the turn's id, and an edit's rows take the place of the rows it replaced.
-    private func accept(_ shown: String, turn: TurnContext, id: UUID) {
+    private func accept(_ shown: String, turn: TurnContext, id: UUID, note: String? = nil) {
         var user = ChatMessage(role: .user, text: shown, phase: .finished)
         var reply = ChatMessage(role: .assistant, text: "", phase: .streaming)
         user.turnID = id
@@ -515,6 +524,7 @@ public final class ChatViewModel: ReplySink {
             versionTails[edit.group, default: []].append([user])
         }
         messages.append(user)
+        if let note { messages.append(ChatMessage(role: .system, text: note, phase: .finished)) }
         messages.append(reply)
         live = LiveReply(id: reply.id, userID: user.id, turn: turn, coalescer: DeltaCoalescer(minimumGap: minimumGap))
         onTurnBegan?(shown)
@@ -522,6 +532,12 @@ public final class ChatViewModel: ReplySink {
             stopBeforeAccept = false
             markLiveStopped()
         }
+    }
+
+    /// True when `text` would confirm the card's live confirmation.
+    private func meetsPending(_ text: String, now: ContinuousClock.Instant) -> Bool {
+        guard let pending, !TextConfirmation.isStale(pending, now: now) else { return false }
+        return Affirmation.matches(text)
     }
 
     /// True when `text` would confirm the card's confirmation but the owner check cannot run.

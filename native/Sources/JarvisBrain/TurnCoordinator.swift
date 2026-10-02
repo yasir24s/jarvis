@@ -65,6 +65,8 @@ public actor TurnCoordinator {
     private let fastPath: any FastPathRouting
     private let confirmations: ConfirmationGate
     private let textPort: InputPort
+    /// M9a part 6: the port spoken turns confirm through, carrying the voice confirmation check.
+    private let voicePort: InputPort
     private let online: @Sendable () async -> Bool
     private let onTurnStart: (@Sendable (TurnContext) -> Void)?
     private let onConversationEnded: (@Sendable () -> Void)?
@@ -88,17 +90,21 @@ public actor TurnCoordinator {
     ///     `onConversationEnded`. A turn refused as `.empty` or `.busy` is not archived.
     ///   - activity: told when each accepted turn begins and ends, so background work (the
     ///     file scanner, D-51 P3) can wait for it.
+    ///   - voiceConfirmation: what a spoken confirmation must pass (M9a part 6, D-41); nil means
+    ///     the owner check `textAuthenticator` is, until M10's voiceprint route exists.
     public init(brain: BrainRouter, fastPath: any FastPathRouting = NoFastPath(),
                 confirmations: ConfirmationGate, textAuthenticator: any ConfirmAuthenticator,
                 online: @escaping @Sendable () async -> Bool,
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
                 onConversationEnded: (@Sendable () -> Void)? = nil,
                 archive: (any ExchangeArchiving)? = nil,
-                activity: TurnActivity? = nil) {
+                activity: TurnActivity? = nil,
+                voiceConfirmation: VoiceConfirmation? = nil) {
         self.brain = brain
         self.fastPath = fastPath
         self.confirmations = confirmations
         self.textPort = .text(authenticator: textAuthenticator)
+        self.voicePort = .voice(confirming: voiceConfirmation ?? .ownerCheck(textAuthenticator))
         self.online = online
         self.onTurnStart = onTurnStart
         self.onConversationEnded = onConversationEnded
@@ -141,7 +147,7 @@ public actor TurnCoordinator {
         onTurnStart?(turn)
         await accepted?(turn)
 
-        let port: InputPort = input.channel == .text ? textPort : .voice
+        let port: InputPort = input.channel == .text ? textPort : voicePort
         if case .handled(let result) = await confirmations.consume(text, via: port, runIn: turn) {
             if !result.isEmpty { await sink.sentence(result) }
             archive?.record(user: text, reply: result, channel: input.channel, turn: turnID)

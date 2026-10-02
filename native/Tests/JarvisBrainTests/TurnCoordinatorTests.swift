@@ -139,13 +139,68 @@ struct TurnCoordinatorTests {
         #expect(await rig.claude.calls.isEmpty)
     }
 
-    @Test func voiceConfirmationNeverAsksTheAuthenticator() async throws {
+    /// M9a part 6 (D-41): until a voiceprint exists, a spoken affirmation passes the owner check
+    /// a typed one does (this rig's authenticator approves).
+    @Test func voiceConfirmationAsksTheOwnerCheck() async throws {
         let rig = try Rig()
         defer { rig.harness.remove() }
         let action = Action("Deleted, sir.")
         await rig.gate.stash(desc: Self.desc, action: action.body, turn: TurnContext(channel: .voice))
         #expect(await rig.submit("do it") == .confirmation("Deleted, sir."))
+        #expect(await rig.auth.reasons == [Self.desc])
+    }
+
+    // MARK: - M9a part 6: a spoken confirmation passes the owner check (D-41)
+
+    @Test func spokenYesWithTheCheckApprovedConfirms() async throws {
+        let rig = try Rig(authenticates: true)
+        defer { rig.harness.remove() }
+        let action = Action("Deleted, sir.")
+        await rig.gate.stash(desc: Self.desc, action: action.body, turn: TurnContext(channel: .text))
+        #expect(await rig.submit("yes", .voice) == .confirmation("Deleted, sir."))
+        #expect(action.didRun)
+        #expect(await rig.auth.reasons == [Self.desc])
+        #expect(await rig.gate.pending == nil)
+        #expect(await rig.claude.calls.isEmpty)
+    }
+
+    @Test func spokenYesWithTheCheckDeniedLeavesTheCardUntilItsDeadline() async throws {
+        let rig = try Rig(authenticates: false)
+        defer { rig.harness.remove() }
+        let action = Action("Deleted, sir.")
+        await rig.gate.stash(desc: Self.desc, action: action.body, turn: TurnContext(channel: .text))
+        let card = try #require(await rig.gate.pending)
+        #expect(await rig.submit("yes", .voice) == .confirmation(VoiceConfirmation.notConfirmed))
+        #expect(!action.didRun)
+        #expect(await rig.auth.reasons == [Self.desc])
+        #expect(await rig.sink.sentences == [VoiceConfirmation.notConfirmed])
+        // The same card, with the same deadline, is still pending.
+        #expect(await rig.gate.pending == card)
+        #expect(await rig.claude.calls.isEmpty)
+    }
+
+    /// The owner check cannot run on this Mac: the authenticator says no without a sheet, which
+    /// the gate treats as not confirmed. (The chat refuses before it sends, as for a typed one;
+    /// see VoiceTurnTests.)
+    @Test func spokenYesWhenTheCheckCannotRunIsNotConfirmed() async throws {
+        let rig = try Rig(authenticates: false)
+        defer { rig.harness.remove() }
+        let action = Action("Deleted, sir.")
+        await rig.gate.stash(desc: Self.desc, action: action.body, turn: TurnContext(channel: .text))
+        #expect(await rig.submit("go ahead", .voice) == .confirmation(VoiceConfirmation.notConfirmed))
+        #expect(!action.didRun)
+        #expect(await rig.gate.pending != nil)
+    }
+
+    @Test func spokenNoDeclinesWithoutACheck() async throws {
+        let rig = try Rig(authenticates: true)
+        defer { rig.harness.remove() }
+        let action = Action("Deleted, sir.")
+        await rig.gate.stash(desc: Self.desc, action: action.body, turn: TurnContext(channel: .text))
+        #expect(await rig.submit("no", .voice) == .reply(Self.claudeReply))
+        #expect(!action.didRun)
         #expect(await rig.auth.reasons.isEmpty)
+        #expect(await rig.gate.pending == nil)
     }
 
     @Test func nonAffirmativeInputCancelsAndGoesOn() async throws {

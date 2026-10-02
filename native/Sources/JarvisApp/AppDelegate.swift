@@ -445,7 +445,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             reader: WebReader(), waitForSilence: { [queue = voice.queue] in await queue.idle() },
             textAuthenticator: authenticator,
             // Python's is_online(): asked only when a turn reaches the brain.
-            online: { await Net.isOnline() })
+            online: { await Net.isOnline() },
+            // M9a part 6 (D-41): a spoken confirmation passes the same owner check, a fresh
+            // LAContext each time, until M10's voiceprint. Not the counting wrapper: the
+            // text_confirm_* counters count typed confirmations only.
+            voiceConfirmation: .ownerCheck(LAConfirmAuthenticator()))
         brain = assembly
         voice.activity = assembly.turnActivity   // V1 part 5: speech holds the file scan back
         // P1: the hourly consolidation check starts now (first pass in 120 s); the chat's
