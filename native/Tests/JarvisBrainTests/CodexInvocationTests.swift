@@ -34,6 +34,7 @@ struct CodexInvocationTests {
             "--sandbox", "read-only",
             "-c", #"approval_policy="never""#,
             "-c", #"model_reasoning_effort="low""#,
+            "-c", #"model_reasoning_summary="none""#,
             "-c", #"model_catalog_json="/private/var/empty/run/turn-test.codex-models.json""#,
             "-c", #"web_search="disabled""#,
             "-c", "tools.experimental_request_user_input.enabled=false",

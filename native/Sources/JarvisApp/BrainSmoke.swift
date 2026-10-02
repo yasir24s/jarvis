@@ -30,34 +30,45 @@ import Synchronization
 /// `--force-local` turns Claude off (JARVIS_USE_CLAUDE=0). `--inject-taint-test` sends a fixed
 /// prompt asking for `echo hi` through run_command, as a pasted input, so the turn starts
 /// tainted. The local brain is the assembly's own `LocalBrain`.
+///
+/// B2: `--chatgpt` picks ChatGPT for the turn (the Brain item's third choice) and taps `codex`
+/// the same way. It then prints, instead of the init lines:
+///   codex item <type> [<server>.<tool> <status>]   each item exec reported, from the stream
+///   codex error <message> / codex turn.completed input=<n> output=<n>
+///   chatgpt tool_calls=<list> built_ins=<list>      the driver's own record of the turn
+///   timing first_delta_ms=<n> total_ms=<n>          from the submit to the first reply text
+///                                                   and to the end of the turn
 enum BrainSmoke {
     struct Options: Equatable {
         var text: String
         var forceLocal = false
         var injectTaint = false
+        var chatgpt = false
     }
 
-    static let usage = "usage: JARVIS --brain-smoke [--force-local] (\"<text>\" | --inject-taint-test)\n"
+    static let usage = "usage: JARVIS --brain-smoke [--force-local] [--chatgpt] (\"<text>\" | --inject-taint-test)\n"
     static let taintTestPrompt = "Use the run_command tool to run the shell command `echo hi`, then tell me exactly what it printed."
 
     /// `--brain-smoke` and its flags, in any order after it; nil for anything else.
     static func parse(_ arguments: ArraySlice<String>) -> Options? {
         guard arguments.first == "--brain-smoke" else { return nil }
-        var forceLocal = false, injectTaint = false
+        var forceLocal = false, injectTaint = false, chatgpt = false
         var texts: [String] = []
         for argument in arguments.dropFirst() {
             switch argument {
             case "--force-local": forceLocal = true
             case "--inject-taint-test": injectTaint = true
+            case "--chatgpt": chatgpt = true
             default:
                 if argument.hasPrefix("--") { return nil }
                 texts.append(argument)
             }
         }
         if injectTaint {
-            return texts.isEmpty ? Options(text: taintTestPrompt, forceLocal: forceLocal, injectTaint: true) : nil
+            return texts.isEmpty
+                ? Options(text: taintTestPrompt, forceLocal: forceLocal, injectTaint: true, chatgpt: chatgpt) : nil
         }
-        return texts.count == 1 ? Options(text: texts[0], forceLocal: forceLocal) : nil
+        return texts.count == 1 ? Options(text: texts[0], forceLocal: forceLocal, chatgpt: chatgpt) : nil
     }
 
     /// Runs the turn off the main thread and parks the main thread; exits with its status.
@@ -133,14 +144,34 @@ enum BrainSmoke {
             say("claude: not found on the child PATH")
         }
 
+        // B2: with --chatgpt, codex is tapped and the turn goes to ChatGPT.
+        let codexStream = scratch.appending(path: "codex-stream.jsonl", directoryHint: .notDirectory)
+        var codexTapped: URL?
+        if options.chatgpt {
+            if let codex = BrainAssembly.locateCodex(environment: environment) {
+                do {
+                    codexTapped = try writeTap(claude: codex, stream: codexStream, in: scratch, name: "codex-tap")
+                } catch {
+                    return fail("cannot write the codex stream tap: \(error)", 73)
+                }
+            } else {
+                say("codex: not found")
+            }
+        }
+        let choice: BrainChoice = options.chatgpt ? .chatgpt : .claude
+
         let turnBox = TurnBox()
         let tap = StreamTap(stream: tapped == nil ? nil : stream, turn: turnBox)
+        let codexTap = CodexTap(stream: codexTapped == nil ? nil : codexStream)
         let assembly = BrainAssembly(core: core, research: research, config: config,
                                      environment: environment,
                                      runDirectory: scratch.appending(path: "run", directoryHint: .isDirectory),
                                      claudeWorkingDirectory: scratch.appending(path: "claude-cwd", directoryHint: .isDirectory),
-                                     claudeExecutable: tapped, textAuthenticator: RefusingAuthenticator(),
-                                     online: { true }, onTurnStart: { turnBox.set($0) })
+                                     claudeExecutable: tapped,
+                                     codexWorkingDirectory: scratch.appending(path: "codex-cwd", directoryHint: .isDirectory),
+                                     codexExecutable: codexTapped, textAuthenticator: RefusingAuthenticator(),
+                                     online: { true }, onTurnStart: { turnBox.set($0) },
+                                     brainChoice: { choice })
         do {
             try await assembly.start()
         } catch {
@@ -150,13 +181,24 @@ enum BrainSmoke {
         let poller = Task {
             while !Task.isCancelled {
                 await tap.drain()
+                await codexTap.drain()
                 try? await Task.sleep(for: .milliseconds(100))
             }
         }
+        let firstDelta = FirstDelta()
+        let started = ContinuousClock.now
         _ = await assembly.coordinator.submit(UserInput(text: options.text, channel: .voice, pasted: options.injectTaint),
-                                              sink: PrintingSink())
+                                              sink: PrintingSink(firstDelta: firstDelta))
+        let total = ContinuousClock.now - started
         poller.cancel()
         await tap.drain()
+        await codexTap.drain()
+        if options.chatgpt {
+            let calls = await assembly.chatgpt.lastToolCalls, builtIns = await assembly.chatgpt.lastBuiltIns
+            say("chatgpt tool_calls=\(calls) built_ins=\(builtIns)")
+            let first = firstDelta.instant.map { String(Int(($0 - started) / .milliseconds(1))) } ?? "none"
+            say("timing first_delta_ms=\(first) total_ms=\(Int(total / .milliseconds(1)))")
+        }
         say("backend=\(await assembly.backend.last.name)")
         await assembly.stop()
         withExtendedLifetime(lock) {}
@@ -172,8 +214,9 @@ enum BrainSmoke {
         return URL(fileURLWithPath: String(cString: made), isDirectory: true)
     }
 
-    /// The tap: bash copies its stdout to `stream`, then becomes `claude` (same pid).
-    private static func writeTap(claude: URL, stream: URL, in directory: URL) throws -> URL {
+    /// The tap: bash copies its stdout to `stream`, then becomes `claude` (same pid). B2 taps
+    /// `codex` with the same script under another `name`.
+    private static func writeTap(claude: URL, stream: URL, in directory: URL, name: String = "claude-tap") throws -> URL {
         func quoted(_ url: URL) -> String {
             "'" + url.path(percentEncoded: false).replacingOccurrences(of: "'", with: #"'\''"#) + "'"
         }
@@ -183,7 +226,7 @@ enum BrainSmoke {
         exec \(quoted(claude)) "$@"
 
         """
-        let url = directory.appending(path: "claude-tap", directoryHint: .notDirectory)
+        let url = directory.appending(path: name, directoryHint: .notDirectory)
         try Data(script.utf8).write(to: url)
         try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: url.path(percentEncoded: false))
         return url
@@ -266,8 +309,73 @@ private actor StreamTap {
 }
 
 private struct PrintingSink: ReplySink {
-    func sentence(_ text: String) async { BrainSmoke.say("sentence: \(text)") }
+    /// B2: when the first reply text came, for `--chatgpt`'s timing line.
+    let firstDelta: FirstDelta
+
+    func sentence(_ text: String) async {
+        firstDelta.mark()
+        BrainSmoke.say("sentence: \(text)")
+    }
+
+    func delta(_ text: String) async { firstDelta.mark() }
     func retracted(messageID: String) async { BrainSmoke.say("retracted \(messageID)") }
+}
+
+/// The first instant a reply's text reached the sink, set once.
+private final class FirstDelta: Sendable {
+    private let state = Mutex<ContinuousClock.Instant?>(nil)
+    func mark() { state.withLock { $0 = $0 ?? ContinuousClock.now } }
+    var instant: ContinuousClock.Instant? { state.withLock { $0 } }
+}
+
+/// B2: reads the tapped `codex` stream as it grows and prints each item, error and the turn's
+/// end, so the run shows which tools ran: JARVIS's (`mcp_tool_call jarvis.<tool>`) or any
+/// built-in Codex one.
+private actor CodexTap {
+    private let stream: URL?
+    private var offset: UInt64 = 0
+    private var pending = Data()
+
+    init(stream: URL?) {
+        self.stream = stream
+    }
+
+    func drain() {
+        guard let stream, let handle = try? FileHandle(forReadingFrom: stream) else { return }
+        defer { try? handle.close() }
+        guard (try? handle.seek(toOffset: offset)) != nil, let data = try? handle.readToEnd(), !data.isEmpty else { return }
+        offset += UInt64(data.count)
+        pending.append(data)
+        while let newline = pending.firstIndex(of: UInt8(ascii: "\n")) {
+            let line = String(decoding: pending[pending.startIndex..<newline], as: UTF8.self)
+            pending.removeSubrange(pending.startIndex...newline)
+            report(line)
+        }
+    }
+
+    private func report(_ line: String) {
+        guard let event = CodexEvent.parse(line) else { return }
+        switch event {
+        case .message:
+            BrainSmoke.say("codex item agent_message")
+        case .reasoning:
+            BrainSmoke.say("codex item reasoning")
+        case let .toolCall(_, server, tool, finished, failed):
+            BrainSmoke.say("codex item mcp_tool_call \(server).\(tool) \(finished ? (failed ? "failed" : "completed") : "started")")
+        case let .builtIn(type):
+            BrainSmoke.say("codex item \(type)")
+        case let .notice(message):
+            BrainSmoke.say("codex item error \(message)")
+        case let .error(message):
+            BrainSmoke.say("codex error \(message)")
+        case let .turnFailed(message):
+            BrainSmoke.say("codex turn.failed \(message)")
+        case let .turnCompleted(input, output):
+            BrainSmoke.say("codex turn.completed input=\(input.map(String.init) ?? "?") output=\(output.map(String.init) ?? "?")")
+        case .threadStarted, .turnStarted, .unknown:
+            break
+        }
+    }
 }
 
 /// No frontmost-app read: that is NSWorkspace, which the smoke never touches. Python's

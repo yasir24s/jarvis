@@ -100,7 +100,9 @@ public struct CodexInvocation: Sendable, Equatable {
         if !config.effort.isEmpty {
             a += ["-c", "model_reasoning_effort=" + Self.toml(config.effort)]
         }
-        a += ["-c", "model_catalog_json=" + Self.toml(catalog.path(percentEncoded: false)),
+        // No reasoning summary: JARVIS never shows one, and it is more output to wait for.
+        a += ["-c", "model_reasoning_summary=" + Self.toml("none"),
+              "-c", "model_catalog_json=" + Self.toml(catalog.path(percentEncoded: false)),
               "-c", "web_search=" + Self.toml("disabled"),
               "-c", "tools.experimental_request_user_input.enabled=false",
               "-c", "features.code_mode.excluded_tool_namespaces=" + Self.toml(["clock", "functions"]),
