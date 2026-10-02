@@ -35,6 +35,8 @@ __pycache__/
 *.wav
 # ...except M10's speaker fixtures: synthetic `say` voices, never a person (see the folder's README)
 !native/Tests/Fixtures/golden/voice/speaker/*.wav
+# ...and M11's wake fixtures: synthetic `say` voices and generated noise (see the folder's README)
+!native/Tests/Fixtures/golden/voice/wake/*.wav
 .DS_Store
 *.pkg
 
