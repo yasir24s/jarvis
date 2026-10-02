@@ -168,9 +168,9 @@ public actor TurnCoordinator {
         }
         let isOnline = await online()
         let brain = self.brain
-        let reply = await withTaskCancellationHandler {
-            await brain.process(text, online: isOnline, channel: input.channel, turn: turn, sink: sink,
-                                addsContext: input.addsContext)
+        let answer = await withTaskCancellationHandler {
+            await brain.answer(text, online: isOnline, channel: input.channel, turn: turn, sink: sink,
+                               addsContext: input.addsContext)
         } onCancel: {
             // UI1 part 4: stopped. From now on the gateway runs no tool for this turn.
             Task { await turn.close() }
@@ -181,8 +181,9 @@ public actor TurnCoordinator {
             await turn.close()
             await dropConfirmation(stashedSince: started)
         }
-        archive?.record(user: text, reply: reply, channel: input.channel, turn: turnID)   // the brain sent it
-        return .reply(reply)
+        // The brain sent it; MEM1 part 3: the archive notes which brain.
+        archive?.record(user: text, reply: answer.text, channel: input.channel, turn: turnID, brain: answer.brain)
+        return .reply(answer.text)
     }
 
     /// Clears the pending confirmation if it was stashed at or after `start`, as the card's

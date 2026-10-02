@@ -53,9 +53,10 @@ public final class MemoryStore: Sendable {
     /// bytes the archive gained since the last one).
     /// UI1 part 5: `turn` is the id of the turn the message belongs to, written on its line.
     @discardableResult
-    public func archive(_ text: String, role: MemoryRole, channel: String, turn: String? = nil) -> Bool {
+    public func archive(_ text: String, role: MemoryRole, channel: String, turn: String? = nil,
+                        brain: String? = nil) -> Bool {
         let entry = ArchiveEntry(timestamp: clock.now(), timeZone: timeZone, channel: channel,
-                                 role: role, text: text, turn: turn)
+                                 role: role, text: text, turn: turn, brain: brain)
         guard store.appendLine(entry.line, to: .archive) else { return false }
         backups.afterAppend(.archive, path: store.path(.archive))
         return true

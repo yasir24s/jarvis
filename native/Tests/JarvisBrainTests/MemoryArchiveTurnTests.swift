@@ -112,7 +112,8 @@ struct MemoryArchiveTurnTests {
         #expect(UUID(uuidString: turn) != nil)
         #expect(lines == [
             #"{"timestamp": 1790582400.0, "date": "2026-09-28", "channel": "text", "role": "user", "text": "my sister Amira lives in Leeds", "turn": ""# + turn + #""}"#,
-            #"{"timestamp": 1790582400.0, "date": "2026-09-28", "channel": "text", "role": "jarvis", "text": "Claude reply, sir.", "turn": ""# + turn + #""}"#,
+            // MEM1 part 3: the reply's line also names the brain that wrote it.
+            #"{"timestamp": 1790582400.0, "date": "2026-09-28", "channel": "text", "role": "jarvis", "text": "Claude reply, sir.", "turn": ""# + turn + #"", "brain": "claude"}"#,
         ])
         #expect(logged.events == ["memory: archived 2 message(s)"])
 

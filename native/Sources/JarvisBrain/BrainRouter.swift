@@ -104,6 +104,20 @@ public struct BrainRouter: Sendable {
     /// labelled by `addedContext`; history and the rest of the turn see it as typed.
     public func process(_ text: String, online: Bool, channel: Channel, turn: TurnContext,
                         sink: any ReplySink, addsContext: Bool = false) async -> String {
+        await answer(text, online: online, channel: channel, turn: turn, sink: sink, addsContext: addsContext).text
+    }
+
+    /// MEM1 part 3: a reply and the brain that wrote it, for the archive. `brain` is nil when no
+    /// brain wrote anything (a state file with the wrong shape).
+    public struct Answer: Sendable, Equatable {
+        public let text: String
+        public let brain: ArchiveBrain?
+    }
+
+    /// `process`, with the brain: Claude or ChatGPT for a cloud reply (whole or salvaged), the
+    /// on-device model for every local ending, and for a stopped turn the brain it stopped.
+    public func answer(_ text: String, online: Bool, channel: Channel, turn: TurnContext,
+                       sink: any ReplySink, addsContext: Bool = false) async -> Answer {
         // M9a part 7: read before anything waits, so a turn finishes on the brain it began with.
         let chosen = choice()
         let head: CoreState.TurnPrompt
@@ -112,7 +126,7 @@ public struct BrainRouter: Sendable {
         } catch {
             // Python raises before its `finally`, so nothing is saved either.
             log("Loop error: \(error)")
-            return ""
+            return Answer(text: "", brain: nil)
         }
         defer { await core.saveHistory() }                                            // step 14
         if channel == .text {
@@ -130,32 +144,33 @@ public struct BrainRouter: Sendable {
         let shown = ShownReply(sink)
 
         if online, let cloud = cloudBrain(chosen) {                                       // step 11
+            let brain: ArchiveBrain = chosen == .chatgpt ? .chatgpt : .claude
             // Python's `if reply:`: nil and "" both fall through to the local model.
             let reply = await cloud.generate(system: system, user: user, turn: turn, sink: shown)
-            if Task.isCancelled { return await stopped(shown) }
+            if Task.isCancelled { return Answer(text: await stopped(shown), brain: brain) }
             if let reply, !reply.isEmpty {
                 await core.recordAssistant(reply)                                    // step 12
-                return reply
+                return Answer(text: reply, brain: brain)
             }
         }
-        if Task.isCancelled { return await stopped(shown) }
+        if Task.isCancelled { return Answer(text: await stopped(shown), brain: nil) }
 
         await backend.set(LocalBrain.backendName)                                     // step 13
         // History as Python's four local-loop endings leave it (jarvis.py 5086-5118).
         let outcome = await local.generate(system: localSystem, user: user, channel: channel, turn: turn, sink: shown)
-        if Task.isCancelled { return await stopped(shown) }
+        if Task.isCancelled { return Answer(text: await stopped(shown), brain: .onDevice) }
         switch outcome {
         case .reply(let reply):
             await core.recordAssistant(reply)
-            return reply
+            return Answer(text: reply, brain: .onDevice)
         case .emptyReply(let spoken):
             await core.recordAssistant("")
-            return spoken
+            return Answer(text: spoken, brain: .onDevice)
         case .stuck(let spoken):
-            return spoken
+            return Answer(text: spoken, brain: .onDevice)
         case .failed(let reply):
             await core.popTrailingUserTurn()
-            return reply
+            return Answer(text: reply, brain: .onDevice)
         }
     }
 

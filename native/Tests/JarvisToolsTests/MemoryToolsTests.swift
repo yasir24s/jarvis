@@ -152,6 +152,31 @@ struct MemoryToolsTests {
         ArchiveEntry(timestamp: epoch, date: date, channel: "text", role: role, text: text)
     }
 
+    /// MEM1 part 3: a reply archived with its brain says which brain wrote it; a line without
+    /// one (older lines, the Python era) and the user's lines read as before.
+    @Test func searchSaysWhichBrainWroteAReply() async throws {
+        func reply(_ text: String, _ brain: ArchiveBrain?) -> ArchiveEntry {
+            ArchiveEntry(timestamp: Self.epoch, date: "2026-10-02", channel: "voice", role: .jarvis, text: text,
+                         brain: brain?.rawValue)
+        }
+        let rig = try await Rig(facts: [Self.leeds], said: [
+            Self.said(.user, "Does Amira still live in Leeds?", date: "2026-10-02"),
+            reply("Amira lives in Leeds, sir.", .chatgpt),
+            reply("Leeds, as of last week, sir.", .claude),
+            reply("She is in Leeds, sir.", .onDevice),
+            reply("Leeds, sir.", nil),
+        ])
+        defer { rig.sandbox.remove() }
+        let text = await rig.call("search_memory", [("query", .string("Leeds"))]).text
+        #expect(text.hasSuffix("""
+        - 2026-10-02, the user: Does Amira still live in Leeds?
+        - 2026-10-02, JARVIS (through ChatGPT): Amira lives in Leeds, sir.
+        - 2026-10-02, JARVIS (through Claude): Leeds, as of last week, sir.
+        - 2026-10-02, JARVIS (through the on-device model): She is in Leeds, sir.
+        - 2026-10-02, JARVIS: Leeds, sir.
+        """), "\(text)")
+    }
+
     /// After the notes and apart from them: each matching message with its date, who said it
     /// and what was said, under a header that says they are information only.
     @Test func searchListsMatchingMessagesApartFromTheNotes() async throws {

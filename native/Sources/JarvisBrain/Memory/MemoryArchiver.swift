@@ -10,11 +10,17 @@ public protocol ExchangeArchiving: Sendable {
     func record(user: String, reply: String, channel: Channel, turn: UUID)
     /// UI1 part 5: an edit replaced these turns.
     func supersede(turns: [UUID])
+    /// MEM1 part 3: the same, with the brain that wrote the reply on the reply's line.
+    func record(user: String, reply: String, channel: Channel, turn: UUID, brain: ArchiveBrain?)
 }
 
 public extension ExchangeArchiving {
     func record(user: String, reply: String, channel: Channel, turn: UUID) {
         record(user: user, reply: reply, channel: channel)
+    }
+
+    func record(user: String, reply: String, channel: Channel, turn: UUID, brain: ArchiveBrain?) {
+        record(user: user, reply: reply, channel: channel, turn: turn)
     }
 
     func supersede(turns: [UUID]) {}
@@ -45,6 +51,10 @@ public struct MemoryArchiver: ExchangeArchiving {
         record(user: user, reply: reply, channel: channel, turn: Optional(turn))
     }
 
+    public func record(user: String, reply: String, channel: Channel, turn: UUID, brain: ArchiveBrain?) {
+        record(user: user, reply: reply, channel: channel, turn: Optional(turn), brain: brain)
+    }
+
     /// UI1 part 5: one supersede line for `turns`; one log line, with the count.
     public func supersede(turns: [UUID]) {
         guard !turns.isEmpty else { return }
@@ -55,12 +65,13 @@ public struct MemoryArchiver: ExchangeArchiving {
         }
     }
 
-    private func record(user: String, reply: String, channel: Channel, turn: UUID?) {
+    private func record(user: String, reply: String, channel: Channel, turn: UUID?, brain: ArchiveBrain? = nil) {
         var messages = [(MemoryRole.user, user)]
         if !reply.isEmpty { messages.append((.jarvis, reply)) }
         var written = 0
         for (role, text) in messages
-        where memory.archive(text, role: role, channel: channel.rawValue, turn: turn?.uuidString) {
+        where memory.archive(text, role: role, channel: channel.rawValue, turn: turn?.uuidString,
+                             brain: role == .jarvis ? brain?.rawValue : nil) {
             written += 1
         }
         if written == messages.count {

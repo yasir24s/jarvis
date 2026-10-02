@@ -15,7 +15,9 @@ public enum MemoryRole: String, Sendable, CaseIterable {
 /// "user"|"jarvis", "text": "..."}`, compact, in that key order, non-ASCII kept. JSON escapes
 /// every newline in the text, so one message is always one line. UI1 part 5: a message from a
 /// turn also carries `"turn": "<uuid>"`, last, so an edit can supersede the turn (a line
-/// without it reads as before).
+/// without it reads as before). MEM1 part 3: a reply from a brain also carries `"brain":`
+/// (`ArchiveBrain`), after the turn; lines from before, the user's lines and Python-era lines
+/// have none, and read as before.
 public struct ArchiveEntry: Sendable, Equatable {
     public var timestamp: Double
     public var date: String          // the local calendar date of `timestamp`
@@ -26,23 +28,28 @@ public struct ArchiveEntry: Sendable, Equatable {
     /// UI1 part 5: the turn the message belongs to, nil on lines from before UI1 and on the
     /// Python-era archive.
     public var turn: String?
+    /// MEM1 part 3: which brain wrote a reply (`ArchiveBrain`'s raw values), nil on the user's
+    /// lines, on replies no brain wrote, and on every line from before.
+    public var brain: String?
 
     public init(timestamp: Double, date: String, channel: String, role: MemoryRole, text: String,
-                turn: String? = nil) {
+                turn: String? = nil, brain: String? = nil) {
         self.timestamp = timestamp
         self.date = date
         self.channel = channel
         self.role = role
         self.text = text
         self.turn = turn
+        self.brain = brain
     }
 
     /// Stamps `text` with `timestamp` and its local date in `timeZone`.
     public init(timestamp: Double, timeZone: TimeZone, channel: String, role: MemoryRole,
-                text: String, turn: String? = nil) {
+                text: String, turn: String? = nil, brain: String? = nil) {
         let date = PyTime.strftime("%Y-%m-%d", Date(timeIntervalSince1970: timestamp),
                                    timeZone: timeZone)
-        self.init(timestamp: timestamp, date: date, channel: channel, role: role, text: text, turn: turn)
+        self.init(timestamp: timestamp, date: date, channel: channel, role: role, text: text, turn: turn,
+                  brain: brain)
     }
 
     /// The archive line, without its trailing newline.
@@ -55,6 +62,7 @@ public struct ArchiveEntry: Sendable, Equatable {
             .init(key: "text", value: .string(text)),
         ]
         if let turn { members.append(.init(key: "turn", value: .string(turn))) }
+        if let brain { members.append(.init(key: "brain", value: .string(brain))) }
         return PyJSON.dumps(.object(JSONObject(members)), ensureASCII: false)
     }
 
@@ -69,7 +77,23 @@ public struct ArchiveEntry: Sendable, Equatable {
               let text = o["text"]?.stringValue
         else { return nil }
         self.init(timestamp: timestamp, date: date, channel: channel, role: role, text: text,
-                  turn: o["turn"]?.stringValue)
+                  turn: o["turn"]?.stringValue, brain: o["brain"]?.stringValue)
+    }
+}
+
+/// MEM1 part 3: the brains a reply is archived with.
+public enum ArchiveBrain: String, Sendable, CaseIterable {
+    case claude
+    case chatgpt
+    case onDevice = "on-device"
+
+    /// How search_memory names it: "Claude", "ChatGPT", "the on-device model".
+    public var displayName: String {
+        switch self {
+        case .claude: "Claude"
+        case .chatgpt: "ChatGPT"
+        case .onDevice: "the on-device model"
+        }
     }
 }
 
