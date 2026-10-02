@@ -535,7 +535,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         talk.onHeard = { [weak self] text in
             guard let self else { return }
-            if self.chat.sendVoice(text) == nil { self.hud.listeningEnded() }
+            // The turn's start makes the HUD think. A turn never taken (refused, or nothing sent)
+            // must not leave it listening.
+            guard let turn = self.chat.sendVoice(text) else {
+                self.hud.listeningEnded()
+                return
+            }
+            Task { [weak self] in
+                await turn.value
+                self?.hud.listeningEnded()
+            }
         }
         // Part 5: the first time the microphone or speech recognition is found denied, the chat
         // says how to allow it in System Settings.
