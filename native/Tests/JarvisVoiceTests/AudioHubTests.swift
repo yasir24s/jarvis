@@ -362,6 +362,8 @@ final class FakeHubEngine: HubEngine, @unchecked Sendable {
         state.withLock { $0.tap }?(buffer, 0)
     }
 
+    func setVoiceProcessingBypassed(_ bypassed: Bool) {}
+
     /// The engine stops itself, as AVAudioEngine does when a device changes.
     func stopByItself() {
         state.withLock { $0.running = false }

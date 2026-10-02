@@ -30,6 +30,9 @@ final class AppVoice {
     /// audio's length in seconds), its audio ended, and its speech is over, with audio or not.
     var onReplyAudioStarted: ((String, Double) -> Void)?
     var onReplyAudioEnded: (() -> Void)?
+    /// M11 part 4, barge-in's hook: any of his audio started (true) or ended (false), a part at
+    /// a time: a reply's sentence, an acknowledgement, or one of the loop's own lines.
+    var onAudio: ((Bool) -> Void)?
     var onReplyOver: (() -> Void)?
     /// Replies handed to `speak` whose speech is not over.
     private(set) var repliesPending = 0
@@ -182,6 +185,7 @@ final class AppVoice {
 
     /// The player started `chunk`: an acknowledgement, or the reply.
     private func audioStarted(_ chunk: PCMChunk) {
+        onAudio?(true)
         if let acknowledgementClip, acknowledgementClip.samples == chunk.samples { return }
         guard let heardReply, chunk.sampleRate > 0 else { return }
         replyAudioPlaying = true
@@ -189,6 +193,7 @@ final class AppVoice {
     }
 
     private func audioEnded() {
+        onAudio?(false)
         guard replyAudioPlaying else { return }
         replyAudioPlaying = false
         onReplyAudioEnded?()

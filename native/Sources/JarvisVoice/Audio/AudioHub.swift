@@ -77,6 +77,9 @@ protocol HubEngine: AnyObject {
     func stop(_ player: HubPlayer)
     /// Fires when the devices change under the engine.
     var deviceChanges: DeviceChangeRelay { get }
+    /// With voice processing on, bypasses its processing of the input (the raw microphone with
+    /// his voice in it), for `--selftest-aec`'s comparison.
+    func setVoiceProcessingBypassed(_ bypassed: Bool)
 }
 
 /// AVAudioEngine with the speech and effect players into the main mixer and, in duplex mode, a
@@ -197,6 +200,11 @@ final class SystemHubEngine: HubEngine {
 
     func stop(_ player: HubPlayer) {
         players[player]?.stop()
+    }
+
+    func setVoiceProcessingBypassed(_ bypassed: Bool) {
+        guard inputFormat != nil, engine.inputNode.isVoiceProcessingEnabled else { return }
+        engine.inputNode.isVoiceProcessingBypassed = bypassed
     }
 
     /// For tests: the next `frames` (at most `offlineFrames`) of an offline engine's output, one
@@ -439,6 +447,14 @@ public final class AudioHub: @unchecked Sendable {
         } catch {
             log("audio: cannot rebuild the engine output only (\(error))")
         }
+    }
+
+    /// `--selftest-aec`: with the microphone open and voice processing on, bypass its input
+    /// processing (true) or not.
+    public func setVoiceProcessingBypassed(_ bypassed: Bool) {
+        lock.lock()
+        defer { lock.unlock() }
+        engine.setVoiceProcessingBypassed(bypassed)
     }
 
     /// Whether anything has the microphone open.

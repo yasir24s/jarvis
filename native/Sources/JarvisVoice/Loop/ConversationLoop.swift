@@ -95,6 +95,9 @@ public actor ConversationLoop {
     private let rebind: @Sendable () -> Void
     private let hour: @Sendable () -> Int
     private let log: @Sendable (String) -> Void
+    /// The frames being listened to, for `say` and `handleOne` to drop what they kept from being
+    /// heard.
+    private var source: FrameSource?
 
     /// - speaker: the voiceprint's checks; nil checks nothing (accepts every voice).
     /// - enrolment: "learn my voice"; nil says it is not ready.
@@ -120,6 +123,7 @@ public actor ConversationLoop {
     /// greeting (the first start in a launch); `ready` is called once the loop is listening (the
     /// startup watchdog stands down).
     public func run(_ source: FrameSource, greet: Bool, ready: @escaping @Sendable () -> Void = {}) async {
+        self.source = source
         guard await boot(source, greet: greet) else { return }
         ready()
         while !Task.isCancelled {
@@ -136,7 +140,7 @@ public actor ConversationLoop {
         while tries < Self.checkTries {
             guard let recorded = await record(source, seconds: 1.0) else { return false }
             if MicFrame(samples: recorded, index: 0).rms > 0 { break }
-            if tries == 0 { await host.say(Self.awaitingMicrophone) }
+            if tries == 0 { await say(Self.awaitingMicrophone) }
             tries += 1
             guard await skip(source, seconds: Self.checkGap) else { return false }
         }
@@ -148,7 +152,7 @@ public actor ConversationLoop {
             log("wake: the wake-word models would not load (\(error)); hands-free listening is off")
             return false
         }
-        if greet { await host.say(Self.greeting(hour: hour())) }
+        if greet { await say(Self.greeting(hour: hour())) }
         await host.show(.idle)
         log("listen: online and listening")
         return true
@@ -218,7 +222,7 @@ public actor ConversationLoop {
         }
         if text.isEmpty {
             await host.show(.listening)
-            await host.say(Self.yesSir)
+            await say(Self.yesSir)
             do {
                 let heard = try await listener.listen(source, timeout: Self.conversationTimeout)
                 (text, audio) = (heard.text, heard.clip)
@@ -250,7 +254,7 @@ public actor ConversationLoop {
             if let answer = await host.identifyMusic() {
                 await host.show(.speaking)
                 await host.caption(answer)
-                await host.say(answer)
+                await say(answer)
                 await host.show(.idle)
                 await host.caption("")
                 return true
@@ -260,7 +264,7 @@ public actor ConversationLoop {
             await handleOne(command)
         } else {
             await host.show(.listening)
-            await host.say(Self.yesSir)
+            await say(Self.yesSir)
         }
         let open = await conversation(source)
         await host.conversationEnded()
@@ -296,13 +300,13 @@ public actor ConversationLoop {
                 if let answer = await host.identifyMusic() {
                     await host.show(.speaking)
                     await host.caption(answer)
-                    await host.say(answer)
+                    await say(answer)
                     continue
                 }
             }
             if Dismissal.isDismiss(reply) {
                 await host.show(.speaking)
-                await host.say(Dismissal.reply)
+                await say(Dismissal.reply)
                 await host.show(.idle)
                 await host.caption("")
                 return true
@@ -313,11 +317,19 @@ public actor ConversationLoop {
     }
 
     /// `handle_one(command)`: stripped, and nothing at all when that leaves nothing (a bare
-    /// "Jarvis" mid-conversation).
+    /// "Jarvis" mid-conversation). What the microphone heard while the turn ran and he spoke is
+    /// not listened to afterwards.
     private func handleOne(_ command: String) async {
         let command = Py.strip(command)
         guard !command.isEmpty else { return }
         await host.handle(command)
+        await source?.dropStale()
+    }
+
+    /// `speak(text)`, and the next listen starts from now.
+    private func say(_ text: String) async {
+        await host.say(text)
+        await source?.dropStale()
     }
 
     /// `speaker_ok(wake_clip, threshold=WAKE_SPK_THRESHOLD)`: a foreign voice is ignored with no
@@ -340,10 +352,10 @@ public actor ConversationLoop {
     /// then the voiceprint. False when the frames ended.
     func enrol(_ source: FrameSource) async -> Bool {
         guard let enrolment else {
-            await host.say(Voiceprint.Lines.notReady)
+            await say(Voiceprint.Lines.notReady)
             return true
         }
-        await host.say(Voiceprint.Lines.starting)
+        await say(Voiceprint.Lines.starting)
         await host.chime(.tink)
         var takes: [[Int16]] = []
         for _ in 0..<Self.enrolTakes {
@@ -354,14 +366,14 @@ public actor ConversationLoop {
             switch try await enrolment.enroll(takes: takes) {
             case .saved:
                 await host.chime(.glass)
-                await host.say(Voiceprint.Lines.set)
+                await say(Voiceprint.Lines.set)
                 log("listen: voiceprint enrolled by voice")
             case .nothingCaptured:
-                await host.say(Voiceprint.Lines.nothingCaptured)
+                await say(Voiceprint.Lines.nothingCaptured)
             }
         } catch {
             log("listen: enrolment failed (\(error))")
-            await host.say(Voiceprint.Lines.notReady)
+            await say(Voiceprint.Lines.notReady)
         }
         return true
     }

@@ -27,6 +27,11 @@ enum Entry {
             }
             BrainSmoke.start(options)
         }
+        // M11 part 4 (plan A13): echo cancelling and barge-in measured on the speakers and the
+        // microphone, by the user at the screen. It plays sound and opens the microphone.
+        if arguments.first == AECSelfTest.flag {
+            exit(AECSelfTest.run(arguments: Array(arguments.dropFirst())))
+        }
         #endif
         if arguments.contains("--version") {
             print("JARVIS \(infoString("CFBundleShortVersionString")) (\(infoString("CFBundleVersion")))")

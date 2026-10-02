@@ -6,20 +6,39 @@ import JarvisCore
 public actor FrameSource {
     private var iterator: AsyncStream<MicFrame>.AsyncIterator
     private var held: [MicFrame] = []
+    private var cutoff: UInt64 = 0
 
     public init(_ frames: AsyncStream<MicFrame>) {
         iterator = frames.makeAsyncIterator()
     }
 
-    /// The next frame; nil once the microphone has closed.
+    /// The next frame; nil once the microphone has closed. Frames captured before the last
+    /// `dropStale` are skipped.
     public func next() async -> MicFrame? {
-        if !held.isEmpty { return held.removeFirst() }
-        // AsyncStream's iterator shares its stream's state, so the copy reads the same frames.
-        // One reader at a time: the loop reads in turn, as Python does.
-        var reading = iterator
-        let frame = await reading.next(isolation: #isolation)
-        iterator = reading
-        return frame
+        while true {
+            let frame: MicFrame?
+            if !held.isEmpty {
+                frame = held.removeFirst()
+            } else {
+                // AsyncStream's iterator shares its stream's state, so the copy reads the same
+                // frames. One reader at a time: the loop reads in turn, as Python does.
+                var reading = iterator
+                frame = await reading.next(isolation: #isolation)
+                iterator = reading
+            }
+            guard let frame else { return nil }
+            // A frame with no capture time (a test's) is never stale.
+            if frame.hostTime != 0 && frame.hostTime < cutoff { continue }
+            return frame
+        }
+    }
+
+    /// What the microphone heard before now goes unread: the time he spoke, or a turn ran, while
+    /// nothing listened. Python's next listen reads a stream that has moved on (PyAudio keeps only
+    /// the latest audio when nobody reads); the barge-in audio is not replayed either.
+    public func dropStale(before hostTime: UInt64 = mach_absolute_time()) {
+        cutoff = hostTime
+        held.removeAll { $0.hostTime != 0 && $0.hostTime < hostTime }
     }
 
     /// Puts frames back to be read again first (a stream that is read on elsewhere, as the wake
