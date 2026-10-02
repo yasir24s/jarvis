@@ -16,6 +16,8 @@ struct ChatView: View {
     var onWindow: (NSWindow) -> Void = { _ in }
     @Environment(\.openWindow) private var openWindow
     @Environment(\.appearsActive) private var appearsActive
+    /// UI1: whether the composer has the keyboard, for its focus ring.
+    @State private var composerFocused = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -54,7 +56,7 @@ struct ChatView: View {
                     }
                 }
             }
-            Divider()
+            Hairline()
             if let pending = model.pending {
                 ConfirmationCard(pending: pending, enabled: model.isConnected && !model.responding,
                                  onConfirm: { _ = model.confirmPending() },
@@ -62,19 +64,38 @@ struct ChatView: View {
             }
             if model.busy {
                 Text(ChatViewModel.busyNotice)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .font(JarvisTheme.small)
+                    .foregroundStyle(JarvisTheme.gold.color)   // UI1: it needs the user's attention
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
             }
-            Composer(text: $model.draft.text, onPaste: { model.notePaste() }, onSubmit: { _ = model.send() })
+            Composer(text: $model.draft.text, onPaste: { model.notePaste() }, onSubmit: { _ = model.send() },
+                     onFocus: { composerFocused = $0 })
                 .frame(minHeight: 36, idealHeight: 56, maxHeight: 120)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                // UI1: a panel with a cyan focus ring, dim cyan while the composer is not focused.
+                .background(JarvisTheme.panel.color, in: .rect(cornerRadius: 8))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(composerFocused ? JarvisTheme.cyan.color : JarvisTheme.cyanDim.color,
+                                      lineWidth: composerFocused ? 1.5 : 1)
+                }
                 .padding(8)
                 .onChange(of: model.draft.text) { model.noteTyping() }   // U1: typing holds an update back
         }
         .frame(minWidth: 420, minHeight: 360)
-        .background(WindowReader(onWindow: onWindow))
+        // UI1 part 1: always dark, navy to the edges, ice-white text in the body face.
+        .foregroundStyle(JarvisTheme.ice.color)
+        .font(JarvisTheme.body)
+        .tint(JarvisTheme.cyan.color)
+        .background(JarvisTheme.navy.color)
+        .preferredColorScheme(.dark)
+        .background(WindowReader(onWindow: { window in
+            JarvisTheme.style(window)
+            onWindow(window)
+        }))
         .onAppear {
             onAppear(openWindow)
         }
@@ -104,19 +125,25 @@ private struct ConfirmationCard: View {
                     .textSelection(.enabled)
             } icon: {
                 Image(systemName: "checkmark.shield")
+                    .foregroundStyle(JarvisTheme.gold.color)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             TimelineView(.periodic(from: .now, by: 1)) { _ in
                 Text("\(TextConfirmation.secondsLeft(until: pending.deadline, now: .now)) s")
                     .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(JarvisTheme.gold.color)
             }
             Button("Cancel", role: .cancel, action: onCancel)
             Button("Confirm", action: onConfirm)
         }
         .disabled(!enabled)
         .padding(10)
-        .background(.orange.opacity(0.12), in: .rect(cornerRadius: 8))
+        // UI1: gold, the colour of whatever needs the user.
+        .background(JarvisTheme.attentionFill.color, in: .rect(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(JarvisTheme.gold.color.opacity(0.55), lineWidth: 1)
+        }
         .padding(.horizontal, 8)
         .padding(.top, 8)
     }
@@ -125,6 +152,7 @@ private struct ConfirmationCard: View {
 /// One transcript row. User text and streaming text are plain; a finished assistant row is
 /// markdown. A row fed by a retracted message (R6) is plain and struck through. An assistant
 /// row with no text yet shows a spinner. A system row is the app's own note, small and centred.
+/// UI1: the user's rows are outlined in dim cyan, his sit on a faint cyan glow.
 private struct MessageRow: View {
     let message: ChatMessage
 
@@ -132,15 +160,19 @@ private struct MessageRow: View {
         switch message.role {
         case .user:
             Text(verbatim: message.text)
-                .padding(8)
-                .background(.tint.opacity(0.15), in: .rect(cornerRadius: 8))
+                .padding(10)
+                .background(JarvisTheme.panel.color, in: .rect(cornerRadius: 10))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(JarvisTheme.cyanDim.color, lineWidth: 1)
+                }
                 .frame(maxWidth: .infinity, alignment: .trailing)
         case .assistant:
             Group {
                 if message.retracted {
                     Text(verbatim: message.text)
                         .strikethrough()
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(JarvisTheme.muted.color)
                 } else if message.rendersMarkdown {
                     MarkdownText(text: message.text)
                 } else if message.text.isEmpty {
@@ -150,11 +182,18 @@ private struct MessageRow: View {
                     Text(verbatim: message.text)
                 }
             }
+            .padding(10)
+            .background(JarvisTheme.replyFill.color, in: .rect(cornerRadius: 10))
+            .overlay {
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(JarvisTheme.cyan.color.opacity(JarvisTheme.replyBorderAlpha), lineWidth: 1)
+            }
+            .jarvisGlow()
             .frame(maxWidth: .infinity, alignment: .leading)
         case .system:
             Text(verbatim: message.text)
-                .font(.callout)
-                .foregroundStyle(.secondary)
+                .font(JarvisTheme.small)
+                .foregroundStyle(JarvisTheme.muted.color)
                 .frame(maxWidth: .infinity, alignment: .center)
         }
     }

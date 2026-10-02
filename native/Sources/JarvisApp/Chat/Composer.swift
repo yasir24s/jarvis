@@ -10,6 +10,8 @@ struct Composer: NSViewRepresentable {
     @Binding var text: String
     let onPaste: () -> Void
     let onSubmit: () -> Void
+    /// UI1: told when the text view takes or gives up the keyboard (the cyan focus ring).
+    var onFocus: (Bool) -> Void = { _ in }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -21,6 +23,7 @@ struct Composer: NSViewRepresentable {
         scrollView.hasHorizontalScroller = false
         scrollView.borderType = .noBorder
         scrollView.autoresizingMask = [.width, .height]
+        scrollView.drawsBackground = false   // UI1: the panel behind it shows through
 
         let size = scrollView.contentSize
         let textView = ComposerTextView(frame: NSRect(origin: .zero, size: size))
@@ -34,11 +37,24 @@ struct Composer: NSViewRepresentable {
         textView.isRichText = false
         textView.importsGraphics = false
         textView.allowsUndo = true
-        textView.font = .preferredFont(forTextStyle: .body)
+        // UI1 part 1: the theme's body face, ice-white on the panel, a cyan caret, and selected
+        // text on dim cyan.
+        textView.font = JarvisTheme.bodyNSFont
+        textView.textColor = JarvisTheme.ice.nsColor
+        textView.insertionPointColor = JarvisTheme.cyan.nsColor
+        textView.drawsBackground = false
+        textView.selectedTextAttributes = [.backgroundColor: JarvisTheme.selection.nsColor,
+                                           .foregroundColor: JarvisTheme.ice.nsColor]
+        textView.typingAttributes = [.font: JarvisTheme.bodyNSFont, .foregroundColor: JarvisTheme.ice.nsColor]
         textView.string = text
         textView.delegate = context.coordinator
         let coordinator = context.coordinator
         textView.onPaste = { [weak coordinator] in coordinator?.parent.onPaste() }
+        // After the current update: taking the keyboard can happen while SwiftUI lays the view out.
+        textView.onFocus = { [weak coordinator] focused in
+            let coordinator = coordinator
+            Task { @MainActor in coordinator?.parent.onFocus(focused) }
+        }
 
         scrollView.documentView = textView
         return scrollView
@@ -85,6 +101,20 @@ struct Composer: NSViewRepresentable {
 /// text lands, so the flag is never set later than the text arrives.
 final class ComposerTextView: NSTextView {
     var onPaste: (() -> Void)?
+    /// UI1: true when it takes the keyboard, false when it gives it up.
+    var onFocus: ((Bool) -> Void)?
+
+    override func becomeFirstResponder() -> Bool {
+        let became = super.becomeFirstResponder()
+        if became { onFocus?(true) }
+        return became
+    }
+
+    override func resignFirstResponder() -> Bool {
+        let resigned = super.resignFirstResponder()
+        if resigned { onFocus?(false) }
+        return resigned
+    }
 
     override func paste(_ sender: Any?) {
         onPaste?()

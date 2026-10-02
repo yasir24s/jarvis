@@ -68,6 +68,7 @@ let package = Package(
 
         // W1: the WebKit reader lives in JarvisApp (the one target that may import WebKit), so
         // its tests import the app. They load pages from a loopback server, never the network.
-        .testTarget(name: "JarvisAppTests", dependencies: ["JarvisApp", "JarvisBrain", "JarvisCore", "JarvisTools", "JarvisTestSupport"]),
+        // UI1: the chat snapshots drive the real ChatViewModel, so these tests import JarvisChat too.
+        .testTarget(name: "JarvisAppTests", dependencies: ["JarvisApp", "JarvisBrain", "JarvisChat", "JarvisCore", "JarvisTools", "JarvisTestSupport"]),
     ]
 )

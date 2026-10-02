@@ -73,6 +73,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // A regular app with a Dock icon (D-43); main thread by isolation.
         // M13's HUD is a non-activating NSPanel and must never change this policy.
         NSApplication.shared.setActivationPolicy(.regular)
+        // UI1 part 1: always dark (the J.A.R.V.I.S. theme), so the menus he draws match the chat.
+        NSApplication.shared.appearance = NSAppearance(named: .darkAqua)
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
