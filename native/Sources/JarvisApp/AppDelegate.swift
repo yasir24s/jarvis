@@ -525,7 +525,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// M9a: push-to-talk's hooks, keys and global shortcut. Starting to talk stops his speech and
     /// any reply being written (UI1's stop); the HUD listens with the microphone's level; what is
-    /// heard goes into the composer.
+    /// heard is sent as a voice turn, whose reply is always spoken.
     private func startPushToTalk() {
         talk.onStart = { [weak self] in _ = self?.chat.stop() }
         talk.onListening = { [weak self] in self?.hud.listening() }
@@ -535,9 +535,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         talk.onHeard = { [weak self] text in
             guard let self else { return }
-            self.hud.listeningEnded()
-            let draft = self.chat.draft.text
-            self.chat.draft.text = draft.isEmpty ? text : draft + " " + text
+            if self.chat.sendVoice(text) == nil { self.hud.listeningEnded() }
         }
         talkKeys = PushToTalkKeys(talk: talk, chatWindow: { [weak self] in self?.chatWindow })
         talkHotKey = GlobalHotKey { [weak self] in self?.pushToTalkHotKey() }

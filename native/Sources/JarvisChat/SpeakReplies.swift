@@ -31,7 +31,7 @@ public final class SpeakRepliesToggle {
     }
 }
 
-/// What happens to each finished typed reply (plan §3.12): the user's policy is asked. On a
+/// What happens to each finished reply (plan §3.12). A typed one: the user's policy is asked. On a
 /// yes, `text_reply_spoken` is bumped and the text goes, with the turn's summary, to M8's
 /// speaker. Until M8 there is no speaker: a yes is logged, and nothing is spoken or counted,
 /// since the counter counts replies that were spoken.
@@ -63,6 +63,16 @@ public enum SpeakReplies {
     public static func replyFinished(_ message: ChatMessage, context: SpeakContext, research: any ResearchCounting,
                                      speaker: Speaker?, log: (String) -> Void,
                                      policy: Policy = shouldSpeakReply) -> Bool {
+        // M9a: a reply to something said aloud is always spoken, whatever its length, as Python
+        // spoke its voice replies. The toggle and the typed-reply policy are for typed turns, and
+        // `text_reply_spoken` counts only those.
+        if context.turn.channel == .voice {
+            guard let speaker, !message.text.unicodeScalars.allSatisfy({ $0.properties.isWhitespace }) else {
+                return false
+            }
+            speaker(message.text, context.turn)
+            return true
+        }
         guard policy(.text, message.text, context) else { return false }
         guard let speaker else {
             log("speak policy: yes, but typed replies are not spoken until M8")

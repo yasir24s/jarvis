@@ -224,6 +224,28 @@ public final class ChatViewModel: ReplySink {
         return start(turnInput, shown: shown, restoring: sent, via: submitter, after: interrupted)
     }
 
+    /// M9a: what push-to-talk heard, sent as a turn on the voice channel. The turn is archived
+    /// with channel `voice` and gets Python's voice prompt, and its reply is always spoken
+    /// (`SpeakReplies`). The draft is left alone, and the typed acknowledgement (`onSend`) is not
+    /// made. Like a typed message, it stops a reply still being written and follows it, though
+    /// listening has normally stopped that already. Refused as busy, the text goes into the
+    /// composer so it is not lost.
+    @discardableResult
+    public func sendVoice(_ text: String) -> Task<Void, Never>? {
+        lastUse = clock.now()
+        let shown = Py.strip(text)
+        guard let submitter, !shown.isEmpty else { return nil }
+        if !responding { showLatestVersions() }
+        let interrupted = responding ? stop() : nil
+        if responding && interrupted == nil { return nil }
+        if speaking { stopSpeech() }
+        busy = false
+        // Put back in front of whatever is in the composer, as a refused typed message is.
+        let back = ComposerDraft(text: draft.text.isEmpty ? shown : shown + " ")
+        return start(UserInput(text: shown, channel: .voice), shown: shown, restoring: back,
+                     via: submitter, after: interrupted)
+    }
+
     /// UI1 part 4: Stop, the send button's other face, and Esc. Speech stops. A reply being
     /// written stops where it is: its turn is closed, so the gateway runs no tool for it, and
     /// cancelled, so the brain stops (the Claude process, or the local model's generation) and
