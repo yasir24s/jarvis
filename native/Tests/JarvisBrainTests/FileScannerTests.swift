@@ -314,6 +314,34 @@ struct FileScannerTests {
         #expect(rig.local.calls.count == 1)
     }
 
+    /// The start line is logged before the loop's task exists, so the loop's first line cannot
+    /// come ahead of it, however slow the sink: 200 ms over the start line here, time enough for
+    /// a task that already existed to log the consent notice first (before the fix it did).
+    @Test func startedLineComesBeforeTheFirstLoopLineWithASlowSink() async throws {
+        let rig = try ScanRig()
+        defer { rig.remove() }
+        let reader = FileFactReader(memory: rig.memory, local: rig.local, claude: rig.claude,
+                                    budget: LocalFileBudget(counter: FakeTokenCounter()), quota: rig.quota,
+                                    turns: rig.turns, clock: ManualClock(epoch), log: { _ in })
+        let record = rig.logs.function
+        let scanner = FileScanner(home: rig.home.root, stateRoot: rig.state.root, store: rig.store,
+                                  extractors: TextExtractors([rig.extractor]), reader: reader, quota: rig.quota,
+                                  turns: rig.turns, probe: rig.probe, enabled: { false },
+                                  clock: ManualClock(epoch),
+                                  sleep: { d in
+                                      try await Task.sleep(for: d >= .seconds(3600) ? d : .milliseconds(1),
+                                                           clock: .suspending)
+                                  },
+                                  log: { line in
+                                      if line.hasPrefix("files: scanner started") { Thread.sleep(forTimeInterval: 0.2) }
+                                      record(line)
+                                  })
+        scanner.start()
+        try await waitUntil("the loop to log that learning is off") { rig.logs.all.count >= 2 }
+        await scanner.stop()
+        #expect(rig.logs.all.first?.hasPrefix("files: scanner started") == true, "got \(rig.logs.all)")
+    }
+
     /// P6: until the user allows learning from their files, a pass reads nothing and the loop
     /// only looks again; switched on, the loop's next look reads. Switched off mid-pass, the
     /// pass stops before its next document.

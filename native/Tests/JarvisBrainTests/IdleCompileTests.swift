@@ -121,6 +121,40 @@ struct IdleCompileTests {
         #expect(rig.calls.count == 0)
     }
 
+    /// The start line is logged before the loop's task exists, so the loop's first line cannot
+    /// come ahead of it, however slow the sink: 200 ms over the start line here, time enough for
+    /// a task that already existed to log its compile notice first (before the fix it did).
+    @Test func startedLineComesBeforeTheFirstCompileLineWithASlowSink() async throws {
+        let clock = ManualClock(Self.epoch)
+        let lines = LogLines()
+        let record = lines.sink
+        let firstLook = Flag(true)
+        let idle = IdleCompile(turns: TurnActivity(clock: clock), pending: { true }, compile: { .nothingNew },
+                               clock: clock,
+                               sleep: { d in
+                                   // The first look finds the chat idle for the full 30 minutes; later
+                                   // looks wait until stop() cancels them.
+                                   guard d == IdleCompile.checkEvery else {
+                                       try await Task.sleep(for: .milliseconds(1))
+                                       return
+                                   }
+                                   guard firstLook.value else {
+                                       try await Task.sleep(for: .seconds(86_400))
+                                       return
+                                   }
+                                   firstLook.set(false)
+                                   clock.advance(IdleCompile.idleAfter)
+                               },
+                               log: { line in
+                                   if line.hasPrefix("Idle compile started") { Thread.sleep(forTimeInterval: 0.2) }
+                                   record(line)
+                               })
+        idle.start()
+        defer { idle.stop() }
+        try await waitUntil("the loop's compile notice") { lines.all.count >= 2 }
+        #expect(lines.all.first?.hasPrefix("Idle compile started") == true, "got \(lines.all)")
+    }
+
     /// Through P2's real compile: the user's messages since `compiled_through` become a fact,
     /// and the offset moves past them. A second idle stretch with nothing new compiles nothing.
     @Test func itRunsP2sCompileOnTheArchive() async throws {

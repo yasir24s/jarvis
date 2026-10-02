@@ -6,7 +6,8 @@ import Testing
 
 /// PersonalitySchedule (P1 piece 3): proactive_loop's timing (jarvis.py 2535-2567), first
 /// pass 120 s after start and then every 3600 s, in virtual time (VirtualSleeper), and stop().
-@Suite("Personality schedule: consolidation 120 s after start, then hourly", .timeLimit(.minutes(1)))
+/// Serialized: the two slow-sink tests each hold a thread for 200 ms, and run one at a time.
+@Suite("Personality schedule: consolidation 120 s after start, then hourly", .serialized, .timeLimit(.minutes(1)))
 @MainActor
 struct PersonalityScheduleTests {
     static let t0: Double = 1_790_582_400
@@ -68,6 +69,60 @@ struct PersonalityScheduleTests {
         #expect(passes.all.isEmpty)
         #expect(logs.all.filter { $0.hasPrefix("Personality schedule started") }.count == 1)
         #expect(logs.all.filter { $0 == "Personality schedule stopped" }.count == 1)
+    }
+
+    static let startedLine = "Personality schedule started: first consolidation check in 120 s, then every 3600 s"
+
+    /// A log sink that takes 200 ms over the "started" line before it records it, as a slow disk
+    /// would. A loop task that already exists runs ahead of the line in that time. `entered`
+    /// notes the moment the sink has the line.
+    static func sinkSlowOnTheStartLine(_ lines: LogLines, entered: LogLines = LogLines()) -> @Sendable (String) -> Void {
+        { line in
+            if line.hasPrefix("Personality schedule started") {
+                entered.record("the sink has the started line")
+                Thread.sleep(forTimeInterval: 0.2)
+            }
+            lines.record(line)
+        }
+    }
+
+    /// The "started" line is logged before the loop's task exists, so the first check's line
+    /// cannot come ahead of it, however slow the sink. Before the fix it could: the task was made
+    /// first and the line logged after the lock was released. start() runs off the main actor,
+    /// so the sink's 200 ms does not hold it.
+    @Test func startedLineComesBeforeTheFirstCheckLineWithASlowSink() async throws {
+        let clock = ManualClock(Self.t0)
+        let sleeper = VirtualSleeper(clock: clock, budget: 1)
+        let lines = LogLines()
+        let schedule = PersonalitySchedule(consolidate: {}, clock: clock, sleep: { try await sleeper.sleep($0) },
+                                           log: Self.sinkSlowOnTheStartLine(lines))
+        await Task.detached { schedule.start() }.value
+        defer { schedule.stop() }
+        try await until("the first check and the second sleep") { sleeper.isParked }
+        try await until("both lines") { lines.all.count >= 2 }
+        #expect(Array(lines.all.prefix(2)) == [Self.startedLine, "Personality consolidation check 1 at +120 s"],
+                "got \(lines.all)")
+    }
+
+    /// stop() waits for the lock start() holds while it logs, so "stopped" cannot come before
+    /// "started" even with a slow sink. Before the fix the lock was free by then and stop() logged
+    /// at once. Both calls run off the main actor: the 200 ms in the sink is the only gap between
+    /// them.
+    @Test func stoppedLineComesAfterTheStartedLineWithASlowSink() async throws {
+        let clock = ManualClock(Self.t0)
+        let sleeper = VirtualSleeper(clock: clock, budget: 0)
+        let lines = LogLines(), entered = LogLines()
+        let schedule = PersonalitySchedule(consolidate: {}, clock: clock, sleep: { try await sleeper.sleep($0) },
+                                           log: Self.sinkSlowOnTheStartLine(lines, entered: entered))
+        let starter = Task.detached { schedule.start() }
+        let stopper = Task.detached {
+            for _ in 0..<5_000 where entered.all.isEmpty { try? await Task.sleep(for: .milliseconds(1)) }
+            schedule.stop()
+        }
+        await starter.value
+        await stopper.value
+        try await until("the loop to end after stop()") { sleeper.released }
+        #expect(lines.all == [Self.startedLine, "Personality schedule stopped"], "got \(lines.all)")
     }
 
     /// stop() while a pass waits on its writer cancels the pass too.
