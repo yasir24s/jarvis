@@ -97,7 +97,7 @@ echo "Voice assets ready in $(tilde "$DEST") (${#FILES[@]} files checked)"
 # the replies' 4: rendering happens once, and at 4 the shortest lines often blurred ("On it, sir."
 # heard as "On its, uh"), while at 8 every take of the three hardest was exact.
 ACK_STEPS=8
-ACK_SPEED=1.15
+ACK_SPEED=1.2
 ACKNOWLEDGEMENTS=(
     "right-away|Right away, sir."
     "one-moment|One moment, sir."

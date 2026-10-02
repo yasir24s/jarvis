@@ -23,6 +23,19 @@ struct FrameBudgetTests {
         #expect(frames(0) == 401)
     }
 
+    /// V1 part 4 stepped the default back to 1.2: 600 bytes take 3485 frames, and 718 is the most
+    /// that fits.
+    @Test func sixHundredCharactersFitAtTheDefaultSpeed() {
+        func frames(_ bytes: Int) -> Int {
+            VoiceHelperSetup.frames(referenceSamples: Self.samples, referenceTextBytes: Self.textBytes,
+                                    textBytes: bytes, speed: VoiceHelperSetup.defaultSpeed)
+        }
+        #expect(VoiceHelperSetup.defaultSpeed == 1.2)
+        #expect(frames(600) == 3485)
+        #expect(frames(718) <= F5Engine.maxFrames)
+        #expect(frames(719) > F5Engine.maxFrames)
+    }
+
     @Test func theSetupReadsItsReferenceAndTheEngineNamesWhatDoesNotFit() throws {
         let folder = try TempFolder()
         defer { folder.remove() }

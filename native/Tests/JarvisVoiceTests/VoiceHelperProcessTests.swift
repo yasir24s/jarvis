@@ -58,16 +58,16 @@ struct VoiceHelperProcessTests {
         #expect(setup.executable.path(percentEncoded: false).hasSuffix("/Contents/Helpers/jarvis-voice"))
         #expect(setup.assets.path(percentEncoded: false).hasSuffix("/Library/Application Support/JARVIS/voice/"))
         #expect(Array(setup.arguments.suffix(8))
-            == ["--cache-limit-mb", "512", "--steps", "4", "--speed", "1.15", "--idle-exit", "300"])
+            == ["--cache-limit-mb", "512", "--steps", "4", "--speed", "1.2", "--idle-exit", "300"])
         #expect(setup.arguments[0] == "--assets")
         #expect(setup.arguments[2] == "--out-dir")
     }
 
-    @Test func theSpeedComesFromTheDefaultsClampedWith1Point15AsTheDefault() throws {
+    @Test func theSpeedComesFromTheDefaultsClampedWith1Point2AsTheDefault() throws {
         let name = "jarvis-voice-tests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: name))
         defer { defaults.removePersistentDomain(forName: name) }
-        #expect(VoiceHelperSetup.speed(in: defaults) == 1.15)
+        #expect(VoiceHelperSetup.speed(in: defaults) == 1.2)
         defaults.set(1.1, forKey: VoiceHelperSetup.speedKey)
         #expect(VoiceHelperSetup.speed(in: defaults) == 1.1)
         #expect(VoiceHelperSetup.inApp(log: nil, defaults: defaults).arguments.contains("1.1"))
@@ -76,8 +76,8 @@ struct VoiceHelperProcessTests {
         defaults.set(0, forKey: VoiceHelperSetup.speedKey)
         #expect(VoiceHelperSetup.speed(in: defaults) == 0.8)
         defaults.set("fast", forKey: VoiceHelperSetup.speedKey)
-        #expect(VoiceHelperSetup.speed(in: defaults) == 1.15)
-        #expect(VoiceHelperSetup.speed(in: nil) == 1.15)
+        #expect(VoiceHelperSetup.speed(in: defaults) == 1.2)
+        #expect(VoiceHelperSetup.speed(in: nil) == 1.2)
         #expect(VoiceHelperSetup.speedKey == "voiceSpeed")
     }
 

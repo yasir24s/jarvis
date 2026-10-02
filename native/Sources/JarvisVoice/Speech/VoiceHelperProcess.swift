@@ -8,7 +8,11 @@ import Foundation
 /// user chose 4 on 2026-10-01, when one 5.8 s sentence took 7.7 s at 4 against 18.0 s at 8
 /// with the words exact at both. A `cfg` of 0 garbled the words, so cfg keeps its default.
 /// The speed is the `voiceSpeed` setting (P5): at F5's own speed of 1 the clone spoke about 140
-/// words a minute, under conversation's 155 to 165. The app reads the setting for each reply
+/// words a minute, under conversation's 155 to 165. V1 part 4 asked for 1.25 and measured two
+/// lines in twelve takes each way: at 1.25 (183 and 203 words a minute) five of the twelve
+/// lost or changed words ("I take a liberty", "So I read your messages") and "On it, sir."
+/// came out "Honestly."; at 1.2 (176 and 195) all twelve and all ten acknowledgements were
+/// transcribed right, so the default is 1.2. The app reads the setting for each reply
 /// (U1 part 5): when it changed since the last reply SpeechQueue releases the helper, which the
 /// next request starts again with the new `--speed`.
 public struct VoiceHelperSetup: VoiceHelperLauncher {
@@ -22,7 +26,7 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
     public static let idleExitSeconds = 300
     /// Where `voiceSpeed` is read from: SpeechQueue's suite.
     public static let speedKey = "voiceSpeed"
-    public static let defaultSpeed = 1.15
+    public static let defaultSpeed = 1.2
     public static let speedRange = 0.8...1.4
     /// V1 part 3: which reference the clone speaks with, from SpeechQueue's suite. Unset, or
     /// "default", is the installed `reference/`; another name is `references/<name>/`, which
