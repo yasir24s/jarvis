@@ -1,0 +1,239 @@
+{
+ "schema": 1,
+ "suite": "w1_news",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "offline",
+   "input": {
+    "online": false
+   },
+   "expected": {
+    "reply": "I'm offline, sir — I can't fetch the headlines.",
+    "requests": [],
+    "kb": null
+   }
+  },
+  {
+   "name": "ten items, first four kept",
+   "input": {
+    "pages": {
+     "https://feeds.bbci.co.uk/news/rss.xml": {
+      "body": "<?xml version=\"1.0\"?><rss><channel><title>Invented</title><item>\n    <title><![CDATA[Invented storm reaches Leeds]]></title>\n    <link>https://example.invalid/0</link>\n</item>\n<item>\n    <title>Markets &amp; banks rally</title>\n    <link>https://example.invalid/1</link>\n</item>\n<item>\n    <title>   </title>\n    <link>https://example.invalid/2</link>\n</item>\n<item>\n    <title>It&#8217;s a <b>bold</b> claim</title>\n    <link>https://example.invalid/3</link>\n</item>\n<item>\n    <title><![CDATA[]]></title>\n    <link>https://example.invalid/4</link>\n</item>\n<item>\n    <title>Caf&eacute;s close &#x1F600; early</title>\n    <link>https://example.invalid/5</link>\n</item>\n<item>\n    <title>Seventh &notanentity; story</title>\n    <link>https://example.invalid/6</link>\n</item>\n<item>\n    <title>Eighth</title>\n    <link>https://example.invalid/7</link>\n</item>\n<item>\n    <title>Ninth</title>\n    <link>https://example.invalid/8</link>\n</item>\n<item>\n    <title>Tenth</title>\n    <link>https://example.invalid/9</link>\n</item>\n</channel></rss>"
+     }
+    }
+   },
+   "expected": {
+    "reply": "Top headlines. Invented storm reaches Leeds ... Markets & banks rally ... It’s a <b>bold</b> claim ... Cafés close 😀 early.",
+    "requests": [
+     {
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "user_agent": "JARVIS/1.0",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "two items",
+   "input": {
+    "pages": {
+     "https://feeds.bbci.co.uk/news/rss.xml": {
+      "body": "<?xml version=\"1.0\"?><rss><channel><title>Invented</title><item>\n    <title>One</title>\n    <link>https://example.invalid/0</link>\n</item>\n<item>\n    <title>Two &lt;3</title>\n    <link>https://example.invalid/1</link>\n</item>\n</channel></rss>"
+     }
+    }
+   },
+   "expected": {
+    "reply": "Top headlines. One ... Two <3.",
+    "requests": [
+     {
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "user_agent": "JARVIS/1.0",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "item without newline",
+   "input": {
+    "pages": {
+     "https://feeds.bbci.co.uk/news/rss.xml": {
+      "body": "<item><title>Tight</title></item><item>\t\r\n<title>\nMulti\nline\n</title></item>"
+     }
+    }
+   },
+   "expected": {
+    "reply": "Top headlines. Tight ... Multi\nline.",
+    "requests": [
+     {
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "user_agent": "JARVIS/1.0",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "no items",
+   "input": {
+    "pages": {
+     "https://feeds.bbci.co.uk/news/rss.xml": {
+      "body": "<rss><channel><title>Only a channel</title></channel></rss>"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't fetch the headlines, sir.",
+    "requests": [
+     {
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "user_agent": "JARVIS/1.0",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "only empty titles",
+   "input": {
+    "pages": {
+     "https://feeds.bbci.co.uk/news/rss.xml": {
+      "body": "<?xml version=\"1.0\"?><rss><channel><title>Invented</title><item>\n    <title></title>\n    <link>https://example.invalid/0</link>\n</item>\n<item>\n    <title>  </title>\n    <link>https://example.invalid/1</link>\n</item>\n<item>\n    <title><![CDATA[  ]]></title>\n    <link>https://example.invalid/2</link>\n</item>\n</channel></rss>"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't fetch the headlines, sir.",
+    "requests": [
+     {
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "user_agent": "JARVIS/1.0",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "invalid utf-8",
+   "input": {
+    "pages": {
+     "https://feeds.bbci.co.uk/news/rss.xml": {
+      "hex": "3c6974656d3e3c7469746c653e426164ff2062797465c3282068657265e2823c2f7469746c653e3c2f6974656d3e"
+     }
+    }
+   },
+   "expected": {
+    "reply": "Top headlines. Bad� byte�( here�.",
+    "requests": [
+     {
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "user_agent": "JARVIS/1.0",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "byte order mark",
+   "input": {
+    "pages": {
+     "https://feeds.bbci.co.uk/news/rss.xml": {
+      "hex": "efbbbf3c6974656d3e3c7469746c653e424f4d3c2f7469746c653e3c2f6974656d3e"
+     }
+    }
+   },
+   "expected": {
+    "reply": "Top headlines. BOM.",
+    "requests": [
+     {
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "user_agent": "JARVIS/1.0",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "references",
+   "input": {
+    "pages": {
+     "https://feeds.bbci.co.uk/news/rss.xml": {
+      "body": "<?xml version=\"1.0\"?><rss><channel><title>Invented</title><item>\n    <title>&#0; &#13; &#128; &#x110000; &#xD800; &#1; &#65;&#66</title>\n    <link>https://example.invalid/0</link>\n</item>\n<item>\n    <title>&amp &ampx &notin; &notit; &AMP;</title>\n    <link>https://example.invalid/1</link>\n</item>\n<item>\n    <title>&#99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999;</title>\n    <link>https://example.invalid/2</link>\n</item>\n</channel></rss>"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't reach the news service, sir.",
+    "requests": [
+     {
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "user_agent": "JARVIS/1.0",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "timeout",
+   "input": {
+    "pages": {
+     "https://feeds.bbci.co.uk/news/rss.xml": {
+      "error": "timeout"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't reach the news service, sir.",
+    "requests": [
+     {
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "user_agent": "JARVIS/1.0",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "http error",
+   "input": {
+    "pages": {
+     "https://feeds.bbci.co.uk/news/rss.xml": {
+      "status": 404
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't reach the news service, sir.",
+    "requests": [
+     {
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "user_agent": "JARVIS/1.0",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  }
+ ]
+}

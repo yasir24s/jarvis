@@ -1,0 +1,608 @@
+{
+ "schema": 1,
+ "suite": "w1_pyurl",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "UTC",
+  "local": "2026-09-28 08:00:00"
+ },
+ "cases": [
+  {
+   "name": "quote '' safe '/'",
+   "input": {
+    "s": "",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "",
+    "quote_plus": ""
+   }
+  },
+  {
+   "name": "quote '' safe ''",
+   "input": {
+    "s": "",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "",
+    "quote_plus": ""
+   }
+  },
+  {
+   "name": "quote '' safe '/:@'",
+   "input": {
+    "s": "",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "",
+    "quote_plus": ""
+   }
+  },
+  {
+   "name": "quote 'plain' safe '/'",
+   "input": {
+    "s": "plain",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "plain",
+    "quote_plus": "plain"
+   }
+  },
+  {
+   "name": "quote 'plain' safe ''",
+   "input": {
+    "s": "plain",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "plain",
+    "quote_plus": "plain"
+   }
+  },
+  {
+   "name": "quote 'plain' safe '/:@'",
+   "input": {
+    "s": "plain",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "plain",
+    "quote_plus": "plain"
+   }
+  },
+  {
+   "name": "quote 'New York' safe '/'",
+   "input": {
+    "s": "New York",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "New%20York",
+    "quote_plus": "New+York"
+   }
+  },
+  {
+   "name": "quote 'New York' safe ''",
+   "input": {
+    "s": "New York",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "New%20York",
+    "quote_plus": "New+York"
+   }
+  },
+  {
+   "name": "quote 'New York' safe '/:@'",
+   "input": {
+    "s": "New York",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "New%20York",
+    "quote_plus": "New+York"
+   }
+  },
+  {
+   "name": "quote 'a/b/c' safe '/'",
+   "input": {
+    "s": "a/b/c",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "a/b/c",
+    "quote_plus": "a/b/c"
+   }
+  },
+  {
+   "name": "quote 'a/b/c' safe ''",
+   "input": {
+    "s": "a/b/c",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "a%2Fb%2Fc",
+    "quote_plus": "a%2Fb%2Fc"
+   }
+  },
+  {
+   "name": "quote 'a/b/c' safe '/:@'",
+   "input": {
+    "s": "a/b/c",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "a/b/c",
+    "quote_plus": "a/b/c"
+   }
+  },
+  {
+   "name": "quote 'AC/DC & friends?' safe '/'",
+   "input": {
+    "s": "AC/DC & friends?",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "AC/DC%20%26%20friends%3F",
+    "quote_plus": "AC/DC+%26+friends%3F"
+   }
+  },
+  {
+   "name": "quote 'AC/DC & friends?' safe ''",
+   "input": {
+    "s": "AC/DC & friends?",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "AC%2FDC%20%26%20friends%3F",
+    "quote_plus": "AC%2FDC+%26+friends%3F"
+   }
+  },
+  {
+   "name": "quote 'AC/DC & friends?' safe '/:@'",
+   "input": {
+    "s": "AC/DC & friends?",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "AC/DC%20%26%20friends%3F",
+    "quote_plus": "AC/DC+%26+friends%3F"
+   }
+  },
+  {
+   "name": "quote 'São Paulo' safe '/'",
+   "input": {
+    "s": "São Paulo",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "S%C3%A3o%20Paulo",
+    "quote_plus": "S%C3%A3o+Paulo"
+   }
+  },
+  {
+   "name": "quote 'São Paulo' safe ''",
+   "input": {
+    "s": "São Paulo",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "S%C3%A3o%20Paulo",
+    "quote_plus": "S%C3%A3o+Paulo"
+   }
+  },
+  {
+   "name": "quote 'São Paulo' safe '/:@'",
+   "input": {
+    "s": "São Paulo",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "S%C3%A3o%20Paulo",
+    "quote_plus": "S%C3%A3o+Paulo"
+   }
+  },
+  {
+   "name": "quote '100% sure+1' safe '/'",
+   "input": {
+    "s": "100% sure+1",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "100%25%20sure%2B1",
+    "quote_plus": "100%25+sure%2B1"
+   }
+  },
+  {
+   "name": "quote '100% sure+1' safe ''",
+   "input": {
+    "s": "100% sure+1",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "100%25%20sure%2B1",
+    "quote_plus": "100%25+sure%2B1"
+   }
+  },
+  {
+   "name": "quote '100% sure+1' safe '/:@'",
+   "input": {
+    "s": "100% sure+1",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "100%25%20sure%2B1",
+    "quote_plus": "100%25+sure%2B1"
+   }
+  },
+  {
+   "name": "quote '~user_name.-' safe '/'",
+   "input": {
+    "s": "~user_name.-",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "~user_name.-",
+    "quote_plus": "~user_name.-"
+   }
+  },
+  {
+   "name": "quote '~user_name.-' safe ''",
+   "input": {
+    "s": "~user_name.-",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "~user_name.-",
+    "quote_plus": "~user_name.-"
+   }
+  },
+  {
+   "name": "quote '~user_name.-' safe '/:@'",
+   "input": {
+    "s": "~user_name.-",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "~user_name.-",
+    "quote_plus": "~user_name.-"
+   }
+  },
+  {
+   "name": "quote '东京' safe '/'",
+   "input": {
+    "s": "东京",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "%E4%B8%9C%E4%BA%AC",
+    "quote_plus": "%E4%B8%9C%E4%BA%AC"
+   }
+  },
+  {
+   "name": "quote '东京' safe ''",
+   "input": {
+    "s": "东京",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "%E4%B8%9C%E4%BA%AC",
+    "quote_plus": "%E4%B8%9C%E4%BA%AC"
+   }
+  },
+  {
+   "name": "quote '东京' safe '/:@'",
+   "input": {
+    "s": "东京",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "%E4%B8%9C%E4%BA%AC",
+    "quote_plus": "%E4%B8%9C%E4%BA%AC"
+   }
+  },
+  {
+   "name": "quote '😀' safe '/'",
+   "input": {
+    "s": "😀",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "%F0%9F%98%80",
+    "quote_plus": "%F0%9F%98%80"
+   }
+  },
+  {
+   "name": "quote '😀' safe ''",
+   "input": {
+    "s": "😀",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "%F0%9F%98%80",
+    "quote_plus": "%F0%9F%98%80"
+   }
+  },
+  {
+   "name": "quote '😀' safe '/:@'",
+   "input": {
+    "s": "😀",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "%F0%9F%98%80",
+    "quote_plus": "%F0%9F%98%80"
+   }
+  },
+  {
+   "name": "quote 'tab\\there' safe '/'",
+   "input": {
+    "s": "tab\there",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "tab%09here",
+    "quote_plus": "tab%09here"
+   }
+  },
+  {
+   "name": "quote 'tab\\there' safe ''",
+   "input": {
+    "s": "tab\there",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "tab%09here",
+    "quote_plus": "tab%09here"
+   }
+  },
+  {
+   "name": "quote 'tab\\there' safe '/:@'",
+   "input": {
+    "s": "tab\there",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "tab%09here",
+    "quote_plus": "tab%09here"
+   }
+  },
+  {
+   "name": "quote 'line\\nbreak' safe '/'",
+   "input": {
+    "s": "line\nbreak",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "line%0Abreak",
+    "quote_plus": "line%0Abreak"
+   }
+  },
+  {
+   "name": "quote 'line\\nbreak' safe ''",
+   "input": {
+    "s": "line\nbreak",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "line%0Abreak",
+    "quote_plus": "line%0Abreak"
+   }
+  },
+  {
+   "name": "quote 'line\\nbreak' safe '/:@'",
+   "input": {
+    "s": "line\nbreak",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "line%0Abreak",
+    "quote_plus": "line%0Abreak"
+   }
+  },
+  {
+   "name": "quote '#hash?q=1&r=2' safe '/'",
+   "input": {
+    "s": "#hash?q=1&r=2",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "%23hash%3Fq%3D1%26r%3D2",
+    "quote_plus": "%23hash%3Fq%3D1%26r%3D2"
+   }
+  },
+  {
+   "name": "quote '#hash?q=1&r=2' safe ''",
+   "input": {
+    "s": "#hash?q=1&r=2",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "%23hash%3Fq%3D1%26r%3D2",
+    "quote_plus": "%23hash%3Fq%3D1%26r%3D2"
+   }
+  },
+  {
+   "name": "quote '#hash?q=1&r=2' safe '/:@'",
+   "input": {
+    "s": "#hash?q=1&r=2",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "%23hash%3Fq%3D1%26r%3D2",
+    "quote_plus": "%23hash%3Fq%3D1%26r%3D2"
+   }
+  },
+  {
+   "name": "quote 'é' safe '/'",
+   "input": {
+    "s": "é",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "e%CC%81",
+    "quote_plus": "e%CC%81"
+   }
+  },
+  {
+   "name": "quote 'é' safe ''",
+   "input": {
+    "s": "é",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "e%CC%81",
+    "quote_plus": "e%CC%81"
+   }
+  },
+  {
+   "name": "quote 'é' safe '/:@'",
+   "input": {
+    "s": "é",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "e%CC%81",
+    "quote_plus": "e%CC%81"
+   }
+  },
+  {
+   "name": "quote '\\'quotes\\' \"double\"' safe '/'",
+   "input": {
+    "s": "'quotes' \"double\"",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "%27quotes%27%20%22double%22",
+    "quote_plus": "%27quotes%27+%22double%22"
+   }
+  },
+  {
+   "name": "quote '\\'quotes\\' \"double\"' safe ''",
+   "input": {
+    "s": "'quotes' \"double\"",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "%27quotes%27%20%22double%22",
+    "quote_plus": "%27quotes%27+%22double%22"
+   }
+  },
+  {
+   "name": "quote '\\'quotes\\' \"double\"' safe '/:@'",
+   "input": {
+    "s": "'quotes' \"double\"",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "%27quotes%27%20%22double%22",
+    "quote_plus": "%27quotes%27+%22double%22"
+   }
+  },
+  {
+   "name": "quote '@:;,=$!*()[]{}|\\\\^`<>' safe '/'",
+   "input": {
+    "s": "@:;,=$!*()[]{}|\\^`<>",
+    "safe": "/"
+   },
+   "expected": {
+    "quote": "%40%3A%3B%2C%3D%24%21%2A%28%29%5B%5D%7B%7D%7C%5C%5E%60%3C%3E",
+    "quote_plus": "%40%3A%3B%2C%3D%24%21%2A%28%29%5B%5D%7B%7D%7C%5C%5E%60%3C%3E"
+   }
+  },
+  {
+   "name": "quote '@:;,=$!*()[]{}|\\\\^`<>' safe ''",
+   "input": {
+    "s": "@:;,=$!*()[]{}|\\^`<>",
+    "safe": ""
+   },
+   "expected": {
+    "quote": "%40%3A%3B%2C%3D%24%21%2A%28%29%5B%5D%7B%7D%7C%5C%5E%60%3C%3E",
+    "quote_plus": "%40%3A%3B%2C%3D%24%21%2A%28%29%5B%5D%7B%7D%7C%5C%5E%60%3C%3E"
+   }
+  },
+  {
+   "name": "quote '@:;,=$!*()[]{}|\\\\^`<>' safe '/:@'",
+   "input": {
+    "s": "@:;,=$!*()[]{}|\\^`<>",
+    "safe": "/:@"
+   },
+   "expected": {
+    "quote": "@:%3B%2C%3D%24%21%2A%28%29%5B%5D%7B%7D%7C%5C%5E%60%3C%3E",
+    "quote_plus": "@:%3B%2C%3D%24%21%2A%28%29%5B%5D%7B%7D%7C%5C%5E%60%3C%3E"
+   }
+  },
+  {
+   "name": "urlencode [['q', 'AC/DC & friends?'], ['format', 'json'], ['no_html', '1']]",
+   "input": {
+    "pairs": [
+     [
+      "q",
+      "AC/DC & friends?"
+     ],
+     [
+      "format",
+      "json"
+     ],
+     [
+      "no_html",
+      "1"
+     ]
+    ]
+   },
+   "expected": {
+    "urlencode": "q=AC%2FDC+%26+friends%3F&format=json&no_html=1"
+   }
+  },
+  {
+   "name": "urlencode [['action', 'opensearch'], ['search', 'São Paulo'], ['limit', '1']]",
+   "input": {
+    "pairs": [
+     [
+      "action",
+      "opensearch"
+     ],
+     [
+      "search",
+      "São Paulo"
+     ],
+     [
+      "limit",
+      "1"
+     ]
+    ]
+   },
+   "expected": {
+    "urlencode": "action=opensearch&search=S%C3%A3o+Paulo&limit=1"
+   }
+  },
+  {
+   "name": "urlencode [['k y', 'v=a&b'], ['', '']]",
+   "input": {
+    "pairs": [
+     [
+      "k y",
+      "v=a&b"
+     ],
+     [
+      "",
+      ""
+     ]
+    ]
+   },
+   "expected": {
+    "urlencode": "k+y=v%3Da%26b&="
+   }
+  }
+ ]
+}

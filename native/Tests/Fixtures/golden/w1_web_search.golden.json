@@ -1,0 +1,1091 @@
+{
+ "schema": 1,
+ "suite": "w1_web_search",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "offline/kb exact",
+   "input": {
+    "args": {
+     "query": "Leeds"
+    },
+    "online": false,
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   },
+   "expected": {
+    "reply": "Leeds is a city in Yorkshire, invented for this fixture.",
+    "requests": [],
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   }
+  },
+  {
+   "name": "offline/kb overlap",
+   "input": {
+    "args": {
+     "query": "tell me about the invented band"
+    },
+    "online": false,
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   },
+   "expected": {
+    "reply": "An invented band from Leeds.",
+    "requests": [],
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   }
+  },
+  {
+   "name": "offline/kb miss",
+   "input": {
+    "args": {
+     "query": "tennis"
+    },
+    "online": false,
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   },
+   "expected": {
+    "reply": "I'm offline, sir, so I cannot search the web right now.",
+    "requests": [],
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   }
+  },
+  {
+   "name": "offline/no kb file",
+   "input": {
+    "args": {
+     "query": "tennis"
+    },
+    "online": false,
+    "kb": null
+   },
+   "expected": {
+    "reply": "I'm offline, sir, so I cannot search the web right now.",
+    "requests": [],
+    "kb": null
+   }
+  },
+  {
+   "name": "offline/empty query",
+   "input": {
+    "args": {},
+    "online": false,
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   },
+   "expected": {
+    "reply": "I'm offline, sir, so I cannot search the web right now.",
+    "requests": [],
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   }
+  },
+  {
+   "name": "ddg/abstract",
+   "input": {
+    "args": {
+     "query": "Leeds"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=Leeds&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"Leeds is a city.\", \"Answer\": \"ignored\"}"
+     }
+    },
+    "kb": null
+   },
+   "expected": {
+    "reply": "Leeds is a city.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=Leeds&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city.",
+      "updated": 1790582400.0
+     }
+    }
+   }
+  },
+  {
+   "name": "ddg/abstract long and unicode",
+   "input": {
+    "args": {
+     "query": "  Café été  "
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=++Caf%C3%A9+%C3%A9t%C3%A9++&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Caf\\u00e9 \\u00e9t\\u00e9 \\u4e1c\\u4eac \\ud83d\\ude00 end.\"}"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=++Caf%C3%A9+%C3%A9t%C3%A9++&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "café été": {
+      "summary": "Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is",
+      "updated": 1790582400.0
+     }
+    }
+   }
+  },
+  {
+   "name": "ddg/answer string",
+   "input": {
+    "args": {
+     "query": "2+2"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=2%2B2&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"\", \"Answer\": \"4\"}"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "4",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=2%2B2&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "2+2": {
+      "summary": "4",
+      "updated": 1790582400.0
+     }
+    }
+   }
+  },
+  {
+   "name": "ddg/answer number",
+   "input": {
+    "args": {
+     "query": "answer"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=answer&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"\", \"Answer\": 42}"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "42",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=answer&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "answer": {
+      "summary": "42",
+      "updated": 1790582400.0
+     }
+    }
+   }
+  },
+  {
+   "name": "ddg/answer float",
+   "input": {
+    "args": {
+     "query": "pi"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=pi&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"Answer\": 3.14159}"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "3.14159",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=pi&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "pi": {
+      "summary": "3.14159",
+      "updated": 1790582400.0
+     }
+    }
+   }
+  },
+  {
+   "name": "ddg/answer object",
+   "input": {
+    "args": {
+     "query": "calc"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=calc&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"Answer\": {\"from\": \"calculator\", \"result\": [1, 2.5, true, null]}}"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "{'from': 'calculator', 'result': [1, 2.5, True, None]}",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=calc&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "calc": {
+      "summary": "{'from': 'calculator', 'result': [1, 2.5, True, None]}",
+      "updated": 1790582400.0
+     }
+    }
+   }
+  },
+  {
+   "name": "ddg/related topics only",
+   "input": {
+    "args": {
+     "query": "Mercury"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=Mercury&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"\", \"Answer\": \"\", \"RelatedTopics\": [{\"Name\": \"Group\", \"Topics\": [{\"Text\": \"inside a group\"}]}, \"a string\", {\"Text\": \"\"}, {\"Text\": \"Mercury, the planet.\"}, {\"Text\": \"Mercury, the element.\"}]}"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "Mercury, the planet.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=Mercury&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "mercury": {
+      "summary": "Mercury, the planet.",
+      "updated": 1790582400.0
+     }
+    }
+   }
+  },
+  {
+   "name": "ddg/abstract not a str falls to wikipedia",
+   "input": {
+    "args": {
+     "query": "odd"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=odd&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": 7, \"Answer\": \"skipped\"}"
+     },
+     "https://en.wikipedia.org/w/api.php?action=opensearch&search=odd&limit=1&format=json": {
+      "body": "[\"odd\", [\"Odd\"], [\"\"], [\"https://en.wikipedia.org/wiki/Odd\"]]"
+     },
+     "https://en.wikipedia.org/api/rest_v1/page/summary/Odd": {
+      "body": "{\"extract\": \"Odd, from Wikipedia.\"}"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "Odd, from Wikipedia.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=odd&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=odd&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/api/rest_v1/page/summary/Odd",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "odd": {
+      "summary": "Odd, from Wikipedia.",
+      "updated": 1790582400.0
+     }
+    }
+   }
+  },
+  {
+   "name": "ddg/related text not a str",
+   "input": {
+    "args": {
+     "query": "odd text"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=odd+text&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"RelatedTopics\": [{\"Text\": 5}]}"
+     },
+     "https://en.wikipedia.org/w/api.php?action=opensearch&search=odd+text&limit=1&format=json": {
+      "body": "[\"odd text\", []]"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "I found nothing definitive, sir.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=odd+text&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=odd+text&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {}
+   }
+  },
+  {
+   "name": "ddg/related topics null",
+   "input": {
+    "args": {
+     "query": "nulls"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=nulls&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": null, \"RelatedTopics\": null}"
+     },
+     "https://en.wikipedia.org/w/api.php?action=opensearch&search=nulls&limit=1&format=json": {
+      "body": "[\"nulls\", []]"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "I found nothing definitive, sir.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=nulls&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=nulls&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {}
+   }
+  },
+  {
+   "name": "ddg/a list body",
+   "input": {
+    "args": {
+     "query": "list"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=list&format=json&no_html=1&skip_disambig=1": {
+      "body": "[1, 2]"
+     },
+     "https://en.wikipedia.org/w/api.php?action=opensearch&search=list&limit=1&format=json": {
+      "body": "[\"list\", []]"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "I found nothing definitive, sir.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=list&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=list&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {}
+   }
+  },
+  {
+   "name": "ddg/malformed json",
+   "input": {
+    "args": {
+     "query": "broken"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=broken&format=json&no_html=1&skip_disambig=1": {
+      "body": "{not json"
+     },
+     "https://en.wikipedia.org/w/api.php?action=opensearch&search=broken&limit=1&format=json": {
+      "body": "[\"broken\", [\"Broken (film)\"], [\"\"], [\"\"]]"
+     },
+     "https://en.wikipedia.org/api/rest_v1/page/summary/Broken_%28film%29": {
+      "body": "{\"extract\": \"Broken is an invented film.\"}"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "Broken is an invented film.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=broken&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=broken&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/api/rest_v1/page/summary/Broken_%28film%29",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "broken": {
+      "summary": "Broken is an invented film.",
+      "updated": 1790582400.0
+     }
+    }
+   }
+  },
+  {
+   "name": "ddg/timeout then wikipedia",
+   "input": {
+    "args": {
+     "query": "AC/DC & friends?"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=AC%2FDC+%26+friends%3F&format=json&no_html=1&skip_disambig=1": {
+      "error": "timeout"
+     },
+     "https://en.wikipedia.org/w/api.php?action=opensearch&search=AC%2FDC+%26+friends%3F&limit=1&format=json": {
+      "body": "[\"AC/DC & friends?\", [\"AC/DC\"], [\"\"], [\"\"]]"
+     },
+     "https://en.wikipedia.org/api/rest_v1/page/summary/AC/DC": {
+      "body": "{\"extract\": \"AC/DC are an invented band here.\"}"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "AC/DC are an invented band here.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=AC%2FDC+%26+friends%3F&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=AC%2FDC+%26+friends%3F&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/api/rest_v1/page/summary/AC/DC",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "ac/dc & friends?": {
+      "summary": "AC/DC are an invented band here.",
+      "updated": 1790582400.0
+     }
+    }
+   }
+  },
+  {
+   "name": "ddg/http error then wikipedia unicode title",
+   "input": {
+    "args": {
+     "query": "São Paulo"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=S%C3%A3o+Paulo&format=json&no_html=1&skip_disambig=1": {
+      "status": 503
+     },
+     "https://en.wikipedia.org/w/api.php?action=opensearch&search=S%C3%A3o+Paulo&limit=1&format=json": {
+      "body": "[\"S\\u00e3o Paulo\", [\"S\\u00e3o Paulo FC\"], [\"\"], [\"\"]]"
+     },
+     "https://en.wikipedia.org/api/rest_v1/page/summary/S%C3%A3o_Paulo_FC": {
+      "body": "{\"extract\": \"Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Caf\\u00e9 \\u00e9t\\u00e9 \\u4e1c\\u4eac \\ud83d\\ude00 end.\"}"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=S%C3%A3o+Paulo&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=S%C3%A3o+Paulo&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/api/rest_v1/page/summary/S%C3%A3o_Paulo_FC",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "são paulo": {
+      "summary": "Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is a city in West Yorkshire, England. Leeds is",
+      "updated": 1790582400.0
+     }
+    }
+   }
+  },
+  {
+   "name": "wiki/no extract falls to kb",
+   "input": {
+    "args": {
+     "query": "Leeds rhinos"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=Leeds+rhinos&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"\", \"Answer\": \"\", \"RelatedTopics\": []}"
+     },
+     "https://en.wikipedia.org/w/api.php?action=opensearch&search=Leeds+rhinos&limit=1&format=json": {
+      "body": "[\"Leeds rhinos\", [\"Leeds Rhinos\"], [\"\"], [\"\"]]"
+     },
+     "https://en.wikipedia.org/api/rest_v1/page/summary/Leeds_Rhinos": {
+      "body": "{\"title\": \"Leeds Rhinos\"}"
+     }
+    },
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   },
+   "expected": {
+    "reply": "Leeds is a city in Yorkshire, invented for this fixture.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=Leeds+rhinos&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=Leeds+rhinos&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/api/rest_v1/page/summary/Leeds_Rhinos",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   }
+  },
+  {
+   "name": "wiki/summary 404",
+   "input": {
+    "args": {
+     "query": "gone"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=gone&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"\", \"Answer\": \"\", \"RelatedTopics\": []}"
+     },
+     "https://en.wikipedia.org/w/api.php?action=opensearch&search=gone&limit=1&format=json": {
+      "body": "[\"gone\", [\"Gone\"]]"
+     },
+     "https://en.wikipedia.org/api/rest_v1/page/summary/Gone": {
+      "status": 404
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "I found nothing definitive, sir.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=gone&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=gone&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/api/rest_v1/page/summary/Gone",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {}
+   }
+  },
+  {
+   "name": "wiki/empty titles",
+   "input": {
+    "args": {
+     "query": "nothing here"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=nothing+here&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"\", \"Answer\": \"\", \"RelatedTopics\": []}"
+     },
+     "https://en.wikipedia.org/w/api.php?action=opensearch&search=nothing+here&limit=1&format=json": {
+      "body": "[\"nothing here\", [], [], []]"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "I found nothing definitive, sir.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=nothing+here&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=nothing+here&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {}
+   }
+  },
+  {
+   "name": "wiki/title not a str",
+   "input": {
+    "args": {
+     "query": "numbers"
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=numbers&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"\", \"Answer\": \"\", \"RelatedTopics\": []}"
+     },
+     "https://en.wikipedia.org/w/api.php?action=opensearch&search=numbers&limit=1&format=json": {
+      "body": "[\"numbers\", [12]]"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "I found nothing definitive, sir.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=numbers&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=numbers&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {}
+   }
+  },
+  {
+   "name": "nothing at all",
+   "input": {
+    "args": {
+     "query": "zzz"
+    },
+    "pages": {},
+    "kb": {}
+   },
+   "expected": {
+    "reply": "I found nothing definitive, sir.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=zzz&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=zzz&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {}
+   }
+  },
+  {
+   "name": "online/empty query",
+   "input": {
+    "args": {
+     "query": ""
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"An empty search.\"}"
+     }
+    },
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   },
+   "expected": {
+    "reply": "An empty search.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   }
+  },
+  {
+   "name": "online/missing query",
+   "input": {
+    "args": {},
+    "pages": {
+     "https://api.duckduckgo.com/?q=&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"\", \"Answer\": \"\", \"RelatedTopics\": []}"
+     },
+     "https://en.wikipedia.org/w/api.php?action=opensearch&search=&limit=1&format=json": {
+      "body": "[\"\", []]"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "I found nothing definitive, sir.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {}
+   }
+  },
+  {
+   "name": "query null",
+   "input": {
+    "args": {
+     "query": null
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=None&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"None, the invented answer.\"}"
+     }
+    },
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   },
+   "expected": {
+    "reply": "None, the invented answer.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=None&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   }
+  },
+  {
+   "name": "query false offline",
+   "input": {
+    "args": {
+     "query": false
+    },
+    "online": false,
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   },
+   "expected": {
+    "reply": "I'm offline, sir, so I cannot search the web right now.",
+    "requests": [],
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   }
+  },
+  {
+   "name": "query number",
+   "input": {
+    "args": {
+     "query": 5
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=5&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"Five.\"}"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "Tool error: 'int' object has no attribute 'strip'",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=5&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     },
+     {
+      "url": "https://en.wikipedia.org/w/api.php?action=opensearch&search=5&limit=1&format=json",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {}
+   }
+  },
+  {
+   "name": "query number offline",
+   "input": {
+    "args": {
+     "query": 5
+    },
+    "online": false,
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   },
+   "expected": {
+    "reply": "Tool error: 'int' object has no attribute 'strip'",
+    "requests": [],
+    "kb": {
+     "leeds": {
+      "summary": "Leeds is a city in Yorkshire, invented for this fixture.",
+      "updated": 1790496000
+     },
+     "invented band": {
+      "summary": "An invented band from Leeds.",
+      "updated": 1790578800
+     }
+    }
+   }
+  },
+  {
+   "name": "kb remembers lowercased topic cut",
+   "input": {
+    "args": {
+     "query": "  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  "
+    },
+    "pages": {
+     "https://api.duckduckgo.com/?q=++XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX++&format=json&no_html=1&skip_disambig=1": {
+      "body": "{\"AbstractText\": \"Exes.\"}"
+     }
+    },
+    "kb": {}
+   },
+   "expected": {
+    "reply": "Exes.",
+    "requests": [
+     {
+      "url": "https://api.duckduckgo.com/?q=++XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX++&format=json&no_html=1&skip_disambig=1",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": {
+     "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": {
+      "summary": "Exes.",
+      "updated": 1790582400.0
+     }
+    }
+   }
+  }
+ ]
+}

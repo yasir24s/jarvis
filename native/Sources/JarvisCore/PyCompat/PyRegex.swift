@@ -33,13 +33,15 @@ public struct PyRegex: Sendable {
     private let regex: NSRegularExpression
 
     /// Translates a Python pattern and compiles it. Always `.useUnixLineSeparators` (only \n
-    /// ends a line for `.` and `$`, as in Python), plus `.caseInsensitive` for re.I.
-    public init(_ pythonPattern: String, ignoreCase: Bool = false) throws {
+    /// ends a line for `.` and `$`, as in Python), plus `.caseInsensitive` for re.I and (W1)
+    /// `.dotMatchesLineSeparators` for re.DOTALL.
+    public init(_ pythonPattern: String, ignoreCase: Bool = false, dotAll: Bool = false) throws {
         pattern = pythonPattern
         self.ignoreCase = ignoreCase
         icuPattern = try Self.translate(pythonPattern, ignoreCase: ignoreCase)
         var options: NSRegularExpression.Options = [.useUnixLineSeparators]
         if ignoreCase { options.insert(.caseInsensitive) }
+        if dotAll { options.insert(.dotMatchesLineSeparators) }
         do {
             regex = try NSRegularExpression(pattern: icuPattern, options: options)
         } catch {

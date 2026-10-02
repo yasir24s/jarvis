@@ -1,0 +1,239 @@
+{
+ "schema": 1,
+ "suite": "w1_location",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "offline",
+   "input": {
+    "online": false
+   },
+   "expected": {
+    "reply": "I can't determine your location offline, sir.",
+    "requests": [],
+    "kb": null
+   }
+  },
+  {
+   "name": "all three",
+   "input": {
+    "pages": {
+     "https://ipwho.is/": {
+      "body": "{\"success\": true, \"city\": \"Leeds\", \"region\": \"England\", \"country\": \"United Kingdom\"}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "You appear to be in Leeds, England, United Kingdom, sir.",
+    "requests": [
+     {
+      "url": "https://ipwho.is/",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "no region",
+   "input": {
+    "pages": {
+     "https://ipwho.is/": {
+      "body": "{\"success\": true, \"city\": \"Leeds\", \"region\": \"\", \"country\": \"United Kingdom\"}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "You appear to be in Leeds, United Kingdom, sir.",
+    "requests": [
+     {
+      "url": "https://ipwho.is/",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "null city",
+   "input": {
+    "pages": {
+     "https://ipwho.is/": {
+      "body": "{\"success\": true, \"city\": null, \"country\": \"Japan\"}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "You appear to be in Japan, sir.",
+    "requests": [
+     {
+      "url": "https://ipwho.is/",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "empty bits",
+   "input": {
+    "pages": {
+     "https://ipwho.is/": {
+      "body": "{\"success\": true, \"city\": \"\", \"region\": \"\", \"country\": \"\"}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't pinpoint your location, sir.",
+    "requests": [
+     {
+      "url": "https://ipwho.is/",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "not success",
+   "input": {
+    "pages": {
+     "https://ipwho.is/": {
+      "body": "{\"success\": false, \"message\": \"reserved range\"}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't determine your location, sir.",
+    "requests": [
+     {
+      "url": "https://ipwho.is/",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "success 1",
+   "input": {
+    "pages": {
+     "https://ipwho.is/": {
+      "body": "{\"success\": 1, \"city\": \"Z\\u00fcrich\"}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "You appear to be in Zürich, sir.",
+    "requests": [
+     {
+      "url": "https://ipwho.is/",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "city a number",
+   "input": {
+    "pages": {
+     "https://ipwho.is/": {
+      "body": "{\"success\": true, \"city\": 5, \"country\": \"X\"}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't determine your location, sir.",
+    "requests": [
+     {
+      "url": "https://ipwho.is/",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "a list body",
+   "input": {
+    "pages": {
+     "https://ipwho.is/": {
+      "body": "[1]"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't determine your location, sir.",
+    "requests": [
+     {
+      "url": "https://ipwho.is/",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "malformed",
+   "input": {
+    "pages": {
+     "https://ipwho.is/": {
+      "body": "nope"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't determine your location, sir.",
+    "requests": [
+     {
+      "url": "https://ipwho.is/",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "timeout",
+   "input": {
+    "pages": {
+     "https://ipwho.is/": {
+      "error": "timeout"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't determine your location, sir.",
+    "requests": [
+     {
+      "url": "https://ipwho.is/",
+      "user_agent": "JARVIS/1.0 (personal assistant)",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  }
+ ]
+}

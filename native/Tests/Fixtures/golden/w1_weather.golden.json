@@ -1,0 +1,370 @@
+{
+ "schema": 1,
+ "suite": "w1_weather",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "offline",
+   "input": {
+    "args": {
+     "location": "Leeds"
+    },
+    "online": false
+   },
+   "expected": {
+    "reply": "I'm offline, sir, so I can't check the weather.",
+    "requests": [],
+    "kb": null
+   }
+  },
+  {
+   "name": "here",
+   "input": {
+    "args": {},
+    "pages": {
+     "https://wttr.in/?format=j1": {
+      "body": "{\"current_condition\": [{\"weatherDesc\": [{\"value\": \"Partly cloudy\"}], \"temp_C\": \"12\", \"FeelsLikeC\": \"10\"}], \"nearest_area\": [{\"areaName\": [{\"value\": \"Leeds\"}]}]}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "It's partly cloudy and 12 degrees in Leeds, feeling like 10, sir.",
+    "requests": [
+     {
+      "url": "https://wttr.in/?format=j1",
+      "user_agent": "curl/8",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "named place",
+   "input": {
+    "args": {
+     "location": "  New York  "
+    },
+    "pages": {
+     "https://wttr.in/New%20York?format=j1": {
+      "body": "{\"current_condition\": [{\"weatherDesc\": [{\"value\": \"Light Rain Shower\"}], \"temp_C\": \"7\", \"FeelsLikeC\": \"4\"}], \"nearest_area\": [{\"areaName\": [{\"value\": \"New York\"}]}]}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "It's light rain shower and 7 degrees in New York, feeling like 4, sir.",
+    "requests": [
+     {
+      "url": "https://wttr.in/New%20York?format=j1",
+      "user_agent": "curl/8",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "unicode and slash",
+   "input": {
+    "args": {
+     "location": "São Paulo/Brazil"
+    },
+    "pages": {
+     "https://wttr.in/S%C3%A3o%20Paulo/Brazil?format=j1": {
+      "body": "{\"current_condition\": [{\"weatherDesc\": [{\"value\": \"\\u00c9clairs\\u00c9\"}], \"temp_C\": \"30\", \"FeelsLikeC\": \"33\"}], \"nearest_area\": [{\"areaName\": [{\"value\": \"S\\u00e3o Paulo\"}]}]}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "It's éclairsé and 30 degrees in São Paulo, feeling like 33, sir.",
+    "requests": [
+     {
+      "url": "https://wttr.in/S%C3%A3o%20Paulo/Brazil?format=j1",
+      "user_agent": "curl/8",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "no nearest_area uses the location",
+   "input": {
+    "args": {
+     "location": " York "
+    },
+    "pages": {
+     "https://wttr.in/York?format=j1": {
+      "body": "{\"current_condition\": [{\"weatherDesc\": [{\"value\": \"Partly cloudy\"}], \"temp_C\": \"12\", \"FeelsLikeC\": \"10\"}]}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "It's partly cloudy and 12 degrees in York, feeling like 10, sir.",
+    "requests": [
+     {
+      "url": "https://wttr.in/York?format=j1",
+      "user_agent": "curl/8",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "no nearest_area and no location",
+   "input": {
+    "args": {
+     "location": ""
+    },
+    "pages": {
+     "https://wttr.in/?format=j1": {
+      "body": "{\"current_condition\": [{\"weatherDesc\": [{\"value\": \"Partly cloudy\"}], \"temp_C\": \"12\", \"FeelsLikeC\": \"10\"}]}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "It's partly cloudy and 12 degrees, feeling like 10, sir.",
+    "requests": [
+     {
+      "url": "https://wttr.in/?format=j1",
+      "user_agent": "curl/8",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "empty area name",
+   "input": {
+    "args": {
+     "location": "Leeds"
+    },
+    "pages": {
+     "https://wttr.in/Leeds?format=j1": {
+      "body": "{\"current_condition\": [{\"weatherDesc\": [{\"value\": \"Partly cloudy\"}], \"temp_C\": \"12\", \"FeelsLikeC\": \"10\"}], \"nearest_area\": [{\"areaName\": [{\"value\": \"\"}]}]}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "It's partly cloudy and 12 degrees, feeling like 10, sir.",
+    "requests": [
+     {
+      "url": "https://wttr.in/Leeds?format=j1",
+      "user_agent": "curl/8",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "numbers not strings",
+   "input": {
+    "args": {
+     "location": "Oslo"
+    },
+    "pages": {
+     "https://wttr.in/Oslo?format=j1": {
+      "body": "{\"current_condition\": [{\"weatherDesc\": [{\"value\": \"SNOW\"}], \"temp_C\": -3, \"FeelsLikeC\": -7.5}], \"nearest_area\": [{\"areaName\": [{\"value\": 42}]}]}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "It's snow and -3 degrees in 42, feeling like -7.5, sir.",
+    "requests": [
+     {
+      "url": "https://wttr.in/Oslo?format=j1",
+      "user_agent": "curl/8",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "area value null",
+   "input": {
+    "args": {
+     "location": "Oslo"
+    },
+    "pages": {
+     "https://wttr.in/Oslo?format=j1": {
+      "body": "{\"current_condition\": [{\"weatherDesc\": [{\"value\": \"Fog\"}], \"temp_C\": \"1\", \"FeelsLikeC\": \"0\"}], \"nearest_area\": [{\"areaName\": [{\"value\": null}]}]}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "It's fog and 1 degrees, feeling like 0, sir.",
+    "requests": [
+     {
+      "url": "https://wttr.in/Oslo?format=j1",
+      "user_agent": "curl/8",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "malformed",
+   "input": {
+    "args": {
+     "location": "Leeds"
+    },
+    "pages": {
+     "https://wttr.in/Leeds?format=j1": {
+      "body": "<html>"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't reach the weather service, sir.",
+    "requests": [
+     {
+      "url": "https://wttr.in/Leeds?format=j1",
+      "user_agent": "curl/8",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "missing current_condition",
+   "input": {
+    "args": {
+     "location": "Leeds"
+    },
+    "pages": {
+     "https://wttr.in/Leeds?format=j1": {
+      "body": "{}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't reach the weather service, sir.",
+    "requests": [
+     {
+      "url": "https://wttr.in/Leeds?format=j1",
+      "user_agent": "curl/8",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "description not a str",
+   "input": {
+    "args": {
+     "location": "Leeds"
+    },
+    "pages": {
+     "https://wttr.in/Leeds?format=j1": {
+      "body": "{\"current_condition\": [{\"weatherDesc\": [{\"value\": 3}], \"temp_C\": \"1\", \"FeelsLikeC\": \"1\"}]}"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't reach the weather service, sir.",
+    "requests": [
+     {
+      "url": "https://wttr.in/Leeds?format=j1",
+      "user_agent": "curl/8",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "timeout",
+   "input": {
+    "args": {
+     "location": "Leeds"
+    },
+    "pages": {
+     "https://wttr.in/Leeds?format=j1": {
+      "error": "timeout"
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't reach the weather service, sir.",
+    "requests": [
+     {
+      "url": "https://wttr.in/Leeds?format=j1",
+      "user_agent": "curl/8",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "http error",
+   "input": {
+    "args": {
+     "location": "Leeds"
+    },
+    "pages": {
+     "https://wttr.in/Leeds?format=j1": {
+      "status": 500
+     }
+    }
+   },
+   "expected": {
+    "reply": "I couldn't reach the weather service, sir.",
+    "requests": [
+     {
+      "url": "https://wttr.in/Leeds?format=j1",
+      "user_agent": "curl/8",
+      "timeout": 8
+     }
+    ],
+    "kb": null
+   }
+  },
+  {
+   "name": "location not a str",
+   "input": {
+    "args": {
+     "location": 7
+    },
+    "pages": {}
+   },
+   "expected": {
+    "reply": "I couldn't reach the weather service, sir.",
+    "requests": [],
+    "kb": null
+   }
+  },
+  {
+   "name": "location null",
+   "input": {
+    "args": {
+     "location": null
+    },
+    "pages": {}
+   },
+   "expected": {
+    "reply": "I couldn't reach the weather service, sir.",
+    "requests": [],
+    "kb": null
+   }
+  }
+ ]
+}

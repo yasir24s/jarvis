@@ -4,7 +4,8 @@ import JarvisCore
 /// The tool bodies that exist so far (B4: `get_time`; D-50: `personality_note` and
 /// `personality_rewrite`; M5 T5.5: `get_battery`, `get_cpu_usage`, `get_wifi_status`,
 /// `run_diagnostics`; T5.6: `read_clipboard`; T5.7: `see_screen`, `take_screenshot`; T5.8:
-/// `find_apps`; T5.10: `search_files`, `find_files`; T5.11: `read_file`), registered on a gateway in one call, so JarvisBrain and JarvisApp
+/// `find_apps`; T5.10: `search_files`, `find_files`; T5.11: `read_file`; W1: `web_search`,
+/// `get_weather`, `get_location`, `get_news`), registered on a gateway in one call, so JarvisBrain and JarvisApp
 /// never name a tool type. Every other catalog tool stays listed with no body, and the gateway
 /// answers it with its unknown-tool text until M5 or M6 adds one.
 public enum BuiltInTools {
@@ -66,6 +67,13 @@ public enum BuiltInTools {
         await gateway.register(Capped(OpenSettings(opener: platform.settingsOpener)))
         await gateway.register(Capped(SystemControl(runner: platform.actionRunner, scriptRunner: platform.scriptRunner,
                                                     executable: platform.executable)))
+        // W1 part 1: Python's four web tools, over the platform's GET and is_online.
+        await gateway.register(Capped(WebSearch(core: core, web: platform.web, online: platform.online,
+                                                log: platform.webLog)))
+        await gateway.register(Capped(GetWeather(web: platform.web, online: platform.online)))
+        await gateway.register(Capped(GetLocation(web: platform.web, online: platform.online)))
+        await gateway.register(Capped(GetNews(web: platform.web, online: platform.online, feed: platform.newsFeed,
+                                              log: platform.webLog)))
         if let memory {
             await gateway.register(Capped(SearchMemory(memory: memory.store, search: memory.search)))
             await gateway.register(Capped(ForgetMemory(memory: memory.store)))
@@ -116,13 +124,26 @@ struct ToolPlatform: Sendable {
     var settingsOpener: any SettingsOpening = LiveSettingsOpener()
     /// `shutil.which` over the agent PATH, for blueutil and shortcuts.
     var executable: @Sendable (String) -> String? = SystemControl.liveExecutable
+    /// W1 part 1: the web tools' GET and Python's is_online. Until the app gives them the
+    /// network, a platform has none and reads as offline, so no fake platform reaches it.
+    var web: any WebFetching = NoWebFetch()
+    var online: @Sendable () async -> Bool = { false }
+    /// get_news's feed: `JARVIS_NEWS_FEED`, else BBC News.
+    var newsFeed: String = GetNews.defaultFeed
+    /// The web tools' log (error kinds only, never a query or a URL).
+    var webLog: @Sendable (String) -> Void = { _ in }
 
     static var live: ToolPlatform {
-        ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard(), screen: LiveScreenCapture(),
-                     recognizer: VisionTextRecognizer(),
-                     home: ProcessInfo.processInfo.environment["HOME"] ?? NSHomeDirectory(),
-                     apps: AppIndex(runner: BoundedRunner()), browser: LiveDefaultBrowser(),
-                     spotlightRunner: BoundedRunner(cap: Spotlight.cap))
+        var platform = ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard(), screen: LiveScreenCapture(),
+                                    recognizer: VisionTextRecognizer(),
+                                    home: ProcessInfo.processInfo.environment["HOME"] ?? NSHomeDirectory(),
+                                    apps: AppIndex(runner: BoundedRunner()), browser: LiveDefaultBrowser(),
+                                    spotlightRunner: BoundedRunner(cap: Spotlight.cap))
+        platform.web = LiveWebFetch()
+        platform.online = { await Net.isOnline() }
+        platform.newsFeed = GetNews.feed(ProcessInfo.processInfo.environment)
+        platform.webLog = { JarvisLog.log($0, category: .tools) }
+        return platform
     }
 }
 
