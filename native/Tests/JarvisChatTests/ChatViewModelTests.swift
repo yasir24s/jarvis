@@ -288,6 +288,25 @@ struct ChatViewModelTests {
         #expect(turns.map(\.channel) == [.text])
     }
 
+    @Test("V1: the send hook sees each sent message once, as shown, and nothing that was not sent")
+    func sendHookSeesEachSentMessage() async throws {
+        let outcomes = Outcomes([.reply("It is three o'clock, sir."), .reply("Done, sir.")])
+        let fake = FakeCoordinator(outcomes)
+        let model = ChatViewModel(submitter: fake)
+        var sent: [String] = []
+        model.onSend = { text, _ in sent.append(text) }
+        model.draft.text = "  what time is it \n"
+        let first = model.send()
+        model.draft.text = "and the date"
+        #expect(model.send() == nil, "Return during the turn sends nothing")
+        await first?.value
+        model.draft.text = "   "
+        #expect(model.send() == nil)
+        model.draft.text = "open Safari"
+        await model.send()?.value
+        #expect(sent == ["what time is it", "open Safari"])
+    }
+
     @Test("a submit the coordinator refuses as .busy shows no row, even while it is being refused")
     func busyNeverShowsARow() async throws {
         let model = ChatViewModel()

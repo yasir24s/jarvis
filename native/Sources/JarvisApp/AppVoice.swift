@@ -6,15 +6,24 @@ import JarvisVoice
 /// `Contents/Helpers/`, macOS `say` as the fallback, and the one player, all behind SpeechQueue.
 /// Nothing starts until a reply is spoken: the helper is launched by its first request and exits
 /// after 5 idle minutes. Its stderr goes to `jarvis-voice/helper.log` in the temporary folder.
+/// V1 part 1: a typed message is acknowledged at once with a line the clone rendered at install.
 @MainActor
 final class AppVoice {
     let f5: F5Engine
     let queue: SpeechQueue
+    /// The voice assets, where the acknowledgements were rendered.
+    private let assets: URL
+    /// The acknowledgements last played, oldest first (`Acknowledgement.recentLimit` of them).
+    private var recentAcknowledgements: [String] = []
+    /// Clips read so far, by file.
+    private var clips: [URL: PCMChunk] = [:]
+    private var reportedMissingClip = false
 
     init() {
         let folder = FileManager.default.temporaryDirectory.appending(path: "jarvis-voice", directoryHint: .isDirectory)
         // voiceSpeed is read for each reply and at each helper launch, never kept (U1 part 5).
         let setup = VoiceHelperSetup.inApp(log: folder.appending(path: "helper.log"))
+        assets = setup.assets
         let f5 = F5Engine(launcher: setup)
         self.f5 = f5
         queue = SpeechQueue(engine: f5, fallback: SayEngine(), player: EnginePlayer(),
@@ -35,6 +44,38 @@ final class AppVoice {
     /// When the last of them finished, by the wall clock; nil before the first.
     private(set) var lastSpoke: Double?
     var isSpeaking: Bool { inFlight > 0 }
+
+    /// V1 part 1: plays an acknowledgement of a typed message the moment it is sent (Speak
+    /// replies on). Without the rendered clip nothing plays, and that is logged once.
+    func acknowledge(_ message: String, sentAt: ContinuousClock.Instant) {
+        let line = Acknowledgement.choose(for: message, recent: recentAcknowledgements)
+        guard let clip = clip(Acknowledgement.clipURL(line, assets: assets, reference: "default")) else { return }
+        recentAcknowledgements = Array((recentAcknowledgements + [line.name]).suffix(Acknowledgement.recentLimit))
+        let queue = self.queue
+        inFlight += 1
+        Task {
+            await queue.acknowledge(clip, line: line.text, sentAt: sentAt)
+            await queue.idle()
+            self.inFlight -= 1
+            self.lastSpoke = SystemClock().now()
+        }
+    }
+
+    private func clip(_ url: URL) -> PCMChunk? {
+        if let clip = clips[url] { return clip }
+        do {
+            let clip = try Acknowledgement.loadClip(url)
+            clips[url] = clip
+            return clip
+        } catch {
+            if !reportedMissingClip {
+                reportedMissingClip = true
+                JarvisLog.log("voice: no acknowledgement clip (\(url.lastPathComponent): \(error)); "
+                              + "install-voice-assets.sh renders them", category: .voice)
+            }
+            return nil
+        }
+    }
 
     /// Speaks a finished reply; a new reply cancels whatever is queued or playing.
     func speak(_ text: String, turn: UUID) {

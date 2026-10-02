@@ -57,6 +57,9 @@ public final class ChatViewModel: ReplySink {
     /// turn, with that turn's summary (its data sources and taint). Rows made here without a
     /// turn (the card's "Cancelled.", the "can't verify" refusal) never come here.
     @ObservationIgnored public var onReplyFinished: ((ChatMessage, TurnSummary) -> Void)?
+    /// V1 part 1: each typed message the composer sends, with the moment it was sent, before
+    /// its turn starts (the voice's acknowledgement). A refused confirmation is not sent.
+    @ObservationIgnored public var onSend: ((String, ContinuousClock.Instant) -> Void)?
 
     @ObservationIgnored private var submitter: (any TurnSubmitting)?
     @ObservationIgnored private var backendName: (@Sendable () async -> String)?
@@ -177,6 +180,7 @@ public final class ChatViewModel: ReplySink {
             addLocalReply(to: shown, TextConfirmation.cannotVerify)
             return nil
         }
+        onSend?(shown, .now)
         return start(input, shown: shown, restoring: sent, via: submitter)
     }
 

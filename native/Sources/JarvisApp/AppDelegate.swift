@@ -378,6 +378,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                        speaker: { text, turn in voice.speak(text, turn: turn.turnID) },
                                        log: { JarvisLog.log($0, category: .voice) })
         }
+        // V1 part 1: with Speak replies on, a sent message is acknowledged in his voice at once.
+        chat.onSend = { [weak self] text, sentAt in
+            guard let self else { return }
+            self.speakReplies.refresh()
+            guard self.speakReplies.isOn else { return }
+            voice.acknowledge(text, sentAt: sentAt)
+        }
         // P2: the long-term memory in memory/, on the same lease-holding store. Local dates
         // follow the Mac's time zone as it changes.
         // P6: a first launch has no memory folder yet (looked at before anything writes). The

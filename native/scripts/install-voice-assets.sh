@@ -10,10 +10,19 @@
 # voice spike checked the two weight files against Hugging Face). Nothing is downloaded. A file
 # already installed with the right size and hash is left alone, so running this again is safe.
 # The weights and the voice clip never go into git.
+#
+# Then (V1 part 1) the clone renders JARVIS's acknowledgements, the short lines he says the
+# moment a typed message is sent, into acknowledgements/default/<name>.wav, with the jarvis-voice
+# helper of the built app (or VoiceHelper's release build, or $JARVIS_VOICE_HELPER). Without a
+# helper this step is skipped; run the script again once the app is built. Lines already
+# rendered with the same settings, reference and list are left alone.
+#
+# $JARVIS_VOICE_DEST installs somewhere else (a test folder).
 set -euo pipefail
 
 SPIKES="${JARVIS_SPIKES:-$HOME/jarvis-spikes}"
-DEST="$HOME/Library/Application Support/JARVIS/voice"
+DEST="${JARVIS_VOICE_DEST:-$HOME/Library/Application Support/JARVIS/voice}"
+NATIVE="$(cd "$(dirname "$0")/.." && pwd)"
 umask 077   # the voice clip is the user's: owner-only folders and files
 
 # destination | source | bytes | sha256
@@ -71,3 +80,76 @@ for entry in "${FILES[@]}"; do
     matches "$DEST/$rel" "$bytes" "$sha" || { echo "error: $rel failed its final check" >&2; exit 1; }
 done
 echo "Voice assets ready in $(tilde "$DEST") (6 files checked)"
+
+# The acknowledgements: name | line. Native JARVIS lists the same (Acknowledgement.lines) and
+# renders nothing itself. The speed is the app's default (VoiceHelperSetup). The steps are 8, not
+# the replies' 4: rendering happens once, and at 4 the shortest lines often blurred ("On it, sir."
+# heard as "On its, uh"), while at 8 every take of the three hardest was exact.
+ACK_STEPS=8
+ACK_SPEED=1.15
+ACKNOWLEDGEMENTS=(
+    "right-away|Right away, sir."
+    "one-moment|One moment, sir."
+    "certainly|Certainly, sir."
+    "of-course|Of course, sir."
+    "on-it|On it, sir."
+    "let-me-see|Let me see, sir."
+    "looking-into-it|Looking into it, sir."
+    "give-me-a-second|Give me a second, sir."
+    "very-good|Very good, sir."
+    "working-on-it|Working on it, sir."
+)
+
+helper=""
+for candidate in "${JARVIS_VOICE_HELPER:-}" "$NATIVE/dist/JARVIS.app/Contents/Helpers/jarvis-voice" \
+                 "$NATIVE/VoiceHelper/.build/release/jarvis-voice"; do
+    if [[ -n "$candidate" && -x "$candidate" ]]; then
+        helper="$candidate"
+        break
+    fi
+done
+
+# render_acknowledgements <name> <reference folder>: every line, spoken with that reference, into
+# acknowledgements/<name>/, unless a stamp shows they already were with these settings.
+render_acknowledgements() {
+    local name="$1" reference="$2"
+    local out="$DEST/acknowledgements/$name"
+    local stamp
+    stamp="steps $ACK_STEPS speed $ACK_SPEED"
+    stamp+=" reference $(cat "$reference/reference.wav" "$reference/reference.txt" | shasum -a 256 | cut -d' ' -f1)"
+    stamp+=" lines $(printf '%s\n' "${ACKNOWLEDGEMENTS[@]}" | shasum -a 256 | cut -d' ' -f1)"
+    local complete=1 entry n
+    for entry in "${ACKNOWLEDGEMENTS[@]}"; do
+        n="${entry%%|*}"
+        [[ -f "$out/$n.wav" ]] || complete=0
+    done
+    if [[ "$complete" == 1 && -f "$out/stamp" && "$(cat "$out/stamp")" == "$stamp" ]]; then
+        echo "ok        acknowledgements/$name (already rendered)"
+        return
+    fi
+    if [[ -z "$helper" ]]; then
+        echo "skipped   acknowledgements/$name: no jarvis-voice helper yet (build the app, then run this again)"
+        return
+    fi
+    local tmp="$out.partial"
+    rm -rf "$tmp"
+    mkdir -p "$tmp"
+    local list="$tmp/lines.tsv" t
+    for entry in "${ACKNOWLEDGEMENTS[@]}"; do
+        IFS='|' read -r n t <<< "$entry"
+        printf '%s\t%s\n' "$n" "$t"
+    done > "$list"
+    if ! "$helper" --assets "$DEST" --out-dir "$tmp" --steps "$ACK_STEPS" --speed "$ACK_SPEED" \
+            --render "$list" 2>/dev/null; then
+        rm -rf "$tmp"
+        echo "error: the helper could not render acknowledgements/$name" >&2
+        exit 1
+    fi
+    rm -f "$list"
+    printf '%s\n' "$stamp" > "$tmp/stamp"
+    rm -rf "$out"
+    mv "$tmp" "$out"
+    echo "rendered  acknowledgements/$name (${#ACKNOWLEDGEMENTS[@]} lines)"
+}
+
+render_acknowledgements default "$DEST/reference"

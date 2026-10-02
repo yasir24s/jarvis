@@ -11,6 +11,10 @@ import JarvisCore
 /// characters (P5; D-54 generated a reply of up to 160 characters whole). The log line gives
 /// each gap's predicted and actual length. A new reply cancels whatever is queued or playing;
 /// `cancelAll()` stops everything.
+///
+/// V1 part 1: `acknowledge` plays a rendered acknowledgement the moment a message is sent. The
+/// reply after it generates while it plays and starts once it has finished, and does not say a
+/// short acknowledgement of its own first (`Acknowledgement.spokenText`).
 public actor SpeechQueue {
     /// Where `voiceChunkChars` is read from.
     public static let defaultsSuite = "com.jarvis.assistant"
@@ -62,6 +66,10 @@ public actor SpeechQueue {
     private let helperFootprintMB: @Sendable () -> Int?
     private let log: @Sendable (String) -> Void
     private var current: Task<Void, Never>?
+    /// The acknowledgement playing, if any; a reply waits for it before its own audio.
+    private var acknowledging: Task<Void, Never>?
+    /// An acknowledgement was played for the message the next reply answers.
+    private var acknowledged = false
 
     /// - engine: the voice (F5Engine); `fallback` speaks a part it fails (SayEngine).
     /// - helperFootprintMB: the helper's footprint in its last reply, for the log line.
@@ -84,15 +92,45 @@ public actor SpeechQueue {
         self.log = log
     }
 
-    /// Speaks a finished reply, after cancelling whatever is queued or playing.
+    /// Plays an acknowledgement clip at once, after stopping whatever is queued or playing (the
+    /// last reply, or an acknowledgement before this one). Logs how long after `sentAt`, when
+    /// the message was sent, its audio was handed to the player.
+    public func acknowledge(_ clip: PCMChunk, line: String, sentAt: ContinuousClock.Instant) {
+        let previous = current
+        let previousAcknowledgement = acknowledging
+        previous?.cancel()
+        previousAcknowledgement?.cancel()
+        current = nil
+        acknowledged = true
+        let player = self.player
+        let log = self.log
+        acknowledging = Task {
+            await previous?.value   // the audio before has stopped
+            await previousAcknowledgement?.value
+            guard !Task.isCancelled else { return }
+            log("voice: acknowledgement \"\(line)\" started \(Self.seconds(ContinuousClock.now - sentAt, digits: 2)) s after send")
+            do {
+                try await player.play(clip)
+            } catch {
+                log("voice: cannot play (\(error))")
+            }
+        }
+    }
+
+    /// Speaks a finished reply, after cancelling the reply before it. An acknowledgement still
+    /// playing finishes first.
     public func say(_ text: String, turn: UUID) {
         let started = ContinuousClock.now
         let previous = current
         previous?.cancel()
-        guard let clean = TextClean.clean(text) else {
+        let afterAcknowledgement = acknowledged
+        acknowledged = false
+        guard let cleaned = TextClean.clean(text) else {
             current = nil
             return
         }
+        let clean = afterAcknowledgement ? Acknowledgement.spokenText(cleaned) : cleaned
+        let acknowledgement = acknowledging
         let speed = self.speed?()
         let timing = speed.map { self.timing.at(speed: $0) } ?? self.timing
         let parts = Self.chunks(clean, limit: chunkChars(), timing: timing)
@@ -103,21 +141,29 @@ public actor SpeechQueue {
             guard !Task.isCancelled else { return }
             if restart { await self.engine.release() }   // the next part starts it at the new speed
             await self.speak(parts, characters: clean.unicodeScalars.count, turn: turn, started: started,
-                             timing: timing)
+                             timing: timing, after: acknowledgement)
         }
     }
 
-    /// Stops everything: the reply being generated or played and anything after it.
+    /// Stops everything: the acknowledgement, the reply being generated or played and anything
+    /// after it.
     public func cancelAll() async {
         let running = current
+        let acknowledgement = acknowledging
         current = nil
+        acknowledging = nil
+        acknowledged = false
         running?.cancel()
+        acknowledgement?.cancel()
         await running?.value
+        await acknowledgement?.value
         await player.stop()
     }
 
-    /// Waits for the reply in hand to finish (tests, and quit after `cancelAll`).
+    /// Waits for the acknowledgement and the reply in hand to finish (tests, and quit after
+    /// `cancelAll`).
     public func idle() async {
+        await acknowledging?.value
         await current?.value
     }
 
@@ -132,7 +178,7 @@ public actor SpeechQueue {
     }
 
     private func speak(_ parts: [String], characters: Int, turn: UUID, started: ContinuousClock.Instant,
-                       timing: Timing) async {
+                       timing: Timing, after acknowledgement: Task<Void, Never>?) async {
         let context = SynthesisContext(turnID: turn)
         var firstAudio: Duration?
         var generating = Duration.zero
@@ -164,6 +210,13 @@ public actor SpeechQueue {
             }
             if part.engine == .say { sayParts += 1 }
             guard let chunk = part.chunk, !chunk.samples.isEmpty else { continue }
+            if firstAudio == nil {
+                await acknowledgement?.value   // generated while it played; heard after it
+                if Task.isCancelled {
+                    stopped = true
+                    break
+                }
+            }
             let now = ContinuousClock.now
             if firstAudio == nil { firstAudio = now - started }
             if let lastEnd { actual.append((now - lastEnd) / .seconds(1)) }
@@ -246,9 +299,9 @@ public actor SpeechQueue {
         return line
     }
 
-    private static func seconds(_ d: Duration) -> String {
+    private static func seconds(_ d: Duration, digits: Int = 1) -> String {
         let s = Double(d.components.seconds) + Double(d.components.attoseconds) / 1e18
-        return String(format: "%.1f", s)
+        return String(format: "%.\(digits)f", s)
     }
 
     // MARK: - Chunking

@@ -7,7 +7,7 @@ import Vocos
 // jarvis-voice: the F5-TTS helper JARVIS speaks through (plan D-54).
 //
 //   jarvis-voice --assets <dir> --out-dir <dir> [--cache-limit-mb 512] [--steps 8]
-//                [--speed 1] [--idle-exit 300] [--selftest]
+//                [--speed 1] [--idle-exit 300] [--selftest] [--render <list>]
 //
 // Protocol: one JSON object per line on stdin, one per line on stdout.
 //   {"id": "<uuid>", "text": "<clean text>"}
@@ -17,6 +17,10 @@ import Vocos
 //   {"cmd": "ping"} -> {"cmd": "ping", "ok": true, "loaded", "footprint_mb"}
 // The model loads on the first request and stays loaded. The helper exits on stdin EOF, or
 // after --idle-exit seconds with no request, which hands its memory back to the system.
+//
+// --render <list> (V1 part 1): each line of <list> is "<name>\t<text>"; the text is rendered and
+// written to <out-dir>/<name>.wav (32-bit float, 24 kHz mono), then the helper exits, 0 when
+// every line was rendered. install-voice-assets.sh renders JARVIS's acknowledgements this way.
 //
 // <assets> holds f5/{model.safetensors,vocab.txt}, vocos/{model.safetensors,config.json} and
 // reference/{reference.wav,reference.txt} (native/scripts/install-voice-assets.sh puts them there).
@@ -31,13 +35,14 @@ struct Options {
     var speed = 1.0
     var idleExitSeconds = 300.0
     var selftest = false
+    var render: URL?
 }
 
 func usage(_ message: String) -> Never {
     FileHandle.standardError.write(Data((
         "jarvis-voice: \(message)\n"
             + "usage: jarvis-voice --assets <dir> --out-dir <dir> [--cache-limit-mb N] [--steps N]"
-            + " [--speed X] [--idle-exit S] [--selftest]\n").utf8))
+            + " [--speed X] [--idle-exit S] [--selftest] [--render <list>]\n").utf8))
     exit(2)
 }
 
@@ -67,6 +72,7 @@ func parseOptions(_ args: [String]) -> Options {
             guard let s = Double(next(flag)), s > 0 else { usage("\(flag) takes seconds") }
             options.idleExitSeconds = s
         case "--selftest": options.selftest = true
+        case "--render": options.render = URL(fileURLWithPath: next(flag), isDirectory: false)
         default: usage("unknown argument \(flag)")
         }
         i += 1
@@ -177,6 +183,20 @@ final class Voice {
 func writeRawFloat32(_ samples: [Float], to url: URL) throws {
     // Apple silicon is little-endian, so the in-memory floats are the file format.
     let data = samples.withUnsafeBufferPointer { Data(buffer: $0) }
+    try data.write(to: url, options: .atomic)
+}
+
+/// 32-bit float WAV (format 3), for rendered lines: nothing is clipped or rounded.
+func writeFloatWAV(_ samples: [Float], rate: Int, to url: URL) throws {
+    var data = Data()
+    func append<T: FixedWidthInteger>(_ value: T) { withUnsafeBytes(of: value.littleEndian) { data.append(contentsOf: $0) } }
+    let dataBytes = samples.count * 4
+    data.append(contentsOf: Array("RIFF".utf8)); append(UInt32(36 + dataBytes))
+    data.append(contentsOf: Array("WAVE".utf8))
+    data.append(contentsOf: Array("fmt ".utf8)); append(UInt32(16)); append(UInt16(3)); append(UInt16(1))
+    append(UInt32(rate)); append(UInt32(rate * 4)); append(UInt16(4)); append(UInt16(32))
+    data.append(contentsOf: Array("data".utf8)); append(UInt32(dataBytes))
+    samples.withUnsafeBufferPointer { data.append(Data(buffer: $0)) }   // little-endian floats
     try data.write(to: url, options: .atomic)
 }
 
@@ -336,6 +356,43 @@ if options.selftest {
         exit(samples.isEmpty ? 1 : 0)
     } catch {
         writeLine("selftest failed: \(error)")
+        exit(1)
+    }
+}
+
+// MARK: - Render
+
+if let list = options.render {
+    let lines: [Substring]
+    do {
+        lines = try String(contentsOf: list, encoding: .utf8).split(separator: "\n").filter {
+            !$0.trimmingCharacters(in: .whitespaces).isEmpty
+        }
+    } catch {
+        writeLine("render failed: cannot read \(list.path): \(error)")
+        exit(1)
+    }
+    let allowed = Set("abcdefghijklmnopqrstuvwxyz0123456789-")
+    do {
+        let l0 = ContinuousClock.now
+        let voice = try loadedVoice()
+        writeLine(String(format: "render: model loaded in %.2f s", seconds(ContinuousClock.now - l0)))
+        for line in lines {
+            let fields = line.split(separator: "\t", maxSplits: 1)
+            guard fields.count == 2, !fields[0].isEmpty, fields[0].allSatisfy({ allowed.contains($0) }) else {
+                throw HelperError("a render line is not \"<name>\\t<text>\" with a name of a-z, 0-9 and -: \(line)")
+            }
+            let name = String(fields[0]), text = String(fields[1])
+            let g0 = ContinuousClock.now
+            let samples = try voice.synthesize(text)
+            guard !samples.isEmpty else { throw HelperError("no audio for \(name)") }
+            try writeFloatWAV(samples, rate: F5TTS.sampleRate, to: outDir.appendingPathComponent("\(name).wav"))
+            writeLine(String(format: "render: %@ \"%@\" -> %.2f s of audio in %.2f s", name, text,
+                             Double(samples.count) / Double(F5TTS.sampleRate), seconds(ContinuousClock.now - g0)))
+        }
+        exit(0)
+    } catch {
+        writeLine("render failed: \(error)")
         exit(1)
     }
 }
