@@ -10,6 +10,7 @@ import Foundation
 /// - `isEnroll`: `_is_enroll` (J:5215-5221), "learn my voice" and the like.
 /// - `endsMidSentence`: `_INCOMPLETE_TAIL_RE.search` (J:986-988), a transcript that stops
 ///   mid-thought ("remind me to", a trailing "and").
+/// - `isShazam`: `_is_shazam` (J:4169-4173), "what song is this".
 ///
 /// `Dismissal.isDismiss` is the loop's fourth, "that's all, Jarvis".
 public enum WakePhrases {
@@ -69,6 +70,17 @@ public enum WakePhrases {
         let t = Py.strip(Py.lower(text ?? ""))
         if enrolExact.contains(where: { Py.eq(t, $0) }) { return true }
         return enrolContained.contains { Py.contains(t, $0) }
+    }
+
+    /// `_is_shazam`'s phrases (J:4169-4173), in source order.
+    static let shazam = ["what song is this", "what's this song", "whats this song", "name this song",
+                         "identify this song", "identify the song", "shazam", "what song is playing",
+                         "what is this song"]
+
+    /// `_is_shazam(t)`: a request to identify the music playing.
+    public static func isShazam(_ text: String?) -> Bool {
+        let t = Py.lower(text ?? "")
+        return shazam.contains { Py.contains(t, $0) }
     }
 
     /// `bool(_INCOMPLETE_TAIL_RE.search(text))`.

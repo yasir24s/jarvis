@@ -143,6 +143,30 @@ final class AppVoice {
         }
     }
 
+    /// M11: one of the conversation loop's own lines ("Yes, sir?", the greeting, "Always a
+    /// pleasure, sir."), spoken now; returns once it has been said, or stopped. The loop sets the
+    /// HUD itself, so the line is not captioned, as Python's `speak()` leaves the caption alone.
+    func say(_ text: String) async {
+        let queue = self.queue
+        let activity = self.activity
+        heardReply = nil
+        inFlight += 1
+        activity?.speechBegan()
+        await queue.say(text, turn: UUID())
+        await queue.idle()
+        activity?.speechEnded()
+        inFlight -= 1
+        lastSpoke = SystemClock().now()
+    }
+
+    /// M11: returns once nothing is being spoken or waiting to be (a voice turn's reply is
+    /// handed over as its turn ends, and spoken after).
+    func quiet() async {
+        while inFlight > 0 {
+            try? await Task.sleep(for: .milliseconds(50))
+        }
+    }
+
     /// The menus' Stop Speaking.
     func stop() {
         let queue = self.queue

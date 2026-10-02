@@ -1,0 +1,495 @@
+{
+ "schema": 1,
+ "suite": "m11_tone",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "cmd_daniel",
+   "input": {
+    "parts": [
+     [
+      "clip",
+      "speaker",
+      "daniel_cmd_1"
+     ]
+    ],
+    "text": "Jarvis, what is the weather like today?"
+   },
+   "expected": {
+    "descriptor": "hurried and tense",
+    "loud_db": -18.243730742818617,
+    "f0s": [
+     126.98412698412699,
+     115.94202898550725,
+     129.03225806451613,
+     139.1304347826087,
+     113.47517730496453,
+     126.98412698412699,
+     129.03225806451613,
+     136.75213675213675,
+     117.6470588235294,
+     115.94202898550725
+    ],
+    "f0_std": 8.538557571485544
+   }
+  },
+  {
+   "name": "cmd_daniel_rushed",
+   "input": {
+    "parts": [
+     [
+      "clip",
+      "speaker",
+      "daniel_cmd_1"
+     ]
+    ],
+    "text": "jarvis what is the weather like today and tomorrow and the day after that please now"
+   },
+   "expected": {
+    "descriptor": "hurried and tense",
+    "loud_db": -18.243730742818617,
+    "f0s": [
+     126.98412698412699,
+     115.94202898550725,
+     129.03225806451613,
+     139.1304347826087,
+     113.47517730496453,
+     126.98412698412699,
+     129.03225806451613,
+     136.75213675213675,
+     117.6470588235294,
+     115.94202898550725
+    ],
+    "f0_std": 8.538557571485544
+   }
+  },
+  {
+   "name": "cmd_daniel_loud",
+   "input": {
+    "parts": [
+     [
+      "gain",
+      "speaker",
+      "daniel_cmd_1",
+      4
+     ]
+    ],
+    "text": "Jarvis, what is the weather like today?"
+   },
+   "expected": {
+    "descriptor": "hurried and tense",
+    "loud_db": -7.966157988567579,
+    "f0s": [
+     126.98412698412699,
+     118.51851851851852,
+     98.76543209876543,
+     115.94202898550725,
+     129.03225806451613,
+     113.47517730496453,
+     126.98412698412699,
+     129.03225806451613,
+     116.78832116788321,
+     117.6470588235294
+    ],
+    "f0_std": 8.854642334091261
+   }
+  },
+  {
+   "name": "cmd_daniel_quiet",
+   "input": {
+    "parts": [
+     [
+      "shift",
+      "speaker",
+      "daniel_cmd_1",
+      4
+     ]
+    ],
+    "text": "what is the weather"
+   },
+   "expected": {
+    "descriptor": "calm and even",
+    "loud_db": -38.7195413961353,
+    "f0s": [
+     126.98412698412699,
+     115.94202898550725,
+     129.03225806451613,
+     139.1304347826087,
+     113.47517730496453,
+     126.98412698412699,
+     129.03225806451613,
+     136.75213675213675,
+     117.6470588235294,
+     115.94202898550725
+    ],
+    "f0_std": 8.538557571485544
+   }
+  },
+  {
+   "name": "cmd_samantha",
+   "input": {
+    "parts": [
+     [
+      "clip",
+      "speaker",
+      "samantha_cmd"
+     ]
+    ],
+    "text": "Jarvis, what is the weather like today?"
+   },
+   "expected": {
+    "descriptor": "hurried and tense",
+    "loud_db": -15.566903021477858,
+    "f0s": [
+     202.53164556962025,
+     200.0,
+     207.7922077922078,
+     195.1219512195122,
+     192.7710843373494,
+     177.77777777777777,
+     197.53086419753086,
+     175.82417582417582,
+     190.47619047619048,
+     173.91304347826087
+    ],
+    "f0_std": 11.201382917299593
+   }
+  },
+  {
+   "name": "cmd_karen",
+   "input": {
+    "parts": [
+     [
+      "clip",
+      "speaker",
+      "karen_cmd"
+     ]
+    ],
+    "text": "Open Safari and search for train times to London."
+   },
+   "expected": {
+    "descriptor": "hurried and tense",
+    "loud_db": -15.560758934656038,
+    "f0s": [
+     200.0,
+     181.8181818181818,
+     195.1219512195122,
+     242.42424242424244,
+     188.23529411764707,
+     188.23529411764707,
+     181.8181818181818,
+     179.77528089887642,
+     225.35211267605635,
+     181.8181818181818
+    ],
+    "f0_std": 20.046465212325852
+   }
+  },
+  {
+   "name": "cmd_moira",
+   "input": {
+    "parts": [
+     [
+      "clip",
+      "speaker",
+      "moira_cmd"
+     ]
+    ],
+    "text": "Please remind me to call the office"
+   },
+   "expected": {
+    "descriptor": "calm and even",
+    "loud_db": -15.070055196420375,
+    "f0s": [
+     183.90804597701148,
+     200.0,
+     202.53164556962025,
+     235.2941176470588,
+     250.0,
+     238.80597014925374,
+     242.42424242424244,
+     246.15384615384616,
+     250.0,
+     253.96825396825398
+    ],
+    "f0_std": 23.81886823829869
+   }
+  },
+  {
+   "name": "cmd_rishi",
+   "input": {
+    "parts": [
+     [
+      "clip",
+      "speaker",
+      "rishi_cmd"
+     ]
+    ],
+    "text": "Good morning"
+   },
+   "expected": {
+    "descriptor": "calm and even",
+    "loud_db": -15.869834128256922,
+    "f0s": [
+     107.38255033557047,
+     146.78899082568807,
+     108.84353741496598,
+     111.11111111111111,
+     116.78832116788321,
+     128.0,
+     121.21212121212122,
+     119.40298507462687,
+     146.78899082568807,
+     120.30075187969925
+    ],
+    "f0_std": 13.428890733942984
+   }
+  },
+  {
+   "name": "long_daniel",
+   "input": {
+    "parts": [
+     [
+      "clip",
+      "speaker",
+      "daniel_long"
+     ]
+    ],
+    "text": "I have been reading about the history of the London Underground"
+   },
+   "expected": {
+    "descriptor": "calm and even",
+    "loud_db": -18.183483763563956,
+    "f0s": [
+     100.62893081761007,
+     124.03100775193798,
+     125.98425196850394,
+     117.6470588235294,
+     173.91304347826087,
+     107.38255033557047,
+     120.30075187969925,
+     119.40298507462687,
+     121.21212121212122,
+     123.07692307692308
+    ],
+    "f0_std": 18.431700127900946
+   }
+  },
+  {
+   "name": "pause_daniel",
+   "input": {
+    "parts": [
+     [
+      "mix",
+      "speaker",
+      "daniel_pause"
+     ]
+    ],
+    "text": "set a timer for ten minutes actually make it twenty"
+   },
+   "expected": {
+    "descriptor": "hurried and tense",
+    "loud_db": -18.95685439278132,
+    "f0s": [
+     116.78832116788321,
+     156.86274509803923,
+     112.67605633802818,
+     128.0,
+     93.02325581395348,
+     126.98412698412699,
+     98.76543209876543,
+     129.03225806451613,
+     152.38095238095238,
+     131.14754098360655
+    ],
+    "f0_std": 19.391060362643984
+   }
+  },
+  {
+   "name": "short_yes",
+   "input": {
+    "parts": [
+     [
+      "clip",
+      "speaker",
+      "daniel_short"
+     ]
+    ],
+    "text": "yes"
+   },
+   "expected": {
+    "descriptor": "calm and even",
+    "loud_db": -20.08883301929089,
+    "f0s": [
+     75.11737089201878,
+     125.0,
+     129.03225806451613,
+     129.03225806451613,
+     118.51851851851852,
+     125.0,
+     128.0
+    ],
+    "f0_std": 18.04222837697486
+   }
+  },
+  {
+   "name": "too_short",
+   "input": {
+    "parts": [
+     [
+      "slice",
+      "speaker",
+      "daniel_cmd_1",
+      0,
+      6000
+     ]
+    ],
+    "text": "jarvis"
+   },
+   "expected": {
+    "descriptor": "",
+    "loud_db": null,
+    "f0s": null,
+    "f0_std": null
+   }
+  },
+  {
+   "name": "noise",
+   "input": {
+    "parts": [
+     [
+      "clip",
+      "speaker",
+      "noise_m25dbfs"
+     ]
+    ],
+    "text": "hmm"
+   },
+   "expected": {
+    "descriptor": "calm and even",
+    "loud_db": -25.007739054420487,
+    "f0s": null,
+    "f0_std": null
+   }
+  },
+  {
+   "name": "silence",
+   "input": {
+    "parts": [
+     [
+      "floor",
+      32000
+     ]
+    ],
+    "text": "nothing"
+   },
+   "expected": {
+    "descriptor": "",
+    "loud_db": null,
+    "f0s": null,
+    "f0_std": null
+   }
+  },
+  {
+   "name": "wake_time",
+   "input": {
+    "parts": [
+     [
+      "clip",
+      "wake",
+      "wake_time_daniel_200"
+     ]
+    ],
+    "text": "hey jarvis what's the time"
+   },
+   "expected": {
+    "descriptor": "hurried and tense",
+    "loud_db": -19.22430807533725,
+    "f0s": [
+     123.07692307692308,
+     188.23529411764707,
+     125.0,
+     175.82417582417582,
+     188.23529411764707,
+     148.14814814814815,
+     186.04651162790697,
+     118.51851851851852,
+     150.9433962264151,
+     152.38095238095238
+    ],
+    "f0_std": 26.311287654652777
+   }
+  },
+  {
+   "name": "wake_kathy",
+   "input": {
+    "parts": [
+     [
+      "clip",
+      "wake",
+      "wake_close_kathy_200"
+     ]
+    ],
+    "text": "jarvis close safari"
+   },
+   "expected": {
+    "descriptor": "calm and even",
+    "loud_db": -19.70289934078113,
+    "f0s": [
+     225.35211267605635,
+     258.06451612903226,
+     238.80597014925374,
+     246.15384615384616,
+     238.80597014925374,
+     253.96825396825398,
+     266.6666666666667,
+     246.15384615384616,
+     275.86206896551727,
+     253.96825396825398
+    ],
+    "f0_std": 13.890379769471398
+   }
+  },
+  {
+   "name": "no_text",
+   "input": {
+    "parts": [
+     [
+      "clip",
+      "speaker",
+      "daniel_cmd_2"
+     ]
+    ],
+    "text": null
+   },
+   "expected": {
+    "descriptor": "calm and even",
+    "loud_db": -17.74886246462537,
+    "f0s": [
+     130.08130081300814,
+     149.53271028037383,
+     123.07692307692308,
+     113.47517730496453,
+     155.3398058252427,
+     117.6470588235294,
+     123.07692307692308,
+     153.84615384615384,
+     126.98412698412699,
+     125.0
+    ],
+    "f0_std": 14.54400076314565
+   }
+  }
+ ]
+}

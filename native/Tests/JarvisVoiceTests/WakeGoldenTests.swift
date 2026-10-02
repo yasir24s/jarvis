@@ -97,13 +97,19 @@ struct WakeGoldenTests {
     }
 
     @Test("every frame's score, after a reset", arguments: try Golden.cases("m11_oww"))
-    func scores(_ c: GoldenCase) throws {
+    func scores(_ c: GoldenCase) async throws {
         let pcm = try WakeCorpus.input(try #require(c.input.string("clip")))
         let want = try #require(SpeakerCorpus.f32(c.expected.string("scores")))
         let seed = WakeSeed()
         let detector = try WakeModels.detector(seed)
         try detector.reset()
-        let got = try WakeCorpus.frames(pcm).map { try detector.process($0.samples) }
+        var got: [Float] = []
+        for frame in WakeCorpus.frames(pcm) {
+            got.append(try detector.process(frame.samples))
+            // A frame is three model runs: leave the cooperative pool to the timing-sensitive M8
+            // tests in this target between them.
+            await Task.yield()
+        }
         #expect(got.count == want.count)
         let delta = SpeakerCorpus.maxDelta(got, want)
         #expect(delta <= Self.tolerance, "\(c.name): max |Δ| \(delta)")

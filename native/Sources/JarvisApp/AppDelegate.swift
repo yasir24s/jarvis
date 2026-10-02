@@ -59,6 +59,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// M9a: push-to-talk. The mic button and ⌥Space in the chat window and ⌃⌥J anywhere drive
     /// it; it listens once the brain has started (`AppListening`).
     let talk = PushToTalkModel()
+    /// M11: "Hey Jarvis" and the conversation after it; built with the brain.
+    private(set) var handsFree: AppHandsFree?
     private var talkKeys: PushToTalkKeys?
     private var talkHotKey: GlobalHotKey?
     /// U1: watches dist/staged/ for a new build and swaps over when JARVIS is not in use. It
@@ -517,6 +519,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.chat.watchConfirmations(assembly.confirmations, authenticator: authenticator)
             // M9a: push-to-talk listens once turns can run.
             self.talk.connect(AppListening(core: core, research: research))
+            // M11: hands-free listening can start once turns can run (the menus turn it on).
+            if let voice = self.voice {
+                self.handsFree = AppHandsFree(core: core, research: research, voiceprint: self.speaker, voice: voice,
+                                              chat: self.chat, hud: self.hud,
+                                              conversationOver: { assembly.personality.conversationEnded() })
+            }
             // U1: a resumed build tells the update helper once it has run 30 s with its brain up.
             if let launch = Self.resumeAtLaunch { self.reportHealthy(launch.url, assembly: assembly) }
             // P6: on a first launch, JARVIS offers once to learn from the user's files.

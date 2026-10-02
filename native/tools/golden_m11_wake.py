@@ -13,8 +13,8 @@ is built and at every reset. Here that one call is answered with seed_noise(k), 
 
 Float arrays are "f32": base64 of the little-endian float32 bytes, exact through JSON.
 
-    m11_phrases     contains_wake_word, extract_command, _is_enroll and
-                    _INCOMPLETE_TAIL_RE.search over 160 strings
+    m11_phrases     contains_wake_word, extract_command, _is_enroll, _is_shazam and
+                    _INCOMPLETE_TAIL_RE.search over 178 strings
     m11_oww         Model.predict's score for every 80 ms frame of every clip, after
                     model.reset(); and _get_melspectrogram's rows for four frames of three clips
     m11_wake_watch  wait_for_wake_word over a stream that serves a clip 1280 samples a read (and
@@ -169,6 +169,8 @@ PHRASES = [
     "because", "to", "theory", "band", "hand", "brand", "tomato", "panda", ",", "hello,", "hello ,",
     "hello, ", "hello and\n", "hello and \n", "hello and\n\n", "and.", "and!", "and?", "x and", "x_and",
     "x-and", "x'and", "1and", "ẞand", "the end", "please and thank you", "I'll", "say um",
+    "what song is this", "What's this song?", "whats this song jarvis", "jarvis name this song", "SHAZAM",
+    "identify the song please", "what song is playing", "what is this song", "what's that song", "song",
 ]
 
 
@@ -184,6 +186,7 @@ def phrases(ctx):
                 "contains_wake_word": J.contains_wake_word(t),
                 "extract_command": J.extract_command(t),
                 "is_enroll": J._is_enroll(t),
+                "is_shazam": J._is_shazam(t),
                 "incomplete_tail": None if t is None else bool(J._INCOMPLETE_TAIL_RE.search(t)),
             },
         })

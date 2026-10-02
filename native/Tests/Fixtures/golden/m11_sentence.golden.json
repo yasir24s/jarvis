@@ -1,0 +1,225 @@
+{
+ "schema": 1,
+ "suite": "m11_sentence",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "whole",
+   "input": {
+    "parts": [
+     [
+      "floor",
+      32000
+     ],
+     [
+      "mix",
+      "speaker",
+      "daniel_cmd_1"
+     ],
+     [
+      "floor",
+      48000
+     ]
+    ],
+    "timeout": 2.5,
+    "texts": [
+     "Jarvis, what is the weather like today?"
+    ]
+   },
+   "expected": {
+    "text": "jarvis, what is the weather like today?",
+    "samples": 37120,
+    "reads": 35,
+    "calls": [
+     {
+      "samples": 37120,
+      "after_read": 59
+     }
+    ],
+    "threshold": 3164.860199048636
+   }
+  },
+  {
+   "name": "continued",
+   "input": {
+    "parts": [
+     [
+      "floor",
+      32000
+     ],
+     [
+      "mix",
+      "speaker",
+      "daniel_pause"
+     ],
+     [
+      "floor",
+      48000
+     ]
+    ],
+    "timeout": 2.5,
+    "texts": [
+     "Set a timer for ten minutes and",
+     " Actually, make it twenty. "
+    ]
+   },
+   "expected": {
+    "text": "set a timer for ten minutes and actually, make it twenty.",
+    "samples": 28160,
+    "reads": 75,
+    "calls": [
+     {
+      "samples": 28160,
+      "after_read": 52
+     },
+     {
+      "samples": 39680,
+      "after_read": 99
+     }
+    ],
+    "threshold": 990.8474987383377
+   }
+  },
+  {
+   "name": "continued_empty",
+   "input": {
+    "parts": [
+     [
+      "floor",
+      32000
+     ],
+     [
+      "mix",
+      "speaker",
+      "daniel_pause"
+     ],
+     [
+      "floor",
+      48000
+     ]
+    ],
+    "timeout": 2.5,
+    "texts": [
+     "Set a timer for ten minutes, ",
+     ""
+    ]
+   },
+   "expected": {
+    "text": "set a timer for ten minutes,",
+    "samples": 28160,
+    "reads": 75,
+    "calls": [
+     {
+      "samples": 28160,
+      "after_read": 52
+     },
+     {
+      "samples": 39680,
+      "after_read": 99
+     }
+    ],
+    "threshold": 990.8474987383377
+   }
+  },
+  {
+   "name": "no_rest",
+   "input": {
+    "parts": [
+     [
+      "floor",
+      32000
+     ],
+     [
+      "mix",
+      "speaker",
+      "daniel_cmd_2"
+     ],
+     [
+      "floor",
+      48000
+     ]
+    ],
+    "timeout": 2.5,
+    "texts": [
+     "Open Safari and search for train times to"
+    ]
+   },
+   "expected": {
+    "text": "open safari and search for train times to",
+    "samples": 51200,
+    "reads": 73,
+    "calls": [
+     {
+      "samples": 51200,
+      "after_read": 70
+     }
+    ],
+    "threshold": 72.31978523581148
+   }
+  },
+  {
+   "name": "nothing_heard",
+   "input": {
+    "parts": [
+     [
+      "floor",
+      32000
+     ],
+     [
+      "mix",
+      "speaker",
+      "daniel_short"
+     ],
+     [
+      "floor",
+      48000
+     ]
+    ],
+    "timeout": 2.5,
+    "texts": [
+     ""
+    ]
+   },
+   "expected": {
+    "timeout": true,
+    "reads": 31,
+    "calls": [],
+    "threshold": 96.26410372758983
+   }
+  },
+  {
+   "name": "timeout",
+   "input": {
+    "parts": [
+     [
+      "floor",
+      32000
+     ],
+     [
+      "floor",
+      64000
+     ]
+    ],
+    "timeout": 2.5,
+    "texts": []
+   },
+   "expected": {
+    "timeout": true,
+    "reads": 31,
+    "calls": [],
+    "threshold": 48.245020643993676
+   }
+  }
+ ]
+}
