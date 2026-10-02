@@ -47,4 +47,6 @@ native/.build/
 native/.swiftpm/
 native/VoiceHelper/.swiftpm/
 native/Vendor/onnxruntime/lib/
+# M10: ORT, webrtcvad's .so and the models, copied in by native/scripts/vendor-voice-assets.sh
+native/Resources/vendor/
 .jarvis.lock

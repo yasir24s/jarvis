@@ -14,6 +14,9 @@ let package = Package(
     ],
     products: [
         .executable(name: "JARVIS", targets: ["JarvisApp"]),
+        // M10 (plan: M08-M13 §3.1): libpystubs.dylib, which JarvisVoice dlopens RTLD_GLOBAL
+        // before webrtcvad's extension module. Never linked: the app and tests load it by path.
+        .library(name: "pystubs", type: .dynamic, targets: ["CPyStubs"]),
     ],
     targets: [
         // State primitives + (from M1) persona, emotions, prompt, dataset, security, routing.
@@ -43,7 +46,15 @@ let package = Package(
         // M8 voice out (plan: M08-M13 §3.2, D-54): the F5 clone through the jarvis-voice helper,
         // `say` as the fallback, the speech queue and the one player. Foundation and AVFAudio only.
         // The helper is a package of its own (VoiceHelper/), so this package never depends on MLX.
-        .target(name: "JarvisVoice", dependencies: ["JarvisCore"]),
+        // M10 speaker verification (§3.5) adds the ORT C API and dlopens webrtcvad's .so.
+        .target(name: "JarvisVoice", dependencies: ["JarvisCore", "COnnxRuntime"]),
+
+        // M10 (plan: M08-M13 §3.1): the ONNX Runtime 1.26.0 C API headers and module map, copied
+        // verbatim from jarvis-swift. The dylib is vendored (scripts/vendor-voice-assets.sh) and
+        // dlopened by path, so a checkout without it still builds and the tests say what is missing.
+        .systemLibrary(name: "COnnxRuntime", path: "Sources/COnnxRuntime"),
+        // The Python data symbols webrtcvad's .so binds at load time; built as libpystubs.dylib.
+        .target(name: "CPyStubs"),
         .testTarget(name: "JarvisVoiceTests", dependencies: ["JarvisVoice", "JarvisCore", "JarvisTestSupport"]),
 
         // Sandbox + golden-fixture loader shared by every test target. Foundation only —

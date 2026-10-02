@@ -39,6 +39,17 @@ swift build -c "$CONFIGURATION" --package-path "$NATIVE" --product JARVIS -j "$J
     -Xlinker -rpath -Xlinker @executable_path/../Frameworks \
     ${ORT_LIB:+-Xlinker -L"$ORT_LIB"}               # ORT_LIB set only from M10
 BIN="$(swift build -c "$CONFIGURATION" --package-path "$NATIVE" --show-bin-path)/JARVIS"
+# M10 (plan: M08-M13 §3.1): libpystubs.dylib, which the app dlopens before webrtcvad's module,
+# and the vendored binaries from scripts/vendor-voice-assets.sh. Neither is linked: the app
+# dlopens ORT and the module from Contents/Frameworks and reads the models from
+# Contents/Resources/vendor.
+swift build -c "$CONFIGURATION" --package-path "$NATIVE" --product pystubs -j "$JOBS"
+PYSTUBS="$(swift build -c "$CONFIGURATION" --package-path "$NATIVE" --show-bin-path)/libpystubs.dylib"
+VENDOR="$NATIVE/Resources/vendor"
+for f in libonnxruntime.1.26.0.dylib _webrtcvad.cpython-314-darwin.so \
+         embedding_model.onnx hey_jarvis_v0.1.onnx melspectrogram.onnx; do
+    [[ -f "$VENDOR/$f" ]] || { echo "error: Resources/vendor/$f is missing: run scripts/vendor-voice-assets.sh" >&2; exit 1; }
+done
 # M8's voice helper (D-54) is a package of its own, so the main build never compiles MLX. It is
 # always release, built with -j 3 (VOICE_JOBS), and runs from Contents/Helpers/ beside its two
 # resource bundles, where MLX and the helper look for them: mlx-swift_Cmlx.bundle holds
@@ -81,12 +92,14 @@ for s in 16 32 128 256 512; do
 done
 iconutil -c icns "$ICONSET" -o "$STAGE/Contents/Resources/AppIcon.icns"
 rm -rf "$ICONTMP"
-if otool -L "$BIN" | grep -q libonnxruntime; then   # only once M10 links ORT
-    cp "$ORT_LIB/libonnxruntime.1.26.0.dylib" "$STAGE/Contents/Frameworks/libonnxruntime.1.dylib"
-fi
+cp "$VENDOR/libonnxruntime.1.26.0.dylib" "$STAGE/Contents/Frameworks/libonnxruntime.1.dylib"
+cp "$PYSTUBS" "$STAGE/Contents/Frameworks/libpystubs.dylib"
+cp "$VENDOR/_webrtcvad.cpython-314-darwin.so" "$STAGE/Contents/Frameworks/"
+mkdir -p "$STAGE/Contents/Resources/vendor"
+cp "$VENDOR"/*.onnx "$STAGE/Contents/Resources/vendor/"
 
 security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-for d in "$STAGE"/Contents/Frameworks/*.dylib; do [[ -e "$d" ]] || continue
+for d in "$STAGE"/Contents/Frameworks/*.dylib "$STAGE"/Contents/Frameworks/*.so; do [[ -e "$d" ]] || continue
     codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$d" 2>/dev/null; done   # inner first, no --deep
 # The voice helper's nested code, also inner first: its resource bundles, then the helper.
 for h in "$STAGE"/Contents/Helpers/*.bundle "$STAGE/Contents/Helpers/jarvis-voice"; do
