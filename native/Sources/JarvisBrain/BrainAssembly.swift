@@ -64,6 +64,9 @@ public final class BrainAssembly: Sendable {
     public let database: MemoryDatabase?
     /// W1 part 3: every page JARVIS reads, in the same database. nil without a `memory` store.
     public let webMemory: WebMemory?
+    /// W1 part 6: the storage rule (10% of the drive for memory/, 3% of it kept free), checked
+    /// after each web-store write; the app checks it at launch too. nil without a `memory` store.
+    public let memoryBudget: MemoryBudget?
     /// W1 part 3: what summarises those pages: the on-device model within P3's budget, else the
     /// page's first sentences. Never Claude.
     public let pageSummarizer: any PageSummarizing
@@ -161,8 +164,13 @@ public final class BrainAssembly: Sendable {
         // W1 part 3: and the pages JARVIS has read, from the web memory in the same database.
         let database = memory.map { MemoryDatabase(memory: $0) }
         self.database = database
-        let webMemory = database.map { WebMemory(database: $0, embedding: embedding) }
+        // W1 part 6: the storage rule is checked after every write to the web store.
+        let hook = BudgetHook()
+        let webMemory = database.map { WebMemory(database: $0, embedding: embedding, afterWrite: { hook.check() }) }
         self.webMemory = webMemory
+        let budget = memory.flatMap { store in webMemory.map { MemoryBudget(memory: store, web: $0) } }
+        if let budget { hook.set(budget) }
+        memoryBudget = budget
         let recall = memory.map { store in
             MemoryRecall(memory: store, vectors: vectors, index: database.map { MemoryIndex(database: $0, memory: store) },
                          web: webMemory)

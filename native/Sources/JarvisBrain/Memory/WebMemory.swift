@@ -93,7 +93,7 @@ public final class WebMemory: Sendable {
                 if let id {
                     try db.prepare("""
                         UPDATE web_pages SET requested = ?, title = ?, read_at = ?, source = ?, query = ?, text = ?,
-                        bytes = ?, compacted = 0\(keepSummary ? "" : ", summary = '', points = '[]', summarized_by = NULL, vector = NULL")
+                        bytes = ?, compacted = 0, packed = NULL\(keepSummary ? "" : ", summary = '', points = '[]', summarized_by = NULL, vector = NULL")
                         WHERE id = ?
                         """).bind(.text(page.requested), .text(page.title), .double(now), .text(source.rawValue),
                                   query.map(SQLiteValue.text) ?? .null, .text(page.text), .int(Int64(page.text.utf8.count)),
@@ -215,15 +215,16 @@ public final class WebMemory: Sendable {
             scored.sort { $0.score != $1.score ? $0.score > $1.score : $0.readAt > $1.readAt }
             var hits: [WebMemoryHit] = []
             let one = try db.prepare("""
-                SELECT url, title, read_at, summary, points, source, substr(coalesce(text, ''), 1, 400)
+                SELECT url, title, read_at, summary, points, source, substr(coalesce(text, ''), 1, 400), compacted, packed
                 FROM web_pages WHERE id = ?
                 """)
             for row in scored.prefix(limit) {
                 one.bind(.int(row.id))
                 guard try one.step() else { continue }
-                let summary = one.text(3).isEmpty ? Py.strip(one.text(6)) : one.text(3)
-                let points = (try? PyJSON.loads(one.blob(4)))?.arrayValue?.compactMap(\.stringValue) ?? []
-                hits.append(WebMemoryHit(url: one.text(0), title: one.text(1), readAt: one.double(2),
+                var title = one.text(1), summary = one.text(3).isEmpty ? Py.strip(one.text(6)) : one.text(3)
+                var points = (try? PyJSON.loads(one.blob(4)))?.arrayValue?.compactMap(\.stringValue) ?? []
+                if one.int(7) != 0, let kept = Self.unpack(one.blob(8)) { (title, summary, points) = kept }
+                hits.append(WebMemoryHit(url: one.text(0), title: title, readAt: one.double(2),
                                          date: Self.date(one.double(2), timeZone: timeZone), summary: summary,
                                          points: points, source: one.text(5)))
             }
@@ -238,14 +239,16 @@ public final class WebMemory: Sendable {
     public func page(_ canonicalURL: String) -> Stored? {
         database.with { db -> Stored? in
             let s = try db.prepare("""
-                SELECT id, url, requested, title, read_at, source, query, text, summary, points, summarized_by, compacted
-                FROM web_pages WHERE url = ?
+                SELECT id, url, requested, title, read_at, source, query, text, summary, points, summarized_by, compacted,
+                packed FROM web_pages WHERE url = ?
                 """).bind(.text(canonicalURL))
             guard try s.step() else { return nil }
-            let points = (try? PyJSON.loads(s.blob(9)))?.arrayValue?.compactMap(\.stringValue) ?? []
-            return Stored(id: s.int(0), url: s.text(1), requested: s.text(2), title: s.text(3), readAt: s.double(4),
+            var title = s.text(3), summary = s.text(8)
+            var points = (try? PyJSON.loads(s.blob(9)))?.arrayValue?.compactMap(\.stringValue) ?? []
+            if s.int(11) != 0, let kept = Self.unpack(s.blob(12)) { (title, summary, points) = kept }
+            return Stored(id: s.int(0), url: s.text(1), requested: s.text(2), title: title, readAt: s.double(4),
                           source: s.text(5), query: s.isNull(6) ? nil : s.text(6), text: s.isNull(7) ? nil : s.text(7),
-                          summary: s.text(8), points: points, summarizedBy: s.isNull(10) ? nil : s.text(10),
+                          summary: summary, points: points, summarizedBy: s.isNull(10) ? nil : s.text(10),
                           compacted: s.int(11) != 0)
         } ?? nil
     }
@@ -298,6 +301,82 @@ public final class WebMemory: Sendable {
             let s = try db.prepare("SELECT count(*) FROM web_pages")
             return try s.step() ? Int(s.int(0)) : 0
         } ?? 0
+    }
+
+    // MARK: - Compaction (W1 part 6)
+
+    /// Compacts the oldest pages that still hold their text, at most `limit`, and only as many as
+    /// it takes for their text to reach `textBytes` when given (always at least one): the text is
+    /// dropped, and the title, summary and key points are kept compressed (zlib) beside the URL,
+    /// still found by a search. A page with no summary yet gets its first sentences as one.
+    /// Returns the pages compacted and the bytes of text dropped. Writes no budget check of its own.
+    public func compactOldest(_ limit: Int, upTo textBytes: Int? = nil) -> (pages: Int, textBytes: Int) {
+        database.with { db -> (pages: Int, textBytes: Int) in
+            let oldest = try db.prepare("""
+                SELECT id, title, summary, points, text, summarized_by FROM web_pages
+                WHERE compacted = 0 AND text IS NOT NULL ORDER BY read_at, id LIMIT ?
+                """).bind(.int(Int64(limit)))
+            var rows: [(Int64, String, String, [String], String, Bool)] = []
+            var total = 0
+            while try oldest.step() {
+                let points = (try? PyJSON.loads(oldest.blob(3)))?.arrayValue?.compactMap(\.stringValue) ?? []
+                rows.append((oldest.int(0), oldest.text(1), oldest.text(2), points, oldest.text(4), oldest.isNull(5)))
+                total += oldest.text(4).utf8.count
+                if let textBytes, total >= textBytes { break }
+            }
+            var dropped = 0
+            try db.transaction {
+                for (id, title, summary, points, text, pending) in rows {
+                    let kept = pending || summary.isEmpty ? LeadSummarizer.lead(text) : summary
+                    let packed = Self.pack(title: title, summary: kept, points: points)
+                    try db.prepare("DELETE FROM web_words WHERE rowid = ?").bind(.int(id)).run()
+                    try db.prepare("INSERT INTO web_words (rowid, title, summary, points, body) VALUES (?, ?, ?, ?, '')")
+                        .bind(.int(id), .text(title), .text(kept), .text(points.joined(separator: " "))).run()
+                    try db.prepare("""
+                        UPDATE web_pages SET text = NULL, title = '', summary = '', points = '[]', packed = ?, compacted = 1,
+                        bytes = 0, summarized_by = coalesce(summarized_by, 'lead') WHERE id = ?
+                        """).bind(.blob(packed), .int(id)).run()
+                    dropped += text.utf8.count
+                }
+            }
+            return (rows.count, dropped)
+        } ?? (0, 0)
+    }
+
+    /// Gives the database's free pages back to the disk: the FTS index merged (dropping what the
+    /// compacted texts left in it), then the incremental vacuum and the WAL cut back.
+    public func reclaim() {
+        _ = database.with { db in
+            try db.exec("""
+                INSERT INTO web_words (web_words) VALUES ('optimize');
+                PRAGMA incremental_vacuum;
+                PRAGMA wal_checkpoint(TRUNCATE);
+                """)
+        }
+    }
+
+    /// Pages still holding their text, and that text's size.
+    public func uncompacted() -> (pages: Int, textBytes: Int) {
+        database.with { db -> (pages: Int, textBytes: Int) in
+            let s = try db.prepare("SELECT count(*), coalesce(sum(bytes), 0) FROM web_pages WHERE compacted = 0 AND text IS NOT NULL")
+            return try s.step() ? (Int(s.int(0)), Int(s.int(1))) : (0, 0)
+        } ?? (0, 0)
+    }
+
+    static func pack(title: String, summary: String, points: [String]) -> Data {
+        let json = PyJSON.dumps(.object(JSONObject([
+            .init(key: "title", value: .string(title)), .init(key: "summary", value: .string(summary)),
+            .init(key: "points", value: .array(points.map(JSONValue.string))),
+        ])), ensureASCII: false)
+        let raw = Data(json.utf8)
+        return (try? (raw as NSData).compressed(using: .zlib) as Data) ?? raw
+    }
+
+    static func unpack(_ data: Data) -> (title: String, summary: String, points: [String])? {
+        let raw = (try? (data as NSData).decompressed(using: .zlib) as Data) ?? data
+        guard case .object(let o)? = try? PyJSON.loads(raw) else { return nil }
+        return (o["title"]?.stringValue ?? "", o["summary"]?.stringValue ?? "",
+                o["points"]?.arrayValue?.compactMap(\.stringValue) ?? [])
     }
 
     // MARK: - Helpers

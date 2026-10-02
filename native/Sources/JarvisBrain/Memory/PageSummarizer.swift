@@ -90,15 +90,21 @@ public struct LeadSummarizer: PageSummarizing {
     public init() {}
 
     public func summarize(title: String, text: String) async throws -> PageSummary {
+        let lead = Self.lead(text)
+        guard !lead.isEmpty else { throw PageSummaryError.empty }
+        return PageSummary(summary: lead, points: [], by: "lead")
+    }
+
+    /// The page's first sentences, up to about `length` code points ("" for no text).
+    public static func lead(_ text: String) -> String {
         let flat = Py.split(Py.prefix(text, 4_000)).joined(separator: " ")
-        guard !flat.isEmpty else { throw PageSummaryError.empty }
         var out = ""
         for sentence in flat.split(separator: ".", omittingEmptySubsequences: true) {
             let next = out + Py.strip(String(sentence)) + ". "
-            if Py.len(next) > Self.length, !out.isEmpty { break }
+            if Py.len(next) > length, !out.isEmpty { break }
             out = next
         }
-        return PageSummary(summary: Py.prefix(Py.strip(out), Self.length), points: [], by: "lead")
+        return Py.prefix(Py.strip(out), length)
     }
 }
 

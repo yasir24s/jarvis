@@ -84,8 +84,10 @@ public final class MemoryDatabase: Sendable {
     }
 
     /// Every table, created when missing. `indexed`, `lines` and `line_words` are part 7c's;
-    /// the `web_` ones are part 3's.
+    /// the `web_` ones are parts 3 and 5's. Incremental auto-vacuum (set before the first table)
+    /// lets part 6's compaction give the freed pages back to the disk.
     static let schema = """
+        PRAGMA auto_vacuum = INCREMENTAL;
         PRAGMA journal_mode = WAL;
         PRAGMA synchronous = NORMAL;
         CREATE TABLE IF NOT EXISTS indexed (

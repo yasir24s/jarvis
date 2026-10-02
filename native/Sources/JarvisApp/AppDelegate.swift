@@ -419,6 +419,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         webSummaries = assembly.webSummaries
         webSummaries?.kick()   // pages left unsummarised by the last run
         // P2: the facts' sentence vectors are computed in the background, not on the first turn.
+        // W1 part 6: the storage rule is checked at launch, in the background.
+        if let budget = assembly.memoryBudget {
+            Task.detached(priority: .utility) { budget.check() }
+        }
         if let recall = assembly.recall {
             Task.detached(priority: .utility) {
                 let n = recall.warm()
