@@ -140,6 +140,7 @@ public final class BrainAssembly: Sendable {
                 online: @escaping @Sendable () async -> Bool,
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
                 voiceConfirmation: VoiceConfirmation? = nil,
+                brainChoice: @escaping @Sendable () -> BrainChoice = { .claude },
                 log: @escaping @Sendable (String, LogCategory) -> Void = { JarvisLog.log($0, category: $1) }) {
         let brainLog: @Sendable (String) -> Void = { log($0, .brain) }
         self.core = core
@@ -179,7 +180,7 @@ public final class BrainAssembly: Sendable {
         self.recall = recall
         memoryTools = memory.flatMap { store in recall.map { BuiltInTools.Memory(store: store, search: $0) } }
         router = BrainRouter(core: core, config: config, claude: driver, local: local, backend: backend,
-                             research: research, recall: recall, log: brainLog)
+                             research: research, recall: recall, choice: brainChoice, log: brainLog)
         // P1's two writers, shared by the persona writer and the fact compile (P2).
         let localWriter = LocalPersonaLLM()
         let claudeWriter = ClaudePersonaLLM(config: config, executable: executable,

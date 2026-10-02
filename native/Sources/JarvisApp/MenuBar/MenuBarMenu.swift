@@ -1,15 +1,17 @@
 import AppKit
+import JarvisBrain
 import JarvisChat
 import SwiftUI
 
 /// The menu-bar menu (plan: M02-M04 §3.12): Open Chat, the last backend, the "Speak replies"
-/// toggle, M8's "Stop Speaking", P6's "Learn About Me From My Files", UI1's "Show HUD", U1's
-/// "Update Ready" and "Update Now" while a build waits, M0's state-root and lock lines, and Quit.
-/// DEBUG builds add "Test confirmation".
+/// toggle, M9a's "Brain", M8's "Stop Speaking", P6's "Learn About Me From My Files", UI1's
+/// "Show HUD", U1's "Update Ready" and "Update Now" while a build waits, M0's state-root and lock
+/// lines, and Quit. DEBUG builds add "Test confirmation".
 struct MenuBarMenu: View {
     let model: AppModel
     let chat: ChatViewModel
     @Bindable var speak: SpeakRepliesToggle
+    let brain: BrainSetting
     let learn: FileLearningConsent
     let showHUD: ShowHUDSetting
     let hud: HUDModel
@@ -30,6 +32,7 @@ struct MenuBarMenu: View {
         Text(chat.backendLine)
         // The input to the user's speak policy (SpeakPolicy.swift); it persists across launches.
         Toggle("Speak replies", isOn: $speak.isOn)
+        BrainPicker(setting: brain)
         Button("Stop Speaking") {
             stopSpeaking()
         }
@@ -52,6 +55,43 @@ struct MenuBarMenu: View {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q")
+    }
+}
+
+/// The app menu's items after About Jarvis (the CommandGroup in JarvisSwiftUIApp), as a view so
+/// the tests can build the menu: M8's "Stop Speaking", M9a's "Brain", P6's file learning, UI1's
+/// "Show HUD" and U1's update items, as in the menu-bar menu.
+struct AppMenuItems: View {
+    let stopSpeaking: () -> Void
+    let brain: BrainSetting
+    let learn: FileLearningConsent
+    let showHUD: ShowHUDSetting
+    let hud: HUDModel
+    let updates: UpdateWatcher
+
+    var body: some View {
+        Button("Stop Speaking") { stopSpeaking() }
+        BrainPicker(setting: brain)
+        FileLearningToggle(consent: learn)
+        ShowHUDToggle(setting: showHUD, hud: hud)
+        UpdateMenuItems(updates: updates)
+    }
+}
+
+/// M9a part 7: "Brain", with Claude and On-device and a checkmark on the current one, in the app
+/// menu and the menu-bar menu. Under `JARVIS_USE_CLAUDE=0` it shows On-device, disabled, and its
+/// help says why.
+struct BrainPicker: View {
+    @Bindable var setting: BrainSetting
+
+    var body: some View {
+        Picker(BrainSetting.menuTitle, selection: Binding(get: { setting.shown }, set: { setting.choice = $0 })) {
+            ForEach(BrainChoice.allCases, id: \.self) { choice in
+                Text(BrainSetting.title(choice)).tag(choice)
+            }
+        }
+        .disabled(setting.claudeOff)
+        .help(setting.help)
     }
 }
 

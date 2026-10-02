@@ -22,28 +22,25 @@ struct JarvisSwiftUIApp: App {
                                                       resume: AppDelegate.resumeAtLaunch?.state) ? .presented : .suppressed)
         .restorationBehavior(.disabled)
         .commands {
-            // The app menu's "Stop Speaking" (M8), the same as the menu-bar item.
+            // The app menu's "Stop Speaking" (M8), M9a's "Brain", P6's file learning, UI1's
+            // "Show HUD" and U1's update items, as in the menu-bar menu.
             CommandGroup(after: .appInfo) {
-                Button("Stop Speaking") { appDelegate.stopSpeaking() }
-                // P6: the user's consent to learning from their files, as in the menu-bar menu.
-                FileLearningToggle(consent: appDelegate.fileLearning)
-                // UI1 part 3: the floating HUD, as in the menu-bar menu.
-                ShowHUDToggle(setting: appDelegate.showHUD, hud: appDelegate.hud)
-                // U1: "Update Ready" and "Update Now" while a staged build waits.
-                UpdateMenuItems(updates: appDelegate.updates)
+                AppMenuItems(stopSpeaking: { appDelegate.stopSpeaking() }, brain: appDelegate.brainSetting,
+                             learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
+                             updates: appDelegate.updates)
             }
         }
 
         MenuBarExtra("JARVIS", systemImage: "circle.hexagongrid.fill") {
             #if DEBUG
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
-                        learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
+                        brain: appDelegate.brainSetting, learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
                         updates: appDelegate.updates,
                         stopSpeaking: { appDelegate.stopSpeaking() },
                         testConfirmation: { appDelegate.stashTestConfirmation() })
             #else
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
-                        learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
+                        brain: appDelegate.brainSetting, learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
                         updates: appDelegate.updates,
                         stopSpeaking: { appDelegate.stopSpeaking() })
             #endif

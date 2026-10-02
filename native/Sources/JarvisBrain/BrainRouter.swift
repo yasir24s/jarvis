@@ -11,6 +11,9 @@ import Synchronization
 /// and its `say()` for the fixed replies), so the router only returns the text.
 ///
 /// Where native differs from Python:
+/// - M9a part 7: the menus' Brain item can send replies to the on-device model while Claude is
+///   on and online (`choice`). Only replies: file reading, the memory writer and the persona
+///   writer keep their own routes.
 /// - A text turn also bumps `interactions_text` (M01b's key: a typed command reached the LLM
 ///   path; Python has no text channel). It comes after `beginTurn`, so after the counters
 ///   `track_feedback` bumps rather than next to `interactions`: only the first-bump key order
@@ -19,6 +22,13 @@ import Synchronization
 ///   `sys_prompt` plus the 12 raw history turns.
 /// - With `recall`, the facts relevant to the message follow the channel addendum (D-51 P2),
 ///   within each brain's own budget. No relevant fact adds nothing.
+/// M9a part 7: which brain writes the replies, from the menus' "Brain" item. Claude still needs
+/// `JARVIS_USE_CLAUDE` and a network; otherwise the on-device model answers, as before.
+public enum BrainChoice: String, Sendable, CaseIterable {
+    case claude
+    case onDevice
+}
+
 public struct BrainRouter: Sendable {
     private let core: CoreState
     private let config: ClaudeConfig
@@ -28,15 +38,18 @@ public struct BrainRouter: Sendable {
     private let research: any ResearchCounting
     private let recall: MemoryRecall?
     private let log: @Sendable (String) -> Void
+    private let choice: @Sendable () -> BrainChoice
 
     /// - Parameters:
     ///   - recall: the long-term memory's recall (D-51 P2); nil adds none.
+    ///   - choice: M9a part 7, the menus' Brain item, read once as each turn begins.
     ///   - log: where the router's own line goes (a turn whose state files have the wrong
     ///     shape). Tests pass their own.
     public init(core: CoreState, config: ClaudeConfig, claude: any ClaudeGenerating,
                 local: any LocalGenerating, backend: any BackendReporting, research: any ResearchCounting,
-                recall: MemoryRecall? = nil,
+                recall: MemoryRecall? = nil, choice: @escaping @Sendable () -> BrainChoice = { .claude },
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .brain) }) {
+        self.choice = choice
         self.core = core
         self.config = config
         self.claude = claude
@@ -79,6 +92,8 @@ public struct BrainRouter: Sendable {
     /// labelled by `addedContext`; history and the rest of the turn see it as typed.
     public func process(_ text: String, online: Bool, channel: Channel, turn: TurnContext,
                         sink: any ReplySink, addsContext: Bool = false) async -> String {
+        // M9a part 7: read before anything waits, so a turn finishes on the brain it began with.
+        let chosen = choice()
         let head: CoreState.TurnPrompt
         do {
             head = try await core.beginTurn(text, online: online)                    // steps 1-9
@@ -98,7 +113,7 @@ public struct BrainRouter: Sendable {
         let user = addsContext ? Self.addedContext(text) : text
         let shown = ShownReply(sink)
 
-        if config.enabled && online {                                                  // step 11
+        if config.enabled && online && chosen == .claude {                             // step 11
             // Python's `if reply:`: nil and "" both fall through to the local model.
             let reply = await claude.generate(system: system, user: user, turn: turn, sink: shown)
             if Task.isCancelled { return await stopped(shown) }

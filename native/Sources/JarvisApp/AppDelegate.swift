@@ -26,6 +26,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let chat = ChatViewModel()
     /// The menu's "Speak replies" toggle, the user's input to the speak policy.
     let speakReplies = SpeakRepliesToggle()
+    /// M9a part 7: the menus' "Brain", Claude or On-device; BrainRouter reads it each turn.
+    let brainSetting = BrainSetting(claudeEnabled: ClaudeConfig(environment: ProcessInfo.processInfo.environment).enabled)
     /// P6: "Learn About Me From My Files", the user's consent to the file scanner.
     let fileLearning = FileLearningConsent()
     /// UI1 part 3: the floating HUD's state and the menus' "Show HUD"; the panel, unless
@@ -449,7 +451,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // M9a part 6 (D-41): a spoken confirmation passes the same owner check, a fresh
             // LAContext each time, until M10's voiceprint. Not the counting wrapper: the
             // text_confirm_* counters count typed confirmations only.
-            voiceConfirmation: .ownerCheck(LAConfirmAuthenticator()))
+            voiceConfirmation: .ownerCheck(LAConfirmAuthenticator()),
+            // M9a part 7: the menus' Brain item, read from UserDefaults as each turn begins.
+            brainChoice: { BrainSetting.stored(in: .standard) })
         brain = assembly
         voice.activity = assembly.turnActivity   // V1 part 5: speech holds the file scan back
         // P1: the hourly consolidation check starts now (first pass in 120 s); the chat's
