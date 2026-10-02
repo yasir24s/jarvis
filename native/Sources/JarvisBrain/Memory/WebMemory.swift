@@ -250,6 +250,48 @@ public final class WebMemory: Sendable {
         } ?? nil
     }
 
+    /// Whether the store can be used now (the lease is held and the database opens).
+    public var isAvailable: Bool { database.with { _ in true } ?? false }
+
+    /// Whether a page was read from this URL, as asked for or as its canonical URL (W1 part 5:
+    /// the background pass does not open a feed item it has read).
+    public func hasRead(_ url: String) -> Bool {
+        database.with { db -> Bool in
+            let s = try db.prepare("""
+                SELECT 1 FROM web_pages WHERE url = ?1 OR requested = ?1
+                UNION ALL SELECT 1 FROM web_aliases WHERE url = ?1 LIMIT 1
+                """).bind(.text(url))
+            return try s.step()
+        } ?? false
+    }
+
+    /// Notes that `url` led to the page already kept under `canonicalURL`, so it is not opened
+    /// again (W1 part 5). False when there is no such page.
+    @discardableResult
+    public func alias(_ url: String, to canonicalURL: String) -> Bool {
+        database.with { db -> Bool in
+            try db.prepare("INSERT OR IGNORE INTO web_aliases (url, page) SELECT ?, id FROM web_pages WHERE url = ?")
+                .bind(.text(url), .text(canonicalURL)).run()
+            return db.changes > 0
+        } ?? false
+    }
+
+    /// W1 part 5: notes one background pass.
+    public func recordPass(started: Double, ended: Double, opened: Int, stored: Int, stopped: String) {
+        _ = database.with { db in
+            try db.prepare("INSERT INTO web_passes (started, ended, opened, stored, stopped) VALUES (?, ?, ?, ?, ?)")
+                .bind(.double(started), .double(ended), .int(Int64(opened)), .int(Int64(stored)), .text(stopped)).run()
+        }
+    }
+
+    /// When the last background pass began, nil before the first.
+    public func lastPassStarted() -> Double? {
+        database.with { db -> Double? in
+            let s = try db.prepare("SELECT max(started) FROM web_passes")
+            return try s.step() && !s.isNull(0) ? s.double(0) : nil
+        } ?? nil
+    }
+
     /// How many pages are stored.
     public var count: Int {
         database.with { db -> Int in

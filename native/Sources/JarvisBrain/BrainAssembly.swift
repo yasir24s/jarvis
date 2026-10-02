@@ -75,6 +75,10 @@ public final class BrainAssembly: Sendable {
     private let webTools: BuiltInTools.Web?
     /// W1: the page reader, for the background reading pass (part 5).
     public let reader: (any PageReading)?
+    /// W1 part 5: the background reading of news, pop culture and the user's interests, every
+    /// three hours. nil without a `memory` store or a reader. Not started here: the app starts it
+    /// once the brain has started and stops it at quit, before the lock is released.
+    public let backgroundReader: BackgroundReader?
     /// P6: the fact compile after 30 idle minutes, beside the dismissal's. nil without a
     /// `memory` store. Not started here: the app starts it once the brain has started and stops
     /// it at quit, before the lock is released.
@@ -115,7 +119,9 @@ public final class BrainAssembly: Sendable {
     ///   - files: what the file scanner needs from the app (P3); nil means no scanner. It reads
     ///     with the same two writers and merges into the same facts.
     ///   - reader: W1: what reads web pages (JarvisApp's WebKit reader); nil means web_search
-    ///     has no deep mode.
+    ///     has no deep mode and there is no background reading.
+    ///   - waitForSilence: W1 part 5: returns once no reply is being spoken (the app's voice),
+    ///     so the background reading waits while JARVIS talks.
     ///   - embedding: the sentence vectors for recall and duplicate merging.
     ///   - log: every log line of the parts, with its category. Tests pass their own.
     public init(core: CoreState, research: any ResearchCounting,
@@ -125,6 +131,7 @@ public final class BrainAssembly: Sendable {
                 personaWriter: (any PersonaLLM)? = nil,
                 memory: MemoryStore? = nil, factWriter: (any AttributedWriting)? = nil,
                 files: FileScanSetup? = nil, reader: (any PageReading)? = nil,
+                waitForSilence: @escaping @Sendable () async -> Void = {},
                 embedding: any SentenceEmbedding = SystemSentenceEmbedding(),
                 textAuthenticator: any ConfirmAuthenticator, fastPath: any FastPathRouting = NoFastPath(),
                 online: @escaping @Sendable () async -> Bool,
@@ -177,6 +184,14 @@ public final class BrainAssembly: Sendable {
         let summaries = webMemory.map { WebSummaryQueue(memory: $0, summarizer: summarizer, turns: turns) }
         webSummaries = summaries
         self.reader = reader
+        backgroundReader = memory.flatMap { store in
+            webMemory.flatMap { web in
+                reader.map { reader in
+                    BackgroundReader(memory: web, facts: store, reader: reader, web: LiveWebFetch(), online: online,
+                                     turns: turns, conditions: .init(waitForSilence: waitForSilence), summaries: summaries)
+                }
+            }
+        }
         webTools = reader.map { reader in
             BuiltInTools.Web(reader: reader, keep: { page, query in
                 webMemory?.store(page, source: .search, query: query)

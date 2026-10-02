@@ -43,6 +43,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var idleCompile: IdleCompile?
     /// W1: the web memory's background summaries, stopped at quit before the lock is released.
     private var webSummaries: WebSummaryQueue?
+    /// W1 part 5: the background reading, stopped at quit before the lock is released.
+    private var reading: BackgroundReader?
     /// The background reading of the user's files (P3), started once the brain has started
     /// and stopped at quit before the lock is released: its index and facts writes need the lease.
     private var files: FileScanner?
@@ -192,6 +194,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         idleCompile = nil
         webSummaries?.stop()   // nor a page summary (W1)
         webSummaries = nil
+        reading?.stop()   // nor a background reading pass (W1)
+        reading = nil
         files?.cancel()   // already stopped on a normal quit; no file read outlives the lease
         files = nil
         lock = nil   // closes the fd: releases the flock before exit
@@ -397,8 +401,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             core: core, research: research, config: config, environment: environment,
             runDirectory: folders.run, claudeWorkingDirectory: folders.claudeWorkingDirectory,
             memory: memory, files: fileSetup,
-            // W1: JARVIS reads the web with WebKit on a private profile (never the Safari app).
-            reader: WebReader(),
+            // W1: JARVIS reads the web with WebKit on a private profile (never the Safari app),
+            // and reads in the background only while he is not speaking.
+            reader: WebReader(), waitForSilence: { [queue = voice.queue] in await queue.idle() },
             textAuthenticator: authenticator,
             // Python's is_online(): asked only when a turn reaches the brain.
             online: { await Net.isOnline() })
@@ -440,6 +445,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if self.fileLearning.takeFirstRunOffer(memoryFolderExists: memoryFolderExists) {
                 self.chat.post(FileLearningConsent.firstRunOffer)
                 JarvisLog.log("memory: offered to learn from the user's files (first launch)", category: .state)
+            }
+            // W1 part 5: the background reading starts once the brain has (a pass when one is due).
+            if self.brain === assembly, let reading = assembly.backgroundReader {
+                reading.start()
+                self.reading = reading
             }
             // P3: the file scanner starts once the brain has (its first pass after 120 s).
             guard self.brain === assembly, let scanner = assembly.fileScanner else { return }
@@ -483,6 +493,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.personality?.stop()   // no personality pass outlives the lease
                 self.idleCompile?.stop()   // nor an idle compile
                 self.webSummaries?.stop()   // nor a page summary (W1)
+                self.reading?.stop()   // nor a background reading pass (W1)
                 self.files?.cancel()   // no file read outlives the lease
                 self.lock = nil
                 exit(0)
