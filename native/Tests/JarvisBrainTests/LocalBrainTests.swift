@@ -72,8 +72,78 @@ struct LocalBrainTests {
         #expect(await run.sink.sentences == ["It is noon, sir.", "Anything else?"])
         #expect(run.model.seen.sessions == 1)
         #expect(run.model.seen.prompts == [Self.user])
-        #expect(run.model.seen.instructions == [Self.system])
+        // The instructions end with the one line only this brain adds.
+        #expect(run.model.seen.instructions == [Self.system + LocalBrain.toolHint])
+        #expect(run.model.seen.requests == [LocalToolRequest(text: Self.user)])
         #expect(run.logs.lines.isEmpty)
+    }
+
+    @Test("the tool hint is one short line that names the two pinned tools")
+    func toolHint() {
+        #expect(LocalBrain.toolHint
+                == "\n\nUse web_search for current facts and search_memory for what the user said before.")
+        #expect(LocalBrain.toolHint.dropFirst(2).contains("\n") == false)
+        for name in LocalToolset.pinned.dropFirst() { #expect(LocalBrain.toolHint.contains(name)) }
+    }
+
+    @Test("a tool call written into the reply is taken out of what is shown, spoken and kept, and logged as counts")
+    func toolCallText() async {
+        let run = Run(FakeLocalModel(attempts: [[
+            .snapshot("Checking.\nrun_"), .snapshot("Checking.\nrun_command: read_f"),
+            .snapshot("Checking.\nrun_command: read_file x\nDone, sir."),
+        ]]))
+        let outcome = await run.generate()
+        #expect(outcome == .reply("Checking. Done, sir."))
+        #expect(await run.sink.deltas == ["Checking.\n", "Done, sir."])
+        #expect(await run.sink.sentences == ["Checking.", "Done, sir."])
+        let characters = "run_command: read_file x\n".unicodeScalars.count
+        #expect(run.logs.lines == ["Local model: tool-call text removed from the reply "
+                                   + "(lines 1, JSON objects 0, characters \(characters))"])
+    }
+
+    @Test("a reply that is only a tool call is empty: the removal is logged, then the empty-reply retry runs")
+    func toolCallOnly() async {
+        let call = #"{"name": "web_search", "arguments": {"query": "old sport"}}"#
+        let run = Run(FakeLocalModel(attempts: [[.snapshot(call)], [.snapshot("It is from Gatsby, sir.")]]))
+        let outcome = await run.generate()
+        #expect(outcome == .reply("It is from Gatsby, sir."))
+        #expect(run.logs.lines == ["Local model: tool-call text removed from the reply "
+                                   + "(lines 0, JSON objects 1, characters \(call.unicodeScalars.count))",
+                                   "Empty model response — retry 1."])
+        #expect(await run.sink.deltas == ["It is from Gatsby, sir."])
+        #expect(await run.sink.sentences == ["It is from Gatsby, sir."])
+    }
+
+    @Test("the next turn's tool request carries this turn's message and the tools it ran, each once")
+    func previousTurn() async {
+        let script: [FakeStep] = [.call("get_weather", "{}"), .call("get_weather", "{}"), .call("set_alarm", "{}"),
+                                  .snapshot("Done, sir.")]
+        let model = FakeLocalModel(attempts: [script])
+        let brain = LocalBrain(gateway: localTestGateway(), model: model, log: { _ in })
+        let sink = RecordingSink()
+        for user in ["what's the weather in Leeds", "set an alarm", "turn it up"] {
+            _ = await brain.generate(system: Self.system, user: user, channel: .voice,
+                                     turn: TurnContext(channel: .voice), sink: sink)
+        }
+        #expect(model.seen.requests == [
+            LocalToolRequest(text: "what's the weather in Leeds"),
+            LocalToolRequest(text: "set an alarm", previousText: "what's the weather in Leeds",
+                             previousTools: ["get_weather", "set_alarm"]),
+            LocalToolRequest(text: "turn it up", previousText: "set an alarm",
+                             previousTools: ["get_weather", "set_alarm"]),
+        ])
+    }
+
+    @Test("a turn that fails still hands its message on, with no tools")
+    func previousTurnAfterFailure() async {
+        let model = FakeLocalModel(attempts: [[.fail(FakeModelError(description: "decoding failed"))]])
+        let brain = LocalBrain(gateway: localTestGateway(), model: model, log: { _ in })
+        let sink = RecordingSink()
+        for user in ["one thing", "another"] {
+            _ = await brain.generate(system: Self.system, user: user, channel: .voice,
+                                     turn: TurnContext(channel: .voice), sink: sink)
+        }
+        #expect(model.seen.requests.last == LocalToolRequest(text: "another", previousText: "one thing"))
     }
 
     @Test("the returned reply is Python's join of the sentences, stripped")

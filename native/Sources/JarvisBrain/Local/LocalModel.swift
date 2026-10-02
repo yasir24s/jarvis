@@ -12,8 +12,8 @@ import JarvisTools
 public protocol LocalLanguageModel: Sendable {
     /// nil when the model can run, otherwise the reason it cannot (LocalBrain logs it).
     func unavailableReason() async -> String?
-    /// The turn's tools (LocalToolset's budget rule for the real model).
-    func tools(instructions: String, gateway: ToolGateway, turn: TurnContext,
+    /// The turn's tools (LocalToolset's budget rule for the real model), chosen for `request`.
+    func tools(for request: LocalToolRequest, instructions: String, gateway: ToolGateway, turn: TurnContext,
                budget: LocalCallBudget) async -> [DynamicTool]
     /// A new session holding `instructions` and `tools`, for one turn only.
     func session(instructions: String, tools: [DynamicTool]) async -> any LocalModelSession
@@ -28,11 +28,15 @@ public protocol LocalModelSession: Sendable {
 /// `SystemLanguageModel.default` (or another system model) behind `LocalLanguageModel`.
 public struct SystemLocalModel: LocalLanguageModel {
     public let model: SystemLanguageModel
+    private let ranker: LocalToolRanker?
     private let log: @Sendable (String) -> Void
 
-    public init(model: SystemLanguageModel = .default,
+    /// - Parameter embedding: the sentence vectors that choose each turn's tools by relevance;
+    ///   nil offers CORE-21 instead.
+    public init(model: SystemLanguageModel = .default, embedding: (any SentenceEmbedding)? = nil,
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .brain) }) {
         self.model = model
+        ranker = embedding.map { LocalToolRanker(embedding: $0) }
         self.log = log
     }
 
@@ -43,10 +47,10 @@ public struct SystemLocalModel: LocalLanguageModel {
         }
     }
 
-    public func tools(instructions: String, gateway: ToolGateway, turn: TurnContext,
+    public func tools(for request: LocalToolRequest, instructions: String, gateway: ToolGateway, turn: TurnContext,
                       budget: LocalCallBudget) async -> [DynamicTool] {
-        await LocalToolset.select(model: model, instructions: instructions, gateway: gateway, turn: turn,
-                                  budget: budget, log: log).tools
+        await LocalToolset.select(model: model, instructions: instructions, request: request, ranker: ranker,
+                                  gateway: gateway, turn: turn, budget: budget, log: log).tools
     }
 
     public func session(instructions: String, tools: [DynamicTool]) async -> any LocalModelSession {

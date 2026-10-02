@@ -26,6 +26,14 @@ import JarvisTools
 ///   equivalent; its errors were exceptions.
 /// - Cancelling the calling task stops the generation. A cancelled turn with no reply yet is
 ///   an error (no retry); one with text already streamed returns that text.
+/// - The instructions end with `toolHint`, one line the on-device model gets and Claude does
+///   not, since only this model works with a short list of tools.
+/// - The turn's tools are chosen by relevance to what was said (`LocalToolset`), so the brain
+///   keeps the message and the tools of its previous turn for the next one's choice. A turn
+///   Claude answered is not seen here.
+/// - A tool call the model writes into its reply as text (`run_command: ...`, a JSON object)
+///   is taken out of what is shown, spoken and kept (`ToolCallTextFilter`), and logged as
+///   counts. Nothing runs it: there is no text tool protocol.
 public actor LocalBrain: LocalGenerating {
     /// `_set_backend` name for this brain. Its counter is `backend_local_apple_foundation_model_`:
     /// Python's `\W+` replaces the closing parenthesis too (golden m3_backend_key).
@@ -40,19 +48,28 @@ public actor LocalBrain: LocalGenerating {
     public static let emptyReply = "Sorry, sir — could you say that again?"
     public static let stuckReply = "I got stuck working through that, sir."
     public static let errorReply = "My local reasoning core had an error, sir."
+    /// The last line of the instructions. web_search and search_memory are pinned, so they are
+    /// offered on every turn and this can say so.
+    public static let toolHint = "\n\nUse web_search for current facts and search_memory for what the user said before."
 
     private let gateway: ToolGateway
     private let model: any LocalLanguageModel
     private let log: @Sendable (String) -> Void
+    /// The previous turn's message and the tools it ran (each once, in order), for the next
+    /// turn's choice of tools.
+    private var previous: (text: String, tools: [String])?
 
     /// - Parameters:
     ///   - gateway: every tool call the model makes goes through it, as `.model(.local)`.
     ///   - model: `SystemLocalModel()` in production; tests pass a fake.
+    ///   - embedding: the sentence vectors the default model chooses a turn's tools with (the
+    ///     instance recall uses); nil means it offers the fixed list.
     ///   - log: where log lines go. Tests pass their own.
     public init(gateway: ToolGateway, model: (any LocalLanguageModel)? = nil,
+                embedding: (any SentenceEmbedding)? = nil,
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .brain) }) {
         self.gateway = gateway
-        self.model = model ?? SystemLocalModel(log: log)
+        self.model = model ?? SystemLocalModel(embedding: embedding, log: log)
         self.log = log
     }
 
@@ -65,20 +82,35 @@ public actor LocalBrain: LocalGenerating {
     /// Never throws. `.failed` means BrainRouter pops the user entry (Python's except branch).
     public func generate(system: String, user: String, channel: Channel, turn: TurnContext,
                          sink: any ReplySink) async -> LocalOutcome {
+        let request = LocalToolRequest(text: user, previousText: previous?.text,
+                                       previousTools: previous?.tools ?? [])
+        let outcome = await run(instructions: system + Self.toolHint, request: request, channel: channel,
+                                turn: turn, sink: sink)
+        // Whatever the ending, the next turn's choice of tools has this message and these tools.
+        var seen = Set<String>()
+        let tools = await turn.summary().toolRuns.map(\.name).filter { seen.insert($0).inserted }
+        previous = (user, tools)
+        return outcome
+    }
+
+    /// One turn, from the availability check to the outcome.
+    private func run(instructions: String, request: LocalToolRequest, channel: Channel, turn: TurnContext,
+                     sink: any ReplySink) async -> LocalOutcome {
         if let reason = await model.unavailableReason() {
             log("Brain error: the on-device model is unavailable (\(reason))")
             await sink.sentence(Self.errorReply)
             return .failed(Self.errorReply)
         }
         let budget = LocalCallBudget()
-        let tools = await model.tools(instructions: system, gateway: gateway, turn: turn, budget: budget)
+        let tools = await model.tools(for: request, instructions: instructions, gateway: gateway, turn: turn,
+                                      budget: budget)
         // The turn's one session. It is a local, so it is released when the turn returns.
-        let session = await model.session(instructions: system, tools: tools)
+        let session = await model.session(instructions: instructions, tools: tools)
         let options = Self.options(for: channel)
         var retries = 0
         do {
             while true {
-                let content = try await reply(from: session, to: user, options: options, sink: sink)
+                let content = try await reply(from: session, to: request.text, options: options, sink: sink)
                 if !Py.strip(content).isEmpty { return .reply(content) }
                 // A cancelled turn ends its stream early. That is an error, not an empty reply.
                 try Task.checkCancellation()
@@ -100,16 +132,18 @@ public actor LocalBrain: LocalGenerating {
         }
     }
 
-    /// One streamed response: snapshots diffed into deltas, each delta to `sink.delta` and
-    /// `SentenceSplitter`, each popped sentence to `sink.sentence`, the rest force-popped at
-    /// the end. Returns Python's `" ".join(full).strip()`.
+    /// One streamed response: snapshots diffed into deltas, a tool call written as text taken
+    /// out of them (`ToolCallTextFilter`), each delta to `sink.delta` and `SentenceSplitter`,
+    /// each popped sentence to `sink.sentence`, the rest force-popped at the end. Returns
+    /// Python's `" ".join(full).strip()`.
     private func reply(from session: any LocalModelSession, to prompt: String, options: GenerationOptions,
                        sink: any ReplySink) async throws -> String {
         var diff = SnapshotDiff()
+        var filter = ToolCallTextFilter()
         var buf = ""
         var full: [String] = []
         for try await snapshot in session.streamResponse(to: prompt, options: options) {
-            let delta = diff.delta(to: snapshot)
+            let delta = filter.push(diff.delta(to: snapshot))
             guard !delta.isEmpty else { continue }
             await sink.delta(delta)
             buf += delta
@@ -119,6 +153,17 @@ public actor LocalBrain: LocalGenerating {
                 full.append(sentence)
                 await sink.sentence(sentence)
             }
+        }
+        // What the filter still held at the end: a line start that never became a tool name, or
+        // a JSON object that never closed and names no tool.
+        let held = filter.finish()
+        if !held.isEmpty {
+            await sink.delta(held)
+            buf += held
+        }
+        if filter.removed {
+            log("Local model: tool-call text removed from the reply (lines \(filter.lines), "
+                + "JSON objects \(filter.objects), characters \(filter.characters))")
         }
         for sentence in SentenceSplitter.pop(buf, force: true).sentences {
             full.append(sentence)

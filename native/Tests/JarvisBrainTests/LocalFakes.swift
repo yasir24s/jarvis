@@ -77,6 +77,7 @@ final class FakeModelLog: Sendable {
         var sessions = 0
         var instructions: [String] = []
         var offered: [[String]] = []
+        var requests: [LocalToolRequest] = []
         var prompts: [String] = []
         var options: [GenerationOptions] = []
         var toolOutputs: [String] = []
@@ -87,6 +88,7 @@ final class FakeModelLog: Sendable {
 
     var sessions: Int { state.withLock { $0.sessions } }
     var instructions: [String] { state.withLock { $0.instructions } }
+    var requests: [LocalToolRequest] { state.withLock { $0.requests } }
     var prompts: [String] { state.withLock { $0.prompts } }
     var options: [GenerationOptions] { state.withLock { $0.options } }
     var toolOutputs: [String] { state.withLock { $0.toolOutputs } }
@@ -110,13 +112,16 @@ final class FakeLocalModel: LocalLanguageModel {
 
     func unavailableReason() async -> String? { reason }
 
-    func tools(instructions: String, gateway: ToolGateway, turn: TurnContext,
+    func tools(for request: LocalToolRequest, instructions: String, gateway: ToolGateway, turn: TurnContext,
                budget: LocalCallBudget) async -> [DynamicTool] {
         let schemas = offer.map { names in ToolCatalog.tools.filter { names.contains($0.name) } }
             ?? ToolCatalog.tools
         let tools = LocalToolset.dynamicTools(schemas, gateway: gateway, turn: turn, budget: budget,
                                               log: { _ in })
-        seen.state.withLock { $0.offered.append(tools.map(\.name)) }
+        seen.state.withLock {
+            $0.offered.append(tools.map(\.name))
+            $0.requests.append(request)
+        }
         return tools
     }
 
@@ -205,5 +210,41 @@ struct RecordingBody: JarvisTool {
     func run(_ args: ToolArgs, _ ctx: ToolContext) async throws -> String {
         calls.state.withLock { $0.append((args, ctx.origin)) }
         return "Volume set, sir."
+    }
+}
+
+/// A deterministic stand-in for NLEmbedding: each word of four letters or more adds one to the
+/// slot its FNV-1a hash picks, so two sentences are close when they share words, on every Mac.
+/// `calls` counts the sentences asked for. `available: false` answers nil, as a Mac without the
+/// language asset does, and so does a sentence with no such word.
+final class WordBagEmbedding: SentenceEmbedding {
+    static let dimension = 512
+
+    private let available: Bool
+    private let asked = Mutex(0)
+
+    init(available: Bool = true) {
+        self.available = available
+    }
+
+    var calls: Int { asked.withLock { $0 } }
+
+    func vector(for sentence: String) -> [Double]? {
+        asked.withLock { $0 += 1 }
+        guard available else { return nil }
+        var vector = [Double](repeating: 0, count: Self.dimension)
+        var any = false
+        let words = sentence.lowercased().split { !($0.isASCII && ($0.isLetter || $0.isNumber)) }
+        for word in words where word.count >= 4 {
+            vector[Self.slot(word)] += 1
+            any = true
+        }
+        return any ? vector : nil
+    }
+
+    private static func slot(_ word: Substring) -> Int {
+        var hash: UInt64 = 14_695_981_039_346_656_037
+        for byte in word.utf8 { hash = (hash ^ UInt64(byte)) &* 1_099_511_628_211 }
+        return Int(hash % UInt64(dimension))
     }
 }

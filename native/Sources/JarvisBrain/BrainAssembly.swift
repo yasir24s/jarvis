@@ -160,7 +160,7 @@ public final class BrainAssembly: Sendable {
         driver = ClaudeDriver(config: config, executable: executable, bridge: registry,
                               workingDirectory: claudeWorkingDirectory, research: research, backend: backend,
                               parentEnvironment: environment, allowedTools: claudeTools.allowed, log: brainLog)
-        let local = localBrain?(gateway) ?? LocalBrain(gateway: gateway, log: brainLog)
+        let local = localBrain?(gateway) ?? LocalBrain(gateway: gateway, embedding: embedding, log: brainLog)
         let vectors = FactVectors(embedding: embedding)
         // W1 part 7c: search_memory reads the conversations and the journal from the index.
         // W1 part 3: and the pages JARVIS has read, from the web memory in the same database.

@@ -471,7 +471,7 @@ final class PersonaModel: LocalLanguageModel {
 
     func unavailableReason() async -> String? { reason }
 
-    func tools(instructions: String, gateway: ToolGateway, turn: TurnContext,
+    func tools(for request: LocalToolRequest, instructions: String, gateway: ToolGateway, turn: TurnContext,
                budget: LocalCallBudget) async -> [DynamicTool] {
         Issue.record("the persona writer must not ask for a turn's tools")
         return []
