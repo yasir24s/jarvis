@@ -500,6 +500,10 @@ private struct TurnState {
 /// process group still follows the grace, for anything it started.
 struct Watch {
     let grace: Duration
+    /// The log lines' prefix and the child's name: "Claude" and "claude", or B2's "ChatGPT"
+    /// and "codex".
+    let owner: String
+    let name: String
     var exit: ClaudeExit?
     var stdoutOpen = true
     var stderrOpen = true
@@ -507,8 +511,10 @@ struct Watch {
     var stopping = false
     var killed = false
 
-    init(grace: Duration) {
+    init(grace: Duration, owner: String = "Claude", name: String = "claude") {
         self.grace = grace
+        self.owner = owner
+        self.name = name
     }
 
     /// SIGTERM to claude's process group (to claude alone while it runs, if it is not a
@@ -518,7 +524,7 @@ struct Watch {
         guard !stopping else { return }
         stopping = true
         guard exit == nil || child.isGroupLeader else { return }
-        log("Claude: stopping claude (\(why)): SIGTERM")
+        log("\(owner): stopping \(name) (\(why)): SIGTERM")
         child.send(SIGTERM)
         let exited = exit != nil, grace = grace
         Task.detached {
@@ -541,10 +547,10 @@ struct Watch {
                            log: @Sendable (String) -> Void) -> Bool {
         guard exit == nil else { return false }
         guard !killed else {
-            log("Claude: claude still running after SIGKILL; giving up on it")
+            log("\(owner): \(name) still running after SIGKILL; giving up on it")
             return false
         }
-        log("Claude: claude still running \(Self.seconds(grace)) after SIGTERM: SIGKILL")
+        log("\(owner): \(name) still running \(Self.seconds(grace)) after SIGTERM: SIGKILL")
         if !child.isGroupLeader { child.send(SIGKILL) }
         killed = true
         let grace = grace

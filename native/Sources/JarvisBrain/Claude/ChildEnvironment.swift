@@ -97,7 +97,7 @@ public enum ChildEnvironment {
         return out
     }
 
-    private struct Account {
+    struct Account {
         let home: String
         let name: String
 
