@@ -131,6 +131,15 @@ Line numbers refer to jarvis.py @ 68cd112.
 | DEV-P6b-06 | P6b | (P4) The self-knowledge section had no recall rule | With memory tools it adds: search before saying you don't remember (conversations, journal, notes, and `search_files` for documents); 691 bytes | Proactive recall | `SelfKnowledgeTests` | `proposed` | P6b report part 6 |
 | DEV-U1-01 | U1 | Every launch counts as a start; there are no live updates | A live update's relaunch (`--resume`) bumps no `starts_swift_<build>`; its research checks run as on any launch | A swap-over is the same run in a new build (D-58) | `ResearchSchedulerTests.aLiveUpdatesRelaunchIsNotCountedAsAStart` | `proposed` | U1 report part 3 |
 | DEV-U1-02 | U1 | `.jarvis.lock` is held from launch to quit | During a swap the lock is free for the few seconds between the old process exiting and the new build taking it; a JARVIS started in that window gets it, and the update rolls back | Swap-over without a manual restart (D-58) | `UpdateScriptTests` (held lock) | `proposed` | U1 report part 4 |
+| DEV-W1-01 | W1 | (P6b) Any taint blocks every `TaintPolicy` executor | Taint by source: when `search_memory` is the only source, `forget_memory`, `correct_memory` and `restore_memory` may run; any other source blocks them; every other executor is blocked by any taint; an empty source list fails closed | Search-then-forget was blocked in one turn | `M2SecurityTests` (one case per source) | `proposed` | W1 report part 7a |
+| DEV-W1-02 | W1 | (P6b) A multi-batch compile ran on through a new turn | It waits for the turn to end before each batch, and writes nothing if cancelled while waiting | Memory and the turn competed on 8 GB | `FactCompilerTests` | `proposed` | W1 report part 7b |
+| DEV-W1-03 | W1 | (P6b) Conversation search parsed whole files; append-only files were backed up whole | An FTS5 index (`memory/web/index.sqlite`) of the archives and journal, refreshed by byte offset; search reads only the lines it shows; append-only files are backed up as segments of new bytes, merged past 48 | 5 s a search on a 50,000-message archive became about 2 ms | `MemoryIndexTests`, `MemoryPermanenceTests` | `proposed` | W1 report part 7c |
+| DEV-W1-04 | W1 | `_web_search` returns a list when `AbstractText`, `Text` or `extract` is one, and makes an odd request for a string opensearch reply | Native moves to the next step in those cases; response bodies are capped at 16 MB | Python's results there are garbage | the web golden suites, Python's verdict as known issues | `proposed` | W1 report part 1 |
+| DEV-W1-05 | W1 | No page reader | An offscreen WKWebView on a non-persistent store (no cookies, logins or downloads; http(s) only), settled within 15 s, a native extraction script, text capped at 200,000 characters and redacted, at most 2 tabs | The user: search "using Safari" in the background (D-58, D-59) | `WebReaderTests` | `proposed` | W1 report part 2 |
+| DEV-W1-06 | W1 | No web memory | Every page read is kept by canonical URL with full text, an on-device summary and key points, indexed by keyword and meaning; `search_memory` shows it as "From what I've read", untrusted, and marks the turn tainted by `web_memory` | "Stockpile all data he soaks in" | `WebMemoryTests`, `MemoryToolsTests` | `proposed` | W1 report part 3 |
+| DEV-W1-07 | W1 | `web_search` gives one answer from DuckDuckGo's Instant Answer or Wikipedia | With `deep` (or a query asking for detail or sources) it reads the top 5 DuckDuckGo results (3 for the on-device model) and replies with their texts and URLs, keeping every page; otherwise Python's path | Live answers with sources | `WebSearchDeepTests` | `proposed` | W1 report part 4 |
+| DEV-W1-08 | W1 | `research_loop` web-searched the literal words of queued messages (never ported) | Background reading every 3 hours: BBC and Guardian feeds, Wikipedia's most-read list and topics from the user's facts; at most 40 pages and 10 minutes a pass; pauses during turns, speech, battery, Low Power Mode and heat. The `kb_note_topic` queue still fills and nothing reads it | Keep up with news and pop culture without the junk-topic quirk | `BackgroundReaderTests` | `proposed` | W1 report part 5 |
+| DEV-W1-09 | W1 | No storage limit | `MemoryBudget`: `memory/` may use 10% of the drive's total capacity, read at run time, and free space must stay at or above 3%; at either limit the oldest web pages lose their full text (title, summary and key points kept, compressed); conversations, facts, the journal and backups are never removed | The user's rule (D-59) | `MemoryBudgetTests` | `proposed` | W1 report part 6 |
 
 The M7 table gives one fixture for all 15 `DEV-M7-*` / `DEV-M14-*` rows (§8.1 heading:
 "fixture §4.2"). For the `DEV-M14-*` rows that marker was carried over as written; the
@@ -138,14 +147,15 @@ loop behaviours may need their own tests at M14.
 
 ## Counts
 
-108 entries: 60 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
+117 entries: 60 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
 DEV-M7-01, DEV-M7-02, DEV-M7-05, R9 → D-18, DEV-M0-01 to DEV-M0-03, DEV-M1-01 to DEV-M1-04, D1a,
 D1b, D1c, D5a, R8-str-float, R8-load-not-dict, R8-nan-sort, R8-kb-summary-not-str,
 R8-list-content, DEV-M3-01 to DEV-M3-14, DEV-M4-01, DEV-M4-02, DEV-P1-01, DEV-P1-02, DEV-P2-01,
 DEV-P3-01, DEV-M5-01 to DEV-M5-05, R11, R12, R13), 1 `approved (overage kill-switch only)`
-(X-10), 1 `rejected` (X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 45 proposed: 20 `proposed —
+(X-10), 1 `rejected` (X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 54 proposed: 20 `proposed —
 decide at milestone start`, plus DEV-M8-01 to DEV-M8-04, DEV-P4-01 to DEV-P4-06, DEV-P5-01,
-DEV-P6-01 to DEV-P6-06, DEV-P6b-01 to DEV-P6b-06 and DEV-U1-01 to DEV-U1-02.
+DEV-P6-01 to DEV-P6-06, DEV-P6b-01 to DEV-P6b-06, DEV-U1-01 to DEV-U1-02 and DEV-W1-01 to
+DEV-W1-09.
 
 ## Not registered: differences mentioned only in the M05 §3.5 tool table
 

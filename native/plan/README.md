@@ -612,6 +612,21 @@ guard, `4cf4fb0` gateway, `52487e5` gateway fixes), and Claude checked each comm
   - **Then (M9 to M12):** push-to-talk, a first-launch setup that records the user's
     voiceprint so only their voice is heard, and "Hey Jarvis".
   - **App updates wait** until the file scan has finished, as the user asked.
+- **D-59. JARVIS reads the web himself, and his memory may use 10% of the drive** (user,
+  2026-10-01).
+  - **No Claude web search.** It would bypass the gateway's taint tracking. JARVIS searches
+    and reads through Safari's engine: an offscreen WebKit view with a private profile (no
+    cookies, logins or downloads), never the user's Safari app or accounts.
+  - **What he reads, he keeps.** Every page goes into a local web memory, indexed and
+    searchable, labelled untrusted, and never turned into facts about the user.
+  - **Background reading every 3 hours:** news, pop culture and topics drawn from the
+    user's interests. It replaces Python's literal-message research.
+  - **The storage rule:** his memory may use 10% of the drive's total capacity, whatever the
+    drive. At the limit he compacts the oldest web pages to summaries and key points, then
+    grows again.
+  - **The floor:** the orchestrator added that at least 3% of the drive always stays free,
+    and the user agreed. On this Mac the cap is about 46 GB and the floor about 14 GB.
+  - Built in W1 (DEV-W1-01 to 09).
 
 ## Open user decisions
 
