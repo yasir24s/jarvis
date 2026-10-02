@@ -6,6 +6,7 @@
 #   _webrtcvad.cpython-314-darwin.so (py-webrtcvad 2.0.10)            from Python 3.14's site-packages
 #   embedding_model.onnx, hey_jarvis_v0.1.onnx, melspectrogram.onnx    from ~/jarvis-swift/Resources/models/
 #                                                                       (openWakeWord 0.6.0's, for M11)
+#   resemblyzer.onnx (M10's speaker encoder)                           exported by tools/export_resemblyzer.py
 #
 # Every file is checked against the size and md5 below before the copy and after it, so a pip
 # upgrade of webrtcvad fails here instead of at dlopen (plan §8 R2). A file already in place
@@ -13,13 +14,14 @@
 # espeakbridge.so and espeak-ng-data/ are not vendored: F5 replaced Piper (D-54).
 #
 # build-app.sh copies the folder into the app bundle and signs each library before the app.
-# $JARVIS_SWIFT_DIR and $JARVIS_PY_SITE point at other source folders.
+# $JARVIS_SWIFT_DIR, $JARVIS_PY_SITE and $JARVIS_PYTHON point at other sources.
 set -euo pipefail
 
 NATIVE="$(cd "$(dirname "$0")/.." && pwd)"
 VENDOR="$NATIVE/Resources/vendor"
 SWIFT_DIR="${JARVIS_SWIFT_DIR:-$HOME/jarvis-swift}"
 PY_SITE="${JARVIS_PY_SITE:-/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages}"
+PYTHON="${JARVIS_PYTHON:-/Library/Frameworks/Python.framework/Versions/3.14/bin/python3}"
 
 # destination | source | bytes | md5
 FILES=(
@@ -76,4 +78,22 @@ ln -sfn libonnxruntime.1.26.0.dylib "$VENDOR/libonnxruntime.1.dylib"
 [[ "$(lipo -archs "$VENDOR/libonnxruntime.1.26.0.dylib")" == arm64 ]] \
     || { echo "error: the ONNX Runtime dylib is not arm64-only" >&2; exit 1; }
 
-echo "vendor-voice-assets: $copied copied, $kept already in place, in $(tilde "$VENDOR")"
+# The speaker encoder is not copied: it is exported from resemblyzer 0.1.4's own weights (T10.0),
+# and the export script keeps it only after checking it against torch. The export is
+# deterministic (torch 2.12.0), so its size and md5 are pinned like the copies. It takes about a
+# minute and 1 GB of memory, once.
+MODEL="$VENDOR/resemblyzer.onnx"
+if matches "$MODEL" 5701350 5571f01852375eee552d067f74137738; then
+    kept=$((kept + 1))
+else
+    "$PYTHON" "$NATIVE/tools/export_resemblyzer.py" --out "$MODEL" \
+        || { echo "error: tools/export_resemblyzer.py failed" >&2; exit 1; }
+    if ! matches "$MODEL" 5701350 5571f01852375eee552d067f74137738; then
+        rm -f "$MODEL"
+        echo "error: the exported resemblyzer.onnx is not the pinned file (did torch or resemblyzer change?)" >&2
+        exit 1
+    fi
+    copied=$((copied + 1))
+fi
+
+echo "vendor-voice-assets: $copied copied or exported, $kept already in place, in $(tilde "$VENDOR")"

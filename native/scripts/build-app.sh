@@ -47,7 +47,7 @@ swift build -c "$CONFIGURATION" --package-path "$NATIVE" --product pystubs -j "$
 PYSTUBS="$(swift build -c "$CONFIGURATION" --package-path "$NATIVE" --show-bin-path)/libpystubs.dylib"
 VENDOR="$NATIVE/Resources/vendor"
 for f in libonnxruntime.1.26.0.dylib _webrtcvad.cpython-314-darwin.so \
-         embedding_model.onnx hey_jarvis_v0.1.onnx melspectrogram.onnx; do
+         embedding_model.onnx hey_jarvis_v0.1.onnx melspectrogram.onnx resemblyzer.onnx; do
     [[ -f "$VENDOR/$f" ]] || { echo "error: Resources/vendor/$f is missing: run scripts/vendor-voice-assets.sh" >&2; exit 1; }
 done
 # M8's voice helper (D-54) is a package of its own, so the main build never compiles MLX. It is

@@ -1,0 +1,114 @@
+{
+ "generator": "native/tools/make_speaker_corpus.py",
+ "macos": "27.2",
+ "macos_build": "26B5091g",
+ "say_rate": 180,
+ "rate": 16000,
+ "clips": [
+  {
+   "file": "daniel_enrol_1.wav",
+   "samples": 64000,
+   "sha256": "42d01d33bd51305d87ac1b9ba038460fa519faa6089a07450682b8a967cb2d2f",
+   "voice": "Daniel",
+   "text": "Good morning. I would like to check my calendar for this week, please.",
+   "say": "say -v Daniel -r 180 --file-format=WAVE --data-format=LEI16@16000 -o daniel_enrol_1.wav 'Good morning. I would like to check my calendar for this week, please.'"
+  },
+  {
+   "file": "daniel_enrol_2.wav",
+   "samples": 64000,
+   "sha256": "07ef5e9a65a88922bdb08b32431b18e54c96116c98cc3501e2f2de4d92953725",
+   "voice": "Daniel",
+   "text": "The quick brown fox jumps over the lazy dog, down by the river bank.",
+   "say": "say -v Daniel -r 180 --file-format=WAVE --data-format=LEI16@16000 -o daniel_enrol_2.wav 'The quick brown fox jumps over the lazy dog, down by the river bank.'"
+  },
+  {
+   "file": "daniel_enrol_3.wav",
+   "samples": 64000,
+   "sha256": "918bb47610ee3a146625727b4ccf93e8d98adb55a62543ee7a5c4ad56044482a",
+   "voice": "Daniel",
+   "text": "Please remind me to call the office at three o'clock this afternoon.",
+   "say": "say -v Daniel -r 180 --file-format=WAVE --data-format=LEI16@16000 -o daniel_enrol_3.wav \"Please remind me to call the office at three o'clock this afternoon.\""
+  },
+  {
+   "file": "daniel_cmd_1.wav",
+   "samples": 43334,
+   "sha256": "cf482170e4aa57df78350c5a56eba3f2fa7cafff44a8ef9c82c86f1da8e72370",
+   "voice": "Daniel",
+   "text": "Jarvis, what is the weather like today?",
+   "say": "say -v Daniel -r 180 --file-format=WAVE --data-format=LEI16@16000 -o daniel_cmd_1.wav 'Jarvis, what is the weather like today?'"
+  },
+  {
+   "file": "daniel_cmd_2.wav",
+   "samples": 52163,
+   "sha256": "91c7d10a00f5fa231fd673c3d5f0c569a0ef92d4f7635890818299e3c6d9593d",
+   "voice": "Daniel",
+   "text": "Open Safari and search for train times to London.",
+   "say": "say -v Daniel -r 180 --file-format=WAVE --data-format=LEI16@16000 -o daniel_cmd_2.wav 'Open Safari and search for train times to London.'"
+  },
+  {
+   "file": "daniel_long.wav",
+   "samples": 124167,
+   "sha256": "9ce29f60e2e6e656b6cb5b4b94e3a1163a248b0d5440ff99915e588e039b18e0",
+   "voice": "Daniel",
+   "text": "I have been reading about the history of the London Underground. The first line opened in eighteen sixty three, and it ran on steam.",
+   "say": "say -v Daniel -r 180 --file-format=WAVE --data-format=LEI16@16000 -o daniel_long.wav 'I have been reading about the history of the London Underground. The first line opened in eighteen sixty three, and it ran on steam.'"
+  },
+  {
+   "file": "daniel_pause.wav",
+   "samples": 87465,
+   "sha256": "e75ea14fd8115167ddb8df772b584fc7f56cb1031acc28bf389ea8fe009f3930",
+   "voice": "Daniel",
+   "text": "Set a timer for ten minutes. [[slnc 1500]] Actually, make it twenty.",
+   "say": "say -v Daniel -r 180 --file-format=WAVE --data-format=LEI16@16000 -o daniel_pause.wav 'Set a timer for ten minutes. [[slnc 1500]] Actually, make it twenty.'"
+  },
+  {
+   "file": "daniel_short.wav",
+   "samples": 12485,
+   "sha256": "3b3c0df4188c10ddc6ad83ca2030b1ff4c8e0bb52790beaa39f42bd5a74e946b",
+   "voice": "Daniel",
+   "text": "Yes.",
+   "say": "say -v Daniel -r 180 --file-format=WAVE --data-format=LEI16@16000 -o daniel_short.wav 'Yes.'"
+  },
+  {
+   "file": "samantha_cmd.wav",
+   "samples": 38350,
+   "sha256": "cc23ea8d25774b8377ed15b22d36fd1839a0209dbbb50fdb19cd3a7eecd79349",
+   "voice": "Samantha",
+   "text": "Jarvis, what is the weather like today?",
+   "say": "say -v Samantha -r 180 --file-format=WAVE --data-format=LEI16@16000 -o samantha_cmd.wav 'Jarvis, what is the weather like today?'"
+  },
+  {
+   "file": "karen_cmd.wav",
+   "samples": 50116,
+   "sha256": "613ac6c4ea588e24dae959cf3f4966d1946f36e7ec6be1a04a992871274b5680",
+   "voice": "Karen",
+   "text": "Open Safari and search for train times to London.",
+   "say": "say -v Karen -r 180 --file-format=WAVE --data-format=LEI16@16000 -o karen_cmd.wav 'Open Safari and search for train times to London.'"
+  },
+  {
+   "file": "moira_cmd.wav",
+   "samples": 61360,
+   "sha256": "d4d1ede3a573dd7c4de7a3c1d5a3013867a92714caa25cd9f58ffede10a63418",
+   "voice": "Moira",
+   "text": "Please remind me to call the office at three o'clock this afternoon.",
+   "say": "say -v Moira -r 180 --file-format=WAVE --data-format=LEI16@16000 -o moira_cmd.wav \"Please remind me to call the office at three o'clock this afternoon.\""
+  },
+  {
+   "file": "rishi_cmd.wav",
+   "samples": 75934,
+   "sha256": "24823a8964a41112fd949b40908b4d12341bc1b9dec255098e82dc9be6fd0d47",
+   "voice": "Rishi",
+   "text": "Good morning. I would like to check my calendar for this week, please.",
+   "say": "say -v Rishi -r 180 --file-format=WAVE --data-format=LEI16@16000 -o rishi_cmd.wav 'Good morning. I would like to check my calendar for this week, please.'"
+  },
+  {
+   "file": "noise_m25dbfs.wav",
+   "samples": 32000,
+   "sha256": "1f07618b21f0f09cac7336635345cb9663b077fa50d7686ab27a714b8a058207",
+   "voice": null,
+   "text": null,
+   "say": null,
+   "made": "np.random.default_rng(7), -25 dBFS RMS, 2 s"
+  }
+ ]
+}
