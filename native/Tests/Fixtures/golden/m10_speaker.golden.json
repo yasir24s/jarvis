@@ -1,0 +1,769 @@
+{
+ "schema": 1,
+ "suite": "m10_speaker",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "constants",
+   "input": {},
+   "expected": {
+    "SPEAKER_THRESHOLD": 0.6,
+    "WAKE_SPK_THRESHOLD": 0.38,
+    "sim_expression": "float(np.dot(emb, _voiceprint) / (np.linalg.norm(emb) * np.linalg.norm(_voiceprint) + 1e-09))"
+   }
+  },
+  {
+   "name": "enroll_three",
+   "input": {
+    "takes": [
+     "daniel_enrol_1",
+     "daniel_enrol_2",
+     "daniel_enrol_3"
+    ]
+   },
+   "expected": {
+    "spoken": [
+     "Setting up voice recognition, sir. Please speak naturally for about twelve seconds — tell me about your day, or read something aloud.",
+     "Voice recognition is set, sir. I'll now respond only to you."
+    ],
+    "chimes": [
+     "Tink",
+     "Glass"
+    ],
+    "durations": [
+     4,
+     4,
+     4
+    ],
+    "embedded_takes": 3,
+    "embedded_lengths": [
+     62880,
+     63840,
+     60000
+    ],
+    "npy_b64": "k05VTVBZAQB2AHsnZGVzY3InOiAnPGY0JywgJ2ZvcnRyYW5fb3JkZXInOiBGYWxzZSwgJ3NoYXBlJzogKDI1NiwpLCB9ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIApeIE8+AAAAAJtplj4AAAAAAAAAAN4Ymjrkas46P12hObebIj514p0969nkPcGduD2bEVU9AAAAAAAAAAAAAAAAyuR6PgAAAAAYb/88AAAAADXdlT0AAAAAAAAAAAAAAAAAAAAAXOl4PAAAAAAAAAAAAAAAAAAAAACl88E9AiYnPQAAAAAAAAAAAAAAAK9B6z2LFOI8AAAAACCl4jzsgkk9AAAAAAAAAAD/+K09bqKbPNvpBzsAAAAAEkO6PWx43DxG1ao9YMHEOgAAAAAJYEs9AAAAAAAAAAAAAAAAAAAAACMTzzzrsl08tAtePgAAAAAAAAAAAAAAAAX3oj1onwk88xYcOgAAAADMc4090co8PQAAAAAAAAAA8SOiO2SsmD0AAAAAq9O3PQAAAAAAAAAAAAAAAIYdjz09NRY+uqdEPAAAAAAAAAAAUuvNPQAAAAAAAAAAAAAAAAAAAACnJdU6AAAAANG5lj1JzcE8AAAAAAAAAAAAAAAA8QHkPAAAAADBLKs8AAAAAAAAAAAAAAAAAAAAAAAAAABRq449PoiLPWC3tz0AAAAA8pihO5X7QT0AAAAA789JPQAAAAAAAAAAAAAAAJMwzz1GZMI9AAAAAFwqqDyXeyA8V2YkPjti3D3f7jo8AAAAAA5ADjoAAAAAAAAAAINJFD58WYs6LpAgPmpRDj0AAAAAlU0/PAAAAADFruQ6caABPouRCj0P7R49KhEIPQAAAAAmFwc+Iae6PAAAAAAAAAAA4DU1PcwJ+Tu6+fU9uFcrPoqvrTwAAAAAtd2EPQAAAAB37Rs9SxMXPQAAAAAyMZA9AAAAABKD8D0AAAAAAAAAAAcCVj0AAAAAxk0JPgAAAABMm+89azTDPQAAAACPe2g9m2gRPQAAAADm7vw9M2cVPQAAAAAAAAAAteyyPAAAAAAAAAAA1fS2Pf0XRz0RUgo+m5lsPAAAAABQbT08AAAAAMOwUjwI2449D/0OPQAAAAAAAAAAPX6iPQAAAAAAAAAAAAAAAApaujsAAAAAiy0MPgAAAACF8hQ7jyPiPXsRMzs+MAo82AMJPRMBrDqJIzA7AAAAAAAAAAAAAAAAAAAAAAAAAADqekU9Vh4sPUrn0zwAAAAAAAAAAL2aljxMB+E9AAAAAJd+GDsAAAAAtNofPQc0AT0AAAAAAAAAAAAAAAAAAAAAAAAAAD3bqD0UYhM+MKnzPKKYNjwAAAAAAAAAAN6QjTwAAAAAyDdePAAAAAAAAAAAqgryPZ7szT03oVQ9ACixPAAAAADY4hw8AAAAAHKI3zw1NnU+AAAAAAFJpz2VOD0+AAAAAKhfrzx4GC8+AAAAAHzW/zzWypI3AAAAANcGiTwAAAAA",
+    "voiceprint_set": true,
+    "logged": [
+     "Voiceprint enrolled and saved."
+    ]
+   }
+  },
+  {
+   "name": "enroll_one_silent",
+   "input": {
+    "takes": [
+     "daniel_enrol_1",
+     "silence",
+     "daniel_enrol_3"
+    ]
+   },
+   "expected": {
+    "spoken": [
+     "Setting up voice recognition, sir. Please speak naturally for about twelve seconds — tell me about your day, or read something aloud.",
+     "Voice recognition is set, sir. I'll now respond only to you."
+    ],
+    "chimes": [
+     "Tink",
+     "Glass"
+    ],
+    "durations": [
+     4,
+     4,
+     4
+    ],
+    "embedded_takes": 2,
+    "embedded_lengths": [
+     62880,
+     60000
+    ],
+    "npy_b64": "k05VTVBZAQB2AHsnZGVzY3InOiAnPGY0JywgJ2ZvcnRyYW5fb3JkZXInOiBGYWxzZSwgJ3NoYXBlJzogKDI1NiwpLCB9ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAouQEw+AAAAANtXkD4AAAAAAAAAABr45jrmsRo7jNzxOXOXHz4VArE9+BvdPaOjrj3Ud1I9AAAAAAAAAAAAAAAAy3mAPgAAAAAZhAM9AAAAALZwoz0AAAAAAAAAAAAAAAAAAAAA6UnGOwAAAAAAAAAAAAAAAAAAAADbGso9S84BPQAAAAAAAAAAAAAAAFoB/D18HfM8AAAAAKnDDT2i+Rs9AAAAAAAAAABuesY9dS/HPOy2SzsAAAAAQfDBPf3FGjxwubc9LnQTOwAAAACp0GE9AAAAAAAAAAAAAAAAAAAAAO8c1jxIDug75PxVPgAAAAAAAAAAAAAAADI+yz2fEc07pvRpOgAAAABbWI895DtAPQAAAAAAAAAAXAbzO2PGpD0AAAAAD9GnPQAAAAAAAAAAAAAAALkWmD0EeyI+CURwPAAAAAAAAAAAA9nLPQAAAAAAAAAAAAAAAAAAAAD7vB87AAAAANPdrz1Yus48AAAAAAAAAAAAAAAAghmoPAAAAADLYMY8AAAAAAAAAAAAAAAAAAAAAAAAAACAiIg98ouLPTVarT0AAAAAD0nhO8PPWT0AAAAAeftePQAAAAAAAAAAAAAAAB4X+j1HG9M9AAAAANmZtzxSinA8vcopPj+vtD0CJsk7AAAAAF42VToAAAAAAAAAAH0Q9D1d3dA6kFoPPgabGT0AAAAAc5NwPAAAAACLYSs7pSj0PbQQ0Dwycgc9swsbPQAAAACJHAg+Lvm3PAAAAAAAAAAAJ2k9PZqUODwJMwE+XdkyPoECwzwAAAAAzlRkPQAAAABnKhE9TtAcPQAAAACEPaQ9AAAAAJWC4z0AAAAAAAAAABafHD0AAAAA/iIDPgAAAAAUcRA+DImcPQAAAABPgzk97UJFPQAAAAD6tQY+ayfBPAAAAAAAAAAAcjW8PAAAAAAAAAAAGnnEPfhaDz0VNgY+Z3RhPAAAAACDZA88AAAAAASkiTylbFY96CsWPQAAAAAAAAAASKqXPQAAAAAAAAAAAAAAADSoCzwAAAAAEjQCPgAAAAAAAAAAIhfcPdoyhjte78o7AC42PZXnADvSAIQ7AAAAAAAAAAAAAAAAAAAAAAAAAAAvmXM9ozsxPS63HDwAAAAAAAAAAA8Vsjwcbg4+AAAAACiRZDsAAAAA3TcfPcqm7DwAAAAAAAAAAAAAAAAAAAAAAAAAAJjTcz292xY+lEcYPTpMNzwAAAAAAAAAAMcv1DwAAAAACKqDPAAAAAAAAAAAWpjbPVP75D0Xz5g9XIGyPAAAAAAVvUo8AAAAAIbCwDy9Jns+AAAAAMNBuD3Czy8+AAAAAAZuAz0DuB8+AAAAAOgsBz0AAAAAAAAAAK2FgTwAAAAA",
+    "voiceprint_set": true,
+    "logged": [
+     "Voiceprint enrolled and saved."
+    ]
+   }
+  },
+  {
+   "name": "enroll_all_silent",
+   "input": {
+    "takes": [
+     "silence",
+     "silence",
+     "silence"
+    ]
+   },
+   "expected": {
+    "spoken": [
+     "Setting up voice recognition, sir. Please speak naturally for about twelve seconds — tell me about your day, or read something aloud.",
+     "I couldn't capture your voice clearly, sir. We can try again later."
+    ],
+    "chimes": [
+     "Tink"
+    ],
+    "durations": [
+     4,
+     4,
+     4
+    ],
+    "embedded_takes": 0,
+    "embedded_lengths": [],
+    "npy_b64": null,
+    "voiceprint_set": false,
+    "logged": []
+   }
+  },
+  {
+   "name": "enroll_backend_missing",
+   "input": {},
+   "expected": {
+    "spoken": [
+     "Voice recognition isn't ready yet, sir."
+    ],
+    "chimes": [],
+    "npy_b64": null,
+    "logged": [
+     "enroll: backend missing: No module named 'resemblyzer'"
+    ]
+   }
+  },
+  {
+   "name": "load",
+   "input": {},
+   "expected": {
+    "shape": [
+     256
+    ],
+    "dtype": "float32",
+    "f32": "XiBPPgAAAACbaZY+AAAAAAAAAADeGJo65GrOOj9doTm3myI+deKdPevZ5D3Bnbg9mxFVPQAAAAAAAAAAAAAAAMrkej4AAAAAGG//PAAAAAA13ZU9AAAAAAAAAAAAAAAAAAAAAFzpeDwAAAAAAAAAAAAAAAAAAAAApfPBPQImJz0AAAAAAAAAAAAAAACvQes9ixTiPAAAAAAgpeI87IJJPQAAAAAAAAAA//itPW6imzzb6Qc7AAAAABJDuj1seNw8RtWqPWDBxDoAAAAACWBLPQAAAAAAAAAAAAAAAAAAAAAjE88867JdPLQLXj4AAAAAAAAAAAAAAAAF96I9aJ8JPPMWHDoAAAAAzHONPdHKPD0AAAAAAAAAAPEjojtkrJg9AAAAAKvTtz0AAAAAAAAAAAAAAACGHY89PTUWPrqnRDwAAAAAAAAAAFLrzT0AAAAAAAAAAAAAAAAAAAAApyXVOgAAAADRuZY9Sc3BPAAAAAAAAAAAAAAAAPEB5DwAAAAAwSyrPAAAAAAAAAAAAAAAAAAAAAAAAAAAUauOPT6Iiz1gt7c9AAAAAPKYoTuV+0E9AAAAAO/PST0AAAAAAAAAAAAAAACTMM89RmTCPQAAAABcKqg8l3sgPFdmJD47Ytw93+46PAAAAAAOQA46AAAAAAAAAACDSRQ+fFmLOi6QID5qUQ49AAAAAJVNPzwAAAAAxa7kOnGgAT6LkQo9D+0ePSoRCD0AAAAAJhcHPiGnujwAAAAAAAAAAOA1NT3MCfk7uvn1PbhXKz6Kr608AAAAALXdhD0AAAAAd+0bPUsTFz0AAAAAMjGQPQAAAAASg/A9AAAAAAAAAAAHAlY9AAAAAMZNCT4AAAAATJvvPWs0wz0AAAAAj3toPZtoET0AAAAA5u78PTNnFT0AAAAAAAAAALXssjwAAAAAAAAAANX0tj39F0c9EVIKPpuZbDwAAAAAUG09PAAAAADDsFI8CNuOPQ/9Dj0AAAAAAAAAAD1+oj0AAAAAAAAAAAAAAAAKWro7AAAAAIstDD4AAAAAhfIUO48j4j17ETM7PjAKPNgDCT0TAaw6iSMwOwAAAAAAAAAAAAAAAAAAAAAAAAAA6npFPVYeLD1K59M8AAAAAAAAAAC9mpY8TAfhPQAAAACXfhg7AAAAALTaHz0HNAE9AAAAAAAAAAAAAAAAAAAAAAAAAAA926g9FGITPjCp8zyimDY8AAAAAAAAAADekI08AAAAAMg3XjwAAAAAAAAAAKoK8j2e7M09N6FUPQAosTwAAAAA2OIcPAAAAAByiN88NTZ1PgAAAAABSac9lTg9PgAAAACoX688eBgvPgAAAAB81v881sqSNwAAAADXBok8AAAAAA==",
+    "logged": [
+     "Voiceprint loaded — responding only to the enrolled voice (thr 0.6)."
+    ]
+   }
+  },
+  {
+   "name": "verify_daniel_cmd_1",
+   "input": {
+    "clip": "daniel_cmd_1"
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.91 >= 0.6"
+     ]
+    },
+    "sim": 0.9086364507675171,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.91 >= 0.38"
+     ]
+    },
+    "barge_in": true
+   }
+  },
+  {
+   "name": "verify_daniel_cmd_2",
+   "input": {
+    "clip": "daniel_cmd_2"
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.95 >= 0.6"
+     ]
+    },
+    "sim": 0.9461740255355835,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.95 >= 0.38"
+     ]
+    },
+    "barge_in": true
+   }
+  },
+  {
+   "name": "verify_daniel_enrol_1",
+   "input": {
+    "clip": "daniel_enrol_1"
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.97 >= 0.6"
+     ]
+    },
+    "sim": 0.9676957726478577,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.97 >= 0.38"
+     ]
+    },
+    "barge_in": true
+   }
+  },
+  {
+   "name": "verify_daniel_enrol_2",
+   "input": {
+    "clip": "daniel_enrol_2"
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.98 >= 0.6"
+     ]
+    },
+    "sim": 0.9795276522636414,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.98 >= 0.38"
+     ]
+    },
+    "barge_in": true
+   }
+  },
+  {
+   "name": "verify_daniel_enrol_3",
+   "input": {
+    "clip": "daniel_enrol_3"
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.96 >= 0.6"
+     ]
+    },
+    "sim": 0.9644332528114319,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.96 >= 0.38"
+     ]
+    },
+    "barge_in": true
+   }
+  },
+  {
+   "name": "verify_daniel_long",
+   "input": {
+    "clip": "daniel_long"
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.96 >= 0.6"
+     ]
+    },
+    "sim": 0.9639508128166199,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.96 >= 0.38"
+     ]
+    },
+    "barge_in": true
+   }
+  },
+  {
+   "name": "verify_daniel_pause",
+   "input": {
+    "clip": "daniel_pause"
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.88 >= 0.6"
+     ]
+    },
+    "sim": 0.8842544555664062,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.88 >= 0.38"
+     ]
+    },
+    "barge_in": true
+   }
+  },
+  {
+   "name": "verify_daniel_short",
+   "input": {
+    "clip": "daniel_short"
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.74 >= 0.6"
+     ]
+    },
+    "sim": 0.7378987669944763,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.74 >= 0.38"
+     ]
+    },
+    "barge_in": true
+   }
+  },
+  {
+   "name": "verify_karen_cmd",
+   "input": {
+    "clip": "karen_cmd"
+   },
+   "expected": {
+    "default": {
+     "ok": false,
+     "bumps": [
+      "speaker_reject"
+     ],
+     "printed": [
+      "[JARVIS] (ignored — voice match 0.54 < 0.6)"
+     ],
+     "logged": []
+    },
+    "sim": 0.5409600734710693,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.54 >= 0.38"
+     ]
+    },
+    "barge_in": false
+   }
+  },
+  {
+   "name": "verify_moira_cmd",
+   "input": {
+    "clip": "moira_cmd"
+   },
+   "expected": {
+    "default": {
+     "ok": false,
+     "bumps": [
+      "speaker_reject"
+     ],
+     "printed": [
+      "[JARVIS] (ignored — voice match 0.56 < 0.6)"
+     ],
+     "logged": []
+    },
+    "sim": 0.5564106106758118,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.56 >= 0.38"
+     ]
+    },
+    "barge_in": false
+   }
+  },
+  {
+   "name": "verify_noise_m25dbfs",
+   "input": {
+    "clip": "noise_m25dbfs"
+   },
+   "expected": {
+    "default": {
+     "ok": false,
+     "bumps": [
+      "speaker_reject"
+     ],
+     "printed": [
+      "[JARVIS] (ignored — voice match 0.48 < 0.6)"
+     ],
+     "logged": []
+    },
+    "sim": 0.4787289500236511,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.48 >= 0.38"
+     ]
+    },
+    "barge_in": false
+   }
+  },
+  {
+   "name": "verify_rishi_cmd",
+   "input": {
+    "clip": "rishi_cmd"
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.65 >= 0.6"
+     ]
+    },
+    "sim": 0.6521859765052795,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.65 >= 0.38"
+     ]
+    },
+    "barge_in": true
+   }
+  },
+  {
+   "name": "verify_samantha_cmd",
+   "input": {
+    "clip": "samantha_cmd"
+   },
+   "expected": {
+    "default": {
+     "ok": false,
+     "bumps": [
+      "speaker_reject"
+     ],
+     "printed": [
+      "[JARVIS] (ignored — voice match 0.48 < 0.6)"
+     ],
+     "logged": []
+    },
+    "sim": 0.47894713282585144,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.48 >= 0.38"
+     ]
+    },
+    "barge_in": false
+   }
+  },
+  {
+   "name": "verify_daniel_cmd_1_quiet",
+   "input": {
+    "clip": "daniel_cmd_1",
+    "shift": 4
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.84 >= 0.6"
+     ]
+    },
+    "sim": 0.8423123955726624,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.84 >= 0.38"
+     ]
+    },
+    "barge_in": true
+   }
+  },
+  {
+   "name": "verify_samantha_cmd_quiet",
+   "input": {
+    "clip": "samantha_cmd",
+    "shift": 4
+   },
+   "expected": {
+    "default": {
+     "ok": false,
+     "bumps": [
+      "speaker_reject"
+     ],
+     "printed": [
+      "[JARVIS] (ignored — voice match 0.41 < 0.6)"
+     ],
+     "logged": []
+    },
+    "sim": 0.4103463888168335,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.41 >= 0.38"
+     ]
+    },
+    "barge_in": false
+   }
+  },
+  {
+   "name": "verify_daniel_pause_quiet",
+   "input": {
+    "clip": "daniel_pause",
+    "shift": 6
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.83 >= 0.6"
+     ]
+    },
+    "sim": 0.8322441577911377,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.83 >= 0.38"
+     ]
+    },
+    "barge_in": true
+   }
+  },
+  {
+   "name": "verify_noise_quiet",
+   "input": {
+    "clip": "noise_m25dbfs",
+    "shift": 4
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [],
+     "printed": [],
+     "logged": []
+    },
+    "wake": {
+     "ok": true,
+     "bumps": [],
+     "printed": [],
+     "logged": []
+    },
+    "sim": null,
+    "barge_in": false
+   }
+  },
+  {
+   "name": "verify_daniel_cmd_1_head9000",
+   "input": {
+    "clip": "daniel_cmd_1",
+    "stop": 9000
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [],
+     "printed": [],
+     "logged": []
+    },
+    "wake": {
+     "ok": true,
+     "bumps": [],
+     "printed": [],
+     "logged": []
+    },
+    "sim": null,
+    "barge_in": false
+   }
+  },
+  {
+   "name": "verify_daniel_cmd_1_head9600",
+   "input": {
+    "clip": "daniel_cmd_1",
+    "stop": 9600
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.76 >= 0.6"
+     ]
+    },
+    "sim": 0.7616499066352844,
+    "wake": {
+     "ok": true,
+     "bumps": [
+      "speaker_pass"
+     ],
+     "printed": [],
+     "logged": [
+      "Speaker match 0.76 >= 0.38"
+     ]
+    },
+    "barge_in": true
+   }
+  },
+  {
+   "name": "verify_silence_1s",
+   "input": {
+    "silence": 16000
+   },
+   "expected": {
+    "default": {
+     "ok": true,
+     "bumps": [],
+     "printed": [],
+     "logged": []
+    },
+    "wake": {
+     "ok": true,
+     "bumps": [],
+     "printed": [],
+     "logged": []
+    },
+    "sim": null,
+    "barge_in": false
+   }
+  },
+  {
+   "name": "gate_off",
+   "input": {
+    "clip": "samantha_cmd"
+   },
+   "expected": {
+    "ok": true,
+    "embedded": 0,
+    "bumps": []
+   }
+  },
+  {
+   "name": "no_voiceprint",
+   "input": {
+    "clip": "samantha_cmd"
+   },
+   "expected": {
+    "ok": true,
+    "barge_in": false,
+    "embedded": 0,
+    "bumps": []
+   }
+  },
+  {
+   "name": "forget",
+   "input": {},
+   "expected": {
+    "reply": "Voice recognition cleared, sir. I'll respond to any voice now.",
+    "file_removed": true,
+    "reply_again": "Voice recognition cleared, sir. I'll respond to any voice now."
+   }
+  }
+ ]
+}

@@ -45,11 +45,4 @@ public struct VendoredAssets: Sendable, Equatable {
             webrtcvad: vendor.appendingPathComponent(webrtcvadFile),
             speakerModel: vendor.appendingPathComponent(speakerModelFile))
     }
-
-    /// The files that are not on disk, in field order.
-    public var missing: [URL] {
-        [onnxRuntime, pyStubs, webrtcvad, speakerModel].filter {
-            !FileManager.default.fileExists(atPath: $0.path)
-        }
-    }
 }
