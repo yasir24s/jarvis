@@ -27,6 +27,8 @@ struct JarvisSwiftUIApp: App {
                 Button("Stop Speaking") { appDelegate.stopSpeaking() }
                 // P6: the user's consent to learning from their files, as in the menu-bar menu.
                 FileLearningToggle(consent: appDelegate.fileLearning)
+                // UI1 part 3: the floating HUD, as in the menu-bar menu.
+                ShowHUDToggle(setting: appDelegate.showHUD, hud: appDelegate.hud)
                 // U1: "Update Ready" and "Update Now" while a staged build waits.
                 UpdateMenuItems(updates: appDelegate.updates)
             }
@@ -35,12 +37,14 @@ struct JarvisSwiftUIApp: App {
         MenuBarExtra("JARVIS", systemImage: "circle.hexagongrid.fill") {
             #if DEBUG
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
-                        learn: appDelegate.fileLearning, updates: appDelegate.updates,
+                        learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
+                        updates: appDelegate.updates,
                         stopSpeaking: { appDelegate.stopSpeaking() },
                         testConfirmation: { appDelegate.stashTestConfirmation() })
             #else
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
-                        learn: appDelegate.fileLearning, updates: appDelegate.updates,
+                        learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
+                        updates: appDelegate.updates,
                         stopSpeaking: { appDelegate.stopSpeaking() })
             #endif
         }

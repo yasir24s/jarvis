@@ -3,14 +3,16 @@ import JarvisChat
 import SwiftUI
 
 /// The menu-bar menu (plan: M02-M04 §3.12): Open Chat, the last backend, the "Speak replies"
-/// toggle, M8's "Stop Speaking", P6's "Learn About Me From My Files", U1's "Update Ready" and
-/// "Update Now" while a build waits, M0's state-root and lock lines, and Quit. DEBUG builds add
-/// "Test confirmation".
+/// toggle, M8's "Stop Speaking", P6's "Learn About Me From My Files", UI1's "Show HUD", U1's
+/// "Update Ready" and "Update Now" while a build waits, M0's state-root and lock lines, and Quit.
+/// DEBUG builds add "Test confirmation".
 struct MenuBarMenu: View {
     let model: AppModel
     let chat: ChatViewModel
     @Bindable var speak: SpeakRepliesToggle
     let learn: FileLearningConsent
+    let showHUD: ShowHUDSetting
+    let hud: HUDModel
     let updates: UpdateWatcher
     /// Stops the reply being spoken and anything queued (AppDelegate.stopSpeaking).
     let stopSpeaking: () -> Void
@@ -32,6 +34,7 @@ struct MenuBarMenu: View {
             stopSpeaking()
         }
         FileLearningToggle(consent: learn)
+        ShowHUDToggle(setting: showHUD, hud: hud)
         UpdateMenuItems(updates: updates)
         Divider()
         Text("State: \(model.stateRoot)")
@@ -79,5 +82,19 @@ struct UpdateMenuItems: View {
                 }
             }
         }
+    }
+}
+
+/// UI1 part 3: "Show HUD", with a checkmark while it is on, in the app menu and the menu-bar
+/// menu. Switching it off hides the HUD at once.
+struct ShowHUDToggle: View {
+    @Bindable var setting: ShowHUDSetting
+    let hud: HUDModel
+
+    var body: some View {
+        Toggle(ShowHUDSetting.menuTitle, isOn: Binding(get: { setting.isOn }, set: { on in
+            setting.isOn = on
+            hud.enabled = on
+        }))
     }
 }

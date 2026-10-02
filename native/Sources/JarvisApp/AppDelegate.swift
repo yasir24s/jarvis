@@ -28,6 +28,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let speakReplies = SpeakRepliesToggle()
     /// P6: "Learn About Me From My Files", the user's consent to the file scanner.
     let fileLearning = FileLearningConsent()
+    /// UI1 part 3: the floating HUD's state and the menus' "Show HUD"; the panel, unless
+    /// JARVIS_NO_HUD=1.
+    let showHUD = ShowHUDSetting()
+    let hud = HUDModel()
+    private var hudController: HUDController?
     /// U1: watches dist/staged/ for a new build and swaps over when JARVIS is not in use. It
     /// sees nothing unless this bundle runs as dist/JARVIS.app with its update helper.
     let updates = UpdateWatcher(folders: UpdateFolders.of(bundle: Bundle.main.bundleURL))
@@ -79,6 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         installSIGTERMHandler()
+        startHUD()
         // Asked once: macOS shows the prompt only while the user has not decided.
         if location.authorizationStatus == .notDetermined {
             location.requestWhenInUseAuthorization()
@@ -370,6 +376,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // are local, so the policy's cloud rule does not hold back personal sources.
         let voice = AppVoice()
         self.voice = voice
+        // UI1 part 3: the HUD speaks while the reply's audio plays, a sentence at a time.
+        voice.onReplyAudioStarted = { [weak self] heard, seconds in
+            self?.hud.speechStarted(CaptionTimeline(text: heard, duration: seconds))
+        }
+        voice.onReplyAudioEnded = { [weak self] in self?.hud.speechEnded() }
+        voice.onReplyOver = { [weak self] in self?.hud.speechEnded() }
         chat.onReplyFinished = { [weak self] message, turn in
             guard let self else { return }
             let context = SpeakReplies.context(for: message, turn: turn, toggle: self.speakReplies,
@@ -482,6 +494,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The menus' "Stop Speaking": the reply being spoken stops, and so does anything queued.
     func stopSpeaking() {
         voice?.stop()
+    }
+
+    /// UI1 part 3: the HUD thinks while a turn from the chat runs, with the message as its
+    /// caption, and speaks while the reply's audio plays (the voice's hooks, set in startBrain).
+    private func startHUD() {
+        hud.enabled = showHUD.isOn
+        hudController = HUDController.make(model: hud)
+        chat.onTurnBegan = { [weak self] message in
+            self?.hud.turnBegan(message)
+        }
+        chat.onTurnEnded = { [weak self] in
+            guard let self else { return }
+            self.hud.turnEnded(speechFollows: (self.voice?.repliesPending ?? 0) > 0)
+        }
     }
 
     #if DEBUG

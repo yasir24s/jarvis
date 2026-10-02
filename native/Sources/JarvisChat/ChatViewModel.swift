@@ -62,6 +62,10 @@ public final class ChatViewModel: ReplySink {
     @ObservationIgnored public var onSend: ((String, ContinuousClock.Instant) -> Void)?
     /// V1 part 5: each change to the composer's text (the voice warms up while the user types).
     @ObservationIgnored public var onTyping: (() -> Void)?
+    /// UI1 part 3, the HUD: a turn from this window was taken, with the message as shown; and
+    /// that turn ended, after `onReplyFinished`, so a reply to be spoken is already queued.
+    @ObservationIgnored public var onTurnBegan: ((String) -> Void)?
+    @ObservationIgnored public var onTurnEnded: (() -> Void)?
 
     @ObservationIgnored private var submitter: (any TurnSubmitting)?
     @ObservationIgnored private var backendName: (@Sendable () async -> String)?
@@ -292,6 +296,7 @@ public final class ChatViewModel: ReplySink {
         messages.append(user)
         messages.append(reply)
         live = LiveReply(id: reply.id, userID: user.id, turn: turn, coalescer: DeltaCoalescer(minimumGap: minimumGap))
+        onTurnBegan?(shown)
     }
 
     /// True when `text` would confirm the card's confirmation but the owner check cannot run.
@@ -366,6 +371,7 @@ public final class ChatViewModel: ReplySink {
         turn?.flush?.cancel()
         live = nil
         responding = false
+        defer { if turn != nil { onTurnEnded?() } }
         switch outcome {
         case .busy, .empty:
             // Refused, not queued (D-10). The coordinator refuses before it takes a turn, so
