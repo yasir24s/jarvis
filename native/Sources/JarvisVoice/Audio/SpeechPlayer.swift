@@ -13,8 +13,10 @@ public protocol SpeechPlayer: Sendable {
 /// converts them to the output device's rate. Output only: the input node is never touched, so
 /// playing asks for no microphone access.
 ///
-/// Every part gets the gain `Loudness.gain` gives it, so the output reads `Loudness.targetLUFS`,
-/// then `Loudness.limited` keeps its peaks at or below `Loudness.peakCeilingDBFS`.
+/// Every part goes through `Loudness.expanded` (V1 part 3: the quiet tail after each word drops
+/// by up to 12 dB), gets the gain `Loudness.gain` gives it, so the output reads
+/// `Loudness.targetLUFS`, then `Loudness.limited` keeps its peaks at or below
+/// `Loudness.peakCeilingDBFS`.
 /// The node takes two equal channels, not the mono part itself. Rendered offline, the main mixer
 /// played a mono node 3.01 dB down on each channel when its output ran at 44.1 kHz, and at full
 /// level at the other rates tried (16 to 96 kHz); two equal channels played at full level at every

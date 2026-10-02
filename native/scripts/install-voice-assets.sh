@@ -5,6 +5,12 @@
 #   f5/model.safetensors, f5/vocab.txt         from ~/jarvis-spikes/models/f5/
 #   vocos/model.safetensors, vocos/config.json from ~/jarvis-spikes/models/vocos/
 #   reference/reference.wav, reference.txt     from the spike's clips/jarvis_shortref_24k.{wav,txt}
+#   references/dry/, references/dry-wpe/       from clips/jarvis_dry_24k.* and jarvis_dry_wpe_24k.*
+#
+# The two references/ (V1 part 3) are the driest stretch of ~/jarvis/voices/jarvis_en.wav (23.57
+# to 28.23 s, the fastest energy decay after word endings of the 3 to 6 s windows between
+# pauses), as cut and as dereverberated by WPE. JARVIS speaks with one only when the
+# voiceReference setting names it.
 #
 # Every file is checked against the size and SHA-256 below, before the copy and after it (the
 # voice spike checked the two weight files against Hugging Face). Nothing is downloaded. A file
@@ -12,7 +18,8 @@
 # The weights and the voice clip never go into git.
 #
 # Then (V1 part 1) the clone renders JARVIS's acknowledgements, the short lines he says the
-# moment a typed message is sent, into acknowledgements/default/<name>.wav, with the jarvis-voice
+# moment a typed message is sent, into acknowledgements/<reference>/<name>.wav for each of the
+# three references (default, dry, dry-wpe), with the jarvis-voice
 # helper of the built app (or VoiceHelper's release build, or $JARVIS_VOICE_HELPER). Without a
 # helper this step is skipped; run the script again once the app is built. Lines already
 # rendered with the same settings, reference and list are left alone.
@@ -33,6 +40,10 @@ FILES=(
     "vocos/config.json|models/vocos/config.json|403|554a74ddbaa6562191f78a576b73a580ef4a0d40071f627cc343e706f7cb3a98"
     "reference/reference.wav|voice-swift/clips/jarvis_shortref_24k.wav|205484|d0d17e83163f6de8076ef40fa3cd96c3ce76376b07e876474e6b815f9a552986"
     "reference/reference.txt|voice-swift/clips/jarvis_shortref_24k.txt|66|bf1f092c7f4ee44df954f1efe4a2a7507bf493cbb8552715756e028a3c263ecf"
+    "references/dry/reference.wav|voice-swift/clips/jarvis_dry_24k.wav|223724|80b1e363130de60dfc82fb842b643cf742b5d04700a32948042ce9eacdbf109e"
+    "references/dry/reference.txt|voice-swift/clips/jarvis_dry_24k.txt|84|026aaa9c59e6920e25c053d4b867323e72dddd5b8efa66b78527b0c09d1f333d"
+    "references/dry-wpe/reference.wav|voice-swift/clips/jarvis_dry_wpe_24k.wav|223724|93abed4065488e9364ec54b9e1dde68f7dfd6d80b3db22b579ffe22695ecc92f"
+    "references/dry-wpe/reference.txt|voice-swift/clips/jarvis_dry_wpe_24k.txt|84|026aaa9c59e6920e25c053d4b867323e72dddd5b8efa66b78527b0c09d1f333d"
 )
 
 # A path under $HOME, as ~/... for messages.
@@ -79,7 +90,7 @@ for entry in "${FILES[@]}"; do
     IFS='|' read -r rel _ bytes sha <<< "$entry"
     matches "$DEST/$rel" "$bytes" "$sha" || { echo "error: $rel failed its final check" >&2; exit 1; }
 done
-echo "Voice assets ready in $(tilde "$DEST") (6 files checked)"
+echo "Voice assets ready in $(tilde "$DEST") (${#FILES[@]} files checked)"
 
 # The acknowledgements: name | line. Native JARVIS lists the same (Acknowledgement.lines) and
 # renders nothing itself. The speed is the app's default (VoiceHelperSetup). The steps are 8, not
@@ -110,7 +121,8 @@ for candidate in "${JARVIS_VOICE_HELPER:-}" "$NATIVE/dist/JARVIS.app/Contents/He
 done
 
 # render_acknowledgements <name> <reference folder>: every line, spoken with that reference, into
-# acknowledgements/<name>/, unless a stamp shows they already were with these settings.
+# acknowledgements/<name>/, unless a stamp shows they already were with these settings. The
+# helper paces another reference than the default to the default's speed, as it does for replies.
 render_acknowledgements() {
     local name="$1" reference="$2"
     local out="$DEST/acknowledgements/$name"
@@ -140,7 +152,7 @@ render_acknowledgements() {
         printf '%s\t%s\n' "$n" "$t"
     done > "$list"
     if ! "$helper" --assets "$DEST" --out-dir "$tmp" --steps "$ACK_STEPS" --speed "$ACK_SPEED" \
-            --render "$list" 2>/dev/null; then
+            --reference "$reference" --render "$list" 2>/dev/null; then
         rm -rf "$tmp"
         echo "error: the helper could not render acknowledgements/$name" >&2
         exit 1
@@ -153,3 +165,5 @@ render_acknowledgements() {
 }
 
 render_acknowledgements default "$DEST/reference"
+render_acknowledgements dry "$DEST/references/dry"
+render_acknowledgements dry-wpe "$DEST/references/dry-wpe"

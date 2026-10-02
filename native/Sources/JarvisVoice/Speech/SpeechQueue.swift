@@ -24,6 +24,9 @@ public actor SpeechQueue {
     private let speed: (@Sendable () -> Double)?
     /// The speed the last reply was spoken at.
     private var lastSpeed: Double?
+    /// The voice's reference, read for each reply (V1 part 3); nil never releases the engine.
+    private let reference: (@Sendable () -> String)?
+    private var lastReference: String?
     /// Why the voice cannot take a reply whole, or nil when it can.
     private let tooLong: @Sendable (String) -> String?
     private let helperFootprintMB: @Sendable () -> Int?
@@ -37,11 +40,14 @@ public actor SpeechQueue {
     /// - engine: the voice (F5Engine); `fallback` speaks a reply it fails (SayEngine).
     /// - speed: `voiceSpeed`, read for each reply: when it changed since the last reply the
     ///   engine is released first, so it starts again at the new speed.
+    /// - reference: the reference the voice speaks with (`voiceReference`), read and acted on
+    ///   in the same way.
     /// - tooLong: given the cleaned reply, why the voice cannot generate it in one go (F5Engine's
     ///   `tooLong`), or nil. Such a reply goes to `fallback` without asking the voice.
     /// - helperFootprintMB: the helper's footprint in its last reply, for the log line.
     public init(engine: any SpeechEngine, fallback: any SpeechEngine, player: any SpeechPlayer,
                 speed: (@Sendable () -> Double)? = nil,
+                reference: (@Sendable () -> String)? = nil,
                 tooLong: @escaping @Sendable (String) -> String? = { _ in nil },
                 helperFootprintMB: @escaping @Sendable () -> Int? = { nil },
                 log: @escaping @Sendable (String) -> Void) {
@@ -49,6 +55,7 @@ public actor SpeechQueue {
         self.fallback = fallback
         self.player = player
         self.speed = speed
+        self.reference = reference
         self.tooLong = tooLong
         self.helperFootprintMB = helperFootprintMB
         self.log = log
@@ -94,13 +101,16 @@ public actor SpeechQueue {
         let clean = afterAcknowledgement ? Acknowledgement.spokenText(cleaned) : cleaned
         let acknowledgement = acknowledging
         let speed = self.speed?()
-        let restart = speed != nil && lastSpeed != nil && speed != lastSpeed
+        let reference = self.reference?()
+        let restart = (speed != nil && lastSpeed != nil && speed != lastSpeed)
+            || (reference != nil && lastReference != nil && reference != lastReference)
         if let speed { lastSpeed = speed }
+        if let reference { lastReference = reference }
         let overflow = tooLong(clean)
         current = Task {
             await previous?.value   // the reply before has stopped its audio
             guard !Task.isCancelled else { return }
-            if restart { await self.engine.release() }   // the next request starts it at the new speed
+            if restart { await self.engine.release() }   // the next request starts it with the new setting
             await self.speak(clean, turn: turn, started: started, overflow: overflow, after: acknowledgement)
         }
     }

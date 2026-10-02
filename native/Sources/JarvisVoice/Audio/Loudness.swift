@@ -1,7 +1,8 @@
 import Foundation
 
 /// ITU-R BS.1770 loudness, the gain that brings one part of speech to `targetLUFS`, and a
-/// look-ahead limiter that keeps its sample peak at or below `peakCeilingDBFS`.
+/// look-ahead limiter that keeps its sample peak at or below `peakCeilingDBFS`. V1 part 3: before
+/// both, a gentle downward expander (`expanded`) lowers the quiet tail after each word.
 ///
 /// K-weighting is the standard's two biquads: a high shelf of about +4 dB above 1.5 kHz, then a
 /// high pass at about 38 Hz. Both are designed for the signal's own rate the way libebur128 does
@@ -109,10 +110,98 @@ enum Loudness {
         return Float(pow(10, min(targetLUFS - measured - lift, maxGainDB) / 20))
     }
 
-    /// One part as the player plays it: `gain`, then `limited`.
+    /// One part as the player plays it: `expanded`, then `gain` (measured on the expanded part,
+    /// so it still reads the target), then `limited`.
     static func normalized(_ samples: [Float], sampleRate: Double, lift: Double = 0) -> [Float] {
-        let gain = gain(for: samples, sampleRate: sampleRate, lift: lift)
-        return limited(samples.map { $0 * gain }, sampleRate: sampleRate)
+        let part = expanded(samples, sampleRate: sampleRate)
+        let gain = gain(for: part, sampleRate: sampleRate, lift: lift)
+        return limited(part.map { $0 * gain }, sampleRate: sampleRate)
+    }
+
+    // MARK: - Expander (V1 part 3)
+
+    /// The expander's threshold, this far under the part's own speech level (`speechLevel`), in
+    /// dB. On the V1 lab's eight renders, everything within 20 dB of the speech level lost
+    /// nothing (5th percentile 0.00 dB), the band from 20 to 30 dB under it 0.3 dB (median), and
+    /// what lay deeper 7.2 dB (median). At 25 dB the expander barely acted: F5 leaves little
+    /// that quiet between words.
+    static let expanderThresholdDB = 20.0
+    /// Under the threshold, each dB the level falls takes one more dB off (2:1).
+    static let expanderRatio = 2.0
+    /// The most the expander takes off, in dB.
+    static let expanderRangeDB = 12.0
+    /// The time constants the expander opens with, when the level rises over the threshold, and
+    /// closes with, after it falls under it.
+    static let expanderAttackSeconds = 0.005
+    static let expanderReleaseSeconds = 0.08
+    /// The level the expander follows: the mean square over the next 10 ms.
+    static let expanderWindowSeconds = 0.01
+    /// How far ahead the expander looks for a level that opens it: five attack time constants,
+    /// so it is open to within 0.1 dB when a word starts after a quiet stretch.
+    static let expanderLookAheadSeconds = 0.025
+
+    /// The part's speech level in dBFS: the mean square of the 400 ms blocks (every 100 ms) that
+    /// pass `integrated`'s two gates, without its K-weighting. nil when no block passes the
+    /// absolute gate.
+    static func speechLevel(_ samples: [Float], sampleRate: Double) -> Double? {
+        let count = samples.count
+        guard count > 0 else { return nil }
+        let block = min(Int((blockSeconds * sampleRate).rounded()), count)
+        let step = Int((stepSeconds * sampleRate).rounded())
+        var running = [Double](repeating: 0, count: count + 1)
+        for n in 0..<count { running[n + 1] = running[n] + Double(samples[n]) * Double(samples[n]) }
+        let powers = stride(from: 0, through: count - block, by: step).map {
+            (running[$0 + block] - running[$0]) / Double(block)
+        }
+        func dB(_ power: Double) -> Double { 10 * log10(power) }
+        func mean(_ values: [Double]) -> Double { values.reduce(0, +) / Double(values.count) }
+        let audible = powers.filter { dB($0) > absoluteGateLUFS }
+        guard !audible.isEmpty else { return nil }
+        let relativeGate = dB(mean(audible)) - relativeGateLU
+        return dB(mean(audible.filter { dB($0) > relativeGate }))
+    }
+
+    /// A gentle downward expander over one part. F5 copies the room of its reference, and the
+    /// gain to -11 LUFS lifts that tail after every word with the speech. Where the level is
+    /// under the threshold, the gain falls 1 dB for each dB under it, to at most
+    /// `expanderRangeDB` down. Each sample takes the most open of those gains within
+    /// `expanderLookAheadSeconds` ahead, and the gain moves toward it with
+    /// `expanderAttackSeconds` when opening and `expanderReleaseSeconds` when closing. Speech,
+    /// within `expanderThresholdDB` of the part's speech level, is never turned down. Silence, or
+    /// a part with no speech level, is left as it is.
+    static func expanded(_ samples: [Float], sampleRate: Double) -> [Float] {
+        guard let speech = speechLevel(samples, sampleRate: sampleRate) else { return samples }
+        let threshold = speech - expanderThresholdDB
+        let n = samples.count
+        let window = max(1, Int((expanderWindowSeconds * sampleRate).rounded()))
+        var running = [Double](repeating: 0, count: n + 1)
+        for i in 0..<n { running[i + 1] = running[i] + Double(samples[i]) * Double(samples[i]) }
+        var target = [Double](repeating: 0, count: n)
+        for i in 0..<n {
+            let end = min(i + window, n)
+            let level = 10 * log10(max((running[end] - running[i]) / Double(end - i), 1e-20))
+            target[i] = level < threshold ? max(-expanderRangeDB, (level - threshold) * (expanderRatio - 1)) : 0
+        }
+        // The most open target in [i, i + look], a sliding maximum kept in a queue of falling targets.
+        let look = max(0, Int((expanderLookAheadSeconds * sampleRate).rounded()))
+        var ahead = target
+        var queue: [Int] = []
+        var head = 0
+        for j in stride(from: n - 1, through: 0, by: -1) {
+            while queue.count > head, target[queue[queue.count - 1]] <= target[j] { queue.removeLast() }
+            queue.append(j)
+            while queue[head] > j + look { head += 1 }
+            ahead[j] = target[queue[head]]
+        }
+        let opening = 1 - exp(-1 / (expanderAttackSeconds * sampleRate))
+        let closing = 1 - exp(-1 / (expanderReleaseSeconds * sampleRate))
+        var out = samples
+        var gainDB = 0.0
+        for i in 0..<n {
+            gainDB += (ahead[i] - gainDB) * (ahead[i] > gainDB ? opening : closing)
+            if gainDB < -1e-6 { out[i] = Float(Double(samples[i]) * pow(10, gainDB / 20)) }
+        }
+        return out
     }
 
     /// A look-ahead peak limiter over a whole part: no sample comes out above `peakCeilingDBFS`,

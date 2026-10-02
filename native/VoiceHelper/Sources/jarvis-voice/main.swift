@@ -7,7 +7,7 @@ import Vocos
 // jarvis-voice: the F5-TTS helper JARVIS speaks through (plan D-54).
 //
 //   jarvis-voice --assets <dir> --out-dir <dir> [--cache-limit-mb 512] [--steps 8]
-//                [--speed 1] [--idle-exit 300] [--selftest] [--render <list>]
+//                [--speed 1] [--idle-exit 300] [--reference <dir>] [--selftest] [--render <list>]
 //
 // Protocol: one JSON object per line on stdin, one per line on stdout.
 //   {"id": "<uuid>", "text": "<clean text>"}
@@ -24,6 +24,11 @@ import Vocos
 //
 // <assets> holds f5/{model.safetensors,vocab.txt}, vocos/{model.safetensors,config.json} and
 // reference/{reference.wav,reference.txt} (native/scripts/install-voice-assets.sh puts them there).
+//
+// --reference <dir> (V1 part 3) speaks with the reference.wav and reference.txt in <dir> instead
+// of <assets>/reference. --speed stays the pace of <assets>/reference: F5 gives the text the
+// reference's frames per byte, so a reference spoken faster would speak faster, and the speed is
+// scaled by <assets>/reference's frames per byte over this one's.
 
 // MARK: - Arguments
 
@@ -36,13 +41,14 @@ struct Options {
     var idleExitSeconds = 300.0
     var selftest = false
     var render: URL?
+    var reference: URL?
 }
 
 func usage(_ message: String) -> Never {
     FileHandle.standardError.write(Data((
         "jarvis-voice: \(message)\n"
             + "usage: jarvis-voice --assets <dir> --out-dir <dir> [--cache-limit-mb N] [--steps N]"
-            + " [--speed X] [--idle-exit S] [--selftest] [--render <list>]\n").utf8))
+            + " [--speed X] [--idle-exit S] [--reference <dir>] [--selftest] [--render <list>]\n").utf8))
     exit(2)
 }
 
@@ -73,6 +79,7 @@ func parseOptions(_ args: [String]) -> Options {
             options.idleExitSeconds = s
         case "--selftest": options.selftest = true
         case "--render": options.render = URL(fileURLWithPath: next(flag), isDirectory: false)
+        case "--reference": options.reference = URL(fileURLWithPath: next(flag), isDirectory: true)
         default: usage("unknown argument \(flag)")
         }
         i += 1
@@ -120,13 +127,19 @@ final class Voice {
     let steps: Int
     let speed: Double
 
-    init(assets: URL, steps: Int, speed: Double) throws {
+    init(assets: URL, steps: Int, speed: Double, reference: URL?) throws {
         let files = [
             "f5/model.safetensors", "f5/vocab.txt", "vocos/model.safetensors", "vocos/config.json",
             "reference/reference.wav", "reference/reference.txt",
         ]
         for file in files where !FileManager.default.fileExists(atPath: assets.appendingPathComponent(file).path) {
             throw HelperError("missing voice asset \(file)")
+        }
+        let home = assets.appendingPathComponent("reference")
+        let voiceReference = reference ?? home
+        for file in ["reference.wav", "reference.txt"]
+        where !FileManager.default.fileExists(atPath: voiceReference.appendingPathComponent(file).path) {
+            throw HelperError("missing \(file) in the --reference folder")
         }
         f5 = try F5TTS.fromPretrained(modelDirectoryURL: assets.appendingPathComponent("f5"))
         vocos = try Vocos.fromPretrained(modelDirectoryURL: assets.appendingPathComponent("vocos"))
@@ -137,15 +150,26 @@ final class Voice {
         // MLX loads lazily; evaluate so a loaded model means resident weights.
         MLX.eval(f5.parameters())
         MLX.eval(vocos.parameters())
-        refText = try String(contentsOf: assets.appendingPathComponent("reference/reference.txt"), encoding: .utf8)
+        refText = try String(contentsOf: voiceReference.appendingPathComponent("reference.txt"), encoding: .utf8)
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !refText.isEmpty else { throw HelperError("reference.txt is empty") }
-        let refAudio = try F5TTS.loadAudioArray(url: assets.appendingPathComponent("reference/reference.wav"))
+        let refAudio = try F5TTS.loadAudioArray(url: voiceReference.appendingPathComponent("reference.wav"))
         refSamples = refAudio.shape[0]
         refCond = F5TTS.normalizeAudio(audio: refAudio).expandedDimensions(axis: 0)
         MLX.eval(refCond)
         self.steps = steps
-        self.speed = speed
+        if voiceReference.standardizedFileURL.path == home.standardizedFileURL.path {
+            self.speed = speed
+        } else {
+            // The pace of <assets>/reference: its frames per byte against this reference's.
+            let homeText = try String(contentsOf: home.appendingPathComponent("reference.txt"), encoding: .utf8)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let homeSamples = try F5TTS.loadAudioArray(url: home.appendingPathComponent("reference.wav")).shape[0]
+            self.speed = paced(speed, frames: refSamples / F5TTS.hopLength, bytes: refText.utf8.count,
+                               homeFrames: homeSamples / F5TTS.hopLength, homeBytes: homeText.utf8.count)
+            log(String(format: "reference %@: speed %.3f is %.3f at its pace", voiceReference.lastPathComponent,
+                       speed, self.speed))
+        }
     }
 
     /// Duration in frames by F5's own rule (no duration model): reference frames plus
@@ -176,6 +200,13 @@ final class Voice {
         guard wave.shape[0] > refSamples else { return [] }
         return wave[refSamples...].asArray(Float.self)
     }
+}
+
+/// `speed` for a reference of `frames` frames and `bytes` bytes of text, so its text gets the
+/// frames per byte the home reference's would. The app works this out the same way
+/// (VoiceHelperSetup.pacedSpeed), so its frame count matches `Voice.frames`.
+func paced(_ speed: Double, frames: Int, bytes: Int, homeFrames: Int, homeBytes: Int) -> Double {
+    speed * (Double(frames) / Double(max(1, bytes))) / (Double(homeFrames) / Double(max(1, homeBytes)))
 }
 
 // MARK: - Output files
@@ -283,7 +314,7 @@ var voice: Voice?
 func loadedVoice() throws -> Voice {
     if let voice { return voice }
     let start = ContinuousClock.now
-    let loaded = try Voice(assets: assets, steps: options.steps, speed: options.speed)
+    let loaded = try Voice(assets: assets, steps: options.steps, speed: options.speed, reference: options.reference)
     voice = loaded
     log("model loaded in \(String(format: "%.2f", seconds(ContinuousClock.now - start))) s")
     return loaded

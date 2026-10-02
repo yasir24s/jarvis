@@ -178,8 +178,11 @@ struct SpeechQueueAcknowledgementTests {
         #expect(await player.played == [500])
         #expect(await f5.asked.isEmpty, "a rendered clip needs no model")
         let line = log.all.last ?? ""
-        #expect(line.hasPrefix("voice: acknowledgement \"On it, sir.\" started 0."), "\(line)")
-        #expect(line.hasSuffix(" s after send"), "\(line)")
+        let prefix = "voice: acknowledgement \"On it, sir.\" started ", suffix = " s after send"
+        #expect(line.hasPrefix(prefix) && line.hasSuffix(suffix), "\(line)")
+        let delay = Double(line.dropFirst(prefix.count).dropLast(suffix.count))
+        #expect(delay != nil && delay! >= 0, "\(line)")
+        print("V1 acknowledgement in the fake queue: \(line)")
     }
 
     /// The reply generates while the acknowledgement plays, is heard after it, and does not

@@ -11,8 +11,9 @@ import JarvisVoice
 final class AppVoice {
     let f5: F5Engine
     let queue: SpeechQueue
-    /// The voice assets, where the acknowledgements were rendered.
-    private let assets: URL
+    /// The helper's setup: the voice assets, where the acknowledgements were rendered, and the
+    /// reference the voice speaks with.
+    private let setup: VoiceHelperSetup
     /// The acknowledgements last played, oldest first (`Acknowledgement.recentLimit` of them).
     private var recentAcknowledgements: [String] = []
     /// Clips read so far, by file.
@@ -23,11 +24,12 @@ final class AppVoice {
         let folder = FileManager.default.temporaryDirectory.appending(path: "jarvis-voice", directoryHint: .isDirectory)
         // voiceSpeed is read for each reply and at each helper launch, never kept (U1 part 5).
         let setup = VoiceHelperSetup.inApp(log: folder.appending(path: "helper.log"))
-        assets = setup.assets
+        self.setup = setup
         let f5 = F5Engine(launcher: setup)
         self.f5 = f5
         queue = SpeechQueue(engine: f5, fallback: SayEngine(), player: EnginePlayer(),
-                            speed: VoiceHelperSetup.speedFromDefaults, tooLong: { f5.tooLong($0) },
+                            speed: VoiceHelperSetup.speedFromDefaults, reference: { setup.reference },
+                            tooLong: { f5.tooLong($0) },
                             helperFootprintMB: { f5.lastFootprintMB },
                             log: { JarvisLog.log($0, category: .voice) })
     }
@@ -46,10 +48,14 @@ final class AppVoice {
     var isSpeaking: Bool { inFlight > 0 }
 
     /// V1 part 1: plays an acknowledgement of a typed message the moment it is sent (Speak
-    /// replies on). Without the rendered clip nothing plays, and that is logged once.
+    /// replies on), rendered with the reference the voice speaks with, or else with the
+    /// default one. Without a rendered clip nothing plays, and that is logged once.
     func acknowledge(_ message: String, sentAt: ContinuousClock.Instant) {
         let line = Acknowledgement.choose(for: message, recent: recentAcknowledgements)
-        guard let clip = clip(Acknowledgement.clipURL(line, assets: assets, reference: "default")) else { return }
+        let rendered = Acknowledgement.clipURL(line, assets: setup.assets, reference: setup.reference)
+        let fallback = Acknowledgement.clipURL(line, assets: setup.assets, reference: VoiceHelperSetup.defaultReference)
+        let url = FileManager.default.fileExists(atPath: rendered.path(percentEncoded: false)) ? rendered : fallback
+        guard let clip = clip(url) else { return }
         recentAcknowledgements = Array((recentAcknowledgements + [line.name]).suffix(Acknowledgement.recentLimit))
         let queue = self.queue
         inFlight += 1
