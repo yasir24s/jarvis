@@ -3,7 +3,7 @@ import JarvisBrain
 import JarvisChat
 import SwiftUI
 
-/// The menu-bar menu (plan: M02-M04 §3.12): Open Chat, the last backend, the "Speak replies"
+/// The menu-bar menu (plan: M02-M04 §3.12): Open Chat, M10's "Set Up JARVIS…", the last backend, the "Speak replies"
 /// toggle, M9a's "Brain", M8's "Stop Speaking", P6's "Learn About Me From My Files", UI1's
 /// "Show HUD", U1's "Update Ready" and "Update Now" while a build waits, M0's state-root and lock
 /// lines, and Quit. DEBUG builds add "Test confirmation".
@@ -29,6 +29,7 @@ struct MenuBarMenu: View {
             openWindow(id: ChatView.windowID)
             NSApp.activate()
         }
+        SetUpItem()
         Text(chat.backendLine)
         // The input to the user's speak policy (SpeakPolicy.swift); it persists across launches.
         Toggle("Speak replies", isOn: $speak.isOn)
@@ -59,7 +60,7 @@ struct MenuBarMenu: View {
 }
 
 /// The app menu's items after About Jarvis (the CommandGroup in JarvisSwiftUIApp), as a view so
-/// the tests can build the menu: M8's "Stop Speaking", M9a's "Brain", P6's file learning, UI1's
+/// the tests can build the menu: M10's "Set Up JARVIS…", M8's "Stop Speaking", M9a's "Brain", P6's file learning, UI1's
 /// "Show HUD" and U1's update items, as in the menu-bar menu.
 struct AppMenuItems: View {
     let stopSpeaking: () -> Void
@@ -70,11 +71,26 @@ struct AppMenuItems: View {
     let updates: UpdateWatcher
 
     var body: some View {
+        SetUpItem()
         Button("Stop Speaking") { stopSpeaking() }
         BrainPicker(setting: brain)
         FileLearningToggle(consent: learn)
         ShowHUDToggle(setting: showHUD, hud: hud)
         UpdateMenuItems(updates: updates)
+    }
+}
+
+/// M10 part 4: "Set Up JARVIS…", in the app menu and the menu-bar menu: the setup window again,
+/// to re-record the voice or change a choice.
+struct SetUpItem: View {
+    static let title = "Set Up JARVIS…"
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Button(Self.title) {
+            openWindow(id: SetupView.windowID)
+            NSApp.activate()
+        }
     }
 }
 

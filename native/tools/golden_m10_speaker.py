@@ -21,6 +21,8 @@ included). Long arrays are given as a SHA-256 of those bytes, with every 97th va
     m10_rz_embed       jarvis._embed(AudioData) per input
     m10_speaker        enroll_voice, the np.save bytes, speaker_ok at both thresholds with the sim,
                        _barge_in_speaker_match, the gate off, no voiceprint, forget_voice
+    m10_enrol_record   enroll_voice with its takes from speech_recognition's real
+                       Recognizer.record(source, duration=4) over a 16 kHz source, CHUNK 1280
 """
 import ast
 import base64
@@ -409,3 +411,58 @@ def speaker(ctx):
     cases.append({"name": "forget", "input": {}, "expected": {
         "reply": first, "file_removed": gone, "reply_again": second}})
     return cases
+
+
+@suite("m10_enrol_record")
+def enrol_record(ctx):
+    """The takes as Python records them: the real Recognizer.record(source, duration=4) (J:5236)
+    over a source like JARVIS's microphone (16 kHz, 16-bit, CHUNK = OWW_FRAME_SAMPLES = 1280,
+    J:5518), which serves one corpus clip per take, then the real enroll_voice on them."""
+    J = ctx.J
+    sr = J.sr
+    spoken = []
+    J.speak, J.chime, J.log = spoken.append, (lambda *a: None), (lambda *a: None)
+
+    class ClipStream:
+        def __init__(self):
+            self.data, self.pos, self.reads = b"", 0, 0
+
+        def read(self, frames):                          # PyAudio: `frames` samples of 2 bytes
+            out = self.data[self.pos:self.pos + frames * 2]
+            self.pos += frames * 2
+            self.reads += 1
+            return out
+
+    class ClipSource(sr.AudioSource):
+        def __init__(self):
+            self.SAMPLE_RATE, self.SAMPLE_WIDTH, self.CHUNK = RATE, 2, J.OWW_FRAME_SAMPLES
+            self.stream = ClipStream()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    class TakeRecognizer(sr.Recognizer):
+        """The real record(), with the next clip put in the stream first."""
+        def __init__(self, clips):
+            super().__init__()
+            self.clips, self.kept, self.reads = list(clips), [], []
+
+        def record(self, source, duration=None, offset=None):
+            source.stream.data, source.stream.pos, source.stream.reads = self.clips.pop(0).tobytes(), 0, 0
+            audio = sr.Recognizer.record(self, source, duration=duration, offset=offset)
+            self.kept.append(len(audio.get_raw_data()) // 2)
+            self.reads.append(source.stream.reads)
+            return audio
+
+    vp_path = Path(J.VOICEPRINT_FILE)
+    vp_path.unlink(missing_ok=True)
+    J._voiceprint = None
+    rec = TakeRecognizer([_pcm({"clip": c}) for c in ENROL])
+    J.enroll_voice(rec, ClipSource())
+    data = vp_path.read_bytes() if vp_path.exists() else None
+    return [{"name": "enroll_recorded", "input": {"takes": ENROL, "chunk": J.OWW_FRAME_SAMPLES, "duration": 4},
+             "expected": {"kept_samples": rec.kept, "chunks_read": rec.reads, "spoken": spoken,
+                          "npy_b64": None if data is None else base64.b64encode(data).decode("ascii")}}]

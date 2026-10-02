@@ -119,7 +119,7 @@ public actor Voiceprint {
     }
 
     public let url: URL
-    private let encoder: SpeakerEncoder
+    let encoder: SpeakerEncoder
     private let research: any ResearchCounting
     private let log: @Sendable (String) -> Void
     public let speakerThreshold: Double
@@ -176,8 +176,10 @@ public actor Voiceprint {
 
     /// enroll_voice after the takes are recorded (three `record(duration=4)` calls in Python):
     /// preprocess each take, keep those over 12800 samples, embed them, average, normalise with
-    /// `+ 1e-9`, and save atomically. Throws, saving nothing, when the encoder cannot load
-    /// (Python then says `Lines.notReady`) or the file cannot be written.
+    /// `+ 1e-9`, and save atomically. A voiceprint already there is kept as
+    /// `voiceprint.npy.previous` first (M10 part 4; Python overwrites it). Throws, saving
+    /// nothing, when the encoder cannot load (Python then says `Lines.notReady`) or the file
+    /// cannot be written.
     public func enroll(takes: [[Int16]]) async throws -> EnrollOutcome {
         try await encoder.prepare()
         var embeddings: [[Float]] = []
@@ -191,7 +193,7 @@ public actor Voiceprint {
         }
         guard !embeddings.isEmpty else { return .nothingCaptured }
         let print = Self.enrolled(embeddings)
-        try Self.save(print, to: url)
+        try Self.saveKeepingPrevious(print, to: url)
         vector = print
         log("Voiceprint enrolled and saved.")
         return .saved(takes: embeddings.count)
@@ -234,6 +236,28 @@ public actor Voiceprint {
             try? FileManager.default.removeItem(at: tmp)
             throw CocoaError(.fileWriteUnknown, userInfo: [NSUnderlyingErrorKey: POSIXError(POSIXErrorCode(rawValue: code) ?? .EIO)])
         }
+    }
+
+    /// Where `saveKeepingPrevious` keeps the voiceprint it replaces: `voiceprint.npy.previous`.
+    public static func previousURL(for url: URL) -> URL {
+        url.deletingLastPathComponent().appendingPathComponent(url.lastPathComponent + ".previous")
+    }
+
+    /// `save`, after copying the file already at `url`, if any, to `previousURL(for:)`, also
+    /// through a temporary file and a rename. `url` always holds a whole voiceprint, the old one
+    /// or the new one, never neither.
+    public static func saveKeepingPrevious(_ vector: [Float], to url: URL) throws {
+        if let old = try? Data(contentsOf: url) {
+            let previous = previousURL(for: url)
+            let tmp = url.deletingLastPathComponent().appendingPathComponent(".\(previous.lastPathComponent).\(UUID().uuidString).tmp")
+            try old.write(to: tmp)
+            guard rename(tmp.path, previous.path) == 0 else {
+                let code = errno
+                try? FileManager.default.removeItem(at: tmp)
+                throw CocoaError(.fileWriteUnknown, userInfo: [NSUnderlyingErrorKey: POSIXError(POSIXErrorCode(rawValue: code) ?? .EIO)])
+            }
+        }
+        try save(vector, to: url)
     }
 
     /// Python's f"{sim:.2f}".

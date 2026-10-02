@@ -30,6 +30,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let brainSetting = BrainSetting(claudeEnabled: ClaudeConfig(environment: ProcessInfo.processInfo.environment).enabled)
     /// P6: "Learn About Me From My Files", the user's consent to the file scanner.
     let fileLearning = FileLearningConsent()
+    /// M10 part 4: whether setup is done (`setupCompleted`), the voiceprint as the setup window
+    /// and the menus show it, and the setup window's steps.
+    let setupCompletion = SetupCompletion()
+    let voiceStatus = VoiceprintStatus()
+    private(set) lazy var setup = SetupModel(
+        completion: setupCompletion, status: voiceStatus, fileLearning: fileLearning, speakReplies: speakReplies,
+        permissions: SystemPermissions(), recorder: TakeRecorder(log: { JarvisLog.log($0, category: .voice) }),
+        speak: { [weak self] line in self?.speakSetupLine(line) },
+        log: { JarvisLog.log($0, category: .voice) })
+    /// M10: the user's voiceprint, built with the brain once the lock is held and loaded as
+    /// Python's `_load_voiceprint()` is at start. The setup window enrols through it.
+    private(set) var speaker: Voiceprint?
     /// UI1 part 3: the floating HUD's state and the menus' "Show HUD"; the panel, unless
     /// JARVIS_NO_HUD=1.
     let showHUD = ShowHUDSetting()
@@ -358,6 +370,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let lease = InstanceLockLease(lock)
         let researchPaths = ResearchPaths(paths)
         let research = UsageStore(paths: researchPaths, lease: lease)
+        startSpeaker(paths: paths, research: research)
         let store: StateStore
         do {
             store = try StateStore(root: paths.root.path(percentEncoded: false), lease: lease)
@@ -515,6 +528,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The menus' "Stop Speaking": the reply being spoken stops, and so does anything queued.
     func stopSpeaking() {
         voice?.stop()
+    }
+
+    /// M10: the voiceprint store, over the state root's voiceprint.npy and the bundle's speaker
+    /// model. Built before the state store, so a store that will not open leaves it working.
+    private func startSpeaker(paths: StatePaths, research: any ResearchCounting) {
+        let log: @Sendable (String) -> Void = { JarvisLog.log($0, category: .voice) }
+        let speaker = Voiceprint(url: paths.voiceprint, encoder: SpeakerEncoder(assets: .appBundle(), log: log),
+                                 research: research, log: log)
+        self.speaker = speaker
+        Task { @MainActor in
+            await speaker.load()
+            self.voiceStatus.loaded(enrolled: await speaker.isEnrolled)
+            self.setup.attach(speaker)
+        }
+    }
+
+    /// The setup window's lines in his voice (the welcome), once the voice is built; until then
+    /// they are only shown.
+    private func speakSetupLine(_ line: String) {
+        guard let voice else {
+            JarvisLog.log("setup: the voice is not ready; the line is shown, not spoken", category: .voice)
+            return
+        }
+        voice.speak(line, turn: UUID())
     }
 
     /// UI1 part 3: the HUD thinks while a turn from the chat runs, with the message as its

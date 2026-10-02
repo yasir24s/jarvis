@@ -31,6 +31,15 @@ struct JarvisSwiftUIApp: App {
             }
         }
 
+        // M10 part 4: the first-launch setup, while `setupCompleted` is absent, and from the
+        // menus' "Set Up JARVIS…".
+        Window("Set Up JARVIS", id: SetupView.windowID) {
+            SetupView(model: appDelegate.setup)
+        }
+        .windowResizability(.contentSize)
+        .defaultLaunchBehavior(SetupCompletion.opensAtLaunch(arguments: CommandLine.arguments) ? .presented : .suppressed)
+        .restorationBehavior(.disabled)
+
         MenuBarExtra("JARVIS", systemImage: "circle.hexagongrid.fill") {
             #if DEBUG
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,

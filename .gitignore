@@ -4,6 +4,9 @@ audd_key.txt
 .jarvis_config.json
 *_config.json
 voiceprint.npy
+# M10: the voiceprint a new enrolment replaced, and a save's temporary files
+voiceprint.npy.previous
+.voiceprint.npy*.tmp
 knowledge.json
 profile.json
 personality.json
