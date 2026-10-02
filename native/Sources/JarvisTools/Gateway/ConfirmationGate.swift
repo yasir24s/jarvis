@@ -31,8 +31,10 @@ public struct InputPort: Sendable {
 
 /// How a spoken affirmation proves it is the owner's (M9a part 6, D-41: native security wins over
 /// Python's voiceprint-only gate, which passes anyone while no voiceprint is enrolled). This is
-/// the one seam: until a voiceprint exists a spoken "yes" must pass the owner check a typed one
-/// passes. M10 adds its route here (a matching voice, failing closed).
+/// the one seam, and M10 leaves it unused on purpose: a spoken "yes" passes the owner check a
+/// typed one passes, even with a voiceprint enrolled. A voice match is too weak to authorise an
+/// action (in M10's tests a synthetic voice of another speaker scored 0.65 against the 0.60
+/// bar), so there is no voiceprint route here.
 public enum VoiceConfirmation: Sendable {
     /// Touch ID or the login password, the same check as a typed confirmation.
     case ownerCheck(any ConfirmAuthenticator)

@@ -1,0 +1,896 @@
+{
+ "schema": 1,
+ "suite": "m10_thresholds",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "expressions",
+   "input": {},
+   "expected": {
+    "SPEAKER_THRESHOLD": "float(os.environ.get('JARVIS_SPK_THRESH', '0.60'))",
+    "WAKE_SPK_THRESHOLD": "float(os.environ.get('JARVIS_WAKE_SPK_THRESH', '0.38'))"
+   }
+  },
+  {
+   "name": "value_00",
+   "input": {
+    "value": null
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.6",
+     "bits": "333333333333e33f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.38",
+     "bits": "52b81e85eb51d83f"
+    }
+   }
+  },
+  {
+   "name": "value_01",
+   "input": {
+    "value": "0.60"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.6",
+     "bits": "333333333333e33f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.6",
+     "bits": "333333333333e33f"
+    }
+   }
+  },
+  {
+   "name": "value_02",
+   "input": {
+    "value": "0.6"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.6",
+     "bits": "333333333333e33f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.6",
+     "bits": "333333333333e33f"
+    }
+   }
+  },
+  {
+   "name": "value_03",
+   "input": {
+    "value": "0.5"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    }
+   }
+  },
+  {
+   "name": "value_04",
+   "input": {
+    "value": " 0.7 "
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.7",
+     "bits": "666666666666e63f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.7",
+     "bits": "666666666666e63f"
+    }
+   }
+  },
+  {
+   "name": "value_05",
+   "input": {
+    "value": "\t0.65\n"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.65",
+     "bits": "cdcccccccccce43f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.65",
+     "bits": "cdcccccccccce43f"
+    }
+   }
+  },
+  {
+   "name": "value_06",
+   "input": {
+    "value": "\u000b0.4\f"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.4",
+     "bits": "9a9999999999d93f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.4",
+     "bits": "9a9999999999d93f"
+    }
+   }
+  },
+  {
+   "name": "value_07",
+   "input": {
+    "value": "1e-1"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.1",
+     "bits": "9a9999999999b93f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.1",
+     "bits": "9a9999999999b93f"
+    }
+   }
+  },
+  {
+   "name": "value_08",
+   "input": {
+    "value": "+.5"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    }
+   }
+  },
+  {
+   "name": "value_09",
+   "input": {
+    "value": "5."
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "5.0",
+     "bits": "0000000000001440"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "5.0",
+     "bits": "0000000000001440"
+    }
+   }
+  },
+  {
+   "name": "value_10",
+   "input": {
+    "value": "-0.2"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "-0.2",
+     "bits": "9a9999999999c9bf"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "-0.2",
+     "bits": "9a9999999999c9bf"
+    }
+   }
+  },
+  {
+   "name": "value_11",
+   "input": {
+    "value": "0"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.0",
+     "bits": "0000000000000000"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.0",
+     "bits": "0000000000000000"
+    }
+   }
+  },
+  {
+   "name": "value_12",
+   "input": {
+    "value": "1"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "1.0",
+     "bits": "000000000000f03f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "1.0",
+     "bits": "000000000000f03f"
+    }
+   }
+  },
+  {
+   "name": "value_13",
+   "input": {
+    "value": "1E2"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "100.0",
+     "bits": "0000000000005940"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "100.0",
+     "bits": "0000000000005940"
+    }
+   }
+  },
+  {
+   "name": "value_14",
+   "input": {
+    "value": "0.1234567890123456789"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.12345678901234568",
+     "bits": "5ff64637dd9abf3f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.12345678901234568",
+     "bits": "5ff64637dd9abf3f"
+    }
+   }
+  },
+  {
+   "name": "value_15",
+   "input": {
+    "value": "1e400"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "inf",
+     "bits": "000000000000f07f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "inf",
+     "bits": "000000000000f07f"
+    }
+   }
+  },
+  {
+   "name": "value_16",
+   "input": {
+    "value": "-1e400"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "-inf",
+     "bits": "000000000000f0ff"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "-inf",
+     "bits": "000000000000f0ff"
+    }
+   }
+  },
+  {
+   "name": "value_17",
+   "input": {
+    "value": "1e-400"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.0",
+     "bits": "0000000000000000"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.0",
+     "bits": "0000000000000000"
+    }
+   }
+  },
+  {
+   "name": "value_18",
+   "input": {
+    "value": "inf"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "inf",
+     "bits": "000000000000f07f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "inf",
+     "bits": "000000000000f07f"
+    }
+   }
+  },
+  {
+   "name": "value_19",
+   "input": {
+    "value": "-Infinity"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "-inf",
+     "bits": "000000000000f0ff"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "-inf",
+     "bits": "000000000000f0ff"
+    }
+   }
+  },
+  {
+   "name": "value_20",
+   "input": {
+    "value": "INF"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "inf",
+     "bits": "000000000000f07f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "inf",
+     "bits": "000000000000f07f"
+    }
+   }
+  },
+  {
+   "name": "value_21",
+   "input": {
+    "value": "+inf"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "inf",
+     "bits": "000000000000f07f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "inf",
+     "bits": "000000000000f07f"
+    }
+   }
+  },
+  {
+   "name": "value_22",
+   "input": {
+    "value": "nan"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "nan",
+     "bits": "000000000000f87f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "nan",
+     "bits": "000000000000f87f"
+    }
+   }
+  },
+  {
+   "name": "value_23",
+   "input": {
+    "value": "NaN"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "nan",
+     "bits": "000000000000f87f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "nan",
+     "bits": "000000000000f87f"
+    }
+   }
+  },
+  {
+   "name": "value_24",
+   "input": {
+    "value": "-nan"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "nan",
+     "bits": "000000000000f8ff"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "nan",
+     "bits": "000000000000f8ff"
+    }
+   }
+  },
+  {
+   "name": "value_25",
+   "input": {
+    "value": "+NAN"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "nan",
+     "bits": "000000000000f87f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "nan",
+     "bits": "000000000000f87f"
+    }
+   }
+  },
+  {
+   "name": "value_26",
+   "input": {
+    "value": "infinit"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_27",
+   "input": {
+    "value": "nan(1)"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_28",
+   "input": {
+    "value": "0_6"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "6.0",
+     "bits": "0000000000001840"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "6.0",
+     "bits": "0000000000001840"
+    }
+   }
+  },
+  {
+   "name": "value_29",
+   "input": {
+    "value": "0.6_0"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.6",
+     "bits": "333333333333e33f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.6",
+     "bits": "333333333333e33f"
+    }
+   }
+  },
+  {
+   "name": "value_30",
+   "input": {
+    "value": "1_000"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "1000.0",
+     "bits": "0000000000408f40"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "1000.0",
+     "bits": "0000000000408f40"
+    }
+   }
+  },
+  {
+   "name": "value_31",
+   "input": {
+    "value": "1__0"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_32",
+   "input": {
+    "value": "_1"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_33",
+   "input": {
+    "value": "1_"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_34",
+   "input": {
+    "value": "1_.5"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_35",
+   "input": {
+    "value": "1._5"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_36",
+   "input": {
+    "value": "1e1_0"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "10000000000.0",
+     "bits": "000000205fa00242"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "10000000000.0",
+     "bits": "000000205fa00242"
+    }
+   }
+  },
+  {
+   "name": "value_37",
+   "input": {
+    "value": "0x1"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_38",
+   "input": {
+    "value": "0.6.0"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_39",
+   "input": {
+    "value": ""
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_40",
+   "input": {
+    "value": "  "
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_41",
+   "input": {
+    "value": "abc"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_42",
+   "input": {
+    "value": "1e"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_43",
+   "input": {
+    "value": "1e+"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_44",
+   "input": {
+    "value": "."
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_45",
+   "input": {
+    "value": "-"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_46",
+   "input": {
+    "value": "+"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_47",
+   "input": {
+    "value": ".e1"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_48",
+   "input": {
+    "value": "١٢"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "12.0",
+     "bits": "0000000000002840"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "12.0",
+     "bits": "0000000000002840"
+    }
+   }
+  },
+  {
+   "name": "value_49",
+   "input": {
+    "value": "０.５"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    }
+   }
+  },
+  {
+   "name": "value_50",
+   "input": {
+    "value": "٠.٥"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    }
+   }
+  },
+  {
+   "name": "value_51",
+   "input": {
+    "value": " 0.5"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    }
+   }
+  },
+  {
+   "name": "value_52",
+   "input": {
+    "value": "0.5 "
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    }
+   }
+  },
+  {
+   "name": "value_53",
+   "input": {
+    "value": "　0.5　"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "repr": "0.5",
+     "bits": "000000000000e03f"
+    }
+   }
+  },
+  {
+   "name": "value_54",
+   "input": {
+    "value": "\u001c0.5"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_55",
+   "input": {
+    "value": "0.5"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  },
+  {
+   "name": "value_56",
+   "input": {
+    "value": "0.5\u0000"
+   },
+   "expected": {
+    "SPEAKER_THRESHOLD": {
+     "error": "ValueError"
+    },
+    "WAKE_SPK_THRESHOLD": {
+     "error": "ValueError"
+    }
+   }
+  }
+ ]
+}

@@ -70,6 +70,9 @@ final class VoiceprintStatus {
         ready = true
     }
 
+    /// The menus' line.
+    var menuLine: String { enrolled ? "Voice: enrolled" : "Voice: not enrolled" }
+
     /// After Forget My Voice.
     func forgotten() {
         defaults.removeObject(forKey: Self.recordedKey)

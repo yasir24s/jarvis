@@ -122,17 +122,19 @@ public actor Voiceprint {
     let encoder: SpeakerEncoder
     private let research: any ResearchCounting
     private let log: @Sendable (String) -> Void
-    public let speakerThreshold: Double
+    /// SPEAKER_THRESHOLD and WAKE_SPK_THRESHOLD; the app reads them from the environment.
+    public let thresholds: SpeakerThresholds
+    public var speakerThreshold: Double { thresholds.speaker }
     private(set) var vector: [Float]?
     /// `_spk_enabled`: off, speakerOK accepts everything (barge-in is not affected, as in Python).
     public var enabled = true
 
     public init(url: URL, encoder: SpeakerEncoder, research: any ResearchCounting,
-                speakerThreshold: Double = Voiceprint.threshold, log: @escaping @Sendable (String) -> Void) {
+                thresholds: SpeakerThresholds = .defaults, log: @escaping @Sendable (String) -> Void) {
         self.url = url
         self.encoder = encoder
         self.research = research
-        self.speakerThreshold = speakerThreshold
+        self.thresholds = thresholds
         self.log = log
     }
 
@@ -199,10 +201,13 @@ public actor Voiceprint {
         return .saved(takes: embeddings.count)
     }
 
-    /// `forget_voice()`: delete the file (errors ignored) and forget the voiceprint.
+    /// `forget_voice()`: delete the file (errors ignored) and forget the voiceprint. The one kept
+    /// by the last enrolment, voiceprint.npy.previous, is deleted too (Python has no such
+    /// file), so Forget My Voice leaves no copy behind.
     @discardableResult
     public func forget() -> String {
         try? FileManager.default.removeItem(at: url)
+        try? FileManager.default.removeItem(at: Self.previousURL(for: url))
         vector = nil
         return Lines.cleared
     }

@@ -42,6 +42,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// M10: the user's voiceprint, built with the brain once the lock is held and loaded as
     /// Python's `_load_voiceprint()` is at start. The setup window enrols through it.
     private(set) var speaker: Voiceprint?
+    /// M10 part 5, for M11: hands-free audio's speaker check (speaker_ok, barge-in). Nil until
+    /// the voiceprint store is built. Push-to-talk never asks it.
+    var speakerGate: (any SpeakerVerifying)? { speaker }
     /// UI1 part 3: the floating HUD's state and the menus' "Show HUD"; the panel, unless
     /// JARVIS_NO_HUD=1.
     let showHUD = ShowHUDSetting()
@@ -462,8 +465,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Python's is_online(): asked only when a turn reaches the brain.
             online: { await Net.isOnline() },
             // M9a part 6 (D-41): a spoken confirmation passes the same owner check, a fresh
-            // LAContext each time, until M10's voiceprint. Not the counting wrapper: the
-            // text_confirm_* counters count typed confirmations only.
+            // LAContext each time; M10 adds no voiceprint route (see VoiceConfirmation). Not the
+            // counting wrapper: the text_confirm_* counters count typed confirmations only.
             voiceConfirmation: .ownerCheck(LAConfirmAuthenticator()),
             // M9a part 7: the menus' Brain item, read from UserDefaults as each turn begins.
             brainChoice: { BrainSetting.stored(in: .standard) })
@@ -534,13 +537,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// model. Built before the state store, so a store that will not open leaves it working.
     private func startSpeaker(paths: StatePaths, research: any ResearchCounting) {
         let log: @Sendable (String) -> Void = { JarvisLog.log($0, category: .voice) }
+        // SPEAKER_THRESHOLD and WAKE_SPK_THRESHOLD from the environment, as jarvis.py reads them.
         let speaker = Voiceprint(url: paths.voiceprint, encoder: SpeakerEncoder(assets: .appBundle(), log: log),
-                                 research: research, log: log)
+                                 research: research, thresholds: .from(ProcessInfo.processInfo.environment, log: log),
+                                 log: log)
         self.speaker = speaker
         Task { @MainActor in
             await speaker.load()
             self.voiceStatus.loaded(enrolled: await speaker.isEnrolled)
             self.setup.attach(speaker)
+        }
+    }
+
+    /// The menus' "Forget My Voice…": asks, then deletes the voiceprint (M10 part 5).
+    func forgetVoice() {
+        Task { @MainActor in
+            await ForgetMyVoice.run(ask: ForgetMyVoice.askWithAlert, voiceprint: speaker, status: voiceStatus,
+                                    log: { JarvisLog.log($0, category: .voice) })
         }
     }
 

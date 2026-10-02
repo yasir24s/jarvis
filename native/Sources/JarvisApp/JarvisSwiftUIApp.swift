@@ -27,7 +27,8 @@ struct JarvisSwiftUIApp: App {
             CommandGroup(after: .appInfo) {
                 AppMenuItems(stopSpeaking: { appDelegate.stopSpeaking() }, brain: appDelegate.brainSetting,
                              learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
-                             updates: appDelegate.updates)
+                             updates: appDelegate.updates, voice: appDelegate.voiceStatus,
+                             forgetVoice: { appDelegate.forgetVoice() })
             }
         }
 
@@ -44,13 +45,15 @@ struct JarvisSwiftUIApp: App {
             #if DEBUG
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
                         brain: appDelegate.brainSetting, learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
-                        updates: appDelegate.updates,
+                        updates: appDelegate.updates, voice: appDelegate.voiceStatus,
+                        forgetVoice: { appDelegate.forgetVoice() },
                         stopSpeaking: { appDelegate.stopSpeaking() },
                         testConfirmation: { appDelegate.stashTestConfirmation() })
             #else
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
                         brain: appDelegate.brainSetting, learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
-                        updates: appDelegate.updates,
+                        updates: appDelegate.updates, voice: appDelegate.voiceStatus,
+                        forgetVoice: { appDelegate.forgetVoice() },
                         stopSpeaking: { appDelegate.stopSpeaking() })
             #endif
         }

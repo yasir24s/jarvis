@@ -35,9 +35,10 @@ enum Entry {
         if arguments.contains("--selftest") {
             exit(SelfTest.run())
         }
-        // M10 T0.3: the vendored libraries load inside the signed bundle (headless).
+        // M10 T0.3: the vendored libraries load inside the signed bundle (headless), and ORT
+        // embeds a clip: `--selftest-dlopen [<clip.wav> [<m10_rz_embed.golden.json>]]`.
         if arguments.first == DlopenSelfTest.flag {
-            exit(DlopenSelfTest.run())
+            exit(DlopenSelfTest.run(arguments: Array(arguments.dropFirst())))
         }
         // P6: the one-time import of Python JARVIS's memory, only when asked for.
         if arguments.first == PythonImportMain.flag {

@@ -3,7 +3,8 @@ import JarvisBrain
 import JarvisChat
 import SwiftUI
 
-/// The menu-bar menu (plan: M02-M04 §3.12): Open Chat, M10's "Set Up JARVIS…", the last backend, the "Speak replies"
+/// The menu-bar menu (plan: M02-M04 §3.12): Open Chat, M10's "Set Up JARVIS…", "Voice: …" and
+/// "Forget My Voice…", the last backend, the "Speak replies"
 /// toggle, M9a's "Brain", M8's "Stop Speaking", P6's "Learn About Me From My Files", UI1's
 /// "Show HUD", U1's "Update Ready" and "Update Now" while a build waits, M0's state-root and lock
 /// lines, and Quit. DEBUG builds add "Test confirmation".
@@ -16,6 +17,9 @@ struct MenuBarMenu: View {
     let showHUD: ShowHUDSetting
     let hud: HUDModel
     let updates: UpdateWatcher
+    /// M10 part 5: the voiceprint's line and Forget My Voice (AppDelegate.forgetVoice).
+    let voice: VoiceprintStatus
+    let forgetVoice: () -> Void
     /// Stops the reply being spoken and anything queued (AppDelegate.stopSpeaking).
     let stopSpeaking: () -> Void
     #if DEBUG
@@ -30,6 +34,7 @@ struct MenuBarMenu: View {
             NSApp.activate()
         }
         SetUpItem()
+        VoiceMenuItems(status: voice, forget: forgetVoice)
         Text(chat.backendLine)
         // The input to the user's speak policy (SpeakPolicy.swift); it persists across launches.
         Toggle("Speak replies", isOn: $speak.isOn)
@@ -60,7 +65,8 @@ struct MenuBarMenu: View {
 }
 
 /// The app menu's items after About Jarvis (the CommandGroup in JarvisSwiftUIApp), as a view so
-/// the tests can build the menu: M10's "Set Up JARVIS…", M8's "Stop Speaking", M9a's "Brain", P6's file learning, UI1's
+/// the tests can build the menu: M10's "Set Up JARVIS…", "Voice: …" and "Forget My Voice…",
+/// M8's "Stop Speaking", M9a's "Brain", P6's file learning, UI1's
 /// "Show HUD" and U1's update items, as in the menu-bar menu.
 struct AppMenuItems: View {
     let stopSpeaking: () -> Void
@@ -69,9 +75,12 @@ struct AppMenuItems: View {
     let showHUD: ShowHUDSetting
     let hud: HUDModel
     let updates: UpdateWatcher
+    let voice: VoiceprintStatus
+    let forgetVoice: () -> Void
 
     var body: some View {
         SetUpItem()
+        VoiceMenuItems(status: voice, forget: forgetVoice)
         Button("Stop Speaking") { stopSpeaking() }
         BrainPicker(setting: brain)
         FileLearningToggle(consent: learn)

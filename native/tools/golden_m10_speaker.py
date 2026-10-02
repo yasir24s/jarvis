@@ -23,6 +23,7 @@ included). Long arrays are given as a SHA-256 of those bytes, with every 97th va
                        _barge_in_speaker_match, the gate off, no voiceprint, forget_voice
     m10_enrol_record   enroll_voice with its takes from speech_recognition's real
                        Recognizer.record(source, duration=4) over a 16 kHz source, CHUNK 1280
+    m10_thresholds     SPEAKER_THRESHOLD and WAKE_SPK_THRESHOLD for 57 environment values
 """
 import ast
 import base64
@@ -466,3 +467,49 @@ def enrol_record(ctx):
     return [{"name": "enroll_recorded", "input": {"takes": ENROL, "chunk": J.OWW_FRAME_SAMPLES, "duration": 4},
              "expected": {"kept_samples": rec.kept, "chunks_read": rec.reads, "spoken": spoken,
                           "npy_b64": None if data is None else base64.b64encode(data).decode("ascii")}}]
+
+
+THRESHOLD_INPUTS = [
+    None, "0.60", "0.6", "0.5", " 0.7 ", "\t0.65\n", "\x0b0.4\x0c", "1e-1", "+.5", "5.", "-0.2", "0", "1", "1E2",
+    "0.1234567890123456789", "1e400", "-1e400", "1e-400", "inf", "-Infinity", "INF", "+inf", "nan", "NaN", "-nan",
+    "+NAN", "infinit", "nan(1)", "0_6", "0.6_0", "1_000", "1__0", "_1", "1_", "1_.5", "1._5", "1e1_0", "0x1", "0.6.0",
+    "", "  ", "abc", "1e", "1e+", ".", "-", "+", ".e1", "١٢", "０.５", "٠.٥",
+    " 0.5", "0.5 ", "　0.5　", "\x1c0.5", "0.5\x7f", "0.5\x00",
+]
+
+
+def _threshold_expressions(J):
+    """jarvis.py's two module-level threshold assignments, read from its AST (not retyped)."""
+    tree = ast.parse(open(J.__file__, encoding="utf-8").read())
+    found = {}
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            if node.targets[0].id in ("SPEAKER_THRESHOLD", "WAKE_SPK_THRESHOLD"):
+                found[node.targets[0].id] = node.value
+    if set(found) != {"SPEAKER_THRESHOLD", "WAKE_SPK_THRESHOLD"}:
+        raise AssertionError(f"jarvis.py threshold assignments: {sorted(found)}")
+    return {k: (compile(ast.Expression(v), k, "eval"), ast.unparse(v)) for k, v in found.items()}
+
+
+@suite("m10_thresholds")
+def thresholds(ctx):
+    """SPEAKER_THRESHOLD and WAKE_SPK_THRESHOLD for each environment value: jarvis.py's own
+    expressions, evaluated with os.environ replaced by a dict holding only that variable."""
+    import struct
+    import types
+    J = ctx.J
+    exprs = _threshold_expressions(J)
+    cases = [{"name": "expressions", "input": {},
+              "expected": {k: text for k, (_, text) in sorted(exprs.items())}}]
+    for k, raw in enumerate(THRESHOLD_INPUTS):
+        expected = {}
+        for name, variable in (("SPEAKER_THRESHOLD", "JARVIS_SPK_THRESH"), ("WAKE_SPK_THRESHOLD", "JARVIS_WAKE_SPK_THRESH")):
+            env = {} if raw is None else {variable: raw}
+            fake_os = types.SimpleNamespace(environ=env)
+            try:
+                value = eval(exprs[name][0], {"os": fake_os, "float": float})
+                expected[name] = {"repr": repr(value), "bits": struct.pack("<d", value).hex()}
+            except ValueError as e:
+                expected[name] = {"error": type(e).__name__}
+        cases.append({"name": f"value_{k:02d}", "input": {"value": raw}, "expected": expected})
+    return cases

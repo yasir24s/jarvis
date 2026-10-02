@@ -7,7 +7,9 @@ import JarvisVoice
 /// microphone opens in `begin` and closes in `finish` or `cancel`; between sessions nothing holds
 /// it. The transcriber is told the vocabulary (`WHISPER_PROMPT`'s words, the profile name and the
 /// last 12 corrections), drops results under `STT_MIN_CONF` (bumping `stt_segments_dropped` in
-/// the app's research store), and passes the rest through CoreState's corrections.
+/// the app's research store), and passes the rest through CoreState's corrections. M10: what is
+/// heard here is never checked against the voiceprint; the user pressed the button. Only
+/// hands-free audio (M11) goes through `SpeakerVerifying`.
 actor AppListening: VoiceListening {
     private let mic: MicCapture
     private let transcriber: Transcriber

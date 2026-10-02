@@ -91,7 +91,7 @@ public actor TurnCoordinator {
     ///   - activity: told when each accepted turn begins and ends, so background work (the
     ///     file scanner, D-51 P3) can wait for it.
     ///   - voiceConfirmation: what a spoken confirmation must pass (M9a part 6, D-41); nil means
-    ///     the owner check `textAuthenticator` is, until M10's voiceprint route exists.
+    ///     the owner check `textAuthenticator` is. M10 adds no voiceprint route (VoiceConfirmation).
     public init(brain: BrainRouter, fastPath: any FastPathRouting = NoFastPath(),
                 confirmations: ConfirmationGate, textAuthenticator: any ConfirmAuthenticator,
                 online: @escaping @Sendable () async -> Bool,
