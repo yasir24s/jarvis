@@ -65,5 +65,9 @@ let package = Package(
             name: "JarvisToolsTests",
             dependencies: ["JarvisTools"]
         ),
+
+        // W1: the WebKit reader lives in JarvisApp (the one target that may import WebKit), so
+        // its tests import the app. They load pages from a loopback server, never the network.
+        .testTarget(name: "JarvisAppTests", dependencies: ["JarvisApp", "JarvisCore", "JarvisTestSupport"]),
     ]
 )
