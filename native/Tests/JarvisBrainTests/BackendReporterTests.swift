@@ -91,6 +91,20 @@ struct BackendReporterTests {
         #expect(last.at == Date(timeIntervalSince1970: 1234.5))
     }
 
+    /// B2: a ChatGPT turn is reported as ChatGPT, through Codex, and counted under its own
+    /// additive `backend_chatgpt_…` names.
+    @Test func chatgptHasItsOwnReportAndCounters() async {
+        let bumps = BumpRecorder()
+        let reporter = BackendReporter(research: bumps, log: { _ in })
+        for name in [CodexDriver.successBackend(model: CodexConfig.defaultModel), CodexDriver.partialBackend] {
+            await reporter.set(name)
+            #expect(await reporter.report(localModelName: "m") == "The last request was handled by ChatGPT, through Codex, sir.")
+        }
+        #expect(bumps.bumps == ["backend_chatgpt_gpt_6_luna_+1", "backend_chatgpt_partial_+1"])
+        await reporter.set("claude")
+        #expect(await reporter.report(localModelName: "m") == "The last request was handled by Claude, through Claude Code, sir.")
+    }
+
     /// The driver reports through `BackendReporting`; the reporter is that protocol.
     @Test func isTheDriversBackendReporting() async {
         let bumps = BumpRecorder()

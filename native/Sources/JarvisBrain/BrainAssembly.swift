@@ -43,6 +43,8 @@ public final class BrainAssembly: Sendable {
     public let server: MCPServer
     public let backend: BackendReporter
     public let driver: ClaudeDriver
+    /// B2: the ChatGPT brain, through Codex on the user's ChatGPT sign-in, on the same relay.
+    public let chatgpt: CodexDriver
     public let router: BrainRouter
     public let coordinator: TurnCoordinator
     /// The personality upkeep (P1): the hourly consolidation check, and the distillation a
@@ -98,6 +100,10 @@ public final class BrainAssembly: Sendable {
     /// turn fails with ENOENT ("Claude Code CLI not found") and falls back to the local model,
     /// as Python's does when the CLI is missing.
     public let claudeExecutable: URL?
+    /// B2: the `codex` CLI `CodexLocator` found, or nil. With none, the driver is given the
+    /// override or the ChatGPT app's path, so each ChatGPT turn fails with "Codex CLI not found"
+    /// and falls back to the local model.
+    public let codexExecutable: URL?
     /// The state owner the personality tool bodies write through (`start()` registers them).
     private let core: CoreState
 
@@ -107,6 +113,10 @@ public final class BrainAssembly: Sendable {
     ///   - environment: the app's environment; the child env is built from it by
     ///     `ChildEnvironment`.
     ///   - claudeExecutable: overrides the PATH search (the smoke mode's stream tap).
+    ///   - codexConfig: B2, the ChatGPT brain's settings; nil reads them from `environment`.
+    ///   - codexWorkingDirectory: the empty folder `codex` runs in; nil means `codex-cwd/` beside
+    ///     `claudeWorkingDirectory`.
+    ///   - codexExecutable: overrides `CodexLocator` (the smoke mode's stream tap).
     ///   - localBrain: builds the on-device brain on this assembly's gateway; nil means
     ///     `LocalBrain` (T3.6). Tests pass a fake.
     ///   - personaWriter: what consolidation and distillation are written by; nil means
@@ -130,6 +140,7 @@ public final class BrainAssembly: Sendable {
     public init(core: CoreState, research: any ResearchCounting,
                 config: ClaudeConfig, environment: [String: String],
                 runDirectory: URL, claudeWorkingDirectory: URL, claudeExecutable: URL? = nil,
+                codexConfig: CodexConfig? = nil, codexWorkingDirectory: URL? = nil, codexExecutable: URL? = nil,
                 localBrain: ((ToolGateway) -> any LocalGenerating)? = nil,
                 personaWriter: (any PersonaLLM)? = nil,
                 memory: MemoryStore? = nil, factWriter: (any AttributedWriting)? = nil,
@@ -160,6 +171,18 @@ public final class BrainAssembly: Sendable {
         driver = ClaudeDriver(config: config, executable: executable, bridge: registry,
                               workingDirectory: claudeWorkingDirectory, research: research, backend: backend,
                               parentEnvironment: environment, allowedTools: claudeTools.allowed, log: brainLog)
+        // B2: ChatGPT gets the tools Claude is offered, by their MCP names.
+        let codexConfig = codexConfig ?? CodexConfig(environment: environment)
+        let codexLocated = codexExecutable ?? Self.locateCodex(environment: environment)
+        self.codexExecutable = codexLocated
+        let codexPath = codexLocated
+            ?? URL(fileURLWithPath: environment[CodexConfig.executableKey] ?? ("/Applications/" + CodexLocator.appRelativePath))
+        chatgpt = CodexDriver(config: codexConfig, executable: codexPath, bridge: registry,
+                              workingDirectory: codexWorkingDirectory
+                                  ?? claudeWorkingDirectory.deletingLastPathComponent()
+                                  .appending(path: "codex-cwd", directoryHint: .isDirectory),
+                              research: research, backend: backend, parentEnvironment: environment,
+                              allowedTools: claudeTools.tools.map(\.name), log: brainLog)
         let local = localBrain?(gateway) ?? LocalBrain(gateway: gateway, embedding: embedding, log: brainLog)
         let vectors = FactVectors(embedding: embedding)
         // W1 part 7c: search_memory reads the conversations and the journal from the index.
@@ -179,7 +202,8 @@ public final class BrainAssembly: Sendable {
         }
         self.recall = recall
         memoryTools = memory.flatMap { store in recall.map { BuiltInTools.Memory(store: store, search: $0) } }
-        router = BrainRouter(core: core, config: config, claude: driver, local: local, backend: backend,
+        router = BrainRouter(core: core, config: config, claude: driver, chatgpt: chatgpt,
+                             chatgptEnabled: codexConfig.enabled, local: local, backend: backend,
                              research: research, recall: recall, choice: brainChoice, log: brainLog)
         // P1's two writers, shared by the persona writer and the fact compile (P2).
         let localWriter = LocalPersonaLLM()
@@ -280,6 +304,14 @@ public final class BrainAssembly: Sendable {
         let child = ChildEnvironment.forClaude(parent: environment, config: config, assertOnDrop: false,
                                                log: { _ in })
         return ClaudeLocator.find(path: child["PATH"] ?? "")
+    }
+
+    /// B2: `CodexLocator` over `JARVIS_CODEX_CLI`, the PATH `ChildEnvironment.forCodex` builds,
+    /// and the ChatGPT app's own copy.
+    public static func locateCodex(environment: [String: String]) -> URL? {
+        let child = ChildEnvironment.forCodex(parent: environment, assertOnDrop: false, log: { _ in })
+        return CodexLocator.find(environment: environment, path: child["PATH"] ?? "",
+                                 home: child["HOME"] ?? NSHomeDirectory())
     }
 
     /// Reads an app secret from the keychain and registers it with `registry` before returning

@@ -41,8 +41,13 @@ public actor BackendReporter {
 
     /// `_backend_report()`, with `localModelName` where Python has `MODEL`. The local sentence
     /// is Python's. The Claude sentence names Claude Code, the CLI native reaches Claude
-    /// through, where Python says "the Agent SDK" (DEV-M3-04; README D-11 resolves D-6).
+    /// through, where Python says "the Agent SDK" (DEV-M3-04; README D-11 resolves D-6). B2's
+    /// ChatGPT backends ("chatgpt (<model>)", "chatgpt (partial)") have a sentence of their own;
+    /// Python has no such backend.
     public func report(localModelName: String) -> String {
+        if Py.contains(Py.lower(last.name), "chatgpt") {
+            return "The last request was handled by ChatGPT, through Codex, sir."
+        }
         if Py.contains(Py.lower(last.name), "claude") {
             return "The last request was handled by Claude, through Claude Code, sir."
         }

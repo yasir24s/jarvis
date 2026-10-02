@@ -6,7 +6,7 @@ import JarvisChat
 import SwiftUI
 import Testing
 
-/// M9a part 7: the "Brain" item in both menus, built into real NSMenus by SwiftUI
+/// M9a part 7 and B2: the "Brain" item in both menus, built into real NSMenus by SwiftUI
 /// (`NSHostingMenu`) from the same views the app uses: the menu-bar menu and the app menu's
 /// items. Each test's settings live in a defaults suite of its own. With `UI1_SNAPSHOT_DIR` set,
 /// each menu's item tree is written there as text, one file per menu and choice.
@@ -91,7 +91,8 @@ struct BrainMenuTests {
             let menus = Self.menus(defaults, brain: brain)
             for (name, menu) in [("menu-bar", menus.bar), ("app-menu", menus.app)] {
                 let items = try #require(Self.brainItems(menu), "\(name) has no Brain item: \(Self.tree(menu))")
-                #expect(items.map(\.title) == ["Claude", "On-device"], "\(name)")
+                #expect(items.map(\.title) == ["Claude", "ChatGPT", "On-device"], "\(name)")
+                #expect(items.allSatisfy { $0.isEnabled }, "\(name)")
                 #expect(items.map { $0.state == .on } == BrainChoice.allCases.map { $0 == choice }, "\(name)")
                 let brainItem = try #require(menu.items.first { $0.title == BrainSetting.menuTitle })
                 #expect(brainItem.isEnabled, "\(name)")
@@ -125,22 +126,56 @@ struct BrainMenuTests {
         for _ in 0..<200 where Self.brainItems(menus.app)?.last?.state != .on {
             try await Task.sleep(for: .milliseconds(5))
         }
-        #expect(Self.brainItems(menus.app)?.map { $0.state == .on } == [false, true])
-        #expect(Self.brainItems(menus.bar)?.map { $0.state == .on } == [false, true])
+        #expect(Self.brainItems(menus.app)?.map { $0.state == .on } == [false, false, true])
+        #expect(Self.brainItems(menus.bar)?.map { $0.state == .on } == [false, false, true])
+
+        // B2: and ChatGPT, from the app menu this time.
+        let chatgpt = try #require(Self.brainItems(menus.app)?.first { $0.title == "ChatGPT" })
+        let pick = try #require(chatgpt.action)
+        NSApp.sendAction(pick, to: chatgpt.target, from: chatgpt)
+        #expect(brain.choice == .chatgpt)
+        #expect(BrainSetting.stored(in: defaults) == .chatgpt)
+        for _ in 0..<200 where Self.brainItems(menus.bar)?[1].state != .on {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(Self.brainItems(menus.bar)?.map { $0.state == .on } == [false, true, false])
+        #expect(Self.brainItems(menus.app)?.map { $0.state == .on } == [false, true, false])
     }
 
-    @Test("JARVIS_USE_CLAUDE=0: On-device checked, the item off, the reason in its help")
+    @Test("JARVIS_USE_CLAUDE=0 and JARVIS_USE_CHATGPT=0: On-device checked, the item off, the reason in its help")
     func forced() throws {
         try Self.withDefaults { defaults in
-            let brain = BrainSetting(defaults: defaults, claudeEnabled: false)
+            let brain = BrainSetting(defaults: defaults, claudeEnabled: false, chatgptEnabled: false)
             let menus = Self.menus(defaults, brain: brain)
             for (name, menu) in [("menu-bar", menus.bar), ("app-menu", menus.app)] {
                 let items = try #require(Self.brainItems(menu), "\(name)")
-                #expect(items.map { $0.state == .on } == [false, true], "\(name)")
+                #expect(items.map { $0.state == .on } == [false, false, true], "\(name)")
                 let brainItem = try #require(menu.items.first { $0.title == BrainSetting.menuTitle })
                 let reachable = brainItem.isEnabled && items.contains { $0.isEnabled }
                 #expect(!reachable, "\(name): \(Self.tree(menu))")
+                #expect(brainItem.toolTip == BrainSetting.forcedHelp, "\(name)")
                 try Self.write(Self.tree(menu), name: "m9-part7-\(name)-forced-on-device")
+            }
+        }
+    }
+
+    /// B2: one brain switched off: its entry is disabled and a pick of it shows On-device; the
+    /// other two stay reachable, and the help names the switch.
+    @Test("one brain off for the launch: its entry off, a pick of it on On-device", arguments: [BrainChoice.claude, .chatgpt])
+    func oneBrainOff(_ off: BrainChoice) throws {
+        try Self.withDefaults { defaults in
+            let brain = BrainSetting(defaults: defaults, claudeEnabled: off != .claude, chatgptEnabled: off != .chatgpt)
+            brain.choice = off
+            let menus = Self.menus(defaults, brain: brain)
+            for (name, menu) in [("menu-bar", menus.bar), ("app-menu", menus.app)] {
+                let items = try #require(Self.brainItems(menu), "\(name)")
+                #expect(items.map(\.title) == ["Claude", "ChatGPT", "On-device"], "\(name)")
+                #expect(items.map { $0.state == .on } == [false, false, true], "\(name)")
+                #expect(items.map(\.isEnabled) == BrainChoice.allCases.map { $0 != off }, "\(name): \(Self.tree(menu))")
+                let brainItem = try #require(menu.items.first { $0.title == BrainSetting.menuTitle })
+                #expect(brainItem.isEnabled, "\(name)")
+                #expect(brainItem.toolTip == brain.help, "\(name)")
+                try Self.write(Self.tree(menu), name: "b2-\(name)-\(off.rawValue)-off")
             }
         }
     }

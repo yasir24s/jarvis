@@ -14,6 +14,7 @@ import Synchronization
 /// - M9a part 7: the menus' Brain item can send replies to the on-device model while Claude is
 ///   on and online (`choice`). Only replies: file reading, the memory writer and the persona
 ///   writer keep their own routes.
+/// - B2: or to ChatGPT, through Codex, then the on-device model if ChatGPT gives nothing.
 /// - A text turn also bumps `interactions_text` (M01b's key: a typed command reached the LLM
 ///   path; Python has no text channel). It comes after `beginTurn`, so after the counters
 ///   `track_feedback` bumps rather than next to `interactions`: only the first-bump key order
@@ -24,8 +25,11 @@ import Synchronization
 ///   within each brain's own budget. No relevant fact adds nothing.
 /// M9a part 7: which brain writes the replies, from the menus' "Brain" item. Claude still needs
 /// `JARVIS_USE_CLAUDE` and a network; otherwise the on-device model answers, as before.
+/// B2: ChatGPT (through Codex, on the user's ChatGPT sign-in) is the third choice. It needs
+/// `JARVIS_USE_CHATGPT` and a network, and falls back to the on-device model as Claude does.
 public enum BrainChoice: String, Sendable, CaseIterable {
     case claude
+    case chatgpt
     case onDevice
 }
 
@@ -33,6 +37,8 @@ public struct BrainRouter: Sendable {
     private let core: CoreState
     private let config: ClaudeConfig
     private let claude: any ClaudeGenerating
+    private let chatgpt: (any ClaudeGenerating)?
+    private let chatgptEnabled: Bool
     private let local: any LocalGenerating
     private let backend: any BackendReporting
     private let research: any ResearchCounting
@@ -41,11 +47,15 @@ public struct BrainRouter: Sendable {
     private let choice: @Sendable () -> BrainChoice
 
     /// - Parameters:
+    ///   - chatgpt: B2, the ChatGPT brain (`CodexDriver`); nil means a ChatGPT choice answers
+    ///     on-device.
+    ///   - chatgptEnabled: `JARVIS_USE_CHATGPT` (`CodexConfig.enabled`).
     ///   - recall: the long-term memory's recall (D-51 P2); nil adds none.
     ///   - choice: M9a part 7, the menus' Brain item, read once as each turn begins.
     ///   - log: where the router's own line goes (a turn whose state files have the wrong
     ///     shape). Tests pass their own.
     public init(core: CoreState, config: ClaudeConfig, claude: any ClaudeGenerating,
+                chatgpt: (any ClaudeGenerating)? = nil, chatgptEnabled: Bool = true,
                 local: any LocalGenerating, backend: any BackendReporting, research: any ResearchCounting,
                 recall: MemoryRecall? = nil, choice: @escaping @Sendable () -> BrainChoice = { .claude },
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .brain) }) {
@@ -53,6 +63,8 @@ public struct BrainRouter: Sendable {
         self.core = core
         self.config = config
         self.claude = claude
+        self.chatgpt = chatgpt
+        self.chatgptEnabled = chatgptEnabled
         self.local = local
         self.backend = backend
         self.research = research
@@ -113,9 +125,9 @@ public struct BrainRouter: Sendable {
         let user = addsContext ? Self.addedContext(text) : text
         let shown = ShownReply(sink)
 
-        if config.enabled && online && chosen == .claude {                             // step 11
+        if online, let cloud = cloudBrain(chosen) {                                       // step 11
             // Python's `if reply:`: nil and "" both fall through to the local model.
-            let reply = await claude.generate(system: system, user: user, turn: turn, sink: shown)
+            let reply = await cloud.generate(system: system, user: user, turn: turn, sink: shown)
             if Task.isCancelled { return await stopped(shown) }
             if let reply, !reply.isEmpty {
                 await core.recordAssistant(reply)                                    // step 12
@@ -140,6 +152,17 @@ public struct BrainRouter: Sendable {
         case .failed(let reply):
             await core.popTrailingUserTurn()
             return reply
+        }
+    }
+
+    /// The cloud brain the choice names, if it is switched on: Claude under `JARVIS_USE_CLAUDE`,
+    /// ChatGPT (B2) under `JARVIS_USE_CHATGPT`. Both get the same system prompt, with the
+    /// cloud variant of the memory block (`memory.claude`).
+    private func cloudBrain(_ chosen: BrainChoice) -> (any ClaudeGenerating)? {
+        switch chosen {
+        case .claude: config.enabled ? claude : nil
+        case .chatgpt: chatgptEnabled ? chatgpt : nil
+        case .onDevice: nil
         }
     }
 

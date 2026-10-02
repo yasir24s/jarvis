@@ -26,8 +26,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let chat = ChatViewModel()
     /// The menu's "Speak replies" toggle, the user's input to the speak policy.
     let speakReplies = SpeakRepliesToggle()
-    /// M9a part 7: the menus' "Brain", Claude or On-device; BrainRouter reads it each turn.
-    let brainSetting = BrainSetting(claudeEnabled: ClaudeConfig(environment: ProcessInfo.processInfo.environment).enabled)
+    /// M9a part 7: the menus' "Brain", Claude, ChatGPT (B2) or On-device; BrainRouter reads it each
+    /// turn.
+    let brainSetting = BrainSetting(claudeEnabled: ClaudeConfig(environment: ProcessInfo.processInfo.environment).enabled,
+                                    chatgptEnabled: CodexConfig(environment: ProcessInfo.processInfo.environment).enabled)
     /// P6: "Learn About Me From My Files", the user's consent to the file scanner.
     let fileLearning = FileLearningConsent()
     /// M10 part 4: whether setup is done (`setupCompleted`), the voiceprint as the setup window
@@ -457,6 +459,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let assembly = BrainAssembly(
             core: core, research: research, config: config, environment: environment,
             runDirectory: folders.run, claudeWorkingDirectory: folders.claudeWorkingDirectory,
+            codexWorkingDirectory: folders.codexWorkingDirectory,
             memory: memory, files: fileSetup,
             // W1: JARVIS reads the web with WebKit on a private profile (never the Safari app),
             // and reads in the background only while he is not speaking.

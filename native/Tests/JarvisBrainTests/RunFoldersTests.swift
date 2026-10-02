@@ -34,6 +34,15 @@ struct RunFoldersTests {
         #expect(noDefault.claudeWorkingDirectory.lastPathComponent == "claude-cwd-c55d855f")
     }
 
+    @Test("B2: codex-cwd sits beside claude-cwd, with the same suffix")
+    func codexWorkingDirectory() {
+        let plain = RunFolders(stateRoot: Self.home, defaultRoot: Self.home, support: Self.support)
+        #expect(plain.codexWorkingDirectory.path(percentEncoded: false) == "/tmp/support/JARVIS/codex-cwd/")
+        let other = RunFolders(stateRoot: Self.other, defaultRoot: Self.home, support: Self.support)
+        #expect(other.codexWorkingDirectory.path(percentEncoded: false) == "/tmp/support/JARVIS/codex-cwd-3d7c6daa/")
+        #expect(other.codexWorkingDirectory != other.claudeWorkingDirectory)
+    }
+
     @Test("two roots never share a socket")
     func rootsDoNotShare() {
         let a = RunFolders(stateRoot: Self.home, defaultRoot: nil, support: Self.support)

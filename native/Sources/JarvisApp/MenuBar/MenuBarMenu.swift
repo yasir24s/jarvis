@@ -103,9 +103,10 @@ struct SetUpItem: View {
     }
 }
 
-/// M9a part 7: "Brain", with Claude and On-device and a checkmark on the current one, in the app
-/// menu and the menu-bar menu. Under `JARVIS_USE_CLAUDE=0` it shows On-device, disabled, and its
-/// help says why.
+/// M9a part 7: "Brain", with Claude, ChatGPT (B2) and On-device and a checkmark on the current
+/// one, in the app menu and the menu-bar menu. A brain switched off for the launch
+/// (`JARVIS_USE_CLAUDE=0`, `JARVIS_USE_CHATGPT=0`) has its entry disabled, and a pick of it shows
+/// On-device; with both off the item is disabled. The help says why.
 struct BrainPicker: View {
     @Bindable var setting: BrainSetting
 
@@ -113,9 +114,10 @@ struct BrainPicker: View {
         Picker(BrainSetting.menuTitle, selection: Binding(get: { setting.shown }, set: { setting.choice = $0 })) {
             ForEach(BrainChoice.allCases, id: \.self) { choice in
                 Text(BrainSetting.title(choice)).tag(choice)
+                    .selectionDisabled(setting.isOff(choice))
             }
         }
-        .disabled(setting.claudeOff)
+        .disabled(setting.allOff)
         .help(setting.help)
     }
 }
