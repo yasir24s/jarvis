@@ -40,17 +40,23 @@ public final class MemoryStore: Sendable {
         }
     }
 
+    /// W1: the state root, the lease rule and a memory file's path, for what lives beside the
+    /// files (JarvisBrain's search database in memory/web/).
+    public var root: String { store.root }
+    public var mayWrite: Bool { store.mayWrite }
+    public func path(_ f: MemoryFile) -> String { store.path(f) }
+
     // MARK: - Archive
 
     /// Appends one message, stamped now. False when the lease is not held or the write failed.
-    /// P6b: a successful append is followed by the hourly backup of the whole archive.
+    /// P6b: a successful append is followed by the hourly backup (W1 part 7c: a segment of the
+    /// bytes the archive gained since the last one).
     @discardableResult
     public func archive(_ text: String, role: MemoryRole, channel: String) -> Bool {
         let entry = ArchiveEntry(timestamp: clock.now(), timeZone: timeZone, channel: channel,
                                  role: role, text: text)
         guard store.appendLine(entry.line, to: .archive) else { return false }
-        let store = store
-        backups.afterAppend(.archive) { store.read(.archive) }
+        backups.afterAppend(.archive, path: store.path(.archive))
         return true
     }
 
@@ -117,8 +123,7 @@ public final class MemoryStore: Sendable {
         let entry = JournalEntry(timestamp: clock.now(), timeZone: timeZone, tool: tool, outcome: outcome,
                                  args: args, reply: reply)
         guard store.appendLine(entry.line, to: .journal) else { return false }
-        let store = store
-        backups.afterAppend(.journal) { store.read(.journal) }
+        backups.afterAppend(.journal, path: store.path(.journal))
         return true
     }
 

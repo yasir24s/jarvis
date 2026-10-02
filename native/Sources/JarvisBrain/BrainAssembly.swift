@@ -59,6 +59,9 @@ public final class BrainAssembly: Sendable {
     public let recall: MemoryRecall?
     /// Each accepted turn, for background work that waits while one runs (P3).
     public let turnActivity: TurnActivity
+    /// W1: the search database in memory/web/ (the conversations' index, part 7c). nil without a
+    /// `memory` store.
+    public let database: MemoryDatabase?
     /// P6: the fact compile after 30 idle minutes, beside the dismissal's. nil without a
     /// `memory` store. Not started here: the app starts it once the brain has started and stops
     /// it at quit, before the lock is released.
@@ -132,7 +135,12 @@ public final class BrainAssembly: Sendable {
                               parentEnvironment: environment, allowedTools: claudeTools.allowed, log: brainLog)
         let local = localBrain?(gateway) ?? LocalBrain(gateway: gateway, log: brainLog)
         let vectors = FactVectors(embedding: embedding)
-        let recall = memory.map { MemoryRecall(memory: $0, vectors: vectors) }
+        // W1 part 7c: search_memory reads the conversations and the journal from the index.
+        let database = memory.map { MemoryDatabase(memory: $0) }
+        self.database = database
+        let recall = memory.map { store in
+            MemoryRecall(memory: store, vectors: vectors, index: database.map { MemoryIndex(database: $0, memory: store) })
+        }
         self.recall = recall
         memoryTools = memory.flatMap { store in recall.map { BuiltInTools.Memory(store: store, search: $0) } }
         router = BrainRouter(core: core, config: config, claude: driver, local: local, backend: backend,

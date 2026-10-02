@@ -15,4 +15,23 @@ public protocol MemorySearching: Sendable {
     /// P6b: the task journal's calls (`MemoryStore.journalEntries`) that match `query` by
     /// keyword, best first.
     func searchJournal(_ query: String) -> [JournalEntry]
+
+    /// W1 part 7c: the best `limit` of `searchConversations(query)`, and how many match in all,
+    /// so a search through an index reads only the messages it shows.
+    func searchConversations(_ query: String, limit: Int) -> (best: [ArchiveEntry], total: Int)
+
+    /// W1 part 7c: the best `limit` of `searchJournal(query)`, and how many match in all.
+    func searchJournal(_ query: String, limit: Int) -> (best: [JournalEntry], total: Int)
+}
+
+extension MemorySearching {
+    public func searchConversations(_ query: String, limit: Int) -> (best: [ArchiveEntry], total: Int) {
+        let all = searchConversations(query)
+        return (Array(all.prefix(max(0, limit))), all.count)
+    }
+
+    public func searchJournal(_ query: String, limit: Int) -> (best: [JournalEntry], total: Int) {
+        let all = searchJournal(query)
+        return (Array(all.prefix(max(0, limit))), all.count)
+    }
 }

@@ -50,10 +50,14 @@ public final class MemoryRecall: MemorySearching, Sendable {
 
     private let memory: MemoryStore
     private let vectors: FactVectors
+    /// W1 part 7c: the conversations and the journal, indexed; nil means each search reads the
+    /// whole files, as before.
+    public let index: MemoryIndex?
 
-    public init(memory: MemoryStore, vectors: FactVectors) {
+    public init(memory: MemoryStore, vectors: FactVectors, index: MemoryIndex? = nil) {
         self.memory = memory
         self.vectors = vectors
+        self.index = index
     }
 
     /// Computes and caches every fact's vector (about 5 ms each with NLEmbedding, measured), so
@@ -125,10 +129,28 @@ public final class MemoryRecall: MemorySearching, Sendable {
     /// `search_memory`'s search of the conversations (P6b), by keyword alone: every archived
     /// message that shares a content word with `query` (the same words as `search`), the
     /// messages sharing the most words first, then the newest. A query with no content word
-    /// matches nothing.
+    /// matches nothing. W1 part 7c: from the index when there is one (the same messages in the
+    /// same order); the files are read whole only when it cannot be used.
     public func searchConversations(_ query: String) -> [ArchiveEntry] {
+        conversations(query, limit: nil).best
+    }
+
+    /// W1 part 7c: the best `limit` of `searchConversations(query)`, and how many match in all.
+    /// Through the index only those lines are read.
+    public func searchConversations(_ query: String, limit: Int) -> (best: [ArchiveEntry], total: Int) {
+        conversations(query, limit: limit)
+    }
+
+    private func conversations(_ query: String, limit: Int?) -> (best: [ArchiveEntry], total: Int) {
         let words = Self.contentWords(query)
-        guard !words.isEmpty else { return [] }
+        guard !words.isEmpty else { return ([], 0) }
+        if let found = index?.messages(sharing: words, limit: limit) { return found }
+        let all = scanConversations(words)
+        return (Array(all.prefix(limit ?? all.count)), all.count)
+    }
+
+    /// P6b's search of the files themselves, read whole.
+    private func scanConversations(_ words: Set<String>) -> [ArchiveEntry] {
         var scored: [(entry: ArchiveEntry, shared: Int, order: Int)] = []
         for (order, e) in memory.archivedMessages().enumerated() {
             let shared = words.intersection(Self.contentWords(e.text)).count
@@ -143,10 +165,26 @@ public final class MemoryRecall: MemorySearching, Sendable {
 
     /// `search_memory`'s search of the task journal (P6b), the same way: every call whose tool,
     /// arguments or reply share a content word with `query`, the most shared words first, then
-    /// the newest.
+    /// the newest. W1 part 7c: from the index when there is one.
     public func searchJournal(_ query: String) -> [JournalEntry] {
+        journalCalls(query, limit: nil).best
+    }
+
+    /// W1 part 7c: the best `limit` of `searchJournal(query)`, and how many match in all.
+    public func searchJournal(_ query: String, limit: Int) -> (best: [JournalEntry], total: Int) {
+        journalCalls(query, limit: limit)
+    }
+
+    private func journalCalls(_ query: String, limit: Int?) -> (best: [JournalEntry], total: Int) {
         let words = Self.contentWords(query)
-        guard !words.isEmpty else { return [] }
+        guard !words.isEmpty else { return ([], 0) }
+        if let found = index?.journal(sharing: words, limit: limit) { return found }
+        let all = scanJournal(words)
+        return (Array(all.prefix(limit ?? all.count)), all.count)
+    }
+
+    /// P6b's search of the journal file itself, read whole.
+    private func scanJournal(_ words: Set<String>) -> [JournalEntry] {
         var scored: [(entry: JournalEntry, shared: Int, order: Int)] = []
         for (order, e) in memory.journalEntries().enumerated() {
             let own = Self.contentWords(e.tool + " " + e.args + " " + (e.reply ?? ""))

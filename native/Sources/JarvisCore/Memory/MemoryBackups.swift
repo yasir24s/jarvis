@@ -8,6 +8,13 @@ import Synchronization
 // conversation archive too, copied whole after an append, the Python-era archive after the
 // import writes it, and the task journal after an append. Logs carry file names and counts only,
 // never what the files hold.
+//
+// W1 part 7c: the three append-only files are backed up as segments of new bytes instead of
+// whole copies: `<file>-seg-<start>-<end>-<unix seconds>.jsonl` holds the file's bytes from
+// `start` to `end`, at most one an hour. The segments from 0, end to start, are the file.
+// Past `segmentLimit` they are merged into one; a file that is no longer an append of its
+// segments (rewritten, or shrunk) has them put aside as `<segment>.kept`, never removed, and
+// starts again from 0. A first segment from 0 retires P6b's whole copies that it contains.
 
 /// A file the backups cover.
 public enum BackedUpFile: String, CaseIterable, Sendable {
@@ -27,6 +34,14 @@ public enum BackedUpFile: String, CaseIterable, Sendable {
         case .archive: MemoryFile.archive.rawValue
         case .pythonArchive: MemoryFile.pythonArchive.rawValue
         case .journal: MemoryFile.journal.rawValue
+        }
+    }
+
+    /// W1 part 7c: an append-only file, backed up in segments of new bytes.
+    public var isSegmented: Bool {
+        switch self {
+        case .archive, .pythonArchive, .journal: true
+        case .facts, .personality, .profile: false
         }
     }
 
@@ -125,7 +140,13 @@ public final class MemoryBackups: Sendable {
     }
 
     /// The newest backup of `file` whose bytes read as that file, with its stamp and entry count.
+    /// W1 part 7c: for an append-only file, its segments joined (stamped with the newest of
+    /// them) when they read; else its newest whole copy, as P6b took them.
     public func newestReadable(_ file: BackedUpFile) -> (stamp: Int64, data: Data, entries: Int)? {
+        if file.isSegmented, case let chain = chain(file), let last = chain.last,
+           let data = joined(file, chain), let n = file.entries(in: data) {
+            return (chain.map(\.stamp).max() ?? last.stamp, data, n)
+        }
         for stamp in stamps(file) {
             if let data = read(file, stamp: stamp), let n = file.entries(in: data) { return (stamp, data, n) }
         }
@@ -133,18 +154,172 @@ public final class MemoryBackups: Sendable {
     }
 
     /// After a successful write of `file` as `data`: a copy when there is none from the last
-    /// hour, then the rotation. False when no copy was due or it could not be written.
+    /// hour, then the rotation. False when no copy was due or it could not be written. W1 part
+    /// 7c: for an append-only file, a segment of the bytes past its last one instead.
     @discardableResult
     public func afterWrite(_ file: BackedUpFile, data: Data) -> Bool {
-        lock.withLock { _ in copyIfDue(file) { data } }
+        lock.withLock { _ in
+            guard file.isSegmented else { return copyIfDue(file) { data } }
+            return segmentIfDue(file, size: data.count) { range in
+                range.upperBound <= data.count ? data.subdata(in: range) : nil
+            }
+        }
     }
 
-    /// P6b: after an append to `file` (an archive), `afterWrite` with the whole file, which
-    /// `read` gives only when a copy is due. False when none was due, or the file could not be
-    /// read or copied.
+    /// P6b: after an append to `file` (an append-only file at `path`). W1 part 7c: a segment of
+    /// the bytes it gained since its last one, when one is due; only those bytes, and the last
+    /// segment's (to check the file is still an append of them), are read. False when none was
+    /// due, or the file could not be read or the segment written.
     @discardableResult
-    public func afterAppend(_ file: BackedUpFile, read: () -> Data?) -> Bool {
-        lock.withLock { _ in copyIfDue(file, read) }
+    public func afterAppend(_ file: BackedUpFile, path: String) -> Bool {
+        lock.withLock { _ in
+            guard let handle = FileHandle(forReadingAtPath: path) else { return false }
+            defer { try? handle.close() }
+            guard let size = try? handle.seekToEnd() else { return false }
+            return segmentIfDue(file, size: Int(size)) { range in
+                guard (try? handle.seek(toOffset: UInt64(range.lowerBound))) != nil,
+                      let bytes = try? handle.read(upToCount: range.count), bytes.count == range.count
+                else { return nil }
+                return bytes
+            }
+        }
+    }
+
+    // MARK: - Segments (W1 part 7c)
+
+    /// Past this many segments, they are merged into one.
+    public static let segmentLimit = 48
+
+    /// One segment: the file's bytes from `start` to `end`, taken at `stamp`.
+    public struct Segment: Sendable, Equatable {
+        public let start: Int
+        public let end: Int
+        public let stamp: Int64
+
+        public init(start: Int, end: Int, stamp: Int64) {
+            self.start = start
+            self.end = end
+            self.stamp = stamp
+        }
+    }
+
+    /// A segment's name.
+    public static func segmentName(_ file: BackedUpFile, _ segment: Segment) -> String {
+        "\(file.rawValue)-seg-\(segment.start)-\(segment.end)-\(segment.stamp).\(file.fileExtension)"
+    }
+
+    /// The segment a name holds; nil for any other name.
+    public static func segment(_ name: String, of file: BackedUpFile) -> Segment? {
+        let head = file.rawValue + "-seg-", tail = "." + file.fileExtension
+        guard name.hasPrefix(head), name.hasSuffix(tail) else { return nil }
+        let parts = name.dropFirst(head.count).dropLast(tail.count).split(separator: "-", omittingEmptySubsequences: false)
+        guard parts.count == 3, parts.allSatisfy({ !$0.isEmpty && $0.allSatisfy { $0.isASCII && $0.isNumber } }),
+              let start = Int(parts[0]), let end = Int(parts[1]), let stamp = Int64(parts[2]), start < end
+        else { return nil }
+        return Segment(start: start, end: end, stamp: stamp)
+    }
+
+    /// Every segment of `file` on disk, by start.
+    public func segments(_ file: BackedUpFile) -> [Segment] {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: directory)) ?? []
+        return names.compactMap { Self.segment($0, of: file) }.sorted {
+            ($0.start, $0.end, $0.stamp) < ($1.start, $1.end, $1.stamp)
+        }
+    }
+
+    /// The segments that make up the file: from 0, each starting where the one before ended
+    /// (the longest at each start), each file the size its name says.
+    public func chain(_ file: BackedUpFile) -> [Segment] {
+        let all = segments(file)
+        var chain: [Segment] = [], at = 0
+        while let next = all.filter({ $0.start == at && size(file, $0) == $0.end - $0.start })
+            .max(by: { ($0.end, $0.stamp) < ($1.end, $1.stamp) }) {
+            chain.append(next)
+            at = next.end
+        }
+        return chain
+    }
+
+    /// The segments' bytes, joined; nil when one cannot be read.
+    public func joined(_ file: BackedUpFile, _ chain: [Segment]) -> Data? {
+        var data = Data()
+        for segment in chain {
+            guard let bytes = AtomicFile.read(StateStore.join(directory, Self.segmentName(file, segment))),
+                  bytes.count == segment.end - segment.start
+            else { return nil }
+            data.append(bytes)
+        }
+        return data
+    }
+
+    private func size(_ file: BackedUpFile, _ segment: Segment) -> Int? {
+        let path = StateStore.join(directory, Self.segmentName(file, segment))
+        return (try? FileManager.default.attributesOfItem(atPath: path)[.size] as? NSNumber)?.intValue
+    }
+
+    /// The segment due after a write or an append, under `lock`: at most one an hour, holding
+    /// the bytes from the end of the last segment to `size` (`read` gives a range of the file).
+    /// When the file is no longer an append of its segments (smaller than they are, or its bytes
+    /// over the last segment differ), they are put aside whole and it starts again from 0. Past
+    /// `segmentLimit` segments, all are merged into one.
+    private func segmentIfDue(_ file: BackedUpFile, size: Int, read: (Range<Int>) -> Data?) -> Bool {
+        let now = clock.now()
+        let all = segments(file)
+        if let newest = all.map(\.stamp).max(), now - Double(newest) < Self.interval, Double(newest) <= now {
+            return false
+        }
+        let stamp = Int64(now.rounded(.down))
+        var chain = self.chain(file)
+        if let last = chain.last {
+            let kept = AtomicFile.read(StateStore.join(directory, Self.segmentName(file, last)))
+            if size < last.end || read(last.start..<last.end) != kept {
+                guard restart(file, all: all) else { return false }
+                chain = []
+            }
+        } else if !all.isEmpty {
+            guard restart(file, all: all) else { return false }    // pieces that do not start at 0
+        }
+        let start = chain.last?.end ?? 0
+        guard size > start, let bytes = read(start..<size) else { return false }
+        if chain.count + 1 > Self.segmentLimit, let old = joined(file, chain) {
+            let merged = Segment(start: 0, end: size, stamp: stamp)
+            guard writeCopy(old + bytes, name: Self.segmentName(file, merged)) else { return false }
+            for segment in chain { remove(file, segment) }
+            log("memory: \(file.relativePath) backup merged from \(chain.count + 1) segments into one")
+            return true
+        }
+        let segment = Segment(start: start, end: size, stamp: stamp)
+        guard writeCopy(bytes, name: Self.segmentName(file, segment)) else { return false }
+        if start == 0 { retireWholeCopies(file, base: bytes) }
+        return true
+    }
+
+    /// The file was rewritten: each of its segments is put aside as `<segment name>.kept`, out
+    /// of the rotation and never removed (renamed, so nothing is copied). False without the lease.
+    @discardableResult
+    private func restart(_ file: BackedUpFile, all: [Segment]) -> Bool {
+        guard store.mayWrite else { return false }
+        for segment in all {
+            let path = StateStore.join(directory, Self.segmentName(file, segment))
+            try? FileManager.default.moveItem(atPath: path, toPath: path + ".kept")
+        }
+        log("memory: \(file.relativePath) is no longer an append of its \(all.count) backup segment(s); "
+            + "they are kept aside (.kept)")
+        return true
+    }
+
+    /// P6b's whole copies of `file`, once a first segment holds the file from 0: each copy whose
+    /// bytes begin `base` holds nothing the segment does not, and is removed. Any other is kept.
+    private func retireWholeCopies(_ file: BackedUpFile, base: Data) {
+        for stamp in stamps(file) {
+            let path = StateStore.join(directory, Self.name(file, stamp: stamp))
+            guard let copy = AtomicFile.read(path), copy.count <= base.count, base.prefix(copy.count) == copy else { continue }
+            try? FileManager.default.removeItem(atPath: path)
+        }
+    }
+
+    private func remove(_ file: BackedUpFile, _ segment: Segment) {
+        try? FileManager.default.removeItem(atPath: StateStore.join(directory, Self.segmentName(file, segment)))
     }
 
     /// The copy and the rotation, under `lock`.

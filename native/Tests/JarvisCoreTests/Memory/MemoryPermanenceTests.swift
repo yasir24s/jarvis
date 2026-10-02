@@ -370,29 +370,93 @@ struct MemoryPermanenceTests {
 
     // MARK: - The archive (P6b)
 
-    /// An archive append is followed by the hourly copy: the whole file, owner-only, named
-    /// `.jsonl`, at most one an hour.
-    @Test func archiveAppendsAreCopiedAtMostOnceAnHour() throws {
+    /// W1 part 7c: an archive append is followed by the hourly backup, as a segment of the bytes
+    /// the archive gained since the last one (the first holds it from 0), owner-only, named for
+    /// its range, at most one an hour. The segments joined are the archive.
+    @Test func archiveAppendsAreBackedUpAsSegmentsOfNewBytes() throws {
         let rig = try Rig()
         defer { rig.sb.remove() }
+        let archive = rig.path("memory/archive.jsonl")
         #expect(rig.memory.archive("I grow invented chillies.", role: .user, channel: "text"))
-        let first = MemoryBackups.name(.archive, stamp: Int64(epoch))
-        #expect(first == "archive-\(Int64(epoch)).jsonl")
+        let one = try #require(bytes(archive)).count
+        let first = MemoryBackups.segmentName(.archive, .init(start: 0, end: one, stamp: Int64(epoch)))
+        #expect(first == "archive-seg-0-\(one)-\(Int64(epoch)).jsonl")
         #expect(rig.backupNames() == [first])
-        #expect(bytes(rig.backupDir + "/" + first) == bytes(rig.path("memory/archive.jsonl")))
+        #expect(bytes(rig.backupDir + "/" + first) == bytes(archive))
         #expect(mode(rig.backupDir + "/" + first) == 0o600)
         rig.clock.advance(1_800)
         #expect(rig.memory.archive("Splendid, sir.", role: .jarvis, channel: "text"))
-        #expect(rig.backupNames() == [first])                           // within the hour: no copy
+        #expect(rig.backupNames() == [first])                           // within the hour: no segment
         rig.clock.advance(1_800)
         #expect(rig.memory.archive("They are very hot.", role: .user, channel: "text"))
-        let second = MemoryBackups.name(.archive, stamp: Int64(epoch) + 3_600)
-        #expect(rig.backupNames() == [first, second])
-        let copied = try #require(bytes(rig.backupDir + "/" + second))
-        #expect(copied == bytes(rig.path("memory/archive.jsonl")))
-        #expect(BackedUpFile.archive.entries(in: copied) == 3)
-        #expect(MemoryBackups.stamp(second, of: .archive) == Int64(epoch) + 3_600)
-        #expect(MemoryBackups.stamp(second, of: .facts) == nil)
+        let whole = try #require(bytes(archive))
+        let second = MemoryBackups.segmentName(.archive, .init(start: one, end: whole.count, stamp: Int64(epoch) + 3_600))
+        #expect(rig.backupNames() == [first, second].sorted())
+        #expect(bytes(rig.backupDir + "/" + second) == whole.subdata(in: one..<whole.count))   // new bytes only
+        #expect(BackedUpFile.archive.entries(in: try #require(bytes(rig.backupDir + "/" + second))) == 2)
+        #expect(MemoryBackups.segment(second, of: .archive) == .init(start: one, end: whole.count, stamp: Int64(epoch) + 3_600))
+        #expect(MemoryBackups.segment(second, of: .journal) == nil && MemoryBackups.stamp(second, of: .archive) == nil)
+        let newest = try #require(rig.memory.backups.newestReadable(.archive))
+        #expect(newest.data == whole && newest.entries == 3 && newest.stamp == Int64(epoch) + 3_600)
+    }
+
+    /// Past `segmentLimit` segments, the next backup merges them all into one from 0.
+    @Test func segmentsPastTheLimitAreMergedIntoOne() throws {
+        let rig = try Rig()
+        defer { rig.sb.remove() }
+        for k in 0..<MemoryBackups.segmentLimit {
+            #expect(rig.memory.archive("Invented message \(k).", role: .user, channel: "text"))
+            rig.clock.advance(3_600)
+        }
+        #expect(rig.memory.backups.chain(.archive).count == MemoryBackups.segmentLimit)
+        #expect(rig.memory.archive("One too many.", role: .user, channel: "text"))
+        let whole = try #require(bytes(rig.path("memory/archive.jsonl")))
+        let merged = MemoryBackups.Segment(start: 0, end: whole.count, stamp: Int64(rig.clock.now()))
+        #expect(rig.backupNames() == [MemoryBackups.segmentName(.archive, merged)])
+        #expect(rig.memory.backups.newestReadable(.archive)?.data == whole)
+        #expect(rig.lines.all.contains("memory: memory/archive.jsonl backup merged from 49 segments into one"))
+    }
+
+    /// An archive that is no longer an append of its segments (rewritten, or cut short) has them
+    /// put aside as `.kept`, never removed, and starts again from 0.
+    @Test func aRewrittenArchiveStartsItsSegmentsAgain() throws {
+        let rig = try Rig()
+        defer { rig.sb.remove() }
+        let archive = rig.path("memory/archive.jsonl")
+        for k in 0..<3 { #expect(rig.memory.archive("Invented message \(k).", role: .user, channel: "text")) }
+        let before = rig.backupNames()
+        #expect(before.count == 1)
+        let line = ArchiveEntry(timestamp: epoch, date: "2026-09-28", channel: "text", role: .user, text: "Other.").line
+        try Data((line + "\n").utf8).write(to: URL(fileURLWithPath: archive))
+        rig.clock.advance(3_600)
+        #expect(rig.memory.archive("After the rewrite.", role: .user, channel: "text"))
+        let whole = try #require(bytes(archive))
+        let base = MemoryBackups.segmentName(.archive, .init(start: 0, end: whole.count, stamp: Int64(epoch) + 3_600))
+        #expect(rig.backupNames() == [base, before[0] + ".kept"].sorted())
+        #expect(rig.memory.backups.newestReadable(.archive)?.data == whole)
+        #expect(rig.lines.all.contains("memory: memory/archive.jsonl is no longer an append of its 1 backup segment(s); "
+            + "they are kept aside (.kept)"))
+    }
+
+    /// P6b's whole copies: once a first segment holds the archive from 0, each copy it begins
+    /// with is removed; a copy holding anything else is kept.
+    @Test func aFirstSegmentRetiresTheWholeCopiesItHolds() throws {
+        let rig = try Rig()
+        defer { rig.sb.remove() }
+        let line = { (text: String) in
+            ArchiveEntry(timestamp: epoch, date: "2026-09-28", channel: "text", role: .user, text: text).line + "\n"
+        }
+        try FileManager.default.createDirectory(atPath: rig.backupDir, withIntermediateDirectories: true)
+        let prefix = Data(line("I grow invented chillies.").utf8)
+        try prefix.write(to: URL(fileURLWithPath: rig.backupDir + "/archive-\(Int64(epoch) - 7_200).jsonl"))
+        try Data(line("Something else.").utf8).write(to: URL(fileURLWithPath: rig.backupDir + "/archive-\(Int64(epoch) - 3_600).jsonl"))
+        try prefix.write(to: URL(fileURLWithPath: rig.path("memory/archive.jsonl")))
+        #expect(rig.memory.archive("They are very hot.", role: .user, channel: "text"))
+        let whole = try #require(bytes(rig.path("memory/archive.jsonl")))
+        #expect(rig.backupNames() == [
+            "archive-\(Int64(epoch) - 3_600).jsonl",
+            MemoryBackups.segmentName(.archive, .init(start: 0, end: whole.count, stamp: Int64(epoch))),
+        ])
     }
 
     /// Without the lease neither the message nor a copy is written.
@@ -424,7 +488,7 @@ struct MemoryPermanenceTests {
         let archive = rig.path("memory/archive.jsonl")
         let good = try #require(bytes(archive))
         rig.clock.advance(3_600)
-        #expect(rig.memory.checkAtLaunch()[.archive] == .fine)              // and a copy of all ten
+        #expect(rig.memory.checkAtLaunch()[.archive] == .fine)              // and a segment of the other nine
         let copy = Int64(epoch) + 3_600
         #expect(rig.memory.backups.newestReadable(.archive)?.stamp == copy)
         #expect(rig.memory.backups.newestReadable(.archive)?.entries == 10)
@@ -458,9 +522,10 @@ struct MemoryPermanenceTests {
         let path = rig.path("memory/journal.jsonl")
         let good = try #require(bytes(path))
         #expect(rig.memory.journalEntries().map(\.reply) == ["It is 0, sir.", "It is 1, sir.", "It is 2, sir."])
-        #expect(rig.backupNames() == ["journal-\(Int64(epoch)).jsonl"])
+        let first = good.split(separator: 0x0A)[0].count + 1                  // W1 part 7c: the first call's bytes
+        #expect(rig.backupNames() == ["journal-seg-0-\(first)-\(Int64(epoch)).jsonl"])
         rig.clock.advance(3_600)
-        #expect(rig.memory.checkAtLaunch()[.journal] == .fine)                  // and a copy of all three
+        #expect(rig.memory.checkAtLaunch()[.journal] == .fine)                  // and a segment of the other two
         #expect(rig.memory.backups.newestReadable(.journal)?.entries == 3)
         try Data("garbage\n".utf8).write(to: URL(fileURLWithPath: path))
         rig.clock.advance(60)
@@ -480,7 +545,7 @@ struct MemoryPermanenceTests {
         #expect(rig.memory.writePythonArchive(said))
         let path = rig.path("memory/archive-python.jsonl")
         let good = try #require(bytes(path))
-        #expect(rig.backupNames() == ["archive-python-\(Int64(epoch)).jsonl"])
+        #expect(rig.backupNames() == ["archive-python-seg-0-\(good.count)-\(Int64(epoch)).jsonl"])   // W1 part 7c
         #expect(rig.memory.writePythonArchive(said))
         #expect(bytes(path) == good)
         #expect(rig.memory.archive("A chat message.", role: .user, channel: "text"))

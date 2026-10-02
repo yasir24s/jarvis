@@ -113,8 +113,9 @@ struct MemoryToolsWiringTests {
     /// P6b: the conversations search, by keyword alone over the archive on disk. A message
     /// matches when it shares a content word with the query (endings taken off, so "moving" and
     /// "moved" meet); the most shared words first, then the newest. Function words alone, or no
-    /// shared word, match nothing.
-    @Test func recallsConversationSearchByKeyword() throws {
+    /// shared word, match nothing. W1 part 7c: the same from the index as from the files.
+    @Test(arguments: [false, true])
+    func recallsConversationSearchByKeyword(_ indexed: Bool) throws {
         let sb = try Sandbox()
         defer { sb.remove() }
         let clock = ManualClock(1_790_000_000)
@@ -130,18 +131,21 @@ struct MemoryToolsWiringTests {
             clock.set(t)
             #expect(memory.archive(text, role: role, channel: "text"))
         }
-        let recall = MemoryRecall(memory: memory, vectors: FactVectors(embedding: nil))
+        let recall = MemoryRecall(memory: memory, vectors: FactVectors(embedding: nil),
+                                  index: indexed ? MemoryIndex(database: MemoryDatabase(memory: memory), memory: memory) : nil)
         func found(_ query: String) -> [String] { recall.searchConversations(query).map(\.text) }
         #expect(found("Amira moving to Leeds") == ["Amira moved to Leeds with her cat.", "My sister Amira is moving to Leeds."])
         #expect(found("Amira cat") == ["Amira moved to Leeds with her cat.", "I bought a cat.",
                                        "My sister Amira is moving to Leeds."])
         #expect(recall.searchConversations("cat").map(\.date) == ["2026-09-28", "2026-09-27"])
         #expect(found("what was that").isEmpty && found("tennis").isEmpty && found("").isEmpty)
+        #expect(recall.index?.indexed(.archive)?.count == (indexed ? 4 : nil))
     }
 
     /// P6b part 5: the task journal is searched the same way, over each call's tool, arguments
-    /// and reply: the most shared words first, then the newest.
-    @Test func recallsJournalSearchByKeyword() throws {
+    /// and reply: the most shared words first, then the newest. W1 part 7c: from the index too.
+    @Test(arguments: [false, true])
+    func recallsJournalSearchByKeyword(_ indexed: Bool) throws {
         let sb = try Sandbox()
         defer { sb.remove() }
         let clock = ManualClock(1_790_000_000)
@@ -156,7 +160,8 @@ struct MemoryToolsWiringTests {
         noted(1_790_100_000, "run_command", [("command", "ls ~/Invented")], "garden-plan.txt")
         noted(1_790_200_000, "read_file", [("path", "~/Invented/garden-plan.txt")], nil)
         noted(1_790_300_000, "get_time", [], "It is noon, sir.")
-        let recall = MemoryRecall(memory: memory, vectors: FactVectors(embedding: nil))
+        let recall = MemoryRecall(memory: memory, vectors: FactVectors(embedding: nil),
+                                  index: indexed ? MemoryIndex(database: MemoryDatabase(memory: memory), memory: memory) : nil)
         func found(_ query: String) -> [String] { recall.searchJournal(query).map(\.tool) }
         #expect(found("garden plan") == ["read_file", "run_command", "write_file"])
         #expect(found("write the garden plan file") == ["write_file", "read_file", "run_command"])

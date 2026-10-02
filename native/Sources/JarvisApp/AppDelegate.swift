@@ -410,6 +410,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task.detached(priority: .utility) {
                 let n = recall.warm()
                 JarvisLog.log("memory: \(n) fact vector(s) ready", category: .state)
+                // W1 part 7c: the conversations and the journal are indexed before the first search.
+                if let added = recall.index?.refresh() {
+                    JarvisLog.log("memory: search index up to date (\(added) new entries)", category: .state)
+                }
             }
         }
         Task { @MainActor in
