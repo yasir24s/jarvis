@@ -26,17 +26,23 @@ struct VoiceReferenceTests {
         return folder
     }
 
-    @Test func theSettingIsReadFromTheDefaultsWithDefaultWhenUnset() throws {
+    /// V2: unset (or empty) is `dry`, the user's choice by ear; an explicit "default" is still the
+    /// installed `reference/`.
+    @Test func theSettingIsReadFromTheDefaultsWithDryWhenUnset() throws {
         let name = "jarvis-voice-tests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: name))
         defer { defaults.removePersistentDomain(forName: name) }
-        #expect(VoiceHelperSetup.reference(in: defaults) == "default")
-        defaults.set("dry", forKey: VoiceHelperSetup.referenceKey)
         #expect(VoiceHelperSetup.reference(in: defaults) == "dry")
-        defaults.set("  ", forKey: VoiceHelperSetup.referenceKey)
+        defaults.set("dry-wpe", forKey: VoiceHelperSetup.referenceKey)
+        #expect(VoiceHelperSetup.reference(in: defaults) == "dry-wpe")
+        defaults.set("default", forKey: VoiceHelperSetup.referenceKey)
         #expect(VoiceHelperSetup.reference(in: defaults) == "default")
-        #expect(VoiceHelperSetup.reference(in: nil) == "default")
+        defaults.set("  ", forKey: VoiceHelperSetup.referenceKey)
+        #expect(VoiceHelperSetup.reference(in: defaults) == "dry")
+        #expect(VoiceHelperSetup.reference(in: nil) == "dry")
         #expect(VoiceHelperSetup.referenceKey == "voiceReference")
+        #expect(VoiceHelperSetup.preferredReference == "dry")
+        #expect(VoiceHelperSetup.defaultReference == "default")
     }
 
     /// The helper gets `--reference` only for an installed reference other than the default; a

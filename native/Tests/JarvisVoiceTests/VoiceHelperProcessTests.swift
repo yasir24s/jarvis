@@ -53,10 +53,16 @@ struct VoiceHelperProcessTests {
         #expect(try String(contentsOf: log, encoding: .utf8) == "to-stderr\n")
     }
 
-    @Test func theAppsHelperArgumentsAreD54s() {
-        let setup = VoiceHelperSetup.inApp(bundle: .main, log: nil, defaults: nil)
-        #expect(setup.executable.path(percentEncoded: false).hasSuffix("/Contents/Helpers/jarvis-voice"))
-        #expect(setup.assets.path(percentEncoded: false).hasSuffix("/Library/Application Support/JARVIS/voice/"))
+    /// V2: the arguments are read against a temporary assets folder holding only the installed
+    /// default reference (the installed assets are never read), where `dry` is not installed and the
+    /// voice speaks with the installed default, at 4 steps. VoiceStepsTests has the dry reference.
+    @Test func theAppsHelperArgumentsAreD54s() throws {
+        let app = VoiceHelperSetup.inApp(bundle: .main, log: nil, defaults: nil)
+        #expect(app.executable.path(percentEncoded: false).hasSuffix("/Contents/Helpers/jarvis-voice"))
+        #expect(app.assets.path(percentEncoded: false).hasSuffix("/Library/Application Support/JARVIS/voice/"))
+        let folder = try VoiceReferenceTests.assets(dry: false)
+        defer { folder.remove() }
+        let setup = VoiceHelperSetup.inApp(bundle: .main, log: nil, defaults: nil, assets: folder.url)
         #expect(Array(setup.arguments.suffix(8))
             == ["--cache-limit-mb", "512", "--steps", "4", "--speed", "1.2", "--idle-exit", "600"])
         #expect(setup.arguments[0] == "--assets")
@@ -66,11 +72,15 @@ struct VoiceHelperProcessTests {
     @Test func theSpeedComesFromTheDefaultsClampedWith1Point2AsTheDefault() throws {
         let name = "jarvis-voice-tests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: name))
-        defer { defaults.removePersistentDomain(forName: name) }
+        let folder = try TempFolder()
+        defer {
+            defaults.removePersistentDomain(forName: name)
+            folder.remove()
+        }
         #expect(VoiceHelperSetup.speed(in: defaults) == 1.2)
         defaults.set(1.1, forKey: VoiceHelperSetup.speedKey)
         #expect(VoiceHelperSetup.speed(in: defaults) == 1.1)
-        #expect(VoiceHelperSetup.inApp(log: nil, defaults: defaults).arguments.contains("1.1"))
+        #expect(VoiceHelperSetup.inApp(log: nil, defaults: defaults, assets: folder.url).arguments.contains("1.1"))
         defaults.set(2.0, forKey: VoiceHelperSetup.speedKey)
         #expect(VoiceHelperSetup.speed(in: defaults) == 1.4)
         defaults.set(0, forKey: VoiceHelperSetup.speedKey)

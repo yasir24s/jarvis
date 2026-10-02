@@ -40,8 +40,9 @@ public enum Acknowledgement {
     static let forCommands = ["right-away", "certainly", "on-it"]
     /// How many of the lines last used are never said again.
     public static let recentLimit = 3
-    /// The F5 steps `install-voice-assets.sh` renders the lines with. Replies use 4
-    /// (`VoiceHelperSetup.steps`), but the lines are rendered once, and at 4 three of the ten
+    /// The F5 steps `install-voice-assets.sh` renders the lines with. Replies with the installed
+    /// default reference use 4 (`VoiceHelperSetup.defaultSteps(for:)`; V2: the dry references use
+    /// 8), but the lines are rendered once, and at 4 three of the ten
     /// came out blurred (transcribed "On its, uh", "Right way, sir.", "Working on its circle");
     /// at 8, three takes each of those three were transcribed exactly (V1 lab, 2026-10-02).
     public static let renderSteps = 8
@@ -112,7 +113,9 @@ public enum Acknowledgement {
 
     // MARK: - Clips
 
-    /// The folder `install-voice-assets.sh` renders a reference's lines into.
+    /// The folder `install-voice-assets.sh` renders a reference's lines into. V2: the app asks
+    /// for the reference the voice speaks with (`VoiceHelperSetup.reference`), not the setting, so
+    /// with `dry` not installed it is `acknowledgements/default/`, as the voice is the default's.
     public static func folder(assets: URL, reference: String) -> URL {
         assets.appending(path: "acknowledgements/\(reference)", directoryHint: .isDirectory)
     }
