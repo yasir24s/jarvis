@@ -72,20 +72,30 @@ struct ChatView: View {
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
             }
-            Composer(text: $model.draft.text, onPaste: { model.notePaste() }, onSubmit: { _ = model.send() },
-                     onFocus: { composerFocused = $0 })
-                .frame(minHeight: 36, idealHeight: 56, maxHeight: 120)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                // UI1: a panel with a cyan focus ring, dim cyan while the composer is not focused.
-                .background(JarvisTheme.panel.color, in: .rect(cornerRadius: 8))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(composerFocused ? JarvisTheme.cyan.color : JarvisTheme.cyanDim.color,
-                                      lineWidth: composerFocused ? 1.5 : 1)
-                }
-                .padding(8)
-                .onChange(of: model.draft.text) { model.noteTyping() }   // U1: typing holds an update back
+            HStack(alignment: .bottom, spacing: 8) {
+                Composer(text: $model.draft.text, onPaste: { model.notePaste() }, onSubmit: { _ = model.send() },
+                         onFocus: { composerFocused = $0 },
+                         onEscape: {
+                             guard model.canStop else { return false }
+                             model.stop()
+                             return true
+                         })
+                    .frame(minHeight: 36, idealHeight: 56, maxHeight: 120)
+                // UI1 part 4: Send, or Stop while a reply is being written or spoken.
+                SendButton(canStop: model.canStop, canSend: model.isConnected && model.draft.input != nil,
+                           onSend: { _ = model.send() }, onStop: { _ = model.stop() })
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            // UI1: a panel with a cyan focus ring, dim cyan while the composer is not focused.
+            .background(JarvisTheme.panel.color, in: .rect(cornerRadius: 8))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(composerFocused ? JarvisTheme.cyan.color : JarvisTheme.cyanDim.color,
+                                  lineWidth: composerFocused ? 1.5 : 1)
+            }
+            .padding(8)
+            .onChange(of: model.draft.text) { model.noteTyping() }   // U1: typing holds an update back
         }
         .frame(minWidth: 420, minHeight: 360)
         // UI1 part 1: always dark, navy to the edges, ice-white text in the body face.
@@ -170,18 +180,28 @@ private struct MessageRow: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
         case .assistant:
-            Group {
+            VStack(alignment: .leading, spacing: 6) {
                 if message.retracted {
                     Text(verbatim: message.text)
                         .strikethrough()
                         .foregroundStyle(JarvisTheme.muted.color)
                 } else if message.rendersMarkdown {
-                    MarkdownText(text: message.text)
+                    if !message.text.isEmpty {
+                        MarkdownText(text: message.text)
+                    }
                 } else if message.text.isEmpty {
                     ProgressView()
                         .controlSize(.small)
                 } else {
                     Text(verbatim: message.text)
+                }
+                // UI1 part 4: what was shown before Stop stays, marked.
+                if message.stopped {
+                    Label("Stopped", systemImage: "stop.circle")
+                        .font(JarvisTheme.label)
+                        .tracking(JarvisTheme.labelTracking / 2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(JarvisTheme.muted.color)
                 }
             }
             .padding(10)
@@ -197,6 +217,45 @@ private struct MessageRow: View {
                 .font(JarvisTheme.small)
                 .foregroundStyle(JarvisTheme.muted.color)
                 .frame(maxWidth: .infinity, alignment: .center)
+        }
+    }
+}
+
+/// UI1 part 4: the composer's button. Send (Return does the same); while a reply is being
+/// written or spoken it is Stop, and Esc presses it.
+private struct SendButton: View {
+    let canStop: Bool
+    let canSend: Bool
+    let onSend: () -> Void
+    let onStop: () -> Void
+
+    var body: some View {
+        if canStop {
+            Button(action: onStop) {
+                Image(systemName: "stop.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(JarvisTheme.cyan.color)
+                    .frame(width: 28, height: 28)
+                    .background(JarvisTheme.navy.color, in: .circle)
+                    .overlay(Circle().strokeBorder(JarvisTheme.cyan.color, lineWidth: 1.5))
+                    .jarvisGlow()
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.cancelAction)
+            .help("Stop (Esc)")
+            .accessibilityLabel("Stop")
+        } else {
+            Button(action: onSend) {
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(JarvisTheme.navy.color)
+                    .frame(width: 28, height: 28)
+                    .background(canSend ? JarvisTheme.cyan.color : JarvisTheme.cyanDim.color, in: .circle)
+            }
+            .buttonStyle(.plain)
+            .disabled(!canSend)
+            .help("Send (Return)")
+            .accessibilityLabel("Send")
         }
     }
 }

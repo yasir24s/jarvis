@@ -381,7 +381,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.hud.speechStarted(CaptionTimeline(text: heard, duration: seconds))
         }
         voice.onReplyAudioEnded = { [weak self] in self?.hud.speechEnded() }
-        voice.onReplyOver = { [weak self] in self?.hud.speechEnded() }
+        voice.onReplyOver = { [weak self] in
+            self?.hud.speechEnded()
+            self?.chat.speaking = voice.repliesPending > 0   // UI1 part 4: Stop while he speaks
+        }
+        chat.onStopSpeech = { voice.stop() }
         chat.onReplyFinished = { [weak self] message, turn in
             guard let self else { return }
             let context = SpeakReplies.context(for: message, turn: turn, toggle: self.speakReplies,
@@ -391,6 +395,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             SpeakReplies.replyFinished(message, context: context, research: research,
                                        speaker: { text, turn in voice.speak(text, turn: turn.turnID) },
                                        log: { JarvisLog.log($0, category: .voice) })
+            self.chat.speaking = voice.repliesPending > 0
         }
         // V1 part 1: with Speak replies on, a sent message is acknowledged in his voice at once.
         chat.onSend = { [weak self] text, sentAt in

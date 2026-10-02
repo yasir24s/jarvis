@@ -5,13 +5,16 @@ import SwiftUI
 /// The chat composer (plan: M02-M04 §3.12): an `NSTextView` whose paste and drag-and-drop
 /// call `onPaste`, so the next input is `pasted: true` (X-8). Return sends and Shift+Return
 /// adds a newline (`ComposerReturn`). Both are handled at `insertNewline:` in `doCommandBy`
-/// rather than in `keyDown`, so keys an input method takes never reach them.
+/// rather than in `keyDown`, so keys an input method takes never reach them. UI1 part 4: Esc
+/// (`cancelOperation:`) stops a reply, the same way.
 struct Composer: NSViewRepresentable {
     @Binding var text: String
     let onPaste: () -> Void
     let onSubmit: () -> Void
     /// UI1: told when the text view takes or gives up the keyboard (the cyan focus ring).
     var onFocus: (Bool) -> Void = { _ in }
+    /// UI1 part 4: Esc. True when it stopped something; otherwise the text view handles it.
+    var onEscape: () -> Bool = { false }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -84,6 +87,9 @@ struct Composer: NSViewRepresentable {
         }
 
         func textView(_ textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+            if selector == #selector(NSResponder.cancelOperation(_:)) {
+                return parent.onEscape()
+            }
             guard selector == #selector(NSResponder.insertNewline(_:)) else { return false }
             let shift = NSApp.currentEvent?.modifierFlags.contains(.shift) ?? false
             switch ComposerReturn.action(shift: shift) {

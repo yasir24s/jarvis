@@ -142,11 +142,13 @@ struct ChatViewModelTests {
         #expect(await fake.inputs.isEmpty)
     }
 
-    @Test("Return during this window's own turn neither sends nor queues the draft (D-10)")
-    func secondSendDuringATurnIsRefused() async throws {
+    /// UI1 part 4 replaces D-10's refusal here: Return during this window's own turn stops it,
+    /// then sends the draft once it has ended, as added context for the same request.
+    @Test("Return during this window's own turn stops it, then sends the draft as added context (UI1 part 4)")
+    func secondSendDuringATurnStopsItAndAddsContext() async throws {
         let gate = Gate()
-        let fake = FakeCoordinator { _, _ in
-            await gate.park()
+        let fake = FakeCoordinator { input, _ in
+            if input.text == "first" { await gate.park() }
             return .reply("Done, sir.")
         }
         let model = ChatViewModel(submitter: fake)
@@ -154,14 +156,16 @@ struct ChatViewModelTests {
         let turn = try #require(model.send())
         await gate.waitUntilParked()
         model.draft.text = "second"
-        #expect(model.send() == nil)
-        #expect(model.draft.text == "second")
+        let second = try #require(model.send())
+        #expect(model.draft.text.isEmpty)
 
         await gate.open()
         await turn.value
-        #expect(await fake.inputs.map(\.text) == ["first"])
-        #expect(model.draft.text == "second")
-        #expect(model.messages.map(\.text) == ["first", "Done, sir."])
+        await second.value
+        #expect(await fake.inputs.map(\.text) == ["first", "second"])
+        #expect(await fake.inputs.map(\.addsContext) == [false, true])
+        #expect(model.messages.map(\.text) == ["first", "", "second", "Done, sir."])
+        #expect(model.messages.map(\.stopped) == [false, true, false, false])
     }
 
     @Test("a stream that fails finishes with the reply the turn returned, not the partial text")
@@ -301,7 +305,7 @@ struct ChatViewModelTests {
 
     @Test("V1: the send hook sees each sent message once, as shown, and nothing that was not sent")
     func sendHookSeesEachSentMessage() async throws {
-        let outcomes = Outcomes([.reply("It is three o'clock, sir."), .reply("Done, sir.")])
+        let outcomes = Outcomes([.reply("It is three o'clock, sir."), .reply("The second, sir."), .reply("Done, sir.")])
         let fake = FakeCoordinator(outcomes)
         let model = ChatViewModel(submitter: fake)
         var sent: [String] = []
@@ -309,13 +313,16 @@ struct ChatViewModelTests {
         model.draft.text = "  what time is it \n"
         let first = model.send()
         model.draft.text = "and the date"
-        #expect(model.send() == nil, "Return during the turn sends nothing")
+        // UI1 part 4: Return during the turn stops it and sends this after it, as added context.
+        let second = model.send()
+        #expect(second != nil)
         await first?.value
+        await second?.value
         model.draft.text = "   "
         #expect(model.send() == nil)
         model.draft.text = "open Safari"
         await model.send()?.value
-        #expect(sent == ["what time is it", "open Safari"])
+        #expect(sent == ["what time is it", "and the date", "open Safari"])
     }
 
     @Test("a submit the coordinator refuses as .busy shows no row, even while it is being refused")

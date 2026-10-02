@@ -31,9 +31,13 @@ public final class ChatViewModel: ReplySink {
     /// The last submit was refused because another turn was running (D-10). The draft was
     /// kept and the composer shows `busyNotice`. The next submit clears it.
     public private(set) var busy = false
-    /// A turn this window started is running. Until it ends, Return neither sends nor queues
-    /// the draft (D-10).
+    /// A turn this window started is running. UI1 part 4: Return while it runs stops it and
+    /// sends the draft after it as added context (`send`).
     public private(set) var responding = false
+    /// UI1 part 4: a reply of this window's is being spoken, or its speech made; set by the app.
+    public var speaking = false
+    /// UI1 part 4: a reply is being written or spoken, so the send button is Stop and Esc stops.
+    public var canStop: Bool { responding || speaking }
     /// The composer's text and paste flag.
     public var draft = ComposerDraft()
     /// `BackendReporter.last.name` read after this window's latest turn; nil before the first.
@@ -66,6 +70,8 @@ public final class ChatViewModel: ReplySink {
     /// that turn ended, after `onReplyFinished`, so a reply to be spoken is already queued.
     @ObservationIgnored public var onTurnBegan: ((String) -> Void)?
     @ObservationIgnored public var onTurnEnded: (() -> Void)?
+    /// UI1 part 4: stops the app's voice (Stop, and a message sent while he speaks).
+    @ObservationIgnored public var onStopSpeech: (() -> Void)?
 
     @ObservationIgnored private var submitter: (any TurnSubmitting)?
     @ObservationIgnored private var backendName: (@Sendable () async -> String)?
@@ -74,6 +80,12 @@ public final class ChatViewModel: ReplySink {
     @ObservationIgnored private var authenticator: (any TextConfirmAuthenticator)?
     @ObservationIgnored private var watcher: Task<Void, Never>?
     @ObservationIgnored private var expiry: Task<Void, Never>?
+    /// UI1 part 4: the running turn's task, and its number: a turn that ends after a newer one
+    /// was started leaves the newer one's state alone.
+    @ObservationIgnored private var running: Task<Void, Never>?
+    @ObservationIgnored private var generation = 0
+    /// Stop came before the coordinator took the turn: it is stopped as soon as it is.
+    @ObservationIgnored private var stopBeforeAccept = false
     @ObservationIgnored private let clock: any JarvisClock
     private let minimumGap: Duration
 
@@ -175,10 +187,19 @@ public final class ChatViewModel: ReplySink {
     /// A typed affirmation while the card shows, on a Mac whose owner check cannot run, is
     /// refused here (plan §3.4): the user row and the refusal are added, nothing is sent, and
     /// the confirmation stays pending until its deadline, for the voice channel.
+    ///
+    /// UI1 part 4: sent while he replies. A reply being written is stopped (`stop`), and this
+    /// message is sent once that turn has ended, marked as added context for the same request
+    /// (`UserInput.addsContext`); the history it is sent with holds the user's last message and
+    /// the reply as far as it got. A reply that is only being spoken stops speaking, and this
+    /// message is sent as usual.
     @discardableResult
     public func send() -> Task<Void, Never>? {
         lastUse = clock.now()
-        guard !responding, let submitter, let input = draft.input else { return nil }
+        guard let submitter, let input = draft.input else { return nil }
+        let interrupted = responding ? stop() : nil
+        if responding && interrupted == nil { return nil }
+        if speaking { stopSpeech() }
         let sent = draft
         draft = ComposerDraft()
         busy = false
@@ -188,7 +209,27 @@ public final class ChatViewModel: ReplySink {
             return nil
         }
         onSend?(shown, .now)
-        return start(input, shown: shown, restoring: sent, via: submitter)
+        let turnInput = interrupted == nil ? input
+            : UserInput(text: input.text, channel: input.channel, pasted: input.pasted, addsContext: true)
+        return start(turnInput, shown: shown, restoring: sent, via: submitter, after: interrupted)
+    }
+
+    /// UI1 part 4: Stop, the send button's other face, and Esc. Speech stops. A reply being
+    /// written stops where it is: its turn is closed, so the gateway runs no tool for it, and
+    /// cancelled, so the brain stops (the Claude process, or the local model's generation) and
+    /// its MCP turn is revoked. The row keeps what was shown, marked stopped, and is never
+    /// spoken. Returns the stopped turn's task, or nil when no turn was running.
+    @discardableResult
+    public func stop() -> Task<Void, Never>? {
+        stopSpeech()
+        guard responding, let task = running else { return nil }
+        if live == nil {
+            stopBeforeAccept = true
+        } else {
+            markLiveStopped()
+        }
+        task.cancel()
+        return task
     }
 
     /// The card's Confirm button (plan §3.4): the same as typing "confirm", with the draft left
@@ -230,7 +271,7 @@ public final class ChatViewModel: ReplySink {
 
     public func delta(_ text: String) async {
         let now = ContinuousClock.now
-        guard !text.isEmpty, let step = live?.coalescer.append(text, at: now) else { return }
+        guard !text.isEmpty, live?.stopped == false, let step = live?.coalescer.append(text, at: now) else { return }
         switch step {
         case .publish:
             live?.flush?.cancel()
@@ -248,7 +289,7 @@ public final class ChatViewModel: ReplySink {
     /// since the turn's reply, which includes them, finishes the new row. A retraction with
     /// nothing shown changes nothing.
     public func retracted(messageID: String) async {
-        guard let turn = live, let index = messages.lastIndex(where: { $0.id == turn.id }) else { return }
+        guard let turn = live, !turn.stopped, let index = messages.lastIndex(where: { $0.id == turn.id }) else { return }
         let shown = Py.strip(turn.shownText)
         guard !shown.isEmpty else { return }
         turn.flush?.cancel()
@@ -261,7 +302,7 @@ public final class ChatViewModel: ReplySink {
     }
 
     public func sentence(_ text: String) async {
-        guard var turn = live else { return }
+        guard var turn = live, !turn.stopped else { return }
         turn.sentences.append(text)
         live = turn
         if turn.coalescer.text.isEmpty {
@@ -274,19 +315,65 @@ public final class ChatViewModel: ReplySink {
     /// Starts one text turn. Its rows are added once the coordinator takes it (`accept`), so a
     /// submit refused as `.busy` shows nothing. `restoring` is what a refused turn gives back to
     /// the composer: the sent draft, or nil for the card's Confirm button.
+    ///
+    /// UI1 part 4: `previous` is a stopped turn this one follows: it is sent once that has ended.
+    /// Stopped before then, it is never sent and its text goes back to the composer.
     private func start(_ input: UserInput, shown: String, restoring sent: ComposerDraft?,
-                       via submitter: any TurnSubmitting) -> Task<Void, Never> {
+                       via submitter: any TurnSubmitting, after previous: Task<Void, Never>? = nil) -> Task<Void, Never> {
         responding = true
-        return Task {
+        generation += 1
+        let mine = generation
+        let task = Task {
+            if let previous { await previous.value }
+            if Task.isCancelled {
+                self.notSent(sent, generation: mine)
+                return
+            }
             let outcome = await submitter.submit(input, sink: self, accepted: { @MainActor turn in
                 self.accept(shown, turn: turn)
             })
             let summary = await self.live?.turn.summary()
-            self.finish(outcome, restoring: sent, summary: summary)
+            self.finish(outcome, restoring: sent, summary: summary, generation: mine)
             if outcome != .busy, outcome != .empty, let backendName = self.backendName {
                 self.lastBackend = await backendName()
             }
         }
+        running = task
+        return task
+    }
+
+    /// A turn stopped before it was sent: nothing ran, and the text goes back to the composer.
+    private func notSent(_ sent: ComposerDraft?, generation mine: Int) {
+        if mine == generation {
+            responding = false
+            running = nil
+            stopBeforeAccept = false
+        }
+        if let sent {
+            draft = ComposerDraft(text: sent.text + draft.text, pasted: sent.pasted || draft.pasted)
+        }
+    }
+
+    /// The live row keeps what was shown, finished and marked stopped, and takes nothing more.
+    /// Its turn is closed at once, so the gateway refuses any tool call it makes from now on.
+    private func markLiveStopped() {
+        guard var turn = live, !turn.stopped else { return }
+        turn.flush?.cancel()
+        turn.flush = nil
+        turn.stopped = true
+        live = turn
+        if let index = messages.lastIndex(where: { $0.id == turn.id }) {
+            messages[index].text = Py.strip(turn.shownText)
+            messages[index].phase = .finished
+            messages[index].stopped = true
+        }
+        let context = turn.turn
+        Task { await context.close() }
+    }
+
+    private func stopSpeech() {
+        speaking = false
+        onStopSpeech?()
     }
 
     /// The coordinator took the turn: the user row, then the live assistant row.
@@ -297,6 +384,10 @@ public final class ChatViewModel: ReplySink {
         messages.append(reply)
         live = LiveReply(id: reply.id, userID: user.id, turn: turn, coalescer: DeltaCoalescer(minimumGap: minimumGap))
         onTurnBegan?(shown)
+        if stopBeforeAccept {
+            stopBeforeAccept = false
+            markLiveStopped()
+        }
     }
 
     /// True when `text` would confirm the card's confirmation but the owner check cannot run.
@@ -333,6 +424,8 @@ public final class ChatViewModel: ReplySink {
         var coalescer: DeltaCoalescer
         var sentences: [String] = []
         var flush: Task<Void, Never>?
+        /// UI1 part 4: the user stopped it.
+        var stopped = false
 
         /// What streamed into the row: the deltas, or the sentences on a path that sends none.
         var shownText: String {
@@ -366,12 +459,19 @@ public final class ChatViewModel: ReplySink {
         messages[index].text = text
     }
 
-    private func finish(_ outcome: TurnOutcome, restoring sent: ComposerDraft?, summary: TurnSummary?) {
+    private func finish(_ outcome: TurnOutcome, restoring sent: ComposerDraft?, summary: TurnSummary?,
+                        generation mine: Int) {
         let turn = live
         turn?.flush?.cancel()
         live = nil
-        responding = false
+        if mine == generation {
+            responding = false
+            running = nil
+            stopBeforeAccept = false
+        }
         defer { if turn != nil { onTurnEnded?() } }
+        // UI1 part 4: a stopped row already shows what came before Stop, and is not spoken.
+        if turn?.stopped == true { return }
         switch outcome {
         case .busy, .empty:
             // Refused, not queued (D-10). The coordinator refuses before it takes a turn, so

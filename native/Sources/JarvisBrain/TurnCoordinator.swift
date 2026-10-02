@@ -9,11 +9,16 @@ public struct UserInput: Sendable, Equatable {
     /// Typed text that arrived by paste or drag-and-drop: external content, so the turn
     /// starts tainted (X-8, D-8).
     public let pasted: Bool
+    /// UI1 part 4: sent while the reply to the last message was still coming, which stopped it.
+    /// The brains get it labelled as more context for the same request (`BrainRouter.addedContext`);
+    /// everything else sees the text as typed.
+    public let addsContext: Bool
 
-    public init(text: String, channel: Channel, pasted: Bool = false) {
+    public init(text: String, channel: Channel, pasted: Bool = false, addsContext: Bool = false) {
         self.text = text
         self.channel = channel
         self.pasted = pasted
+        self.addsContext = addsContext
     }
 }
 
@@ -107,6 +112,7 @@ public actor TurnCoordinator {
         activity?.begin()
         defer { activity?.end() }
 
+        let started = ContinuousClock.now
         let turn = TurnContext(channel: input.channel, startTainted: input.pasted)
         defer { await turn.close() }
         onTurnStart?(turn)
@@ -132,8 +138,29 @@ public actor TurnCoordinator {
             return .fastPath(reply)
         }
         let isOnline = await online()
-        let reply = await brain.process(text, online: isOnline, channel: input.channel, turn: turn, sink: sink)
+        let brain = self.brain
+        let reply = await withTaskCancellationHandler {
+            await brain.process(text, online: isOnline, channel: input.channel, turn: turn, sink: sink,
+                                addsContext: input.addsContext)
+        } onCancel: {
+            // UI1 part 4: stopped. From now on the gateway runs no tool for this turn.
+            Task { await turn.close() }
+        }
+        if Task.isCancelled {
+            // UI1 part 4: stopped. Nothing it asked for may run later: a confirmation it stashed
+            // is dropped (any earlier one was consumed when this turn began).
+            await turn.close()
+            await dropConfirmation(stashedSince: started)
+        }
         archive?.record(user: text, reply: reply, channel: input.channel)          // the brain sent it
         return .reply(reply)
+    }
+
+    /// Clears the pending confirmation if it was stashed at or after `start`, as the card's
+    /// Cancel does: "cancel" is no affirmation, so the gate drops it and runs nothing.
+    private func dropConfirmation(stashedSince start: ContinuousClock.Instant) async {
+        guard let pending = await confirmations.pending,
+              pending.deadline - ConfirmationGate.timeout >= start else { return }
+        _ = await confirmations.consume("cancel", via: textPort, runIn: TurnContext(channel: .text))
     }
 }

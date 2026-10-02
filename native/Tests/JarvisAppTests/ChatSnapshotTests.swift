@@ -26,6 +26,37 @@ actor ScriptedSubmitter: TurnSubmitting {
     }
 }
 
+/// A submitter whose first turn streams a little and then runs until it is stopped; later
+/// turns answer at once. For the Stop snapshots.
+actor StoppableSubmitter: TurnSubmitting {
+    private var calls = 0
+    private(set) var inputs: [UserInput] = []
+    let firstShown: String
+    let later: String
+
+    init(firstShown: String, later: String) {
+        self.firstShown = firstShown
+        self.later = later
+    }
+
+    func submit(_ input: UserInput, sink: any ReplySink,
+                accepted: (@Sendable (TurnContext) async -> Void)?) async -> TurnOutcome {
+        calls += 1
+        inputs.append(input)
+        let turn = TurnContext(channel: input.channel)
+        await accepted?(turn)
+        if calls == 1 {
+            await sink.delta(firstShown)
+            while !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
+            await turn.close()
+            return .reply(firstShown)
+        }
+        await sink.delta(later)
+        await turn.close()
+        return .reply(later)
+    }
+}
+
 /// An owner check that is always available and always passes; nothing is shown.
 struct PassingAuthenticator: TextConfirmAuthenticator {
     func canAuthenticate() -> Bool { true }
@@ -57,6 +88,31 @@ struct ChatSnapshotTests {
         model.post("A note he posted himself, outside any turn.")
         let url = try await UISnapshot.write(ChatView(model: model), size: CGSize(width: 560, height: 620),
                                              name: "ui1-part1-theme")
+        print("UI1 snapshot \(url.path)")
+    }
+
+    /// UI1 part 4: while he writes, the button is Stop; a message sent then stops him, keeps his
+    /// partial reply marked stopped, and goes after it as added context.
+    @Test func stopAndAddContext() async throws {
+        let submitter = StoppableSubmitter(firstShown: "Flights to Rome next week start at",
+                                           later: "In euros, sir: from €89 return, on Tuesday morning.")
+        let model = ChatViewModel(submitter: submitter, minimumGap: .zero)
+        model.draft.text = "Find me flights to Rome next week"
+        let first = try #require(model.send())
+        for _ in 0..<200 where model.messages.last?.text.isEmpty ?? true {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        model.draft.text = "in euros please"
+        var url = try await UISnapshot.write(ChatView(model: model), size: CGSize(width: 560, height: 420),
+                                             name: "ui1-part4-replying-stop-button")
+        print("UI1 snapshot \(url.path)")
+        let second = try #require(model.send())
+        await first.value
+        await second.value
+        #expect(model.messages.map(\.stopped) == [false, true, false, false])
+        #expect(await submitter.inputs.map(\.addsContext) == [false, true])
+        url = try await UISnapshot.write(ChatView(model: model), size: CGSize(width: 560, height: 420),
+                                         name: "ui1-part4-stopped-then-context")
         print("UI1 snapshot \(url.path)")
     }
 

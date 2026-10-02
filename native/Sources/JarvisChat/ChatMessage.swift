@@ -25,13 +25,17 @@ public struct ChatMessage: Identifiable, Sendable, Equatable {
     /// An assistant row fed by a message the model retracted after a refusal (R6): it is shown
     /// struck through, as plain text.
     public internal(set) var retracted: Bool
+    /// UI1 part 4: the user stopped this reply; it keeps what was shown, marked "stopped".
+    public internal(set) var stopped: Bool
 
-    public init(id: UUID = UUID(), role: Role, text: String, phase: Phase, retracted: Bool = false) {
+    public init(id: UUID = UUID(), role: Role, text: String, phase: Phase, retracted: Bool = false,
+                stopped: Bool = false) {
         self.id = id
         self.role = role
         self.text = text
         self.phase = phase
         self.retracted = retracted
+        self.stopped = stopped
     }
 
     /// Only finished assistant rows are markdown. User text, streaming text and retracted rows

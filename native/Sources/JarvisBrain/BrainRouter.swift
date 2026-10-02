@@ -1,6 +1,7 @@
 import Foundation
 import JarvisCore
 import JarvisTools
+import Synchronization
 
 /// jarvis.py `process_command` (plan: M02-M04 §3.9), in Python's order. `CoreState.beginTurn`
 /// runs steps 1 to 9 (M1's `m1_prompt` golden suite proves that half against the real
@@ -63,10 +64,21 @@ public struct BrainRouter: Sendable {
         return head.system + addendum + String(decoding: full[system.count...], as: UTF8.self)
     }
 
+    /// UI1 part 4: what the brains are given for a message sent while the reply to the last one
+    /// was still coming. The history before it holds that message and the reply as far as it got.
+    public static func addedContext(_ text: String) -> String {
+        "[Added context: I stopped your last reply, so it was cut short, to add this to the same request.]\n" + text
+    }
+
     /// One command, as `process_command(text, online)`. Returns the reply ("" when a state file
     /// has the wrong shape: Python's turn raises there, and its main loop only logs).
+    ///
+    /// UI1 part 4: a stopped turn (its task cancelled) ends where it is, and never falls back to
+    /// the local model. History keeps what was shown of the reply as the assistant turn ("" if
+    /// nothing was), and that is what is returned. With `addsContext`, the brains get the text
+    /// labelled by `addedContext`; history and the rest of the turn see it as typed.
     public func process(_ text: String, online: Bool, channel: Channel, turn: TurnContext,
-                        sink: any ReplySink) async -> String {
+                        sink: any ReplySink, addsContext: Bool = false) async -> String {
         let head: CoreState.TurnPrompt
         do {
             head = try await core.beginTurn(text, online: online)                    // steps 1-9
@@ -83,19 +95,25 @@ public struct BrainRouter: Sendable {
         let system = Self.prompt(head, channel: channel, memory: memory.claude,      // step 10
                                  memoryTools: recall != nil)
         let localSystem = Self.prompt(head, channel: channel, memory: memory.local, memoryTools: false)
+        let user = addsContext ? Self.addedContext(text) : text
+        let shown = ShownReply(sink)
 
         if config.enabled && online {                                                  // step 11
             // Python's `if reply:`: nil and "" both fall through to the local model.
-            if let reply = await claude.generate(system: system, user: text, turn: turn, sink: sink),
-               !reply.isEmpty {
+            let reply = await claude.generate(system: system, user: user, turn: turn, sink: shown)
+            if Task.isCancelled { return await stopped(shown) }
+            if let reply, !reply.isEmpty {
                 await core.recordAssistant(reply)                                    // step 12
                 return reply
             }
         }
+        if Task.isCancelled { return await stopped(shown) }
 
         await backend.set(LocalBrain.backendName)                                     // step 13
         // History as Python's four local-loop endings leave it (jarvis.py 5086-5118).
-        switch await local.generate(system: localSystem, user: text, channel: channel, turn: turn, sink: sink) {
+        let outcome = await local.generate(system: localSystem, user: user, channel: channel, turn: turn, sink: shown)
+        if Task.isCancelled { return await stopped(shown) }
+        switch outcome {
         case .reply(let reply):
             await core.recordAssistant(reply)
             return reply
@@ -108,5 +126,52 @@ public struct BrainRouter: Sendable {
             await core.popTrailingUserTurn()
             return reply
         }
+    }
+
+    /// The stopped turn's history: the reply as far as it was shown.
+    private func stopped(_ shown: ShownReply) async -> String {
+        let partial = shown.text
+        await core.recordAssistant(partial)
+        return partial
+    }
+}
+
+/// UI1 part 4: hands a reply on to `sink` and keeps what was shown of it, the deltas or, on a
+/// path with none, the sentences, since the last retraction (as the chat's live row does).
+/// Once the turn is stopped nothing more is passed on or kept: the local model's error line for
+/// a cancelled generation is neither shown, spoken nor taken as the reply.
+final class ShownReply: ReplySink {
+    private struct Shown {
+        var deltas = ""
+        var sentences: [String] = []
+    }
+
+    private let sink: any ReplySink
+    private let shown = Mutex(Shown())
+
+    init(_ sink: any ReplySink) {
+        self.sink = sink
+    }
+
+    var text: String {
+        shown.withLock { Py.strip($0.deltas.isEmpty ? $0.sentences.joined(separator: " ") : $0.deltas) }
+    }
+
+    func sentence(_ text: String) async {
+        guard !Task.isCancelled else { return }
+        shown.withLock { $0.sentences.append(text) }
+        await sink.sentence(text)
+    }
+
+    func delta(_ text: String) async {
+        guard !Task.isCancelled else { return }
+        shown.withLock { $0.deltas += text }
+        await sink.delta(text)
+    }
+
+    func retracted(messageID: String) async {
+        guard !Task.isCancelled else { return }
+        shown.withLock { $0 = Shown() }
+        await sink.retracted(messageID: messageID)
     }
 }
