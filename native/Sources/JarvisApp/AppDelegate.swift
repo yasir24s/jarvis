@@ -41,6 +41,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// before the lock is released: its passes write, and writes need the lease.
     private var personality: PersonalitySchedule?
     private var idleCompile: IdleCompile?
+    /// W1: the web memory's background summaries, stopped at quit before the lock is released.
+    private var webSummaries: WebSummaryQueue?
     /// The background reading of the user's files (P3), started once the brain has started
     /// and stopped at quit before the lock is released: its index and facts writes need the lease.
     private var files: FileScanner?
@@ -188,6 +190,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         personality = nil
         idleCompile?.stop()   // nor an idle compile
         idleCompile = nil
+        webSummaries?.stop()   // nor a page summary (W1)
+        webSummaries = nil
         files?.cancel()   // already stopped on a normal quit; no file read outlives the lease
         files = nil
         lock = nil   // closes the fd: releases the flock before exit
@@ -393,6 +397,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             core: core, research: research, config: config, environment: environment,
             runDirectory: folders.run, claudeWorkingDirectory: folders.claudeWorkingDirectory,
             memory: memory, files: fileSetup,
+            // W1: JARVIS reads the web with WebKit on a private profile (never the Safari app).
+            reader: WebReader(),
             textAuthenticator: authenticator,
             // Python's is_online(): asked only when a turn reaches the brain.
             online: { await Net.isOnline() })
@@ -405,6 +411,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // P6: chats are compiled into memory after 30 idle minutes too, not only on a dismissal.
         assembly.idleCompile?.start()
         idleCompile = assembly.idleCompile
+        webSummaries = assembly.webSummaries
+        webSummaries?.kick()   // pages left unsummarised by the last run
         // P2: the facts' sentence vectors are computed in the background, not on the first turn.
         if let recall = assembly.recall {
             Task.detached(priority: .utility) {
@@ -474,6 +482,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.research?.stop()   // flushes enqueued bumps while the lease is still held
                 self.personality?.stop()   // no personality pass outlives the lease
                 self.idleCompile?.stop()   // nor an idle compile
+                self.webSummaries?.stop()   // nor a page summary (W1)
                 self.files?.cancel()   // no file read outlives the lease
                 self.lock = nil
                 exit(0)

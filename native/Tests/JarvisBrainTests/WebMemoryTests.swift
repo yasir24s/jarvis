@@ -198,6 +198,55 @@ struct WebMemoryTests {
         #expect(await turn.taintedBy == ["web_memory", "search_memory"])
     }
 
+    /// W1 part 4: with a page reader, Claude is offered web_search with its deep flag; the list
+    /// is otherwise the same, and without a reader it is Python's.
+    @Test func claudeIsOfferedTheDeepSearchOnlyWithAReader() throws {
+        let without = BrainAssembly.claudeTools(memory: true)
+        let with = BrainAssembly.claudeTools(memory: true, deepWeb: true)
+        #expect(with.tools.map(\.name) == without.tools.map(\.name) && with.allowed == without.allowed)
+        #expect(zip(with.tools, without.tools).filter { $0.0 != $0.1 }.map(\.0.name) == ["web_search"])
+        #expect(without.tools.first { $0.name == "web_search" } == ToolCatalog.tools.first { $0.name == "web_search" })
+        #expect(with.tools.first { $0.name == "web_search" } == NativeToolCatalog.webSearchDeep)
+        let parameters = try PyJSON.loads(Data(NativeToolCatalog.webSearchDeep.parametersJSON.utf8)).objectValue
+        #expect(parameters?["properties"]?.objectValue?["deep"]?.objectValue?["type"]?.stringValue == "boolean")
+        #expect(parameters?["required"] == .array([.string("query")]))
+    }
+
+    /// The pages a deep search kept are summarised in the background, never while a turn runs.
+    @Test func pendingSummariesWaitWhileATurnRuns() async throws {
+        let rig = try Rig()
+        defer { rig.sandbox.remove() }
+        rig.web.store(Self.page("one", title: "One", text: "The first invented page."), source: .search, query: "q")
+        rig.web.store(Self.page("two", title: "Two", text: "The second invented page."), source: .search, query: "q")
+        let turns = TurnActivity(clock: rig.clock)
+        turns.begin()
+        let events = Events()
+        struct Recording: PageSummarizing {
+            let events: Events
+            func summarize(title: String, text: String) async throws -> PageSummary {
+                events.add("summarise " + title)
+                return PageSummary(summary: "About " + title + ".", points: [], by: "local")
+            }
+        }
+        let queue = WebSummaryQueue(memory: rig.web, summarizer: Recording(events: events), turns: turns, sleep: { _ in
+            events.add("wait")
+            if events.all.filter({ $0 == "wait" }).count == 2 { turns.end() }
+        })
+        queue.kick()
+        queue.kick()                                                      // one run at a time
+        for _ in 0..<200 where queue.isRunning { try await Task.sleep(for: .milliseconds(10)) }
+        #expect(!queue.isRunning)
+        #expect(events.all == ["wait", "wait", "summarise One", "summarise Two"])
+        #expect(rig.web.page("https://news.invalid/one")?.summary == "About One.")
+        #expect(rig.web.pending(limit: 5).isEmpty)
+    }
+
+    final class Events: Sendable {
+        private let list = Mutex<[String]>([])
+        func add(_ s: String) { list.withLock { $0.append(s) } }
+        var all: [String] { list.withLock { $0 } }
+    }
+
     // MARK: - Summaries
 
     @Test func theSummaryReplyIsParsed() {

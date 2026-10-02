@@ -24,6 +24,13 @@ public enum NativeToolCatalog {
             parametersJSON: #"{"type": "object", "properties": {"ids": {"type": "array", "items": {"type": "string"}, "description": "The ids of the forgotten notes to bring back"}, "query": {"type": "string", "description": "Instead of ids, a phrase the forgotten notes contain"}}, "required": []}"#),
     ]
 
+    /// W1 part 4: web_search as Claude sees it when JARVIS can read pages: Python's schema with
+    /// a `deep` flag, and a description that says when to set it.
+    public static let webSearchDeep = ToolSchema(
+        name: "web_search",
+        description: "Search the web for current information (requires internet). Set deep to true when the user asks for detail, depth, research or sources: you then read the top results in full and answer from them, giving their URLs. Every page you read is kept in your memory.",
+        parametersJSON: #"{"type": "object", "properties": {"query": {"type": "string"}, "deep": {"type": "boolean", "description": "Read the top results in full and answer with their URLs"}}, "required": ["query"]}"#)
+
     /// The tool names, in order.
     public static var memoryToolNames: [String] { memoryTools.map(\.name) }
 

@@ -22,19 +22,33 @@ public enum BuiltInTools {
         }
     }
 
+    /// W1 part 4: what web_search's deep mode needs: the WebKit reader (JarvisApp's) and where
+    /// each page it reads is kept, with the query it was read for (the web memory).
+    public struct Web: Sendable {
+        public let reader: any PageReading
+        public let keep: @Sendable (ReadPage, String) -> Void
+
+        public init(reader: any PageReading, keep: @escaping @Sendable (ReadPage, String) -> Void) {
+            self.reader = reader
+            self.keep = keep
+        }
+    }
+
     /// Registers every implemented body on `gateway`. `clock` and `timeZone` stand in for what
     /// Python's `datetime.now()` reads; the app passes the system's, tests pin both. `core` owns
     /// the personality file the two personality tools write (through its StateStore). With
-    /// `memory`, the four memory tools are registered too (NativeToolCatalog).
+    /// `memory`, the four memory tools are registered too (NativeToolCatalog). With `web`,
+    /// web_search has its deep mode (W1 part 4).
     public static func register(on gateway: ToolGateway, core: CoreState, clock: any JarvisClock,
-                                timeZone: TimeZone, memory: Memory? = nil) async {
-        await register(on: gateway, core: core, clock: clock, timeZone: timeZone, platform: .live, memory: memory)
+                                timeZone: TimeZone, memory: Memory? = nil, web: Web? = nil) async {
+        await register(on: gateway, core: core, clock: clock, timeZone: timeZone, platform: .live, memory: memory,
+                       web: web)
     }
 
     /// The same registration over `platform`, the machine-facing readers, so tests register
     /// every body over fakes.
     static func register(on gateway: ToolGateway, core: CoreState, clock: any JarvisClock,
-                         timeZone: TimeZone, platform: ToolPlatform, memory: Memory? = nil) async {
+                         timeZone: TimeZone, platform: ToolPlatform, memory: Memory? = nil, web: Web? = nil) async {
         await gateway.register(GetTime(clock: clock, timeZone: timeZone))
         await gateway.register(PersonalityNote(core: core))
         await gateway.register(PersonalityRewrite(core: core))
@@ -69,7 +83,7 @@ public enum BuiltInTools {
                                                     executable: platform.executable)))
         // W1 part 1: Python's four web tools, over the platform's GET and is_online.
         await gateway.register(Capped(WebSearch(core: core, web: platform.web, online: platform.online,
-                                                log: platform.webLog)))
+                                                log: platform.webLog, deep: web)))
         await gateway.register(Capped(GetWeather(web: platform.web, online: platform.online)))
         await gateway.register(Capped(GetLocation(web: platform.web, online: platform.online)))
         await gateway.register(Capped(GetNews(web: platform.web, online: platform.online, feed: platform.newsFeed,

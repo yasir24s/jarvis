@@ -67,6 +67,14 @@ public final class BrainAssembly: Sendable {
     /// W1 part 3: what summarises those pages: the on-device model within P3's budget, else the
     /// page's first sentences. Never Claude.
     public let pageSummarizer: any PageSummarizing
+    /// W1 part 4: the pages waiting for a summary, summarised in the background while no turn
+    /// runs. nil without a `memory` store. The app stops it at quit, before the lock is released.
+    public let webSummaries: WebSummaryQueue?
+    /// W1 part 4: web_search's deep mode (the reader, and the web memory that keeps each page),
+    /// registered by `start()`. nil without a reader.
+    private let webTools: BuiltInTools.Web?
+    /// W1: the page reader, for the background reading pass (part 5).
+    public let reader: (any PageReading)?
     /// P6: the fact compile after 30 idle minutes, beside the dismissal's. nil without a
     /// `memory` store. Not started here: the app starts it once the brain has started and stops
     /// it at quit, before the lock is released.
@@ -106,6 +114,8 @@ public final class BrainAssembly: Sendable {
     ///     (`Redactor`, D-51 P3). Tests pass a fake.
     ///   - files: what the file scanner needs from the app (P3); nil means no scanner. It reads
     ///     with the same two writers and merges into the same facts.
+    ///   - reader: W1: what reads web pages (JarvisApp's WebKit reader); nil means web_search
+    ///     has no deep mode.
     ///   - embedding: the sentence vectors for recall and duplicate merging.
     ///   - log: every log line of the parts, with its category. Tests pass their own.
     public init(core: CoreState, research: any ResearchCounting,
@@ -114,7 +124,7 @@ public final class BrainAssembly: Sendable {
                 localBrain: ((ToolGateway) -> any LocalGenerating)? = nil,
                 personaWriter: (any PersonaLLM)? = nil,
                 memory: MemoryStore? = nil, factWriter: (any AttributedWriting)? = nil,
-                files: FileScanSetup? = nil,
+                files: FileScanSetup? = nil, reader: (any PageReading)? = nil,
                 embedding: any SentenceEmbedding = SystemSentenceEmbedding(),
                 textAuthenticator: any ConfirmAuthenticator, fastPath: any FastPathRouting = NoFastPath(),
                 online: @escaping @Sendable () async -> Bool,
@@ -126,7 +136,7 @@ public final class BrainAssembly: Sendable {
         gateway = ToolGateway(confirmationGate: confirmations, log: { log($0, .tools) }, research: research,
                               journal: memory.map { ToolJournal(memory: $0) })
         registry = MCPTurnRegistry(runDirectory: runDirectory)
-        let claudeTools = Self.claudeTools(memory: memory != nil)
+        let claudeTools = Self.claudeTools(memory: memory != nil, deepWeb: reader != nil)
         server = MCPServer(runDirectory: runDirectory, registry: registry, gateway: gateway,
                            tools: claudeTools.tools, log: brainLog)
         backend = BackendReporter(research: research, log: brainLog)
@@ -160,9 +170,19 @@ public final class BrainAssembly: Sendable {
                                             workingDirectory: claudeWorkingDirectory,
                                             parentEnvironment: environment, online: online, log: brainLog)
         let writer = personaWriter ?? CollaborativePersonaLLM(local: localWriter, claude: claudeWriter)
-        pageSummarizer = FallbackSummarizer(LocalPageSummarizer(model: localWriter, budget: .system()))
+        let summarizer = FallbackSummarizer(LocalPageSummarizer(model: localWriter, budget: .system()))
+        pageSummarizer = summarizer
         let turns = TurnActivity()
         turnActivity = turns
+        let summaries = webMemory.map { WebSummaryQueue(memory: $0, summarizer: summarizer, turns: turns) }
+        webSummaries = summaries
+        self.reader = reader
+        webTools = reader.map { reader in
+            BuiltInTools.Web(reader: reader, keep: { page, query in
+                webMemory?.store(page, source: .search, query: query)
+                summaries?.kick()
+            })
+        }
         let facts = memory.map {
             FactCompiler(memory: $0, writer: factWriter ?? Self.factWriter(local: localWriter, claude: claudeWriter),
                          vectors: vectors, turns: turns)
@@ -201,7 +221,7 @@ public final class BrainAssembly: Sendable {
     /// creates the run directory (0700) and starts the MCP server on it.
     public func start() async throws {
         await BuiltInTools.register(on: gateway, core: core, clock: SystemClock(), timeZone: .autoupdatingCurrent,
-                                    memory: memoryTools)
+                                    memory: memoryTools, web: webTools)
         try await server.start()
     }
 
@@ -212,8 +232,11 @@ public final class BrainAssembly: Sendable {
     /// What Claude is offered: the Python catalog, then (P4), with a memory store, the native
     /// memory tools. The MCP server serves `tools` and `--allowedTools` lists `allowed`, which
     /// R3 requires to be the same set; without memory both are Python's 46.
-    static func claudeTools(memory: Bool) -> (tools: [ToolSchema], allowed: [String]) {
-        let tools = ToolCatalog.tools + (memory ? NativeToolCatalog.memoryTools : [])
+    /// W1 part 4: with a page reader (`deepWeb`), web_search is offered with its deep flag.
+    static func claudeTools(memory: Bool, deepWeb: Bool = false) -> (tools: [ToolSchema], allowed: [String]) {
+        let python = deepWeb ? ToolCatalog.tools.map { $0.name == "web_search" ? NativeToolCatalog.webSearchDeep : $0 }
+            : ToolCatalog.tools
+        let tools = python + (memory ? NativeToolCatalog.memoryTools : [])
         return (tools, tools.map { ClaudeInvocation.allowedToolName($0.name) })
     }
 
