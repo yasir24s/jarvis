@@ -48,7 +48,15 @@ struct BrainMenuTests {
         let app: NSMenu
     }
 
-    static func menus(_ defaults: UserDefaults, brain: BrainSetting) -> Menus {
+    /// B2 part 6: a sign-in runner that answers `status` and never runs anything.
+    struct StatusOnly: ChatGPTSignInRunning {
+        let answer: CodexLoginStatus
+        func status() async -> CodexLoginStatus { answer }
+        func signIn() async -> CodexSignInResult { .cancelled }
+    }
+
+    static func menus(_ defaults: UserDefaults, brain: BrainSetting,
+                      chatgpt: ChatGPTAccount = ChatGPTAccount(runner: StatusOnly(answer: .signedOut))) -> Menus {
         _ = NSApplication.shared
         let speak = SpeakRepliesToggle(defaults: defaults)
         let learn = FileLearningConsent(defaults: defaults)
@@ -56,16 +64,17 @@ struct BrainMenuTests {
         let hud = HUDModel()
         let updates = UpdateWatcher(folders: nil)
         #if DEBUG
-        let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, brain: brain, learn: learn,
-                              showHUD: showHUD, hud: hud, updates: updates, voice: VoiceprintStatus(defaults: defaults),
-                              forgetVoice: {}, stopSpeaking: {}, testConfirmation: {})
+        let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, brain: brain, chatgpt: chatgpt,
+                              learn: learn, showHUD: showHUD, hud: hud, updates: updates,
+                              voice: VoiceprintStatus(defaults: defaults), forgetVoice: {}, stopSpeaking: {},
+                              testConfirmation: {})
         #else
-        let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, brain: brain, learn: learn,
-                              showHUD: showHUD, hud: hud, updates: updates, voice: VoiceprintStatus(defaults: defaults),
-                              forgetVoice: {}, stopSpeaking: {})
+        let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, brain: brain, chatgpt: chatgpt,
+                              learn: learn, showHUD: showHUD, hud: hud, updates: updates,
+                              voice: VoiceprintStatus(defaults: defaults), forgetVoice: {}, stopSpeaking: {})
         #endif
-        let app = AppMenuItems(stopSpeaking: {}, brain: brain, learn: learn, showHUD: showHUD, hud: hud,
-                               updates: updates, voice: VoiceprintStatus(defaults: defaults), forgetVoice: {})
+        let app = AppMenuItems(stopSpeaking: {}, brain: brain, chatgpt: chatgpt, learn: learn, showHUD: showHUD,
+                               hud: hud, updates: updates, voice: VoiceprintStatus(defaults: defaults), forgetVoice: {})
         return Menus(bar: NSHostingMenu(rootView: bar), app: NSHostingMenu(rootView: app))
     }
 
@@ -177,6 +186,74 @@ struct BrainMenuTests {
                 #expect(brainItem.toolTip == brain.help, "\(name)")
                 try Self.write(Self.tree(menu), name: "b2-\(name)-\(off.rawValue)-off")
             }
+        }
+    }
+
+    /// B2 part 6: the item right after Brain in both menus, in each state: a button to sign in
+    /// (or to cancel while the browser flow runs), or a disabled line.
+    @Test("the ChatGPT sign-in item after Brain, in each state", arguments: [
+        (CodexLoginStatus.signedOut, "Sign in to ChatGPT…", true, "signed-out"),
+        (.signedIn, "Signed in to ChatGPT", false, "signed-in"),
+        (.unavailable("Codex CLI not found"), "Sign in to ChatGPT… (needs the ChatGPT app)", false, "no-codex"),
+    ])
+    func signInItem(_ status: CodexLoginStatus, _ title: String, _ enabled: Bool, _ name: String) async throws {
+        let folder = FileManager.default.temporaryDirectory
+            .appending(path: "jarvis-tests-brain-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let suite = folder.appending(path: "defaults").path(percentEncoded: false)
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let account = ChatGPTAccount(runner: StatusOnly(answer: status))
+        await account.refresh()
+        let menus = Self.menus(defaults, brain: BrainSetting(defaults: defaults, claudeEnabled: true), chatgpt: account)
+        for (menuName, menu) in [("menu-bar", menus.bar), ("app-menu", menus.app)] {
+            menu.update()
+            let titles = menu.items.map(\.title)
+            let brain = try #require(titles.firstIndex(of: BrainSetting.menuTitle), "\(menuName): \(Self.tree(menu))")
+            #expect(titles.indices.contains(brain + 1) && titles[brain + 1] == title, "\(menuName): \(Self.tree(menu))")
+            let item = menu.items[brain + 1]
+            #expect(item.isEnabled == enabled, "\(menuName): \(Self.tree(menu))")
+            #expect(item.toolTip == account.help, "\(menuName)")
+            try Self.write(Self.tree(menu), name: "b2-part6-\(menuName)-\(name)")
+        }
+    }
+
+    /// While a sign-in runs the item is "Cancel ChatGPT Sign-in", and choosing it cancels.
+    @Test("signing in: the item cancels")
+    func signingInItem() async throws {
+        let folder = FileManager.default.temporaryDirectory
+            .appending(path: "jarvis-tests-brain-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let suite = folder.appending(path: "defaults").path(percentEncoded: false)
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let account = ChatGPTAccount(runner: HangingSignIn())
+        await account.refresh()
+        account.signIn()
+        let menus = Self.menus(defaults, brain: BrainSetting(defaults: defaults, claudeEnabled: true), chatgpt: account)
+        for (menuName, menu) in [("menu-bar", menus.bar), ("app-menu", menus.app)] {
+            menu.update()
+            let item = try #require(menu.items.first { $0.title == ChatGPTAccount.cancelTitle }, "\(menuName): \(Self.tree(menu))")
+            #expect(item.isEnabled, "\(menuName)")
+            try Self.write(Self.tree(menu), name: "b2-part6-\(menuName)-signing-in")
+        }
+        let cancel = try #require(menus.bar.items.first { $0.title == ChatGPTAccount.cancelTitle })
+        let action = try #require(cancel.action)
+        NSApp.sendAction(action, to: cancel.target, from: cancel)
+        await account.waitForSignIn()
+        #expect(account.state == .signedOut)
+    }
+
+    /// A sign-in that waits until it is cancelled.
+    struct HangingSignIn: ChatGPTSignInRunning {
+        func status() async -> CodexLoginStatus { .signedOut }
+        func signIn() async -> CodexSignInResult {
+            while !Task.isCancelled { try? await Task.sleep(for: .milliseconds(20)) }
+            return .cancelled
         }
     }
 }

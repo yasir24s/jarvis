@@ -117,6 +117,7 @@ public final class BrainAssembly: Sendable {
     ///   - codexWorkingDirectory: the empty folder `codex` runs in; nil means `codex-cwd/` beside
     ///     `claudeWorkingDirectory`.
     ///   - codexExecutable: overrides `CodexLocator` (the smoke mode's stream tap).
+    ///   - codexHome: part 6, the `CODEX_HOME` of every codex child; nil means `CodexHome.directory`.
     ///   - localBrain: builds the on-device brain on this assembly's gateway; nil means
     ///     `LocalBrain` (T3.6). Tests pass a fake.
     ///   - personaWriter: what consolidation and distillation are written by; nil means
@@ -141,6 +142,7 @@ public final class BrainAssembly: Sendable {
                 config: ClaudeConfig, environment: [String: String],
                 runDirectory: URL, claudeWorkingDirectory: URL, claudeExecutable: URL? = nil,
                 codexConfig: CodexConfig? = nil, codexWorkingDirectory: URL? = nil, codexExecutable: URL? = nil,
+                codexHome: URL? = nil,
                 localBrain: ((ToolGateway) -> any LocalGenerating)? = nil,
                 personaWriter: (any PersonaLLM)? = nil,
                 memory: MemoryStore? = nil, factWriter: (any AttributedWriting)? = nil,
@@ -181,8 +183,13 @@ public final class BrainAssembly: Sendable {
                               workingDirectory: codexWorkingDirectory
                                   ?? claudeWorkingDirectory.deletingLastPathComponent()
                                   .appending(path: "codex-cwd", directoryHint: .isDirectory),
+                              codexHome: codexHome ?? CodexHome.directory,
                               research: research, backend: backend, parentEnvironment: environment,
-                              allowedTools: claudeTools.tools.map(\.name), log: brainLog)
+                              allowedTools: claudeTools.tools.map(\.name), log: brainLog,
+                              preflight: { [home = codexHome ?? CodexHome.directory] in
+                                  await CodexLogin(executable: codexPath, codexHome: home,
+                                                   parentEnvironment: environment).status()
+                              })
         let local = localBrain?(gateway) ?? LocalBrain(gateway: gateway, embedding: embedding, log: brainLog)
         let vectors = FactVectors(embedding: embedding)
         // W1 part 7c: search_memory reads the conversations and the journal from the index.
@@ -311,7 +318,8 @@ public final class BrainAssembly: Sendable {
     /// B2: `CodexLocator` over `JARVIS_CODEX_CLI`, the PATH `ChildEnvironment.forCodex` builds,
     /// and the ChatGPT app's own copy.
     public static func locateCodex(environment: [String: String]) -> URL? {
-        let child = ChildEnvironment.forCodex(parent: environment, assertOnDrop: false, log: { _ in })
+        let child = ChildEnvironment.forCodex(parent: environment, codexHome: CodexHome.directory, assertOnDrop: false,
+                                              log: { _ in })
         return CodexLocator.find(environment: environment, path: child["PATH"] ?? "",
                                  home: child["HOME"] ?? NSHomeDirectory())
     }

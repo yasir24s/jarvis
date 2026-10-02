@@ -30,6 +30,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// turn.
     let brainSetting = BrainSetting(claudeEnabled: ClaudeConfig(environment: ProcessInfo.processInfo.environment).enabled,
                                     chatgptEnabled: CodexConfig(environment: ProcessInfo.processInfo.environment).enabled)
+    /// B2 part 6: JARVIS's own ChatGPT sign-in (`codex login` under `CodexHome`), the item after
+    /// Brain; its status is read at launch.
+    let chatgptAccount = ChatGPTAccount(runner: CodexLogin(
+        executable: BrainAssembly.locateCodex(environment: ProcessInfo.processInfo.environment)))
     /// P6: "Learn About Me From My Files", the user's consent to the file scanner.
     let fileLearning = FileLearningConsent()
     /// M10 part 4: whether setup is done (`setupCompleted`), the voiceprint as the setup window
@@ -108,6 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         installSIGTERMHandler()
+        Task { await chatgptAccount.refresh() }   // B2 part 6: "Signed in to ChatGPT" or not
         startHUD()
         startPushToTalk()
         // Asked once: macOS shows the prompt only while the user has not decided.

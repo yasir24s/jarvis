@@ -87,6 +87,12 @@ public struct CodexInvocation: Sendable, Equatable {
     public let executable: URL
     public let arguments: [String]
 
+    /// Part 6: on every codex JARVIS runs (exec, `login`, `login status`): the sign-in is a
+    /// ChatGPT one, never an API key, and it is kept in the Codex home's own file, never in a
+    /// keychain item another Codex could share.
+    public static let pinnedSignIn = ["-c", "cli_auth_credentials_store=" + CodexInvocation.toml("file"),
+                                      "-c", "forced_login_method=" + CodexInvocation.toml("chatgpt")]
+
     /// argv for one turn. `enabledTools` are the MCP tool names as the server lists them, in
     /// TOOLS order.
     public init(executable: URL, workingDirectory: URL, catalog: URL, relay: Relay, enabledTools: [String],
@@ -97,6 +103,7 @@ public struct CodexInvocation: Sendable, Equatable {
                  "--model", config.model,
                  "--sandbox", Self.sandbox,
                  "-c", "approval_policy=" + Self.toml("never")]
+        a += Self.pinnedSignIn
         if !config.effort.isEmpty {
             a += ["-c", "model_reasoning_effort=" + Self.toml(config.effort)]
         }

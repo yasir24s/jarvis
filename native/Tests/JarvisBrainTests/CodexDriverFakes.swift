@@ -71,6 +71,8 @@ struct FakeCodex {
     var dir: URL { sandbox.root }
     var script: URL { dir.appending(path: "fake-codex", directoryHint: .notDirectory) }
     var cwd: URL { dir.appending(path: "codex-cwd", directoryHint: .isDirectory) }
+    /// Part 6: the run's own Codex home.
+    var codexHome: URL { dir.appending(path: "support/codex-home", directoryHint: .isDirectory) }
     var runDirectory: URL { dir.appending(path: "run", directoryHint: .isDirectory) }
 
     /// `parts` are printed in order with `pause` seconds between them.

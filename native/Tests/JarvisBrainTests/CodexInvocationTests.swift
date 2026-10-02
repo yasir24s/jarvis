@@ -33,6 +33,8 @@ struct CodexInvocationTests {
             "--model", "gpt-6-luna",
             "--sandbox", "read-only",
             "-c", #"approval_policy="never""#,
+            "-c", #"cli_auth_credentials_store="file""#,
+            "-c", #"forced_login_method="chatgpt""#,
             "-c", #"model_reasoning_effort="low""#,
             "-c", #"model_reasoning_summary="none""#,
             "-c", #"model_catalog_json="/private/var/empty/run/turn-test.codex-models.json""#,

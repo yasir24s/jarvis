@@ -4,8 +4,8 @@ import JarvisChat
 import SwiftUI
 
 /// The menu-bar menu (plan: M02-M04 §3.12): Open Chat, M10's "Set Up JARVIS…", "Voice: …" and
-/// "Forget My Voice…", the last backend, the "Speak replies"
-/// toggle, M9a's "Brain", M8's "Stop Speaking", P6's "Learn About Me From My Files", UI1's
+/// "Forget My Voice…", the last backend, the "Speak replies" toggle, M9a's "Brain" and B2's
+/// ChatGPT sign-in, M8's "Stop Speaking", P6's "Learn About Me From My Files", UI1's
 /// "Show HUD", U1's "Update Ready" and "Update Now" while a build waits, M0's state-root and lock
 /// lines, and Quit. DEBUG builds add "Test confirmation".
 struct MenuBarMenu: View {
@@ -13,6 +13,8 @@ struct MenuBarMenu: View {
     let chat: ChatViewModel
     @Bindable var speak: SpeakRepliesToggle
     let brain: BrainSetting
+    /// B2 part 6: JARVIS's own ChatGPT sign-in, the item after Brain.
+    let chatgpt: ChatGPTAccount
     let learn: FileLearningConsent
     let showHUD: ShowHUDSetting
     let hud: HUDModel
@@ -39,6 +41,7 @@ struct MenuBarMenu: View {
         // The input to the user's speak policy (SpeakPolicy.swift); it persists across launches.
         Toggle("Speak replies", isOn: $speak.isOn)
         BrainPicker(setting: brain)
+        ChatGPTSignInItem(account: chatgpt)
         Button("Stop Speaking") {
             stopSpeaking()
         }
@@ -71,6 +74,7 @@ struct MenuBarMenu: View {
 struct AppMenuItems: View {
     let stopSpeaking: () -> Void
     let brain: BrainSetting
+    let chatgpt: ChatGPTAccount
     let learn: FileLearningConsent
     let showHUD: ShowHUDSetting
     let hud: HUDModel
@@ -83,6 +87,7 @@ struct AppMenuItems: View {
         VoiceMenuItems(status: voice, forget: forgetVoice)
         Button("Stop Speaking") { stopSpeaking() }
         BrainPicker(setting: brain)
+        ChatGPTSignInItem(account: chatgpt)
         FileLearningToggle(consent: learn)
         ShowHUDToggle(setting: showHUD, hud: hud)
         UpdateMenuItems(updates: updates)
@@ -119,6 +124,23 @@ struct BrainPicker: View {
         }
         .disabled(setting.allOff)
         .help(setting.help)
+    }
+}
+
+/// B2 part 6: right after "Brain" in both menus: "Sign in to ChatGPT…" (or "Cancel ChatGPT
+/// Sign-in" while the browser flow runs), and once JARVIS's own Codex home is signed in, the
+/// disabled line "Signed in to ChatGPT" (`ChatGPTAccount`).
+struct ChatGPTSignInItem: View {
+    let account: ChatGPTAccount
+
+    var body: some View {
+        if account.actionable {
+            Button(account.title) { account.act() }
+                .help(account.help)
+        } else {
+            Text(account.title)
+                .help(account.help)
+        }
     }
 }
 

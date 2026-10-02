@@ -32,7 +32,8 @@ struct CodexDriverTests {
              timeout: Duration = .seconds(30),
              timeoutWait: @escaping @Sendable (Duration) async throws -> Void = { _ in try await Task.sleep(for: .seconds(3600)) },
              stopGrace: Duration = .seconds(30), executable: URL? = nil, failOpen: Bool = false,
-             parent extra: [String: String] = [:]) {
+             parent extra: [String: String] = [:], codexHome: URL? = nil,
+             preflight: (@Sendable () async -> CodexLoginStatus)? = nil) {
             self.fake = fake
             bridge = ConfigBridge(runDirectory: fake.runDirectory, failOpen: failOpen)
             turn = TurnContext(channel: channel)
@@ -42,10 +43,11 @@ struct CodexDriverTests {
             parent.merge(extra) { _, new in new }
             self.parent = parent
             driver = CodexDriver(config: config, executable: executable ?? fake.script, bridge: bridge,
-                                 workingDirectory: fake.cwd, research: bumps, backend: backend,
+                                 workingDirectory: fake.cwd, codexHome: codexHome ?? fake.codexHome,
+                                 research: bumps, backend: backend,
                                  parentEnvironment: parent, allowedTools: CodexDriverTests.tools,
                                  timeout: timeout, timeoutWait: timeoutWait, stopGrace: stopGrace,
-                                 log: logs.function)
+                                 log: logs.function, preflight: preflight)
         }
 
         func generate() async -> String? {
@@ -101,10 +103,16 @@ struct CodexDriverTests {
             enabledTools: Self.tools, config: CodexConfig(environment: [:]))
         #expect(fake.argv == expected.arguments)
 
-        // An allowlist, not the parent minus a denylist: no key, token, CODEX_HOME or Claude's.
+        // An allowlist, not the parent minus a denylist: no key, token or Claude's, and part 6's
+        // CODEX_HOME is JARVIS's own home, created 0700 and left empty by JARVIS.
         let env = try #require(fake.environment)
         #expect(Set(env.keys).isSubset(of: ChildEnvironment.codexAllowlist))
-        #expect(env["CODEX_HOME"] == nil && env["OPENAI_API_KEY"] == nil && env["ANTHROPIC_API_KEY"] == nil)
+        #expect(env["CODEX_HOME"] == fake.codexHome.path(percentEncoded: false))
+        #expect(env["CODEX_HOME"]?.contains("/.codex") == false)
+        let homeMode = try FileManager.default.attributesOfItem(atPath: fake.codexHome.path(percentEncoded: false))[.posixPermissions] as? Int
+        #expect(homeMode == 0o700)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: fake.codexHome.path(percentEncoded: false)).isEmpty)
+        #expect(env["OPENAI_API_KEY"] == nil && env["ANTHROPIC_API_KEY"] == nil)
         #expect(env["CLAUDE_CODE_OAUTH_TOKEN"] == nil && env["JARVIS_CODEX_CLI"] == nil)
         #expect(env["HOME"] == run.parent["HOME"] && env["USER"] == "robin" && env["LANG"] == "en_US.UTF-8")
         #expect(env["SHELL"] == "/bin/zsh" && env["HTTPS_PROXY"] == "http://proxy.test:8080")
@@ -256,6 +264,42 @@ struct CodexDriverTests {
         #expect(run.logs.lines.last == Self.unavailable + c.reason)
         #expect(await run.backend.names == [])
         #expect(await run.bridgeSawOneFullTurn())
+        // Part 6: the turn stays open, so the on-device fallback can use its tools on it.
+        #expect(await run.turn.isOpen)
+    }
+
+    /// Part 6: until a turn has succeeded, the home's sign-in is checked first; signed out, the
+    /// turn fails with "not signed in" and codex never starts.
+    @Test func aSignedOutHomeFailsBeforeCodexStarts() async throws {
+        let fake = try FakeCodex(Self.toolTurn(), ending: .exit(0))
+        defer { fake.remove() }
+        let asked = BumpRecorder()
+        let run = Run(fake, preflight: { asked.bump("status", by: 1); return .signedOut })
+        #expect(await run.generate() == nil)
+        #expect(await run.driver.lastError == CodexDriver.signedOutError)
+        #expect(run.logs.lines == [Self.unavailable + "not signed in"])
+        #expect(!fake.exists("argv"))
+        #expect(await run.bridge.calls.isEmpty)
+        #expect(await run.turn.isOpen)
+        #expect(asked.bumps == ["status+1"])
+    }
+
+    @Test func theSignInIsCheckedUntilATurnSucceedsAndAgainAfterASignOut() async throws {
+        let fake = try FakeCodex(Self.toolTurn(), ending: .exit(0))
+        defer { fake.remove() }
+        let asked = BumpRecorder()
+        let run = Run(fake, preflight: { asked.bump("status", by: 1); return .signedIn })
+        #expect(await run.generate() == "It's 1:09 pm. Anything else?")
+        #expect(await run.generate() == "It's 1:09 pm. Anything else?")
+        #expect(asked.bumps == ["status+1"])   // only before the first success
+
+        let out = try FakeCodex([CodexLine.thread, CodexLine.error(ErrorCase.signedOut)], ending: .hang)
+        defer { out.remove() }
+        let asked2 = BumpRecorder()
+        let run2 = Run(out, preflight: { asked2.bump("status", by: 1); return .signedIn })
+        #expect(await run2.generate() == nil)
+        #expect(await run2.generate() == nil)
+        #expect(asked2.bumps == ["status+1", "status+1"])   // a sign-out makes it ask again
     }
 
     @Test func aMissingCodexIsCLINotFound() async throws {
@@ -274,6 +318,18 @@ struct CodexDriverTests {
         let run = Run(fake)
         #expect(await run.generate() == nil)
         #expect(await run.driver.lastError == "exit 3: thread panicked")
+    }
+
+    /// Part 6: a Codex home that is the user's own ~/.codex is refused before codex starts.
+    @Test func theUsersCodexHomeIsRefused() async throws {
+        let fake = try FakeCodex([CodexLine.thread], ending: .exit(0))
+        defer { fake.remove() }
+        let users = fake.dir.appending(path: ".codex", directoryHint: .isDirectory)   // the fake's HOME is fake.dir
+        let run = Run(fake, codexHome: users)
+        #expect(await run.generate() == nil)
+        #expect(await run.driver.lastError == "codex home: the user's own ~/.codex")
+        #expect(!fake.exists("argv"))
+        #expect(!FileManager.default.fileExists(atPath: users.path(percentEncoded: false)))
     }
 
     @Test func aBridgeFailureFallsBackWithoutStartingCodex() async throws {

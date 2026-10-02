@@ -52,6 +52,7 @@ public actor CodexDriver: ClaudeGenerating {
     private let executable: URL
     private let bridge: any MCPTurnBridge
     private let workingDirectory: URL
+    private let codexHome: URL
     private let research: any ResearchCounting
     private let backend: any BackendReporting
     private let parentEnvironment: [String: String]
@@ -60,6 +61,10 @@ public actor CodexDriver: ClaudeGenerating {
     private let timeoutWait: @Sendable (Duration) async throws -> Void
     private let stopGrace: Duration
     private let log: @Sendable (String) -> Void
+    private let preflight: (@Sendable () async -> CodexLoginStatus)?
+    /// Part 6: set once a turn has succeeded, cleared when one is not signed in; while it is
+    /// clear, each turn first asks `preflight`.
+    private var signInVerified = false
 
     /// The last finished turn's error, or nil if it succeeded.
     public private(set) var lastError: String?
@@ -76,21 +81,29 @@ public actor CodexDriver: ClaudeGenerating {
     /// - Parameters:
     ///   - executable: the `codex` CLI (`CodexLocator.find`).
     ///   - workingDirectory: `codex-cwd`, kept empty; created with mode 0700 if missing.
+    ///   - codexHome: part 6, the child's `CODEX_HOME` (`CodexHome.directory`), created 0700. A turn
+    ///     never runs with the user's own `~/.codex` (`CodexHome.refusal`).
     ///   - allowedTools: the MCP tool names offered (`enabled_tools`), in TOOLS order; an MCP
     ///     call to any other name stops the turn.
     ///   - timeout: the wall timeout; nil means `wallTimeout(for: config)`.
     ///   - timeoutWait, stopGrace, log: as `ClaudeDriver`'s.
+    ///   - preflight: part 6, `codex login status` under the Codex home (about 20 ms). Until a turn
+    ///     has succeeded, a turn asks it first, and a signed-out home fails the turn with "not
+    ///     signed in" without starting `codex exec`, so nothing is sent before there is a sign-in.
     public init(config: CodexConfig, executable: URL, bridge: any MCPTurnBridge, workingDirectory: URL,
+                codexHome: URL = CodexHome.directory,
                 research: any ResearchCounting, backend: any BackendReporting,
                 parentEnvironment: [String: String] = ProcessInfo.processInfo.environment,
                 allowedTools: [String] = DataSourceMap.toolNames, timeout: Duration? = nil,
                 timeoutWait: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) },
                 stopGrace: Duration = CodexDriver.stopGrace,
-                log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .brain) }) {
+                log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .brain) },
+                preflight: (@Sendable () async -> CodexLoginStatus)? = nil) {
         self.config = config
         self.executable = executable
         self.bridge = bridge
         self.workingDirectory = workingDirectory
+        self.codexHome = codexHome
         self.research = research
         self.backend = backend
         self.parentEnvironment = parentEnvironment
@@ -99,6 +112,7 @@ public actor CodexDriver: ClaudeGenerating {
         self.timeoutWait = timeoutWait
         self.stopGrace = stopGrace
         self.log = log
+        self.preflight = preflight
     }
 
     /// The reply, or nil to fall back to the local model. Never throws. Cancelling the calling
@@ -121,6 +135,11 @@ public actor CodexDriver: ClaudeGenerating {
         var state = CodexTurnState()
         let channel = await turn.channel
 
+        if !signInVerified, let preflight, await preflight() == .signedOut {
+            state.error = Self.signedOutError
+            return await conclude(state, channel: channel)
+        }
+
         let files: MCPTurnFiles
         do {
             files = try await bridge.openTurn(turn)
@@ -137,6 +156,15 @@ public actor CodexDriver: ClaudeGenerating {
         let process = Process()
         let stdin = Pipe(), stdout = Pipe(), stderr = Pipe()
         do {
+            let environment = ChildEnvironment.forCodex(parent: parentEnvironment, codexHome: codexHome, log: log)
+            if let why = CodexHome.refusal(codexHome, userHome: environment["HOME"] ?? NSHomeDirectory()) {
+                throw SetupError(text: "codex home: \(why)")
+            }
+            do {
+                try CodexHome.prepare(codexHome)
+            } catch {
+                throw SetupError(text: "codex home: \(error)")
+            }
             let relay: CodexInvocation.Relay
             do {
                 relay = try CodexInvocation.Relay.read(mcpConfig: files.configPath)
@@ -159,7 +187,7 @@ public actor CodexDriver: ClaudeGenerating {
                                                      attributes: [.posixPermissions: 0o700])
             process.executableURL = invocation.executable
             process.arguments = invocation.arguments
-            process.environment = ChildEnvironment.forCodex(parent: parentEnvironment, log: log)
+            process.environment = environment
             process.currentDirectoryURL = workingDirectory
             process.standardInput = stdin
             process.standardOutput = stdout
@@ -230,7 +258,9 @@ public actor CodexDriver: ClaudeGenerating {
         timer.cancel()
         withExtendedLifetime(process) {}
 
-        if watch.stopping {
+        // A stop revokes the turn (UI1's Stop, a timeout, a guard trip), except C4's: no tool can
+        // have run, and the on-device fallback answers on this turn with its tools.
+        if watch.stopping && !state.keepTurnOpen {
             await turn.close()
         }
         await bridge.closeTurn(files.turnID)
@@ -248,6 +278,9 @@ public actor CodexDriver: ClaudeGenerating {
     private struct SetupError: Error {
         let text: String
     }
+
+    /// The error when `preflight` finds JARVIS's Codex home signed out ("not signed in").
+    public static let signedOutError = "not logged in to ChatGPT in JARVIS's Codex home"
 
     /// C1-C6 for one event. Returns an error that must stop the child.
     private func apply(_ event: CodexEvent, to s: inout CodexTurnState, sink: any ReplySink) async -> String? {
@@ -285,6 +318,7 @@ public actor CodexDriver: ClaudeGenerating {
             s.lastRetry = message
             let reason = CodexReason.reason(message)
             if ["not signed in", "rate limited", "network unreachable"].contains(reason) {
+                s.keepTurnOpen = true
                 return Py.prefix(message, 300)
             }
         case let .turnFailed(message):                                                      // C5
@@ -322,6 +356,11 @@ public actor CodexDriver: ClaudeGenerating {
     /// Claude's salvage and success return, under ChatGPT's names.
     private func conclude(_ s: CodexTurnState, channel: Channel, exit: ClaudeExit? = nil) async -> String? {
         lastError = s.error
+        if let error = s.error, CodexReason.reason(error) == "not signed in" {
+            signInVerified = false
+        } else if s.error == nil {
+            signInVerified = true
+        }
         lastExit = exit?.code
         lastToolCalls = s.toolCalls
         lastBuiltIns = s.builtIns
@@ -369,6 +408,8 @@ private struct CodexTurnState {
     var lastTextID: String?
     var threadSeen = false
     var ended = false
+    /// C4 stopped the child: the turn stays open for the fallback.
+    var keepTurnOpen = false
     var error: String?
     /// The last retry notice or error event, for an exit with no `turn.failed`.
     var lastRetry: String?

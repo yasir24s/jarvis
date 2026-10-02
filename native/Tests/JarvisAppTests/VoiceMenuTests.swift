@@ -23,20 +23,21 @@ struct VoiceMenuTests {
         _ = NSApplication.shared
         let speak = SpeakRepliesToggle(defaults: defaults)
         let brain = BrainSetting(defaults: defaults, claudeEnabled: true)
+        let chatgpt = ChatGPTAccount(runner: BrainMenuTests.StatusOnly(answer: .signedOut))
         let learn = FileLearningConsent(defaults: defaults)
         let showHUD = ShowHUDSetting(defaults: defaults)
         let hud = HUDModel()
         let updates = UpdateWatcher(folders: nil)
         #if DEBUG
-        let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, brain: brain, learn: learn,
+        let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, brain: brain, chatgpt: chatgpt, learn: learn,
                               showHUD: showHUD, hud: hud, updates: updates, voice: status, forgetVoice: forget,
                               stopSpeaking: {}, testConfirmation: {})
         #else
-        let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, brain: brain, learn: learn,
+        let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, brain: brain, chatgpt: chatgpt, learn: learn,
                               showHUD: showHUD, hud: hud, updates: updates, voice: status, forgetVoice: forget,
                               stopSpeaking: {})
         #endif
-        let app = AppMenuItems(stopSpeaking: {}, brain: brain, learn: learn, showHUD: showHUD, hud: hud,
+        let app = AppMenuItems(stopSpeaking: {}, brain: brain, chatgpt: chatgpt, learn: learn, showHUD: showHUD, hud: hud,
                                updates: updates, voice: status, forgetVoice: forget)
         return Menus(bar: NSHostingMenu(rootView: bar), app: NSHostingMenu(rootView: app))
     }

@@ -26,8 +26,8 @@ struct JarvisSwiftUIApp: App {
             // "Show HUD" and U1's update items, as in the menu-bar menu.
             CommandGroup(after: .appInfo) {
                 AppMenuItems(stopSpeaking: { appDelegate.stopSpeaking() }, brain: appDelegate.brainSetting,
-                             learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
-                             updates: appDelegate.updates, voice: appDelegate.voiceStatus,
+                             chatgpt: appDelegate.chatgptAccount, learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD,
+                             hud: appDelegate.hud, updates: appDelegate.updates, voice: appDelegate.voiceStatus,
                              forgetVoice: { appDelegate.forgetVoice() })
             }
         }
@@ -44,14 +44,16 @@ struct JarvisSwiftUIApp: App {
         MenuBarExtra("JARVIS", systemImage: "circle.hexagongrid.fill") {
             #if DEBUG
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
-                        brain: appDelegate.brainSetting, learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
+                        brain: appDelegate.brainSetting, chatgpt: appDelegate.chatgptAccount,
+                        learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
                         updates: appDelegate.updates, voice: appDelegate.voiceStatus,
                         forgetVoice: { appDelegate.forgetVoice() },
                         stopSpeaking: { appDelegate.stopSpeaking() },
                         testConfirmation: { appDelegate.stashTestConfirmation() })
             #else
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
-                        brain: appDelegate.brainSetting, learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
+                        brain: appDelegate.brainSetting, chatgpt: appDelegate.chatgptAccount,
+                        learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
                         updates: appDelegate.updates, voice: appDelegate.voiceStatus,
                         forgetVoice: { appDelegate.forgetVoice() },
                         stopSpeaking: { appDelegate.stopSpeaking() })

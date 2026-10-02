@@ -1,11 +1,18 @@
 import Foundation
+import JarvisBrain
 import JarvisTestSupport
 import Testing
 
 /// B2 part 5: one real ChatGPT turn, gated by JARVIS_CHATGPT_LIVE=1. It runs the built
 /// `JARVIS --brain-smoke --chatgpt "What's the time?"` (DEBUG) on a sandbox state root, so the
-/// real `codex` answers on the user's ChatGPT sign-in through the real relay and gateway, and
-/// checks from the smoke's output that:
+/// real `codex` answers through the real relay and gateway. Part 6: the turn runs under
+/// JARVIS's own Codex home (`CodexHome.directory`), so what it checks depends on that home's
+/// `codex login status`:
+///
+/// Signed out (until the user signs in from the menu): the turn fails with "not signed in" and
+/// the on-device model answers.
+///
+/// Signed in, it checks from the smoke's output that:
 /// - get_time ran through JARVIS's gateway over MCP (`tools/call get_time`),
 /// - every item codex reported was a message, reasoning, a notice or a jarvis MCP call, so no
 ///   Codex built-in tool ran, and the driver recorded none,
@@ -42,8 +49,16 @@ struct ChatGPTLiveTests {
         return executable
     }
 
+    /// `codex login status` under JARVIS's own home, as the app reads it.
+    static func jarvisHomeIsSignedIn() async -> Bool {
+        let codex = BrainAssembly.locateCodex(environment: ProcessInfo.processInfo.environment)
+        return await CodexLogin(executable: codex).status() == .signedIn
+    }
+
     @Test(.timeLimit(.minutes(3)))
     func whatsTheTimeIsAnsweredThroughGetTime() async throws {
+        let signedIn = await Self.jarvisHomeIsSignedIn()
+        print("B2 live: JARVIS's Codex home is \(signedIn ? "signed in" : "not signed in")")
         let box = try Sandbox()
         let appBox = try Sandbox()
         defer { box.remove(); appBox.remove() }
@@ -74,6 +89,21 @@ struct ChatGPTLiveTests {
         }
         print("B2 live: smoke process wall time \(Int(wall / .milliseconds(1))) ms (includes JARVIS start-up)")
         #expect(process.terminationStatus == 0, "stderr: \(stderr)")
+
+        guard signedIn else {
+            // Part 6: not signed in under JARVIS's own home, whatever ~/.codex holds.
+            #expect(lines.contains { $0.hasSuffix("ChatGPT unavailable this turn — using local model: not signed in") },
+                    "\(lines)")
+            #expect(lines.contains { $0.hasPrefix("backend=local") }, "\(lines)")
+            // codex never ran (the sign-in check came first), and the on-device model's own tool
+            // calls ran on the still-open turn.
+            #expect(!lines.contains { $0.hasPrefix("codex ") }, "\(lines)")
+            for call in lines.filter({ $0.hasPrefix("tools/call ") }) {
+                #expect(call.hasSuffix(" -> ran"), "\(call)")
+            }
+            #expect(lines.contains("chatgpt tool_calls=[] built_ins=[]"), "\(lines)")
+            return
+        }
 
         // get_time ran through JARVIS's gateway, over MCP, and was the only kind of tool.
         #expect(lines.contains { $0.hasPrefix("tools/call get_time -> ") }, "\(lines)")
