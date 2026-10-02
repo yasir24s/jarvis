@@ -94,8 +94,9 @@ public struct CodexInvocation: Sendable, Equatable {
                                       "-c", "forced_login_method=" + CodexInvocation.toml("chatgpt")]
 
     /// argv for one turn. `enabledTools` are the MCP tool names as the server lists them, in
-    /// TOOLS order.
-    public init(executable: URL, workingDirectory: URL, catalog: URL, relay: Relay, enabledTools: [String],
+    /// TOOLS order. MEM1 part 4: with no `relay`, no MCP server is configured at all, so the run
+    /// has no tool (the memory writer's).
+    public init(executable: URL, workingDirectory: URL, catalog: URL, relay: Relay?, enabledTools: [String],
                 config: CodexConfig) throws(CodexInvocationError) {
         var a = ["exec", "--json", "--ephemeral", "--ignore-user-config", "--ignore-rules", "--strict-config",
                  "--skip-git-repo-check", "--color", "never",
@@ -124,15 +125,17 @@ public struct CodexInvocation: Sendable, Equatable {
         for feature in Self.disabledFeatures {
             a += ["--disable", feature]
         }
-        let server = "mcp_servers." + Self.serverName + "."
-        a += ["-c", server + "command=" + Self.toml(relay.command),
-              "-c", server + "args=" + Self.toml(relay.arguments),
-              "-c", server + "required=true",
-              "-c", server + "startup_timeout_sec=10",
-              "-c", server + "omit_tools_from=" + Self.toml(["code_mode", "deferred"]),
-              "-c", server + "default_tools_approval_mode=" + Self.toml("approve"),
-              "-c", server + "enabled_tools=" + Self.toml(enabledTools),
-              "-"]
+        if let relay {
+            let server = "mcp_servers." + Self.serverName + "."
+            a += ["-c", server + "command=" + Self.toml(relay.command),
+                  "-c", server + "args=" + Self.toml(relay.arguments),
+                  "-c", server + "required=true",
+                  "-c", server + "startup_timeout_sec=10",
+                  "-c", server + "omit_tools_from=" + Self.toml(["code_mode", "deferred"]),
+                  "-c", server + "default_tools_approval_mode=" + Self.toml("approve"),
+                  "-c", server + "enabled_tools=" + Self.toml(enabledTools)]
+        }
+        a.append("-")
         try Self.refuseForbidden(a)
         self.executable = executable
         self.arguments = a

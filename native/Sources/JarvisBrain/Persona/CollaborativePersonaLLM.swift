@@ -7,6 +7,8 @@ public struct AttributedText: Sendable, Equatable {
         case local                         // the on-device draft stands
         case claude                        // Claude alone: there was no draft
         case improved(draft: String)       // Claude's improvement of `draft`, which passed the check
+        case chatgpt                       // MEM1 part 4: ChatGPT alone, Claude could not write
+        case improvedByChatGPT(draft: String)   // ChatGPT's improvement, Claude could not write
     }
 
     public let text: String
@@ -38,6 +40,11 @@ public protocol AttributedWriting: Sendable {
 /// - `claudeInput` rewrites what Claude is given (the text and the draft); the on-device model
 ///   always gets the text unchanged. P2's fact compile redacts with it (D-51 P3).
 /// - Both failing throws, and CoreState then writes nothing, as Python did when Ollama failed.
+/// - MEM1 part 4: with `chatgpt`, a Claude call that throws (Claude off, signed out, rate
+///   limited, offline, timed out) is made again to ChatGPT, with the same input `claudeInput`
+///   gives Claude and the same validator, before the draft stands alone (or, with no draft,
+///   before it throws). The order is Claude, ChatGPT, then the on-device draft. A Claude reply
+///   that fails the validator is not sent on: the draft stands, as before.
 ///
 /// One log line, headed by `name`, says which writer produced the text. No prompt or reply
 /// text is logged.
@@ -47,18 +54,22 @@ public struct CollaborativePersonaLLM: PersonaLLM, AttributedWriting {
 
     private let local: any PersonaLLM
     private let claude: any PersonaLLM
+    private let chatgpt: (any PersonaLLM)?
     private let validator: Validator
     private let name: String
     private let claudeInput: @Sendable (String) -> String
     private let log: @Sendable (String) -> Void
 
-    public init(local: any PersonaLLM, claude: any PersonaLLM,
+    /// - Parameter chatgpt: MEM1 part 4, the cloud writer tried when Claude's call throws; nil
+    ///   means none, as before.
+    public init(local: any PersonaLLM, claude: any PersonaLLM, chatgpt: (any PersonaLLM)? = nil,
                 validator: @escaping Validator = CollaborativePersonaLLM.passesCoreStateCheck,
                 name: String = "Personality writer",
                 claudeInput: @escaping @Sendable (String) -> String = { $0 },
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .state) }) {
         self.local = local
         self.claude = claude
+        self.chatgpt = chatgpt
         self.validator = validator
         self.name = name
         self.claudeInput = claudeInput
@@ -82,20 +93,47 @@ public struct CollaborativePersonaLLM: PersonaLLM, AttributedWriting {
                 return AttributedText(text: text, author: .claude)
             } catch {
                 let claudeReason = PersonaWriterError.reason(error)
-                log("\(name): none (\(localReason); \(claudeReason)).")
-                throw PersonaWriterError.bothFailed(local: localReason, claude: claudeReason)
+                guard let chatgpt else {
+                    log("\(name): none (\(localReason); \(claudeReason)).")
+                    throw PersonaWriterError.bothFailed(local: localReason, claude: claudeReason)
+                }
+                try Task.checkCancellation()
+                do {
+                    let text = try await chatgpt.complete(system: system, user: claudeInput(user), timeout: timeout)
+                    log("\(name): ChatGPT alone (\(localReason); \(claudeReason)).")
+                    return AttributedText(text: text, author: .chatgpt)
+                } catch {
+                    let chatgptReason = PersonaWriterError.reason(error)
+                    log("\(name): none (\(localReason); \(claudeReason); \(chatgptReason)).")
+                    throw PersonaWriterError.bothFailed(local: localReason, claude: "\(claudeReason); \(chatgptReason)")
+                }
             }
         }
         let improved: String
+        let request = Self.improveRequest(user: claudeInput(user), draft: claudeInput(draft))
         do {
-            improved = try await claude.complete(system: system,
-                                                 user: Self.improveRequest(user: claudeInput(user),
-                                                                           draft: claudeInput(draft)),
-                                                 timeout: timeout)
+            improved = try await claude.complete(system: system, user: request, timeout: timeout)
         } catch {
             try Task.checkCancellation()
-            log("\(name): on-device draft (\(PersonaWriterError.reason(error))).")
-            return AttributedText(text: draft, author: .local)
+            let claudeReason = PersonaWriterError.reason(error)
+            guard let chatgpt else {
+                log("\(name): on-device draft (\(claudeReason)).")
+                return AttributedText(text: draft, author: .local)
+            }
+            let theirs: String
+            do {
+                theirs = try await chatgpt.complete(system: system, user: request, timeout: timeout)
+            } catch {
+                try Task.checkCancellation()
+                log("\(name): on-device draft (\(claudeReason); \(PersonaWriterError.reason(error))).")
+                return AttributedText(text: draft, author: .local)
+            }
+            guard validator(theirs, system) else {
+                log("\(name): on-device draft (ChatGPT's version failed the check; \(claudeReason)).")
+                return AttributedText(text: draft, author: .local)
+            }
+            log("\(name): ChatGPT, improving the on-device draft (\(claudeReason)).")
+            return AttributedText(text: theirs, author: .improvedByChatGPT(draft: draft))
         }
         guard validator(improved, system) else {
             log("\(name): on-device draft (Claude's version failed the check).")

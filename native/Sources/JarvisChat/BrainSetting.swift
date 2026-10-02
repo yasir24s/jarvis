@@ -28,22 +28,25 @@ public final class BrainSetting {
         }
     }
 
-    /// Part 4: where the other Claude uses go, whichever brain answers.
-    nonisolated public static let routes = "File reading, the memory writer and the persona writer stay on Claude "
-        + "whichever brain answers, unless JARVIS_USE_CLAUDE=0 turns Claude off."
+    /// Part 4: where the other Claude uses go, whichever brain answers. MEM1 part 4: the memory
+    /// writer falls back to ChatGPT when Claude cannot write.
+    nonisolated public static let routes = "File reading and the persona writer stay on Claude whichever brain "
+        + "answers; the memory writer tries Claude, then ChatGPT, then keeps the on-device draft. "
+        + "JARVIS_USE_CLAUDE=0 takes Claude out of all three."
     /// The help text for the item.
     nonisolated public static let help = "Which brain writes his replies, from the next message: Claude, ChatGPT "
         + "(through Codex, on your ChatGPT sign-in) or Apple's on-device model. Claude and ChatGPT need a network; "
         + "offline he answers on-device, as before. " + routes
     /// The help text while `JARVIS_USE_CLAUDE=0` holds and ChatGPT is on.
-    nonisolated public static let claudeOffHelp = "JARVIS_USE_CLAUDE=0 turns Claude off for this launch, for replies "
-        + "and for file reading, the memory writer and the persona writer. ChatGPT and On-device can still be picked."
+    nonisolated public static let claudeOffHelp = "JARVIS_USE_CLAUDE=0 turns Claude off for this launch: file reading "
+        + "and the persona writer go on-device, and the memory writer tries ChatGPT. ChatGPT and On-device can "
+        + "still be picked."
     /// The help text while `JARVIS_USE_CHATGPT=0` holds and Claude is on.
     nonisolated public static let chatgptOffHelp = "JARVIS_USE_CHATGPT=0 turns ChatGPT off for this launch. Claude "
         + "and On-device can still be picked. " + routes
     /// The help text while both are off.
     nonisolated public static let forcedHelp = "On-device: JARVIS_USE_CLAUDE=0 and JARVIS_USE_CHATGPT=0 turn Claude "
-        + "and ChatGPT off for this launch, for replies and for file reading, the memory writer and the persona writer."
+        + "and ChatGPT off for this launch, for replies, file reading, the memory writer and the persona writer."
 
     /// The user's choice, as stored.
     public var choice: BrainChoice {

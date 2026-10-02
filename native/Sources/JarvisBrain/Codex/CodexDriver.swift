@@ -50,7 +50,9 @@ public actor CodexDriver: ClaudeGenerating {
 
     private let config: CodexConfig
     private let executable: URL
-    private let bridge: any MCPTurnBridge
+    private let bridge: (any MCPTurnBridge)?
+    private let catalogDirectory: URL?
+    private let quiet: Bool
     private let workingDirectory: URL
     private let codexHome: URL
     private let research: any ResearchCounting
@@ -87,11 +89,14 @@ public actor CodexDriver: ClaudeGenerating {
     ///     call to any other name stops the turn.
     ///   - timeout: the wall timeout; nil means `wallTimeout(for: config)`.
     ///   - timeoutWait, stopGrace, log: as `ClaudeDriver`'s.
+    ///   - bridge: the per-turn MCP relay; nil runs codex with no MCP server and so no tool at all
+    ///     (MEM1 part 4's writer), its catalog in `catalogDirectory`.
+    ///   - quiet: no "ChatGPT unavailable this turn" line (the writer logs its own).
     ///   - preflight: part 6, `codex login status` under the Codex home (about 20 ms). Until a turn
     ///     has succeeded, a turn asks it first, and a signed-out home fails the turn with "not
     ///     signed in" without starting `codex exec`, so nothing is sent before there is a sign-in.
-    public init(config: CodexConfig, executable: URL, bridge: any MCPTurnBridge, workingDirectory: URL,
-                codexHome: URL = CodexHome.directory,
+    public init(config: CodexConfig, executable: URL, bridge: (any MCPTurnBridge)?, catalogDirectory: URL? = nil,
+                workingDirectory: URL, codexHome: URL = CodexHome.directory, quiet: Bool = false,
                 research: any ResearchCounting, backend: any BackendReporting,
                 parentEnvironment: [String: String] = ProcessInfo.processInfo.environment,
                 allowedTools: [String] = DataSourceMap.toolNames, timeout: Duration? = nil,
@@ -102,6 +107,8 @@ public actor CodexDriver: ClaudeGenerating {
         self.config = config
         self.executable = executable
         self.bridge = bridge
+        self.catalogDirectory = catalogDirectory
+        self.quiet = quiet
         self.workingDirectory = workingDirectory
         self.codexHome = codexHome
         self.research = research
@@ -118,6 +125,20 @@ public actor CodexDriver: ClaudeGenerating {
     /// The reply, or nil to fall back to the local model. Never throws. Cancelling the calling
     /// task stops `codex` like a timeout does.
     public func generate(system: String, user: String, turn: TurnContext, sink: any ReplySink) async -> String? {
+        await outcome(system: system, user: user, turn: turn, sink: sink).reply
+    }
+
+    /// One run's reply and its own error (nil when it succeeded), together: what MEM1 part 4's
+    /// writer needs, since `lastError` belongs to whichever run ended last.
+    public struct Outcome: Sendable, Equatable {
+        public let reply: String?
+        public let error: String?
+        /// The messages' text as the model wrote it, line breaks kept (the reply is the spoken
+        /// sentences joined by spaces); messages are set apart by a blank line.
+        public let text: String
+    }
+
+    public func outcome(system: String, user: String, turn: TurnContext, sink: any ReplySink) async -> Outcome {
         let (signals, input) = AsyncStream.makeStream(of: ClaudeSignal.self)
         let turnTask = Task {
             await self.run(system: system, user: user, turn: turn, sink: sink, signals: signals, input: input)
@@ -130,7 +151,7 @@ public actor CodexDriver: ClaudeGenerating {
     }
 
     private func run(system: String, user: String, turn: TurnContext, sink: any ReplySink,
-                     signals: AsyncStream<ClaudeSignal>, input: AsyncStream<ClaudeSignal>.Continuation) async -> String? {
+                     signals: AsyncStream<ClaudeSignal>, input: AsyncStream<ClaudeSignal>.Continuation) async -> Outcome {
         defer { input.finish() }
         var state = CodexTurnState()
         let channel = await turn.channel
@@ -140,14 +161,17 @@ public actor CodexDriver: ClaudeGenerating {
             return await conclude(state, channel: channel)
         }
 
-        let files: MCPTurnFiles
-        do {
-            files = try await bridge.openTurn(turn)
-        } catch {
-            state.error = "tool bridge: \(error)"
-            await bridge.closeTurn(await turn.turnID)
-            return await conclude(state, channel: channel)
+        var files: MCPTurnFiles?
+        if let bridge {
+            do {
+                files = try await bridge.openTurn(turn)
+            } catch {
+                state.error = "tool bridge: \(error)"
+                await bridge.closeTurn(await turn.turnID)
+                return await conclude(state, channel: channel)
+            }
         }
+        let turnID = if let files { files.turnID } else { await turn.turnID }
 
         var catalog: URL?
         defer {
@@ -165,16 +189,22 @@ public actor CodexDriver: ClaudeGenerating {
             } catch {
                 throw SetupError(text: "codex home: \(error)")
             }
-            let relay: CodexInvocation.Relay
-            do {
-                relay = try CodexInvocation.Relay.read(mcpConfig: files.configPath)
-            } catch {
-                throw SetupError(text: "tool bridge: \(error)")
+            var relay: CodexInvocation.Relay?
+            if let files {
+                do {
+                    relay = try CodexInvocation.Relay.read(mcpConfig: files.configPath)
+                } catch {
+                    throw SetupError(text: "tool bridge: \(error)")
+                }
+            }
+            guard let directory = files?.configPath.deletingLastPathComponent() ?? catalogDirectory else {
+                throw SetupError(text: "catalog: no folder for it")
             }
             let written: URL
             do {
-                written = try CodexInvocation.writeCatalog(in: files.configPath.deletingLastPathComponent(),
-                                                           turnID: files.turnID, model: config.model,
+                try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
+                                                         attributes: [.posixPermissions: 0o700])
+                written = try CodexInvocation.writeCatalog(in: directory, turnID: turnID, model: config.model,
                                                            instructions: system)
             } catch {
                 throw SetupError(text: "catalog: \(error)")
@@ -202,7 +232,7 @@ public actor CodexDriver: ClaudeGenerating {
             state.error = Self.launchError(error)
         }
         if state.error != nil {
-            await bridge.closeTurn(files.turnID)
+            if let files { await bridge?.closeTurn(files.turnID) }
             return await conclude(state, channel: channel)
         }
 
@@ -220,7 +250,7 @@ public actor CodexDriver: ClaudeGenerating {
         ClaudeStreams.startTailReader(stderr.fileHandleForReading, into: input)
         // The relay's handshake checks its parent against this pid: `codex` itself starts it
         // (the app's launcher script `exec`s the binary, so the pid stays the same).
-        await bridge.setClaudePID(child.pid, for: files.turnID)
+        if let files { await bridge?.setClaudePID(child.pid, for: files.turnID) }
         ClaudeDriver.write(user, to: stdin.fileHandleForWriting)
 
         var watch = Watch(grace: stopGrace, owner: Self.displayName, name: "codex")
@@ -263,7 +293,7 @@ public actor CodexDriver: ClaudeGenerating {
         if watch.stopping && !state.keepTurnOpen {
             await turn.close()
         }
-        await bridge.closeTurn(files.turnID)
+        if let files { await bridge?.closeTurn(files.turnID) }
         if state.error == nil && !state.ended {
             let code = watch.exit.map { String($0.code) } ?? "?"
             let detail = state.lastRetry ?? Py.strip(String(decoding: watch.stderrTail, as: UTF8.self))
@@ -342,6 +372,7 @@ public actor CodexDriver: ClaudeGenerating {
         }
         s.lastTextID = id
         await sink.delta(text)
+        s.raw += (s.raw.isEmpty ? "" : CodexTurnState.messageBreak) + text
         s.buf += text
         await emit(s.pop(force: true), to: &s, sink: sink)
     }
@@ -354,7 +385,11 @@ public actor CodexDriver: ClaudeGenerating {
     }
 
     /// Claude's salvage and success return, under ChatGPT's names.
-    private func conclude(_ s: CodexTurnState, channel: Channel, exit: ClaudeExit? = nil) async -> String? {
+    private func conclude(_ s: CodexTurnState, channel: Channel, exit: ClaudeExit? = nil) async -> Outcome {
+        Outcome(reply: await reply(s, channel: channel, exit: exit), error: s.error, text: s.raw)
+    }
+
+    private func reply(_ s: CodexTurnState, channel: Channel, exit: ClaudeExit?) async -> String? {
         lastError = s.error
         if let error = s.error, CodexReason.reason(error) == "not signed in" {
             signInVerified = false
@@ -375,12 +410,12 @@ public actor CodexDriver: ClaudeGenerating {
                 await backend.set(Self.partialBackend)
                 return Py.strip(s.joined(emitted))
             }
-            log("ChatGPT unavailable this turn — using local model: \(CodexReason.reason(error))")
+            if !quiet { log("ChatGPT unavailable this turn — using local model: \(CodexReason.reason(error))") }
             return nil
         }
         let reply = Py.strip(s.joined(s.spoken))
         guard !reply.isEmpty else {
-            log("ChatGPT unavailable this turn — using local model: empty response")
+            if !quiet { log("ChatGPT unavailable this turn — using local model: empty response") }
             return nil
         }
         await backend.set(Self.successBackend(model: config.model))
@@ -403,6 +438,8 @@ public actor CodexDriver: ClaudeGenerating {
 private struct CodexTurnState {
     static let messageBreak = "\n\n"
     var buf = ""
+    /// Every message's text as written, for `Outcome.text`.
+    var raw = ""
     var spoken: [String] = []
     var messageStarts: Set<Int> = []
     var lastTextID: String?

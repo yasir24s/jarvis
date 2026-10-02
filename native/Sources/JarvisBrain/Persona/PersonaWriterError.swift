@@ -14,8 +14,13 @@ public enum PersonaWriterError: Error, Equatable, CustomStringConvertible {
     case offline
     /// The Claude call failed. A short reason with no model output in it.
     case claudeFailed(String)
-    /// Neither writer produced text.
+    /// Neither writer produced text. With MEM1 part 4's ChatGPT fallback, `claude` holds both
+    /// cloud writers' reasons.
     case bothFailed(local: String, claude: String)
+    /// MEM1 part 4: `JARVIS_USE_CHATGPT=0`.
+    case chatgptOff
+    /// MEM1 part 4: the ChatGPT call failed. A short reason with no model output in it.
+    case chatgptFailed(String)
 
     public var description: String {
         switch self {
@@ -25,6 +30,8 @@ public enum PersonaWriterError: Error, Equatable, CustomStringConvertible {
         case .offline: "offline"
         case .claudeFailed(let reason): "Claude failed (\(reason))"
         case let .bothFailed(local, claude): "no writer: \(local); \(claude)"
+        case .chatgptOff: "ChatGPT is off"
+        case .chatgptFailed(let reason): "ChatGPT failed (\(reason))"
         }
     }
 

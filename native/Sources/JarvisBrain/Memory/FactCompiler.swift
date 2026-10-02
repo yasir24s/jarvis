@@ -181,7 +181,8 @@ public final class FactCompiler: Sendable {
 
     /// The reply's fact lines with their writer: all `local` for the on-device draft, all
     /// `claude` for Claude alone, and for Claude's improvement `both` where the draft had the
-    /// same fact (normalised, or `isSimilar`) and `claude` where it did not.
+    /// same fact (normalised, or `isSimilar`) and `claude` where it did not. MEM1 part 4: the
+    /// same for ChatGPT, with `chatgpt` where Claude's would be `claude`.
     static func candidates(from written: AttributedText, isSimilar: (String, String) -> Bool)
         -> (candidates: [FactMerge.Candidate], dropped: Int) {
         let parsed = FactExtraction.facts(fromReply: written.text)
@@ -190,14 +191,23 @@ public final class FactCompiler: Sendable {
             return (parsed.facts.map { FactMerge.Candidate(text: $0, by: .local) }, parsed.dropped.count)
         case .claude:
             return (parsed.facts.map { FactMerge.Candidate(text: $0, by: .claude) }, parsed.dropped.count)
+        case .chatgpt:
+            return (parsed.facts.map { FactMerge.Candidate(text: $0, by: .chatgpt) }, parsed.dropped.count)
         case .improved(let draft):
-            let drafted = FactExtraction.facts(fromReply: draft).facts
-            let keys = Set(drafted.map(FactExtraction.normalized))
-            let candidates = parsed.facts.map { line in
-                let inDraft = keys.contains(FactExtraction.normalized(line)) || drafted.contains { isSimilar($0, line) }
-                return FactMerge.Candidate(text: line, by: inDraft ? .both : .claude)
-            }
-            return (candidates, parsed.dropped.count)
+            return (improvement(parsed.facts, draft: draft, by: .claude, isSimilar: isSimilar), parsed.dropped.count)
+        case .improvedByChatGPT(let draft):
+            return (improvement(parsed.facts, draft: draft, by: .chatgpt, isSimilar: isSimilar), parsed.dropped.count)
+        }
+    }
+
+    /// An improvement's lines: `both` where the draft had the fact, `writer` where it did not.
+    private static func improvement(_ facts: [String], draft: String, by writer: FactWriter,
+                                    isSimilar: (String, String) -> Bool) -> [FactMerge.Candidate] {
+        let drafted = FactExtraction.facts(fromReply: draft).facts
+        let keys = Set(drafted.map(FactExtraction.normalized))
+        return facts.map { line in
+            let inDraft = keys.contains(FactExtraction.normalized(line)) || drafted.contains { isSimilar($0, line) }
+            return FactMerge.Candidate(text: line, by: inDraft ? .both : writer)
         }
     }
 }

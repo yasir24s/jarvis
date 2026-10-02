@@ -3,11 +3,13 @@ import Foundation
 // `memory/facts.json` (D-51, P2): what JARVIS has compiled about the user. Native-only and
 // written atomically through `StateStore`, like every other state file.
 
-/// Which writer produced (or last confirmed) a fact.
+/// Which writer produced (or last confirmed) a fact. MEM1 part 4 adds `chatgpt`, the memory
+/// writer's fallback when Claude cannot write; `both` is any fact more than one writer produced.
 public enum FactWriter: String, Sendable, CaseIterable {
     case local
     case claude
     case both
+    case chatgpt
 
     /// The writer after `other` also produced the same fact.
     public func merged(with other: FactWriter) -> FactWriter {

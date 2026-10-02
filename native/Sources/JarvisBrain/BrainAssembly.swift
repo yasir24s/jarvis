@@ -220,6 +220,16 @@ public final class BrainAssembly: Sendable {
                                             workingDirectory: claudeWorkingDirectory,
                                             parentEnvironment: environment, online: online, log: brainLog)
         let writer = personaWriter ?? CollaborativePersonaLLM(local: localWriter, claude: claudeWriter)
+        // MEM1 part 4: the memory writer's fallback when Claude cannot write: ChatGPT with no tools.
+        let chatgptWriter = ChatGPTPersonaLLM(
+            config: codexConfig, executable: codexPath,
+            workingDirectory: codexWorkingDirectory
+                ?? claudeWorkingDirectory.deletingLastPathComponent().appending(path: "codex-cwd", directoryHint: .isDirectory),
+            codexHome: codexHome ?? CodexHome.directory, catalogDirectory: runDirectory,
+            parentEnvironment: environment, online: online,
+            preflight: { [home = codexHome ?? CodexHome.directory] in
+                await CodexLogin(executable: codexPath, codexHome: home, parentEnvironment: environment).status()
+            }, log: brainLog)
         let summarizer = FallbackSummarizer(LocalPageSummarizer(model: localWriter, budget: .system()))
         pageSummarizer = summarizer
         let turns = TurnActivity()
@@ -242,7 +252,8 @@ public final class BrainAssembly: Sendable {
             })
         }
         let facts = memory.map {
-            FactCompiler(memory: $0, writer: factWriter ?? Self.factWriter(local: localWriter, claude: claudeWriter),
+            FactCompiler(memory: $0, writer: factWriter ?? Self.factWriter(local: localWriter, claude: claudeWriter,
+                                                                           chatgpt: chatgptWriter),
                          vectors: vectors, turns: turns)
         }
         self.facts = facts
@@ -301,10 +312,11 @@ public final class BrainAssembly: Sendable {
 
     /// The fact compile's default writer: P1's two writers collaborating under P2's validator,
     /// with what Claude is given redacted (D-51 P3) and the on-device model's input unchanged.
-    static func factWriter(local: any PersonaLLM, claude: any PersonaLLM,
+    /// MEM1 part 4: `chatgpt` is tried when Claude's call throws, with the same redacted input.
+    static func factWriter(local: any PersonaLLM, claude: any PersonaLLM, chatgpt: (any PersonaLLM)? = nil,
                            log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .state) })
         -> CollaborativePersonaLLM {
-        CollaborativePersonaLLM(local: local, claude: claude, validator: FactExtraction.passesCheck,
+        CollaborativePersonaLLM(local: local, claude: claude, chatgpt: chatgpt, validator: FactExtraction.passesCheck,
                                 name: "Memory writer", claudeInput: Redactor.redacted, log: log)
     }
 

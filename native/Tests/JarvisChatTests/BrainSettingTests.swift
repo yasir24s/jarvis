@@ -88,14 +88,15 @@ struct BrainSettingTests {
     func strings() {
         #expect(BrainSetting.menuTitle == "Brain")
         #expect(BrainChoice.allCases.map(BrainSetting.title) == ["Claude", "ChatGPT", "On-device"])
-        #expect(BrainSetting.routes == "File reading, the memory writer and the persona writer stay on Claude "
-                + "whichever brain answers, unless JARVIS_USE_CLAUDE=0 turns Claude off.")
+        // MEM1 part 4: the memory writer falls back to ChatGPT; the other two stay on Claude.
+        #expect(BrainSetting.routes == "File reading and the persona writer stay on Claude whichever brain "
+                + "answers; the memory writer tries Claude, then ChatGPT, then keeps the on-device draft. "
+                + "JARVIS_USE_CLAUDE=0 takes Claude out of all three.")
         for help in [BrainSetting.help, BrainSetting.chatgptOffHelp] {
             #expect(help.hasSuffix(BrainSetting.routes))
         }
         #expect(BrainSetting.help.contains("ChatGPT (through Codex, on your ChatGPT sign-in)"))
-        for help in [BrainSetting.claudeOffHelp, BrainSetting.forcedHelp] {
-            #expect(help.contains("for file reading, the memory writer and the persona writer"))
-        }
+        #expect(BrainSetting.claudeOffHelp.contains("the memory writer tries ChatGPT"))
+        #expect(BrainSetting.forcedHelp.contains("file reading, the memory writer and the persona writer"))
     }
 }
