@@ -66,11 +66,13 @@ public enum LocalToolset {
     /// Offered first on every turn that does not offer the whole catalog, in this order.
     public static let pinned = ["get_time", "web_search", "search_memory"]
 
-    /// What a local turn can be offered: the Python catalog, then search_memory. P4 serves
-    /// search_memory after the generated catalog (`NativeToolCatalog`), so `ToolCatalog.tools`
-    /// alone has no such tool, and a name in `pinned` or `core21` that it lacks is left out.
-    public static let catalog: [ToolSchema] = ToolCatalog.tools
-        + NativeToolCatalog.memoryTools.filter { $0.name == "search_memory" }
+    /// What a local turn can be offered: the Python catalog, then P4's memory tools. P4 serves
+    /// them after the generated catalog (`NativeToolCatalog`), so `ToolCatalog.tools` alone has
+    /// none of them, and a name in `pinned` or `core21` that it lacks is left out. MEM1 part 2:
+    /// forget_memory, correct_memory and restore_memory join search_memory, ranked in by
+    /// relevance like the rest; the gateway's rules for them (the mass-deletion guard, the
+    /// forgotten bin, taint by source) are the same whichever brain calls.
+    public static let catalog: [ToolSchema] = ToolCatalog.tools + NativeToolCatalog.memoryTools
 
     /// Tools plus instructions may use this share of `contextSize`.
     public static let budgetFraction = 0.6

@@ -45,53 +45,56 @@ struct LocalToolsetTests {
         #expect(Array(LocalToolset.core21.dropFirst(3))
                 == Self.measuredCore22.filter { $0 != "get_time" && !removed.contains($0) })
         #expect(Self.measuredCore22.count == 22)
-        #expect(Self.catalogTools().count == 47)
+        #expect(Self.catalogTools().count == 50)
     }
 
-    @Test("the catalog a local turn can be offered is Python's 46 and search_memory, which only P4 serves")
+    @Test("the catalog a local turn can be offered is Python's 46 and P4's four memory tools, which only P4 serves")
     func catalog() {
         let names = LocalToolset.catalog.map(\.name)
-        #expect(names == ToolCatalog.tools.map(\.name) + ["search_memory"])
-        #expect(Set(names).count == 47)
-        // Without it a name in `pinned` or `core21` would be left out without a word.
-        #expect(!DataSourceMap.allTools.contains("search_memory"))
+        #expect(names == ToolCatalog.tools.map(\.name)
+                + ["search_memory", "forget_memory", "correct_memory", "restore_memory"])
+        #expect(Set(names).count == 50)
+        // Without them a name in `pinned` or `core21` would be left out without a word.
+        for name in NativeToolCatalog.memoryToolNames {
+            #expect(!DataSourceMap.allTools.contains(name))
+        }
         #expect(Set(LocalToolset.pinned).isSubset(of: Set(names)))
         #expect(LocalToolset.pinned == ["get_time", "web_search", "search_memory"])
     }
 
-    @Test("all 47 when tools plus instructions fit in 0.6 × contextSize")
+    @Test("all 50 when tools plus instructions fit in 0.6 × contextSize")
     func allFit() async {
         let logs = LogRecorder()
-        // 47 × 50 + 1000 = 3350 ≤ 0.6 × 6000 = 3600
+        // 50 × 50 + 1000 = 3500 ≤ 0.6 × 6000 = 3600
         let s = await Self.select(FakeCounter(contextSize: 6000, toolCost: 50, instructions: 1000), logs: logs)
         #expect(s.tier == .all)
         #expect(s.names == LocalToolset.catalog.map(\.name))
-        #expect(s.allToolTokens == 2350)
-        #expect(s.selectedToolTokens == 2350)
+        #expect(s.allToolTokens == 2500)
+        #expect(s.selectedToolTokens == 2500)
         #expect(s.instructionTokens == 1000)
         #expect(s.limit == 3600)
         #expect(s.dropped.isEmpty)
         #expect(logs.lines == ["Local model: contextSize 6000, limit 3600.0; instructions 1000 tokens; "
-                               + "47 tools 2350 tokens; offering all: 47 tools, 2350 tokens"])
+                               + "50 tools 2500 tokens; offering all: 50 tools, 2500 tokens"])
     }
 
     @Test("exactly at the limit still fits")
     func boundary() async {
-        // 47 × 10 + 130 = 600 = 0.6 × 1000
-        let fits = await Self.select(FakeCounter(contextSize: 1000, toolCost: 10, instructions: 130))
+        // 50 × 10 + 100 = 600 = 0.6 × 1000
+        let fits = await Self.select(FakeCounter(contextSize: 1000, toolCost: 10, instructions: 100))
         #expect(fits.tier == .all)
-        let over = await Self.select(FakeCounter(contextSize: 1000, toolCost: 10, instructions: 131))
+        let over = await Self.select(FakeCounter(contextSize: 1000, toolCost: 10, instructions: 101))
         #expect(over.tier == .core21)
     }
 
-    @Test("CORE-21, in D-7 order, when all 47 do not fit and there are no sentence vectors")
+    @Test("CORE-21, in D-7 order, when all 50 do not fit and there are no sentence vectors")
     func core21Fits() async {
         let logs = LogRecorder()
-        // 47 × 50 + 1000 = 3350 > 2457.6; 21 × 50 + 1000 = 2050 ≤ 2457.6
+        // 50 × 50 + 1000 = 3500 > 2457.6; 21 × 50 + 1000 = 2050 ≤ 2457.6
         let s = await Self.select(FakeCounter(contextSize: 4096, toolCost: 50, instructions: 1000), logs: logs)
         #expect(s.tier == .core21)
         #expect(s.names == LocalToolset.core21)
-        #expect(s.allToolTokens == 2350)
+        #expect(s.allToolTokens == 2500)
         #expect(s.selectedToolTokens == 1050)
         #expect(s.dropped.isEmpty)
         #expect(logs.lines.count == 1)
@@ -108,7 +111,7 @@ struct LocalToolsetTests {
         #expect(s.names == Array(LocalToolset.core21.prefix(19)))
         #expect(s.selectedToolTokens == 950)
         #expect(logs.lines == ["Local model: contextSize 4096, limit 2457.6; instructions 1500 tokens; "
-                               + "47 tools 2350 tokens; offering CORE-21 trimmed: 19 tools, 950 tokens; "
+                               + "50 tools 2500 tokens; offering CORE-21 trimmed: 19 tools, 950 tokens; "
                                + "dropped run_command, find_files"])
     }
 

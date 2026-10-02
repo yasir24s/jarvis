@@ -10,9 +10,11 @@ import JarvisTools
 ///
 /// The root is `DynamicGenerationSchema(name: "<tool>_args", description:, properties:)`.
 /// A `string` property is `String`, or `anyOf` its values when it has an `enum`; `integer` is
-/// `Int` and `boolean` is `Bool`. A property missing from `required` is optional. The
-/// measured TOOLS use nothing else, so any other type, or an `enum` that is not a list of
-/// strings, throws rather than being guessed at.
+/// `Int` and `boolean` is `Bool`. MEM1 part 2: an `array` whose `items` are `string`s (P4's
+/// `ids`, for forget_memory and restore_memory) is an array of `String`. A property missing
+/// from `required` is optional. The measured TOOLS use nothing else, so any other type (an
+/// array of anything but strings among them), or an `enum` that is not a list of strings,
+/// throws rather than being guessed at.
 public enum SchemaBridge {
     public enum BridgeError: Error, Equatable, CustomStringConvertible {
         case notAnObject(tool: String)
@@ -68,6 +70,9 @@ public enum SchemaBridge {
         case "string": return DynamicGenerationSchema(type: String.self)
         case "integer": return DynamicGenerationSchema(type: Int.self)
         case "boolean": return DynamicGenerationSchema(type: Bool.self)
+        case "array" where spec["items"]?.objectValue?["type"]?.stringValue == "string"
+                && spec["items"]?.objectValue?["enum"] == nil:
+            return DynamicGenerationSchema(arrayOf: DynamicGenerationSchema(type: String.self))
         default: throw .unsupportedType(tool: tool, property: property, type: type)
         }
     }

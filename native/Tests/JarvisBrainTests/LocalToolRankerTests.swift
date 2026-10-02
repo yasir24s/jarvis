@@ -163,7 +163,7 @@ struct LocalToolRankerTests {
             counter: FakeCounter(contextSize: 100_000, toolCost: 10, instructions: 100),
             request: LocalToolRequest(text: "play some music"), ranker: Self.ranker(embedding), log: { _ in })
         #expect(s.tier == .all)
-        #expect(s.tools.count == 47)
+        #expect(s.tools.count == 50)
         #expect(embedding.calls == 0)
     }
 
@@ -172,7 +172,7 @@ struct LocalToolRankerTests {
         let embedding = WordBagEmbedding()
         let ranker = Self.ranker(embedding)
         _ = await Self.select("what is the weather like in London", ranker: ranker)
-        // The request, and the 44 tools that are not pinned.
+        // The request, and the 47 tools that are not pinned.
         #expect(embedding.calls == 1 + (LocalToolset.catalog.count - Self.pinned.count))
         let first = embedding.calls
         _ = await Self.select("play some music", ranker: ranker)
@@ -185,7 +185,7 @@ struct LocalToolRankerTests {
         let logs = LogRecorder()
         let s = await Self.select("what is the weather like in London", logs: logs)
         let expected = "Local model: contextSize 4096, limit 2457.6; instructions \(s.instructionTokens) tokens; "
-            + "47 tools \(s.allToolTokens) tokens; offering relevance: \(s.tools.count) tools, "
+            + "50 tools \(s.allToolTokens) tokens; offering relevance: \(s.tools.count) tools, "
             + "\(s.selectedToolTokens) tokens (estimated: tools chars/2.07, instructions chars/3.5)"
         #expect(logs.lines == [expected])
         for name in LocalToolset.catalog.map(\.name) { #expect(!expected.contains(name)) }

@@ -76,6 +76,28 @@ struct LocalSchemaBridgeTests {
         }
     }
 
+    /// MEM1 part 2: an array of strings (P4's `ids`) bridges; an array of anything else does not.
+    @Test("an array of strings bridges, other arrays throw")
+    func arraysOfStrings() throws {
+        let ids = ToolSchema(name: "probe", description: "d", parametersJSON:
+            #"{"type": "object", "properties": {"ids": {"type": "array", "items": {"type": "string"}}}, "required": []}"#)
+        let encoded = try Self.encoded(SchemaBridge.generationSchema(for: ids))
+        let property = try #require(encoded["properties"]?.objectValue?["ids"]?.objectValue)
+        #expect(property["type"] == .string("array"))
+        #expect(property["items"]?.objectValue?["type"] == .string("string"))
+        for items in [#"{"type": "integer"}"#, #"{"type": "object"}"#, #"{"type": "string", "enum": ["a"]}"#] {
+            let other = ToolSchema(name: "probe", description: "d", parametersJSON:
+                #"{"type": "object", "properties": {"x": {"type": "array", "items": \#(items)}}, "required": []}"#)
+            #expect(throws: SchemaBridge.BridgeError.unsupportedType(tool: "probe", property: "x", type: "array")) {
+                try SchemaBridge.generationSchema(for: other)
+            }
+        }
+        for name in ["forget_memory", "restore_memory", "correct_memory", "search_memory"] {
+            let tool = try #require(NativeToolCatalog.memoryTools.first { $0.name == name })
+            _ = try SchemaBridge.generationSchema(for: tool)
+        }
+    }
+
     @Test("a malformed schema throws")
     func malformedThrows() {
         let cases: [(String, SchemaBridge.BridgeError)] = [
