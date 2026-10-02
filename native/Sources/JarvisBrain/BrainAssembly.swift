@@ -205,7 +205,9 @@ public final class BrainAssembly: Sendable {
         router = BrainRouter(core: core, config: config, claude: driver, chatgpt: chatgpt,
                              chatgptEnabled: codexConfig.enabled, local: local, backend: backend,
                              research: research, recall: recall, choice: brainChoice, log: brainLog)
-        // P1's two writers, shared by the persona writer and the fact compile (P2).
+        // P1's two writers, shared by the persona writer and the fact compile (P2). B2 part 4:
+        // they, and P3's file reading, stay on Claude whichever brain the Brain item picks for
+        // replies; only JARVIS_USE_CLAUDE=0 moves them on-device.
         let localWriter = LocalPersonaLLM()
         let claudeWriter = ClaudePersonaLLM(config: config, executable: executable,
                                             workingDirectory: claudeWorkingDirectory,

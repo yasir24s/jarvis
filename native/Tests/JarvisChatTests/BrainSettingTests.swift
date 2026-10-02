@@ -83,13 +83,19 @@ struct BrainSettingTests {
         }
     }
 
+    /// Part 4: the help says the other Claude uses stay on Claude whichever brain answers.
     @Test("the item's names, and the help states that only replies follow it")
     func strings() {
         #expect(BrainSetting.menuTitle == "Brain")
         #expect(BrainChoice.allCases.map(BrainSetting.title) == ["Claude", "ChatGPT", "On-device"])
-        for help in [BrainSetting.help, BrainSetting.claudeOffHelp, BrainSetting.chatgptOffHelp, BrainSetting.forcedHelp] {
-            #expect(help.contains("File reading, the memory writer and the persona writer keep their own routes."))
+        #expect(BrainSetting.routes == "File reading, the memory writer and the persona writer stay on Claude "
+                + "whichever brain answers, unless JARVIS_USE_CLAUDE=0 turns Claude off.")
+        for help in [BrainSetting.help, BrainSetting.chatgptOffHelp] {
+            #expect(help.hasSuffix(BrainSetting.routes))
         }
         #expect(BrainSetting.help.contains("ChatGPT (through Codex, on your ChatGPT sign-in)"))
+        for help in [BrainSetting.claudeOffHelp, BrainSetting.forcedHelp] {
+            #expect(help.contains("for file reading, the memory writer and the persona writer"))
+        }
     }
 }
