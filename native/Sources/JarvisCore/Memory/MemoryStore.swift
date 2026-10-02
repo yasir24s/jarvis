@@ -51,18 +51,32 @@ public final class MemoryStore: Sendable {
     /// Appends one message, stamped now. False when the lease is not held or the write failed.
     /// P6b: a successful append is followed by the hourly backup (W1 part 7c: a segment of the
     /// bytes the archive gained since the last one).
+    /// UI1 part 5: `turn` is the id of the turn the message belongs to, written on its line.
     @discardableResult
-    public func archive(_ text: String, role: MemoryRole, channel: String) -> Bool {
+    public func archive(_ text: String, role: MemoryRole, channel: String, turn: String? = nil) -> Bool {
         let entry = ArchiveEntry(timestamp: clock.now(), timeZone: timeZone, channel: channel,
-                                 role: role, text: text)
+                                 role: role, text: text, turn: turn)
         guard store.appendLine(entry.line, to: .archive) else { return false }
+        backups.afterAppend(.archive, path: store.path(.archive))
+        return true
+    }
+
+    /// UI1 part 5: an edit replaced `turns`. One supersede line is appended, stamped now; from
+    /// then on the compile and search_memory skip those turns' messages. False when the lease is
+    /// not held or the write failed.
+    @discardableResult
+    public func supersede(turns: [String]) -> Bool {
+        guard !turns.isEmpty else { return true }
+        let line = ArchiveSupersede.line(turns: turns, timestamp: clock.now(), timeZone: timeZone)
+        guard store.appendLine(line, to: .archive) else { return false }
         backups.afterAppend(.archive, path: store.path(.archive))
         return true
     }
 
     /// The whole archive lines after byte `offset`, and the offset just past the last of them
     /// (a torn final line is left for next time). An offset past the end means the archive was
-    /// replaced, so reading starts over. Lines that do not parse are skipped.
+    /// replaced, so reading starts over. Lines that do not parse are skipped, and (UI1 part 5)
+    /// so are the messages of turns a supersede line among them names.
     public func archive(after offset: Int) -> (entries: [ArchiveEntry], end: Int) {
         let read = archiveLines(after: offset)
         return (read.entries, read.end)
@@ -80,9 +94,12 @@ public final class MemoryStore: Sendable {
         else { return ([], [], Int(start)) }
         guard let lastNewline = data.lastIndex(of: 0x0A) else { return ([], [], Int(start)) }
         let whole = data[data.startIndex...lastNewline]
+        let lines = whole.split(separator: 0x0A)
+        let superseded = ArchiveSupersede.superseded(in: lines.lazy.map { Data($0) })
         var entries: [ArchiveEntry] = [], ends: [Int] = []
-        for line in whole.split(separator: 0x0A) {
+        for line in lines {
             guard let entry = ArchiveEntry(line: Data(line)) else { continue }
+            if let turn = entry.turn, superseded.contains(turn) { continue }
             entries.append(entry)
             ends.append(Int(start) + whole.distance(from: whole.startIndex, to: line.endIndex) + 1)
         }
@@ -94,11 +111,17 @@ public final class MemoryStore: Sendable {
     public static let searchedArchives: [MemoryFile] = [.archive, .pythonArchive]
 
     /// P6b: every message in `searchedArchives`, each file in its own order. Lines that do not
-    /// parse, and a torn final line, are skipped.
+    /// parse, and a torn final line, are skipped, and (UI1 part 5) so are superseded turns.
     public func archivedMessages() -> [ArchiveEntry] {
         Self.searchedArchives.flatMap { file -> [ArchiveEntry] in
             guard let data = store.read(file) else { return [] }
-            return data.split(separator: 0x0A).compactMap { ArchiveEntry(line: Data($0)) }
+            let lines = data.split(separator: 0x0A)
+            let superseded = ArchiveSupersede.superseded(in: lines.lazy.map { Data($0) })
+            return lines.compactMap { line -> ArchiveEntry? in
+                guard let entry = ArchiveEntry(line: Data(line)) else { return nil }
+                if let turn = entry.turn, superseded.contains(turn) { return nil }
+                return entry
+            }
         }
     }
 

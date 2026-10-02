@@ -27,6 +27,11 @@ public struct ChatMessage: Identifiable, Sendable, Equatable {
     public internal(set) var retracted: Bool
     /// UI1 part 4: the user stopped this reply; it keeps what was shown, marked "stopped".
     public internal(set) var stopped: Bool
+    /// UI1 part 5: the turn the row came from; nil for rows made without one (the app's notes, a
+    /// refusal made here, rows a live update restored). Only a user row with one can be edited.
+    public internal(set) var turnID: UUID?
+    /// UI1 part 5: on a user message that has been edited, the group its versions share.
+    public internal(set) var versionGroup: UUID?
 
     public init(id: UUID = UUID(), role: Role, text: String, phase: Phase, retracted: Bool = false,
                 stopped: Bool = false) {

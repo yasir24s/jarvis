@@ -6,6 +6,18 @@ import JarvisTools
 /// `record` must return at once and must never log the text.
 public protocol ExchangeArchiving: Sendable {
     func record(user: String, reply: String, channel: Channel)
+    /// UI1 part 5: the same, with the turn's id on each message, so an edit can supersede it.
+    func record(user: String, reply: String, channel: Channel, turn: UUID)
+    /// UI1 part 5: an edit replaced these turns.
+    func supersede(turns: [UUID])
+}
+
+public extension ExchangeArchiving {
+    func record(user: String, reply: String, channel: Channel, turn: UUID) {
+        record(user: user, reply: reply, channel: channel)
+    }
+
+    func supersede(turns: [UUID]) {}
 }
 
 /// Appends each exchange to `memory/archive.jsonl`: the user's message, then JARVIS's reply
@@ -26,10 +38,29 @@ public struct MemoryArchiver: ExchangeArchiving {
     }
 
     public func record(user: String, reply: String, channel: Channel) {
+        record(user: user, reply: reply, channel: channel, turn: nil)
+    }
+
+    public func record(user: String, reply: String, channel: Channel, turn: UUID) {
+        record(user: user, reply: reply, channel: channel, turn: Optional(turn))
+    }
+
+    /// UI1 part 5: one supersede line for `turns`; one log line, with the count.
+    public func supersede(turns: [UUID]) {
+        guard !turns.isEmpty else { return }
+        if memory.supersede(turns: turns.map(\.uuidString)) {
+            log("memory: superseded \(turns.count) turn(s)")
+        } else {
+            log("memory: \(turns.count) superseded turn(s) not marked")
+        }
+    }
+
+    private func record(user: String, reply: String, channel: Channel, turn: UUID?) {
         var messages = [(MemoryRole.user, user)]
         if !reply.isEmpty { messages.append((.jarvis, reply)) }
         var written = 0
-        for (role, text) in messages where memory.archive(text, role: role, channel: channel.rawValue) {
+        for (role, text) in messages
+        where memory.archive(text, role: role, channel: channel.rawValue, turn: turn?.uuidString) {
             written += 1
         }
         if written == messages.count {

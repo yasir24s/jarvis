@@ -53,6 +53,11 @@ public struct HistoryLog: Sendable, Equatable {
         }
     }
 
+    /// UI1 part 5: drops the last `count` turns (an edit replaced them), or all there are.
+    public mutating func dropLast(_ count: Int) {
+        turns.removeLast(min(max(0, count), turns.count))
+    }
+
     /// What `_history_save` writes: `_history[-12:]`.
     public func serialized() -> JSONValue {
         .array(Py.tail(turns, Self.cap).map { .object($0) })

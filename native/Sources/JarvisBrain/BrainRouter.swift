@@ -128,6 +128,15 @@ public struct BrainRouter: Sendable {
         }
     }
 
+    /// UI1 part 5: where history stands, before a turn, and the rewind an edit makes to it.
+    public func historyMark() async -> Int {
+        await core.historyMark()
+    }
+
+    public func rewindHistory(to mark: Int) async {
+        await core.rewindHistory(to: mark)
+    }
+
     /// The stopped turn's history: the reply as far as it was shown.
     private func stopped(_ shown: ShownReply) async -> String {
         let partial = shown.text

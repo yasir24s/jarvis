@@ -116,6 +116,38 @@ struct ChatSnapshotTests {
         print("UI1 snapshot \(url.path)")
     }
 
+    /// UI1 part 5: Edit on a hovered message, the edit field, and a message's versions.
+    @Test func editAndVersions() async throws {
+        let model = await Self.model()
+        let first = try #require(model.messages.first { $0.role == .user })
+        let noEdit = RowEditing(canEdit: true, versions: nil, versionsEnabled: true, text: nil,
+                                begin: {}, cancel: {}, send: {}, show: { _ in })
+        let editingText = RowEditing(canEdit: true, versions: nil, versionsEnabled: true,
+                                     text: .constant("What's on my calendar tomorrow afternoon?"),
+                                     begin: {}, cancel: {}, send: {}, show: { _ in })
+        let rows = VStack(alignment: .trailing, spacing: 18) {
+            UserMessage(message: first, edit: noEdit, hovering: true)
+            UserMessage(message: first, edit: editingText)
+        }
+        .padding(16)
+        .frame(width: 560, alignment: .trailing)
+        .background(JarvisTheme.navy.color)
+        .foregroundStyle(JarvisTheme.ice.color)
+        .font(JarvisTheme.body)
+        var url = try await UISnapshot.write(rows, size: CGSize(width: 560, height: 200), name: "ui1-part5-edit")
+        print("UI1 snapshot \(url.path)")
+
+        await model.edit(first.id, to: "What's on my calendar tomorrow afternoon?")?.value
+        url = try await UISnapshot.write(ChatView(model: model), size: CGSize(width: 560, height: 520),
+                                         name: "ui1-part5-version-2-of-2")
+        print("UI1 snapshot \(url.path)")
+        let edited = try #require(model.messages.first { $0.role == .user })
+        model.showVersion(0, of: edited.id)
+        url = try await UISnapshot.write(ChatView(model: model), size: CGSize(width: 560, height: 520),
+                                         name: "ui1-part5-version-1-of-2")
+        print("UI1 snapshot \(url.path)")
+    }
+
     @Test func confirmationCardIsGold() async throws {
         let model = await Self.model()
         let gate = ConfirmationGate()

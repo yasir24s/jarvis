@@ -304,6 +304,10 @@ public final class MemoryIndex: Sendable {
             var n = 0
             for line in whole.split(separator: 0x0A) {
                 let bytes = Data(line)
+                if file != .journal, let turns = ArchiveSupersede.turns(line: bytes) {
+                    try Self.forget(turns, in: file, db)   // UI1 part 5: an edit replaced them
+                    continue
+                }
                 guard let found = Self.words(of: bytes, in: file) else { continue }
                 try insertLine.bind(.text(file.rawValue), .int(Int64(mark.count + n)), .double(found.timestamp),
                                     .blob(bytes)).run()
@@ -323,6 +327,24 @@ public final class MemoryIndex: Sendable {
             return n
         }
         return (added, mark.offset + whole.count >= size)
+    }
+
+    /// UI1 part 5: takes the messages of superseded turns out of the index, so search_memory
+    /// never finds them. A supersede line always follows the lines it names, so they are already
+    /// in; they are found by the turn's id as their lines carry it.
+    private static func forget(_ turns: [String], in file: MemoryFile, _ db: SQLiteConnection) throws {
+        let find = try db.prepare("SELECT id FROM lines WHERE file = ? AND instr(line, ?) > 0")
+        let deleteWords = try db.prepare("DELETE FROM line_words WHERE rowid = ?")
+        let deleteLine = try db.prepare("DELETE FROM lines WHERE id = ?")
+        for turn in turns {
+            find.bind(.text(file.rawValue), .blob(ArchiveSupersede.needle(turn: turn)))
+            var ids: [Int64] = []
+            while try find.step() { ids.append(find.int(0)) }
+            for id in ids {
+                try deleteWords.bind(.int(id)).run()
+                try deleteLine.bind(.int(id)).run()
+            }
+        }
     }
 
     private func mark(_ file: MemoryFile, _ db: SQLiteConnection) throws -> Mark? {

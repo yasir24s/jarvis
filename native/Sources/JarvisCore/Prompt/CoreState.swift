@@ -38,6 +38,9 @@ public actor CoreState {
     private var corrections: [JSONObject]?
     /// `_history`.
     public private(set) var history: HistoryLog
+    /// UI1 part 5: how many turns this process has added to `history`, less any popped; a mark
+    /// for `rewindHistory(to:)`.
+    private var added = 0
     /// `LAST_TONE`.
     private var lastTone = LastTone()
     /// `_LAST_CMD` (D-35: owned here; FeedbackLogic is the pure half).
@@ -232,6 +235,7 @@ public actor CoreState {
         research.bump("interactions", by: 1)
         try trackFeedback(text)
         history.appendUser(text)
+        added += 1
         var system = basePrompt
         system += try PersonalityLogic.context(store: store)
         system += try EmotionLogic.context(store: store, now: clock.now())
@@ -259,11 +263,30 @@ public actor CoreState {
     /// `_history.append({"role": "assistant", "content": reply})`.
     public func recordAssistant(_ reply: String) {
         history.appendAssistant(reply)
+        added += 1
     }
 
     /// The brain-error branch: drop the trailing user turn, if it is one.
     public func popTrailingUserTurn() {
+        let before = history.turns.count
         history.popTrailingUser()
+        if history.turns.count < before { added -= 1 }
+    }
+
+    /// UI1 part 5: where history stands now, for `rewindHistory(to:)`.
+    public func historyMark() -> Int {
+        added
+    }
+
+    /// UI1 part 5: an edit replaced the conversation from a turn on. What this process added to
+    /// history since `mark` is dropped, as far as the 12-turn window still holds it, and
+    /// history.json is saved in its own format.
+    public func rewindHistory(to mark: Int) {
+        let since = added - mark
+        guard since > 0 else { return }
+        history.dropLast(since)
+        added = mark
+        saveHistory()
     }
 
     /// `_history_save()`: failures are swallowed, as in Python.

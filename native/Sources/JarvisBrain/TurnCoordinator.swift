@@ -13,12 +13,18 @@ public struct UserInput: Sendable, Equatable {
     /// The brains get it labelled as more context for the same request (`BrainRouter.addedContext`);
     /// everything else sees the text as typed.
     public let addsContext: Bool
+    /// UI1 part 5: the turns an edit of the user's message replaces (that message's turn and
+    /// every one after it). Once this turn is taken, history is rewound to before the first of
+    /// them and the archive marks them superseded; then it runs as usual.
+    public let replacing: [UUID]
 
-    public init(text: String, channel: Channel, pasted: Bool = false, addsContext: Bool = false) {
+    public init(text: String, channel: Channel, pasted: Bool = false, addsContext: Bool = false,
+                replacing: [UUID] = []) {
         self.text = text
         self.channel = channel
         self.pasted = pasted
         self.addsContext = addsContext
+        self.replacing = replacing
     }
 }
 
@@ -65,6 +71,10 @@ public actor TurnCoordinator {
     private let archive: (any ExchangeArchiving)?
     private let activity: TurnActivity?
     private var running = false
+    /// UI1 part 5: where history stood before each recent turn, by turn id, oldest first; an
+    /// edit rewinds to the first replaced turn's mark.
+    private var marks: [(turn: UUID, mark: Int)] = []
+    static let marksKept = 64
 
     /// - Parameters:
     ///   - confirmations: the gate the gateway stashes into; pass the same one.
@@ -112,29 +122,42 @@ public actor TurnCoordinator {
         activity?.begin()
         defer { activity?.end() }
 
+        if !input.replacing.isEmpty {
+            // UI1 part 5: an edit. The replaced turns leave history and are superseded in the
+            // archive before this one begins.
+            let replaced = Set(input.replacing)
+            if let first = marks.filter({ replaced.contains($0.turn) }).map(\.mark).min() {
+                await brain.rewindHistory(to: first)
+            }
+            marks.removeAll { replaced.contains($0.turn) }
+            archive?.supersede(turns: input.replacing)
+        }
         let started = ContinuousClock.now
         let turn = TurnContext(channel: input.channel, startTainted: input.pasted)
         defer { await turn.close() }
+        let turnID = await turn.turnID
+        marks.append((turnID, await brain.historyMark()))
+        if marks.count > Self.marksKept { marks.removeFirst(marks.count - Self.marksKept) }
         onTurnStart?(turn)
         await accepted?(turn)
 
         let port: InputPort = input.channel == .text ? textPort : .voice
         if case .handled(let result) = await confirmations.consume(text, via: port, runIn: turn) {
             if !result.isEmpty { await sink.sentence(result) }
-            archive?.record(user: text, reply: result, channel: input.channel)
+            archive?.record(user: text, reply: result, channel: input.channel, turn: turnID)
             return .confirmation(result)
         }
         // P1: a typed message that is a dismissal as a whole ends the conversation. Python's
         // voice loop answers it without handle_one, so no brain call and no interaction count.
         if input.channel == .text, Dismissal.isTextDismissal(text) {
             await sink.sentence(Dismissal.reply)
-            archive?.record(user: text, reply: Dismissal.reply, channel: input.channel)
+            archive?.record(user: text, reply: Dismissal.reply, channel: input.channel, turn: turnID)
             onConversationEnded?()
             return .dismissed(Dismissal.reply)
         }
         if let reply = await fastPath.route(text, turn: turn) {
             if !reply.isEmpty { await sink.sentence(reply) }
-            archive?.record(user: text, reply: reply, channel: input.channel)
+            archive?.record(user: text, reply: reply, channel: input.channel, turn: turnID)
             return .fastPath(reply)
         }
         let isOnline = await online()
@@ -152,7 +175,7 @@ public actor TurnCoordinator {
             await turn.close()
             await dropConfirmation(stashedSince: started)
         }
-        archive?.record(user: text, reply: reply, channel: input.channel)          // the brain sent it
+        archive?.record(user: text, reply: reply, channel: input.channel, turn: turnID)   // the brain sent it
         return .reply(reply)
     }
 

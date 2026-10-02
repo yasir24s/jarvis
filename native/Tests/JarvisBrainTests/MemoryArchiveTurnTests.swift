@@ -107,9 +107,12 @@ struct MemoryArchiveTurnTests {
 
         #expect(await rig.submit("my sister Amira lives in Leeds", .text) == .reply("Claude reply, sir."))
         let lines = try harness.sandbox.read("memory/archive.jsonl").split(separator: "\n").map(String.init)
+        // UI1 part 5: each line ends with its turn's id, the same on both.
+        let turn = try #require(ArchiveEntry(line: Data((lines.first ?? "").utf8))?.turn)
+        #expect(UUID(uuidString: turn) != nil)
         #expect(lines == [
-            #"{"timestamp": 1790582400.0, "date": "2026-09-28", "channel": "text", "role": "user", "text": "my sister Amira lives in Leeds"}"#,
-            #"{"timestamp": 1790582400.0, "date": "2026-09-28", "channel": "text", "role": "jarvis", "text": "Claude reply, sir."}"#,
+            #"{"timestamp": 1790582400.0, "date": "2026-09-28", "channel": "text", "role": "user", "text": "my sister Amira lives in Leeds", "turn": ""# + turn + #""}"#,
+            #"{"timestamp": 1790582400.0, "date": "2026-09-28", "channel": "text", "role": "jarvis", "text": "Claude reply, sir.", "turn": ""# + turn + #""}"#,
         ])
         #expect(logged.events == ["memory: archived 2 message(s)"])
 

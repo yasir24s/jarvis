@@ -18,6 +18,9 @@ struct ChatView: View {
     @Environment(\.appearsActive) private var appearsActive
     /// UI1: whether the composer has the keyboard, for its focus ring.
     @State private var composerFocused = false
+    /// UI1 part 5: the user message being edited, and its text.
+    @State private var editing: UUID?
+    @State private var editText = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,7 +28,7 @@ struct ChatView: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 12) {
                         ForEach(model.messages) { message in
-                            MessageRow(message: message)
+                            MessageRow(message: message, edit: rowEditing(message))
                                 .id(message.id)
                         }
                     }
@@ -120,6 +123,37 @@ struct ChatView: View {
     }
 }
 
+extension ChatView {
+    /// UI1 part 5: what a row needs to be edited and to switch versions.
+    func rowEditing(_ message: ChatMessage) -> RowEditing {
+        RowEditing(canEdit: model.canEdit(message), versions: model.versions(of: message),
+                   versionsEnabled: !model.responding,
+                   text: editing == message.id ? $editText : nil,
+                   begin: {
+                       editText = message.text
+                       editing = message.id
+                   },
+                   cancel: { editing = nil },
+                   send: {
+                       if model.edit(message.id, to: editText) != nil { editing = nil }
+                   },
+                   show: { model.showVersion($0, of: message.id) })
+    }
+}
+
+/// UI1 part 5: a user row's Edit and its versions' arrows.
+struct RowEditing {
+    let canEdit: Bool
+    let versions: (index: Int, count: Int)?
+    let versionsEnabled: Bool
+    /// The text being edited, when this row is.
+    let text: Binding<String>?
+    let begin: () -> Void
+    let cancel: () -> Void
+    let send: () -> Void
+    let show: (Int) -> Void
+}
+
 /// The pending confirmation (plan §3.4, §3.12): what it will do, the seconds left of its 25,
 /// and Confirm and Cancel. Confirm is the same as typing "confirm", so the system sheet
 /// follows; Cancel sends nothing to the brain. Neither has a keyboard shortcut: Return belongs
@@ -164,21 +198,16 @@ private struct ConfirmationCard: View {
 /// One transcript row. User text and streaming text are plain; a finished assistant row is
 /// markdown. A row fed by a retracted message (R6) is plain and struck through. An assistant
 /// row with no text yet shows a spinner. A system row is the app's own note, small and centred.
-/// UI1: the user's rows are outlined in dim cyan, his sit on a faint cyan glow.
+/// UI1: the user's rows are outlined in dim cyan, his sit on a faint cyan glow. UI1 part 5: a
+/// user row shows Edit while hovered, and ‹ n/m › arrows once it has been edited.
 private struct MessageRow: View {
     let message: ChatMessage
+    let edit: RowEditing
 
     var body: some View {
         switch message.role {
         case .user:
-            Text(verbatim: message.text)
-                .padding(10)
-                .background(JarvisTheme.panel.color, in: .rect(cornerRadius: 10))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 10)
-                        .strokeBorder(JarvisTheme.cyanDim.color, lineWidth: 1)
-                }
-                .frame(maxWidth: .infinity, alignment: .trailing)
+            UserMessage(message: message, edit: edit)
         case .assistant:
             VStack(alignment: .leading, spacing: 6) {
                 if message.retracted {
@@ -218,6 +247,119 @@ private struct MessageRow: View {
                 .foregroundStyle(JarvisTheme.muted.color)
                 .frame(maxWidth: .infinity, alignment: .center)
         }
+    }
+}
+
+/// UI1 part 5: one of the user's messages. Hovered, it offers Edit (when it can be edited);
+/// editing shows its text in a field with Cancel and Send (Return sends, Esc cancels). An
+/// edited message has arrows to switch between its versions.
+struct UserMessage: View {
+    let message: ChatMessage
+    let edit: RowEditing
+    @State private var hovering: Bool
+
+    /// `hovering` starts the row as hovered (the snapshots); the pointer sets it after that.
+    init(message: ChatMessage, edit: RowEditing, hovering: Bool = false) {
+        self.message = message
+        self.edit = edit
+        _hovering = State(initialValue: hovering)
+    }
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 4) {
+            if let text = edit.text {
+                EditField(text: text, cancel: edit.cancel, send: edit.send)
+            } else {
+                HStack(alignment: .center, spacing: 6) {
+                    Button(action: edit.begin) {
+                        Label("Edit", systemImage: "pencil")
+                            .labelStyle(.iconOnly)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(JarvisTheme.cyan.color)
+                            .frame(width: 24, height: 24)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Edit")
+                    .accessibilityLabel("Edit")
+                    .opacity(edit.canEdit && hovering ? 1 : 0)
+                    .disabled(!(edit.canEdit && hovering))
+                    Text(verbatim: message.text)
+                        .padding(10)
+                        .background(JarvisTheme.panel.color, in: .rect(cornerRadius: 10))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 10)
+                                .strokeBorder(JarvisTheme.cyanDim.color, lineWidth: 1)
+                        }
+                }
+            }
+            if let versions = edit.versions, edit.text == nil {
+                VersionArrows(index: versions.index, count: versions.count, enabled: edit.versionsEnabled,
+                              show: edit.show)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .onHover { hovering = $0 }
+    }
+}
+
+/// UI1 part 5: the field an edit is written in.
+struct EditField: View {
+    @Binding var text: String
+    let cancel: () -> Void
+    let send: () -> Void
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 6) {
+            TextField("", text: $text, axis: .vertical)
+                .textFieldStyle(.plain)
+                .font(JarvisTheme.body)
+                .foregroundStyle(JarvisTheme.ice.color)
+                .lineLimit(1...8)
+                .focused($focused)
+                .onSubmit(send)
+                .onExitCommand(perform: cancel)
+                .padding(10)
+                .background(JarvisTheme.panel.color, in: .rect(cornerRadius: 10))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10).strokeBorder(JarvisTheme.cyan.color, lineWidth: 1.5)
+                }
+            HStack(spacing: 8) {
+                Button("Cancel", action: cancel)
+                Button("Send", action: send)
+            }
+            .font(JarvisTheme.small)
+        }
+        .frame(maxWidth: 440)
+        .onAppear { focused = true }
+    }
+}
+
+/// UI1 part 5: ‹ n/m ›, under an edited message.
+struct VersionArrows: View {
+    let index: Int
+    let count: Int
+    let enabled: Bool
+    let show: (Int) -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Button { show(index - 1) } label: { Image(systemName: "chevron.left") }
+                .disabled(!enabled || index == 0)
+                .accessibilityLabel("Previous version")
+            Text(verbatim: "\(index + 1)/\(count)")
+                .font(JarvisTheme.label)
+                .monospacedDigit()
+            Button { show(index + 1) } label: { Image(systemName: "chevron.right") }
+                .disabled(!enabled || index == count - 1)
+                .accessibilityLabel("Next version")
+        }
+        .buttonStyle(.plain)
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundStyle(JarvisTheme.muted.color)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Version \(index + 1) of \(count)")
     }
 }
 

@@ -86,6 +86,12 @@ public final class ChatViewModel: ReplySink {
     @ObservationIgnored private var generation = 0
     /// Stop came before the coordinator took the turn: it is stopped as soon as it is.
     @ObservationIgnored private var stopBeforeAccept = false
+    /// UI1 part 5: every version of each edited message, by group: the rows from that message
+    /// on, as they stood when another version was shown. The version on screen is the one whose
+    /// first row is in `messages`; its stored rows may be older than the screen's.
+    private var versionTails: [UUID: [[ChatMessage]]] = [:]
+    /// An edit sent and not yet taken: the message it replaces and the group of its versions.
+    @ObservationIgnored private var pendingEdit: (anchor: UUID, group: UUID)?
     @ObservationIgnored private let clock: any JarvisClock
     private let minimumGap: Duration
 
@@ -193,10 +199,14 @@ public final class ChatViewModel: ReplySink {
     /// (`UserInput.addsContext`); the history it is sent with holds the user's last message and
     /// the reply as far as it got. A reply that is only being spoken stops speaking, and this
     /// message is sent as usual.
+    ///
+    /// UI1 part 5: sent while an earlier version of an edited message is shown, the latest
+    /// versions come back first: the conversation goes on from those.
     @discardableResult
     public func send() -> Task<Void, Never>? {
         lastUse = clock.now()
         guard let submitter, let input = draft.input else { return nil }
+        if !responding { showLatestVersions() }
         let interrupted = responding ? stop() : nil
         if responding && interrupted == nil { return nil }
         if speaking { stopSpeech() }
@@ -267,6 +277,98 @@ public final class ChatViewModel: ReplySink {
         }
     }
 
+    // MARK: - Edits and versions (UI1 part 5)
+
+    /// Whether the user's row `message` can be edited: it came from a turn (rows a live update
+    /// restored, and refusals made here, did not), no turn is running, and every edited message
+    /// on screen shows its latest version, so the edit is of the conversation as it stands.
+    public func canEdit(_ message: ChatMessage) -> Bool {
+        message.role == .user && message.turnID != nil && !responding && isConnected && showsLatestVersions
+    }
+
+    /// The version a user row shows and how many there are, or nil for a row never edited.
+    public func versions(of message: ChatMessage) -> (index: Int, count: Int)? {
+        guard let group = message.versionGroup, let tails = versionTails[group], tails.count > 1,
+              let index = tails.firstIndex(where: { $0.first?.id == message.id }) else { return nil }
+        return (index, tails.count)
+    }
+
+    /// Sends `text` in place of the user's message `id`: the conversation from that message on is
+    /// replaced and runs again from the new text. The rows it replaces are kept as the earlier
+    /// version, and that message gets ‹ › arrows. The replaced turns go with it: history is
+    /// rewound to before them and the archive marks them superseded (`UserInput.replacing`).
+    /// Returns the running turn, or nil when nothing was sent (the text is empty after trimming,
+    /// the row cannot be edited, or the brain has not started).
+    @discardableResult
+    public func edit(_ id: UUID, to text: String) -> Task<Void, Never>? {
+        lastUse = clock.now()
+        guard let submitter, let index = messages.firstIndex(where: { $0.id == id }), canEdit(messages[index]),
+              let input = ComposerDraft(text: text).input else { return nil }
+        if speaking { stopSpeech() }
+        busy = false
+        var replacing: [UUID] = []
+        for row in messages[index...] {
+            if let turn = row.turnID, !replacing.contains(turn) { replacing.append(turn) }
+        }
+        pendingEdit = (id, messages[index].versionGroup ?? UUID())
+        let shown = Py.strip(text)
+        onSend?(shown, .now)
+        let edited = UserInput(text: input.text, channel: input.channel, pasted: false, replacing: replacing)
+        return start(edited, shown: shown, restoring: nil, via: submitter)
+    }
+
+    /// Shows version `index` of the edited message `id` (the ‹ › arrows): the rows from that
+    /// message on become that version's, as they stood. Nothing is sent, and history and memory
+    /// stay as they are: the conversation goes on from the latest version. Not while a turn runs.
+    public func showVersion(_ index: Int, of id: UUID) {
+        guard !responding, let at = messages.firstIndex(where: { $0.id == id }),
+              let group = messages[at].versionGroup, var tails = versionTails[group],
+              let current = tails.firstIndex(where: { $0.first?.id == id }),
+              tails.indices.contains(index), index != current else { return }
+        tails[current] = Array(messages[at...])
+        versionTails[group] = tails
+        messages = Array(messages[..<at]) + tails[index]
+    }
+
+    /// Every edited message on screen shows its latest version.
+    var showsLatestVersions: Bool {
+        firstEarlierVersion == nil
+    }
+
+    /// The first row on screen that shows an earlier version, and its group's latest index.
+    private var firstEarlierVersion: (id: UUID, latest: Int)? {
+        for row in messages where row.role == .user {
+            guard let group = row.versionGroup, let tails = versionTails[group],
+                  let index = tails.firstIndex(where: { $0.first?.id == row.id }) else { continue }
+            if index != tails.count - 1 { return (row.id, tails.count - 1) }
+        }
+        return nil
+    }
+
+    /// Brings back the latest version of every edited message on screen.
+    func showLatestVersions() {
+        for _ in 0..<max(1, versionTails.count + 1) {
+            guard let (id, latest) = firstEarlierVersion else { return }
+            showVersion(latest, of: id)
+        }
+    }
+
+    /// The edit was taken: the rows from its message on are kept as that message's current
+    /// version, and leave the screen for the new version's.
+    private func takeEdit(_ edit: (anchor: UUID, group: UUID)) {
+        guard let at = messages.firstIndex(where: { $0.id == edit.anchor }) else { return }
+        var tails = versionTails[edit.group] ?? []
+        var tail = Array(messages[at...])
+        tail[0].versionGroup = edit.group
+        if let current = tails.firstIndex(where: { $0.first?.id == edit.anchor }) {
+            tails[current] = tail
+        } else {
+            tails.append(tail)
+        }
+        versionTails[edit.group] = tails
+        messages.removeSubrange(at...)
+    }
+
     // MARK: - ReplySink
 
     public func delta(_ text: String) async {
@@ -330,7 +432,7 @@ public final class ChatViewModel: ReplySink {
                 return
             }
             let outcome = await submitter.submit(input, sink: self, accepted: { @MainActor turn in
-                self.accept(shown, turn: turn)
+                self.accept(shown, turn: turn, id: await turn.turnID)
             })
             let summary = await self.live?.turn.summary()
             self.finish(outcome, restoring: sent, summary: summary, generation: mine)
@@ -348,6 +450,7 @@ public final class ChatViewModel: ReplySink {
             responding = false
             running = nil
             stopBeforeAccept = false
+            pendingEdit = nil
         }
         if let sent {
             draft = ComposerDraft(text: sent.text + draft.text, pasted: sent.pasted || draft.pasted)
@@ -376,10 +479,19 @@ public final class ChatViewModel: ReplySink {
         onStopSpeech?()
     }
 
-    /// The coordinator took the turn: the user row, then the live assistant row.
-    private func accept(_ shown: String, turn: TurnContext) {
-        let user = ChatMessage(role: .user, text: shown, phase: .finished)
-        let reply = ChatMessage(role: .assistant, text: "", phase: .streaming)
+    /// The coordinator took the turn: the user row, then the live assistant row. UI1 part 5: both
+    /// carry the turn's id, and an edit's rows take the place of the rows it replaced.
+    private func accept(_ shown: String, turn: TurnContext, id: UUID) {
+        var user = ChatMessage(role: .user, text: shown, phase: .finished)
+        var reply = ChatMessage(role: .assistant, text: "", phase: .streaming)
+        user.turnID = id
+        reply.turnID = id
+        if let edit = pendingEdit {
+            pendingEdit = nil
+            takeEdit(edit)
+            user.versionGroup = edit.group
+            versionTails[edit.group, default: []].append([user])
+        }
         messages.append(user)
         messages.append(reply)
         live = LiveReply(id: reply.id, userID: user.id, turn: turn, coalescer: DeltaCoalescer(minimumGap: minimumGap))
@@ -468,6 +580,7 @@ public final class ChatViewModel: ReplySink {
             responding = false
             running = nil
             stopBeforeAccept = false
+            pendingEdit = nil   // an edit refused before it was taken changes nothing
         }
         defer { if turn != nil { onTurnEnded?() } }
         // UI1 part 4: a stopped row already shows what came before Stop, and is not spoken.
