@@ -69,7 +69,7 @@ struct FileLearningTests {
     @Test func theOfferIsOneAssistantRowNamingTheMenuItem() {
         #expect(FileLearningConsent.firstRunOffer.contains("Learn About Me From My Files"))
         #expect(FileLearningConsent.firstRunOffer.hasPrefix("Good day, sir."))
-        #expect(FileLearningConsent.defaultsSuite == "com.jarvis.assistant")
+        #expect(FileLearningConsent.defaultsSuite == "com.jarv1s.assistant")
         #expect(FileLearningConsent.defaultsKey == "fileLearningEnabled")
         let chat = ChatViewModel()
         chat.post(FileLearningConsent.firstRunOffer)

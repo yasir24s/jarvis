@@ -21,7 +21,7 @@ import Synchronization
 /// The player's reply calls, Stop and the acknowledgement wrap both parts as one reply.
 public actor SpeechQueue {
     /// The app's defaults suite, where the voice settings are read from.
-    public static let defaultsSuite = "com.jarvis.assistant"
+    public static let defaultsSuite = "com.jarv1s.assistant"
     /// The UserDefaults key of Speak First Sentence Early (V5); off when unset.
     public static let speakEarlyKey = "speakEarly"
     /// The shortest first sentence spoken on its own (V5), in Unicode scalars.

@@ -51,7 +51,7 @@ struct StatePathsTests {
     }
 
     @Test func liveThrowsNotInAppBundleUnderTest() {
-        #expect(Bundle.main.bundleIdentifier != "com.jarvis.assistant")
+        #expect(Bundle.main.bundleIdentifier != "com.jarv1s.assistant")
         #expect(throws: StatePathsError.notInAppBundle(bundleID: Bundle.main.bundleIdentifier)) {
             try StatePaths.live()
         }
@@ -104,7 +104,7 @@ struct StatePathsTests {
             <?xml version="1.0" encoding="UTF-8"?>
             <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
             <plist version="1.0"><dict>
-            <key>CFBundleIdentifier</key><string>com.jarvis.assistant</string>
+            <key>CFBundleIdentifier</key><string>com.jarv1s.assistant</string>
             <key>CFBundlePackageType</key><string>APPL</string>
             </dict></plist>
             """

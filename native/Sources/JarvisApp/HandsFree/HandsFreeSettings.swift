@@ -11,7 +11,7 @@ struct MicOnlyRestore: Codable, Equatable {
 }
 
 /// M11 part 5: the menus' "Listen for “Hey Jarvis”" and "Mic Only Mode", kept in the app's
-/// defaults (`com.jarvis.assistant`).
+/// defaults (`com.jarv1s.assistant`).
 ///
 /// - Listening is on once a voice is enrolled and off otherwise, until the user chooses; the
 ///   choice then stands.

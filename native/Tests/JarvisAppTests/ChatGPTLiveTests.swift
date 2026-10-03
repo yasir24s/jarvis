@@ -42,7 +42,7 @@ struct ChatGPTLiveTests {
         try FileManager.default.createDirectory(at: macOS, withIntermediateDirectories: true)
         let executable = macOS.appending(path: "JARVIS", directoryHint: .notDirectory)
         try FileManager.default.copyItem(at: binary, to: executable)
-        let plist: [String: String] = ["CFBundleIdentifier": "com.jarvis.assistant", "CFBundleExecutable": "JARVIS",
+        let plist: [String: String] = ["CFBundleIdentifier": "com.jarv1s.assistant", "CFBundleExecutable": "JARVIS",
                                        "CFBundleName": "JARVIS", "CFBundlePackageType": "APPL"]
         let data = try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
         try data.write(to: contents.appending(path: "Info.plist", directoryHint: .notDirectory))

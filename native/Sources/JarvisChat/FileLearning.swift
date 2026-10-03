@@ -7,7 +7,7 @@ import Synchronization
 /// the menu-bar menu. Memory is the user's own: a new install learns nothing from files until
 /// they switch it on.
 ///
-/// Kept as `fileLearningEnabled` in the app's defaults (`com.jarvis.assistant`), so it survives
+/// Kept as `fileLearningEnabled` in the app's defaults (`com.jarv1s.assistant`), so it survives
 /// a relaunch. With no value yet, `resolve(filesIndexExists:)` decides once: an install whose
 /// scanner has already run (memory/files-index.json exists) counts as having consented and is
 /// set on, so its scan carries on; a new install is set off.
@@ -15,7 +15,7 @@ import Synchronization
 @Observable
 public final class FileLearningConsent {
     /// The defaults domain, the app's own, as the voice settings use.
-    public static let defaultsSuite = "com.jarvis.assistant"
+    public static let defaultsSuite = "com.jarv1s.assistant"
     public static let defaultsKey = "fileLearningEnabled"
     /// Set once JARVIS has offered, in the chat, to learn from the user's files.
     public static let offeredKey = "fileLearningOffered"

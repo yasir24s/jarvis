@@ -257,7 +257,7 @@ public final class HUDModel {
 }
 
 /// UI1 part 3: the "Show HUD" item in the app menu and the menu-bar menu, kept as `showHUD` in
-/// the app's defaults (`com.jarvis.assistant`). On until the user switches it off.
+/// the app's defaults (`com.jarv1s.assistant`). On until the user switches it off.
 @MainActor
 @Observable
 public final class ShowHUDSetting {

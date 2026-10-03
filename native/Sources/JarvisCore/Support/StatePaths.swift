@@ -17,7 +17,7 @@ public struct StatePaths: Sendable, Equatable {
 
     /// The real state root. Order: env JARVIS_HOME, else <bundle>/../../.. (native/dist/JARVIS.app → repo).
     /// Throws unless root/jarvis.py is a file and root/research is a directory, and throws
-    /// .notInAppBundle unless bundle.bundleIdentifier == "com.jarvis.assistant" (tripwire:
+    /// .notInAppBundle unless bundle.bundleIdentifier == AppIdentity.bundleID (tripwire:
     /// under `swift test` the main bundle is the test runner, so tests can never reach real state).
     public static func live(environment: [String: String] = ProcessInfo.processInfo.environment,
                             bundle: Bundle = .main) throws -> StatePaths {
@@ -69,7 +69,7 @@ public struct StatePaths: Sendable, Equatable {
     public var memoryFacts: URL { file(MemoryFile.facts.rawValue) }     // new in native (D-51)
     public var memoryFilesIndex: URL { file(MemoryFile.filesIndex.rawValue) } // new in native (D-51 P3)
 
-    private static let appBundleID = "com.jarvis.assistant"
+    private static let appBundleID = AppIdentity.bundleID
 
     private func file(_ relative: String) -> URL {
         root.appending(path: relative, directoryHint: .notDirectory)

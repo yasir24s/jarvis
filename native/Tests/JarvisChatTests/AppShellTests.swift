@@ -28,7 +28,7 @@ struct AppShellTests {
     func noLSUIElement() throws {
         let data = try Data(contentsOf: Self.native.appending(path: "Resources/Info.plist"))
         let plist = try #require(try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
-        #expect(plist["CFBundleIdentifier"] as? String == "com.jarvis.assistant")
+        #expect(plist["CFBundleIdentifier"] as? String == "com.jarv1s.assistant")
         #expect(plist["LSUIElement"] == nil)
         #expect(plist["LSBackgroundOnly"] == nil)
         let script = try String(contentsOf: Self.native.appending(path: "scripts/build-app.sh"), encoding: .utf8)

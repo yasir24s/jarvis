@@ -32,7 +32,7 @@ enum SelfTest {
         var ok = true
         let bundleID = Bundle.main.bundleIdentifier
         report["bundle_id"] = bundleID.map { .string($0) } ?? .null
-        ok = ok && bundleID == "com.jarvis.assistant"
+        ok = ok && bundleID == AppIdentity.bundleID
         report["version"] = .string("\(Entry.infoString("CFBundleShortVersionString")) (\(Entry.infoString("CFBundleVersion")))")
 
         let paths: StatePaths
