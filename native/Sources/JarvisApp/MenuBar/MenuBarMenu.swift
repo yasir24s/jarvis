@@ -36,10 +36,8 @@ struct MenuBarMenu: View {
     var openMemory: () -> Void = {}
     /// Batch C part 1: "Quiet Hours (22:00–07:00)".
     var quietHours: QuietHoursSetting?
-    /// Batch C part 2: "Learn From My Music" and "Forget My Music…".
-    var media: MediaConsent?
-    var mediaChanged: () -> Void = {}
-    var forgetMusic: () -> Void = {}
+    /// Batch C part 4: "Learning Sources…" (Learn From My Music and Media Library live there).
+    var openLearningSources: (() -> Void)?
     /// Batch C part 6: "Check AirPlay" and "Repair AirPlay…".
     var checkAirPlay: (() -> Void)?
     var repairAirPlay: () -> Void = {}
@@ -62,7 +60,7 @@ struct MenuBarMenu: View {
             stopSpeaking()
         }
         FileLearningToggle(consent: learn)
-        if let media { MusicLearningItems(consent: media, changed: mediaChanged, forget: forgetMusic) }   // batch C part 2
+        if let openLearningSources { Button(LearningSources.menuTitle) { openLearningSources() } }   // batch C part 4
         MemoryItem(open: openMemory)   // batch C part 3
         ShowHUDToggle(setting: showHUD, hud: hud)
         if let checkAirPlay { AirPlayMenuItems(check: checkAirPlay, repair: repairAirPlay) }   // batch C part 6
@@ -110,10 +108,8 @@ struct AppMenuItems: View {
     var openMemory: () -> Void = {}
     /// Batch C part 1: "Quiet Hours (22:00–07:00)".
     var quietHours: QuietHoursSetting?
-    /// Batch C part 2: "Learn From My Music" and "Forget My Music…".
-    var media: MediaConsent?
-    var mediaChanged: () -> Void = {}
-    var forgetMusic: () -> Void = {}
+    /// Batch C part 4: "Learning Sources…" (Learn From My Music and Media Library live there).
+    var openLearningSources: (() -> Void)?
     /// Batch C part 6: "Check AirPlay" and "Repair AirPlay…".
     var checkAirPlay: (() -> Void)?
     var repairAirPlay: () -> Void = {}
@@ -126,7 +122,7 @@ struct AppMenuItems: View {
         BrainPicker(setting: brain)
         ChatGPTSignInItem(account: chatgpt)
         FileLearningToggle(consent: learn)
-        if let media { MusicLearningItems(consent: media, changed: mediaChanged, forget: forgetMusic) }   // batch C part 2
+        if let openLearningSources { Button(LearningSources.menuTitle) { openLearningSources() } }   // batch C part 4
         MemoryItem(open: openMemory)   // batch C part 3
         ShowHUDToggle(setting: showHUD, hud: hud)
         if let checkAirPlay { AirPlayMenuItems(check: checkAirPlay, repair: repairAirPlay) }   // batch C part 6
@@ -248,22 +244,6 @@ struct QuietHoursToggle: View {
 
     var body: some View {
         Toggle(setting.menuTitle, isOn: $setting.isOn)
-    }
-}
-
-/// Batch C part 2: "Learn From My Music", off by default, and "Forget My Music…", in the app
-/// menu and the menu-bar menu.
-struct MusicLearningItems: View {
-    @Bindable var consent: MediaConsent
-    let changed: () -> Void
-    let forget: () -> Void
-
-    var body: some View {
-        Toggle(MediaConsent.musicTitle, isOn: Binding(get: { consent.music }, set: { on in
-            consent.music = on
-            changed()
-        }))
-        Button(MediaConsent.forgetMusicTitle) { forget() }
     }
 }
 

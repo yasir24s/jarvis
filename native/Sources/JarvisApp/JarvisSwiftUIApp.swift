@@ -31,8 +31,7 @@ struct JarvisSwiftUIApp: App {
                              chatgpt: appDelegate.chatgptAccount, learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD,
                              hud: appDelegate.hud, briefing: appDelegate.morningBriefing, updates: appDelegate.updates, voice: appDelegate.voiceStatus,
                              forgetVoice: { appDelegate.forgetVoice() }, openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours,
-                        media: appDelegate.mediaConsent, mediaChanged: { appDelegate.mediaSwitchChanged() },
-                        forgetMusic: { appDelegate.forgetMusic() },
+                        openLearningSources: { appDelegate.openLearningSources() },
                         checkAirPlay: { appDelegate.checkAirPlay() }, repairAirPlay: { appDelegate.repairAirPlay() })
             }
         }
@@ -57,8 +56,7 @@ struct JarvisSwiftUIApp: App {
                         stopSpeaking: { appDelegate.stopSpeaking() },
                         testConfirmation: { appDelegate.stashTestConfirmation() },
                         openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours,
-                        media: appDelegate.mediaConsent, mediaChanged: { appDelegate.mediaSwitchChanged() },
-                        forgetMusic: { appDelegate.forgetMusic() },
+                        openLearningSources: { appDelegate.openLearningSources() },
                         checkAirPlay: { appDelegate.checkAirPlay() }, repairAirPlay: { appDelegate.repairAirPlay() })
             #else
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies, speakEarly: appDelegate.speakEarly,
@@ -69,8 +67,7 @@ struct JarvisSwiftUIApp: App {
                         forgetVoice: { appDelegate.forgetVoice() },
                         stopSpeaking: { appDelegate.stopSpeaking() },
                         openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours,
-                        media: appDelegate.mediaConsent, mediaChanged: { appDelegate.mediaSwitchChanged() },
-                        forgetMusic: { appDelegate.forgetMusic() },
+                        openLearningSources: { appDelegate.openLearningSources() },
                         checkAirPlay: { appDelegate.checkAirPlay() }, repairAirPlay: { appDelegate.repairAirPlay() })
             #endif
         }

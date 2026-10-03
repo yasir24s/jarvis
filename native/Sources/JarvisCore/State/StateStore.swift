@@ -40,6 +40,7 @@ public enum MemoryFile: String, CaseIterable, Sendable {
     case mediaCatalogue = "memory/media-catalogue.json" // batch C: the music, TV and folder catalogue, on-device
     case displayRoutes = "memory/display-routes.json" // batch C part 6: the AirPlay and Sidecar self-test
     case displayRepairBrief = "memory/display-repair-brief.md" // batch C part 6: written when a route breaks
+    case appUsage = "memory/app-usage.json" // batch C part 4: minutes in front per added app and day
 }
 
 public enum StateStoreError: Error, Sendable, Equatable {

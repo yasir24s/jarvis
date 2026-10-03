@@ -62,6 +62,8 @@
 		<string>_airplay._tcp</string>
 		<string>_raop._tcp</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>JARVIS reads the places, dates and people names Photos has already assigned, only when you switch on Photos in Learning Sources. It stays on this Mac.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>JARVIS looks up a contact's number or email when you ask.</string>
 	<key>NSDesktopFolderUsageDescription</key>

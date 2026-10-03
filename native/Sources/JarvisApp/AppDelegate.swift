@@ -96,6 +96,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let mediaConsent = MediaConsent()
     private var media: MediaLibrary?
     private var mediaRefresh: Task<Void, Never>?
+    /// Batch C part 4: every learning source in one window, and the added apps' use.
+    private(set) lazy var learningSources = LearningSources(files: fileLearning, media: mediaConsent,
+                                                            permissions: LiveSourcePermissions())
+    private(set) lazy var learningWindow = LearningSourcesWindowController(
+        sources: learningSources, chooseFolders: { [weak self] in self?.chooseMediaFolders() })
+    private var appUsage: AppUsageTracker?
     /// Batch C part 6: the AirPlay and Sidecar routes and their self-test.
     private var display: DisplayRoutes?
     /// The state root (the JARVIS repo), for the repair session's Terminal window.
@@ -258,18 +264,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task.detached(priority: .utility) { await media.refresh(force: true) }
     }
 
-    /// Batch C part 2: "Forget My Music…", after the user confirms.
-    func forgetMusic() {
-        let alert = NSAlert()
-        alert.messageText = "Forget your music?"
-        alert.informativeText = "JARVIS moves what he learned from your Music library to the forgotten bin (kept 30 days) and "
-            + "removes your music and its play history from his media catalogue. Learn From My Music is switched off."
-        alert.addButton(withTitle: "Forget")
-        alert.addButton(withTitle: "Cancel")
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-        mediaConsent.music = false
-        let done = media?.forgetMusic() ?? false
-        JarvisLog.log("media: forget my music \(done ? "done" : "incomplete")", category: .state)
+    /// Batch C part 4: "Learning Sources…", in both menus.
+    func openLearningSources() {
+        learningWindow.show()
+    }
+
+    /// Batch C part 5b: the Media Library's folders, picked by the user.
+    func chooseMediaFolders() {
+        guard let media else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = true
+        panel.message = "Choose the folders with your films, shows or music."
+        guard panel.runModal() == .OK else { return }
+        media.setFolders(panel.urls.map { $0.path(percentEncoded: false) })
+        Task.detached(priority: .utility) { await media.refresh(force: true) }
     }
 
     /// Batch C part 3: the menus' "Memory…" and `jarvis://memory`.
@@ -323,6 +333,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         reminders?.stop()   // nor a reminder check (F1)
         background?.stop()   // batch C part 1: nor a background line
         mediaRefresh?.cancel()   // batch C part 2: nor a catalogue refresh
+        appUsage?.stop()   // batch C part 4: the added apps' minutes are saved while the lease is held
         reminders = nil
         quickTimers?.stop()   // nor a timer (PA batch A)
         quickTimers = nil
@@ -393,6 +404,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         reminders?.stop()
         background?.stop()   // batch C part 1: nor a background line
         mediaRefresh?.cancel()   // batch C part 2: nor a catalogue refresh
+        appUsage?.stop()   // batch C part 4: the added apps' minutes are saved while the lease is held
         quickTimers?.stop()
         idleCompile?.stop()
         files?.cancel()
@@ -567,6 +579,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let media = MediaLibrary(store: store, memory: memory, switches: mediaSwitches)
         self.media = media
         // Batch C part 6: AirPlay and Sidecar through the fallback ladder.
+        // Batch C part 4: forgetting by source, through the store; music and the media library also
+        // drop what the catalogue keeps.
+        learningSources.forgetter = { prefix, id in
+            let n = SourceForgetting.forget(prefix: prefix, in: memory)
+            if id == .music { media.forgetMusic() }
+            if id == .mediaLibrary { media.forgetLibrary() }
+            return n
+        }
+        learningSources.changed = { [weak self] _ in self?.mediaSwitchChanged() }
+        let usage = AppUsageTracker(store: store, memory: memory, tracked: { [weak self] in self?.learningSources.trackedApps ?? [] })
+        usage.start()
+        appUsage = usage
         let display = DisplayRoutes(store: store)
         self.display = display
         // P3: the home folder is read in the background into the same facts; JARVIS's own state
@@ -945,6 +969,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.reminders?.stop()   // nor a reminder check (F1)
                 self.background?.stop()   // batch C part 1: nor a background line
                 self.mediaRefresh?.cancel()   // batch C part 2: nor a catalogue refresh
+                self.appUsage?.stop()   // batch C part 4: the added apps' minutes are saved while the lease is held
                 self.quickTimers?.stop()   // nor a timer (PA batch A)
                 self.idleCompile?.stop()   // nor an idle compile
                 self.webSummaries?.stop()   // nor a page summary (W1)
