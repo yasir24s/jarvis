@@ -640,8 +640,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return QuickCommands(core: core, confirmations: parts.confirmations, timers: timers, alarms: alarms,
                                      hooks: hooks, tools: parts.tools, online: { await Net.isOnline() })
             },
-            // PR2: the fast path's quit commands read the running apps.
-            runningApps: LiveRunningApps(),
+            // PR2: the fast path's quit commands read the running apps; "make X my default
+            // browser" goes through NSWorkspace (macOS asks the user to confirm).
+            runningApps: LiveRunningApps(), browserSetter: LiveBrowserSetter(),
             // Python's is_online(): asked only when a turn reaches the brain.
             online: { await Net.isOnline() },
             // M9a part 6 (D-41): a spoken confirmation passes the same owner check, a fresh

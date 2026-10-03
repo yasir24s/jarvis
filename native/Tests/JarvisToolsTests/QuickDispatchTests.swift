@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import JarvisCore
 @testable import JarvisTools
@@ -13,13 +14,17 @@ struct QuickDispatchTests {
 
     final class Apps: RunningAppsControlling {
         let apps: [RunningApp]
+        let refusing: Set<String>
         private let quit = Mutex<[String]>([])
-        init(_ apps: [RunningApp]) { self.apps = apps }
+        init(_ apps: [RunningApp], refusing: Set<String> = []) {
+            self.apps = apps
+            self.refusing = refusing
+        }
         var terminated: [String] { quit.withLock { $0 } }
         func runningApps() async -> [RunningApp] { apps }
         func terminate(_ app: RunningApp) async -> Bool {
             quit.withLock { $0.append(app.name) }
-            return true
+            return !refusing.contains(app.name)
         }
     }
 
@@ -32,6 +37,8 @@ struct QuickDispatchTests {
         let volume = FakeVolume()
         let settings = FakeSettingsOpener()
         let apps: Apps
+        let setter = Setter(refuses: false)
+        let lastReply = LastReply()
         let commands: QuickCommands
 
         init(index: String = "/Applications/Safari.app\n", running: [RunningApp] = [],
@@ -41,10 +48,10 @@ struct QuickDispatchTests {
             apps = Apps(running)
             var platform = ToolPlatform.fake(apps: AppIndex(runner: FakeRunner(stdout: index), loadPlist: { _ in nil }),
                                              browser: StubBrowser(name: browser))
-            platform.opener = opener
+            platform.quickRunner = opener
             platform.volume = volume
             platform.settingsOpener = settings
-            platform.quick = QuickPlatform(runningApps: apps)
+            platform.quick = QuickPlatform(runningApps: apps, browserSetter: setter, lastReply: lastReply)
             await BuiltInTools.register(on: gateway, core: sandbox.core, clock: ManualClock(1790582400),
                                         timeZone: QuickDispatchTests.zone, platform: platform,
                                         alarms: AlarmBook(store: sandbox.store, timeZone: QuickDispatchTests.zone))
@@ -298,7 +305,9 @@ struct QuickDispatchTests {
             } ?? [RunningApp(name: "Finder", regular: true, pid: 1), RunningApp(name: "Safari", regular: true, pid: 2),
                   RunningApp(name: "Google Chrome", regular: true, pid: 3), RunningApp(name: "Music", regular: true, pid: 4),
                   RunningApp(name: "Dock", regular: false, pid: 5), RunningApp(name: "JARVIS", regular: true, pid: 6)]
-            let apps = Apps(running)
+            let refusing = Set((c.input["apps"]?.arrayValue ?? []).compactMap(\.objectValue)
+                .filter { $0["terminates"] == .bool(false) }.compactMap { $0.string("name") })
+            let apps = Apps(running, refusing: refusing)
             let catalog = Self.catalog(c.input)
             guard case .text(let text) = try await QuickQuitApp(apps: apps, catalog: { catalog }).run(
                 Self.args([("name", .string(try #require(c.input.string("name"))))]), ctx) else { return }
@@ -333,9 +342,108 @@ struct QuickDispatchTests {
                                          browser: StubBrowser(name: c.input.string("default_browser") ?? ""))
             #expect(await commands.route("what's my default browser", turn: TurnContext(channel: .voice))
                     == e.string("text"))
+        case "copy":
+            let last = LastReply()
+            last.record(c.input.string("last") ?? "")
+            let ok = c.input["pbcopy"]?.pyTruthy ?? true
+            let runner = FakeStdinRunner(output: ok ? ProcessOutput(stdout: Data(), stderr: Data(), status: 0,
+                                                                    timedOut: false, truncated: false)
+                                                     : ProcessOutput.launchFailed(2))
+            guard case .text(let text) = try await QuickCopyLastReply(lastReply: last, runner: runner)
+                .run(JSONObject(), ctx) else { return }
+            #expect(text == e.string("text"))
+            let ran = await runner.calls.map { ["pbcopy"] + [String(decoding: $0.input, as: UTF8.self)] }
+            #expect(ran == Self.calls(e))
+            #expect(await runner.calls.allSatisfy { $0.argv == ["/usr/bin/pbcopy"] })
+        case "set_browser":
+            let setter = Setter(refuses: c.input["raise"]?.pyTruthy ?? false)
+            let catalog = Self.catalog(c.input)
+            guard case .text(let text) = try await QuickSetDefaultBrowser(catalog: { catalog }, setter: setter)
+                .run(Self.args([("name", .string(try #require(c.input.string("name"))))]), ctx) else { return }
+            #expect(text == e.string("text"))
+            #expect(setter.paths.map { ["set_default", $0, "http"] } == Self.calls(e))
+        case "nudge_volume":
+            let runner = FakeStdinRunner()
+            let delta = try #require(c.input["delta"])
+            guard case .text(let text) = try await QuickNudgeVolume(runner: runner).run(Self.args([("delta", delta)]), ctx)
+            else { return }
+            #expect(text == (e.string("text") ?? ""))
+            #expect(await runner.calls.map(\.argv) == Self.calls(e).map { ["/usr/bin/osascript"] + $0.dropFirst() })
+        case "nudge_brightness":
+            // Python's System Events script; native posts the same key, as many times.
+            let denied = (c.input.string("osascript") ?? "").lowercased().contains("error")
+            let keyboard = FakeKeyboard(allowed: !denied)
+            let steps = try #require(c.input["steps"])
+            guard case .text(let text) = try await QuickNudgeBrightness(keyboard: keyboard)
+                .run(Self.args([("steps", steps)]), ctx) else { return }
+            #expect(text == e.string("text"))
+            let script = try #require(Self.calls(e).first?.last)
+            let code: CGKeyCode = script.contains("key code 144") ? 144 : 145
+            let count = script.contains("repeat 4 times") ? 4 : -1
+            #expect(keyboard.events == (denied ? [] : Array(repeating: .key(code), count: count)))
         default:
             Issue.record("unknown case \(fn)")
         }
+    }
+
+    final class Setter: DefaultBrowserSetting {
+        let refuses: Bool
+        private let stored = Mutex<[String]>([])
+        init(refuses: Bool) { self.refuses = refuses }
+        var paths: [String] { stored.withLock { $0 } }
+        func setDefaultBrowser(appPath: String) async -> Bool {
+            if refuses { return false }
+            stored.withLock { $0.append(appPath) }
+            return true
+        }
+    }
+
+    // MARK: PR2 item 2 through the fast path
+
+    @Test func volumeAndBrightnessStepsSayTheLineAndAct() async throws {
+        let rig = try await Rig()
+        defer { rig.sandbox.remove() }
+        #expect(await rig.say("louder") == "Turning it up, sir.")
+        #expect(await Self.eventually {
+            await rig.opener.calls.map(\.argv) == [["/usr/bin/osascript", "-e", QuickNudgeVolume.script(15)]]
+        })
+        #expect(await rig.say("dim the screen") == "Dimming, sir.")
+    }
+
+    @Test func copyThatCopiesTheLastReply() async throws {
+        let rig = try await Rig()
+        defer { rig.sandbox.remove() }
+        #expect(await rig.say("copy that") == "I haven't said anything worth copying yet, sir.")
+        rig.lastReply.record("The answer is 42.")
+        #expect(await rig.say("copy your answer") == "Copied to your clipboard, sir.")
+        let copied = await rig.opener.calls.last
+        #expect(copied?.argv == ["/usr/bin/pbcopy"])
+        #expect(copied.map { String(decoding: $0.input, as: UTF8.self) } == "The answer is 42.")
+    }
+
+    @Test func lastReplyKeepsWhatWasCopied() {
+        let last = LastReply()
+        last.record("First.")
+        last.record("Copied to your clipboard, sir.")
+        last.record("")
+        #expect(last.value == "First.")
+    }
+
+    @Test func makingABrowserTheDefaultGoesThroughTheSwitch() async throws {
+        let rig = try await Rig(index: "/Applications/Safari.app\n/Applications/Google Chrome.app\n")
+        defer { rig.sandbox.remove() }
+        #expect(await rig.say("make chrome my default browser")
+                == "Setting Google Chrome as your default browser, sir — please confirm the system prompt.")
+        #expect(rig.setter.paths == ["/Applications/Google Chrome.app"])
+    }
+
+    @Test func closeAllBrowsersQuitsByKind() async throws {
+        let rig = try await Rig(index: "/Applications/Safari.app\n",
+                                running: [RunningApp(name: "Safari", regular: true, pid: 1),
+                                          RunningApp(name: "Notes", regular: true, pid: 2)])
+        defer { rig.sandbox.remove() }
+        #expect(await rig.say("close all my browsers") == "Closed Safari, sir.")
+        #expect(rig.apps.terminated == ["Safari"])
     }
 
     @Test func theAppTablesMatchPython() throws {

@@ -671,6 +671,28 @@ HELPER_CASES = [
                               "news": "I couldn't fetch the headlines, sir."}),
     ("browser/name", {"fn": "browser", "default_browser": "Safari"}),
     ("browser/none", {"fn": "browser", "default_browser": ""}),
+    # PR2 item 2: the five that had no tool.
+    ("quit/kind_all_browsers", {"fn": "quit", "name": "all my browsers"}),
+    ("quit/kind_the_browsers", {"fn": "quit", "name": "the browsers"}),
+    ("quit/kind_none_running", {"fn": "quit", "name": "all editors"}),
+    ("quit/kind_refused", {"fn": "quit", "name": "all browsers", "apps": [
+        {"name": "Safari", "policy": 0, "terminates": False}, {"name": "Google Chrome", "policy": 0},
+        {"name": "JARVIS Browser", "policy": 0}]}),
+    ("copy/said", {"fn": "copy", "last": "  The answer is 42.  "}),
+    ("copy/nothing", {"fn": "copy", "last": ""}),
+    ("copy/blank", {"fn": "copy", "last": " \n "}),
+    ("copy/pbcopy_fails", {"fn": "copy", "last": "Hello, sir.", "pbcopy": False}),
+    ("set_browser/chrome", {"fn": "set_browser", "name": "chrome"}),
+    ("set_browser/exact_non_browser", {"fn": "set_browser", "name": "Xcode"}),
+    ("set_browser/letter", {"fn": "set_browser", "name": "c"}),
+    ("set_browser/unknown", {"fn": "set_browser", "name": "netscape"}),
+    ("set_browser/refused", {"fn": "set_browser", "name": "safari", "raise": True}),
+    ("nudge_volume/up", {"fn": "nudge_volume", "delta": 15}),
+    ("nudge_volume/down", {"fn": "nudge_volume", "delta": -15}),
+    ("nudge_brightness/up", {"fn": "nudge_brightness", "steps": 4, "osascript": ""}),
+    ("nudge_brightness/down", {"fn": "nudge_brightness", "steps": -4, "osascript": ""}),
+    ("nudge_brightness/denied", {"fn": "nudge_brightness", "steps": 4,
+                                 "osascript": "execution error: System Events got an error: not allowed (-1743)"}),
 ]
 
 
@@ -752,6 +774,44 @@ def quick_helpers(ctx):
         elif fn == "browser":
             with _patched(J, _default_browser_name=lambda _d=inp["default_browser"]: _d):
                 exp["text"] = J.fast_path("what's my default browser")
+        elif fn == "copy":
+            runner = _Runner({("pbcopy",): ""} if inp.get("pbcopy", True) else {})
+            with _patched(J, subprocess=runner, _last_reply=[inp["last"]]):
+                exp["text"] = J._copy_last_reply()
+            calls = [c + [inp["last"].strip()] for c in runner.calls]
+        elif fn == "set_browser":
+            def set_default(url, scheme, handler, _r=inp.get("raise", False)):
+                if _r:
+                    raise RuntimeError("not allowed")
+                calls.append(["set_default", url, scheme])
+
+            class Workspace:
+                def setDefaultApplicationAtURL_toOpenURLsWithScheme_completionHandler_(self, u, s, h):
+                    set_default(u, s, h)
+            appkit = types.SimpleNamespace(NSWorkspace=types.SimpleNamespace(sharedWorkspace=lambda: Workspace()))
+            foundation = types.SimpleNamespace(NSURL=types.SimpleNamespace(fileURLWithPath_=lambda p: p))
+            saved = {m: sys.modules.get(m) for m in ("AppKit", "Foundation")}
+            sys.modules["AppKit"], sys.modules["Foundation"] = appkit, foundation
+            try:
+                with _patched(J, APP_INDEX=app_index, APP_PATHS=app_paths, APP_META=app_meta):
+                    exp["text"] = J._set_default_browser(inp["name"])
+            finally:
+                for m, v in saved.items():
+                    if v is None:
+                        del sys.modules[m]
+                    else:
+                        sys.modules[m] = v
+        elif fn == "nudge_volume":
+            runner = _Runner({})
+            runner.run = lambda argv, **kw: (runner.calls.append(list(argv)), None)[1]
+            with _patched(J, subprocess=runner):
+                exp["text"] = J._nudge_volume(inp["delta"])
+            calls = runner.calls
+        elif fn == "nudge_brightness":
+            scripts = []
+            with _patched(J, _run_applescript=lambda s, _o=inp["osascript"]: (scripts.append(s), _o)[1]):
+                exp["text"] = J._nudge_brightness(inp["steps"])
+            calls = [["osascript", s] for s in scripts]
         exp["calls"] = calls
         cases.append({"name": name, "input": inp, "expected": exp})
     return cases

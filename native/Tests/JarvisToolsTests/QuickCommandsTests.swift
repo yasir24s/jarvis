@@ -147,9 +147,6 @@ struct QuickCommandsTests {
     /// PR2: the branches whose Python helper is a model call (OCR or the clipboard, then
     /// `_ask_model`); the router names them and the brain answers.
     static let leftToTheBrain: Set<String> = ["screen.exact", "screen.fuzzy", "clipboard.help"]
-    /// The five helpers with no tool yet (PR2 item 2).
-    static let toolless: Set<String> = ["clipboard.copy_last", "browser.default.set", "volume.up", "volume.down",
-                                        "brightness.up", "brightness.down"]
 
     @Test func everyCarriedBranchIsInTheCorpus() throws {
         let hit = Set(try M5Fixture.cases("quick_router").compactMap { $0.expected.string("branch") })
@@ -160,7 +157,7 @@ struct QuickCommandsTests {
     @Test func everyBranchButTheModelHelpersIsCarried() throws {
         let tables = try #require(try M5Fixture.cases("quick_router").first { $0.name == "tables" }).expected
         let branches = Set((tables["BRANCHES"]?.arrayValue ?? []).compactMap(\.stringValue))
-        #expect(branches.subtracting(FastPathRouter.carried).subtracting(["defer"]) == Self.leftToTheBrain.union(Self.toolless))
+        #expect(branches.subtracting(FastPathRouter.carried).subtracting(["defer"]) == Self.leftToTheBrain)
     }
 
     // MARK: quick_timers

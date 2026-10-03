@@ -151,6 +151,7 @@ public final class BrainAssembly: Sendable {
     ///   - makeFastPath: PA batch A: builds the fast path on this assembly's confirmation gate;
     ///     when given, it replaces `fastPath`. PR2: with its gateway and backend report too.
     ///   - runningApps: PR2: the running apps, which the fast path's quit commands read.
+    ///   - browserSetter: PR2: the default-browser switch ("make chrome my default browser").
     ///   - log: every log line of the parts, with its category. Tests pass their own.
     public init(core: CoreState, research: any ResearchCounting,
                 config: ClaudeConfig, environment: [String: String],
@@ -167,6 +168,7 @@ public final class BrainAssembly: Sendable {
                 textAuthenticator: any ConfirmAuthenticator, fastPath: any FastPathRouting = NoFastPath(),
                 makeFastPath: ((FastPathParts) -> any FastPathRouting)? = nil,
                 runningApps: any RunningAppsControlling = NoRunningApps(),
+                browserSetter: any DefaultBrowserSetting = NoBrowserSetter(),
                 online: @escaping @Sendable () async -> Bool,
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
                 voiceConfirmation: VoiceConfirmation? = nil,
@@ -177,7 +179,7 @@ public final class BrainAssembly: Sendable {
         self.core = core
         self.extraTools = extraTools
         self.alarms = alarms
-        let quick = QuickPlatform(runningApps: runningApps)
+        let quick = QuickPlatform(runningApps: runningApps, browserSetter: browserSetter)
         self.quick = quick
         confirmations = ConfirmationGate()
         gateway = ToolGateway(confirmationGate: confirmations, log: { log($0, .tools) }, research: research,
@@ -310,7 +312,7 @@ public final class BrainAssembly: Sendable {
                                       onTurnStart: onTurnStart,
                                       onConversationEnded: { personality.conversationEnded() },
                                       archive: memory.map { MemoryArchiver(memory: $0) }, activity: turns,
-                                      voiceConfirmation: voiceConfirmation)
+                                      voiceConfirmation: voiceConfirmation, lastReply: quick.lastReply)
     }
 
     /// Registers the built-in tool bodies on the gateway (the system clock, the system time

@@ -140,12 +140,19 @@ public enum BuiltInTools {
         }
         // PR2: the fast path's own helpers, never offered to a model (FastPathOnly).
         await gateway.register(FastPathOnly(QuickOpenApp(index: platform.apps, browser: platform.browser,
-                                                         runner: platform.opener, appExists: platform.appExists)))
-        await gateway.register(FastPathOnly(QuickOpenPath(spotlight: platform.spotlightRunner, runner: platform.opener,
+                                                         runner: platform.quickRunner, appExists: platform.appExists)))
+        await gateway.register(FastPathOnly(QuickOpenPath(spotlight: platform.spotlightRunner, runner: platform.quickRunner,
                                                           home: platform.home, userHome: platform.userHome,
                                                           exists: platform.pathExists)))
-        await gateway.register(FastPathOnly(QuickOpenURL(runner: platform.opener)))
+        await gateway.register(FastPathOnly(QuickOpenURL(runner: platform.quickRunner)))
         await gateway.register(FastPathOnly(QuickQuitApp(apps: platform.quick.runningApps, catalog: { [apps = platform.apps] in await apps.catalog() })))
+        // PR2 item 2: the five commands that had no tool (quit by kind is in quick_quit_app).
+        await gateway.register(FastPathOnly(QuickCopyLastReply(lastReply: platform.quick.lastReply,
+                                                               runner: platform.quickRunner)))
+        await gateway.register(FastPathOnly(QuickSetDefaultBrowser(catalog: { [apps = platform.apps] in await apps.catalog() },
+                                                                   setter: platform.quick.browserSetter)))
+        await gateway.register(FastPathOnly(QuickNudgeVolume(runner: platform.quickRunner)))
+        await gateway.register(FastPathOnly(QuickNudgeBrightness(keyboard: platform.keyboard)))
     }
 
     /// The generated `ToolCatalog` entry for `name`, so no body carries a hand-written schema.
@@ -209,10 +216,11 @@ struct ToolPlatform: Sendable {
     var calendar: any CalendarStoring = NoCalendar()
     /// PB: `_front_app()`, for summarize_page's browser order.
     var frontApp: @Sendable () async -> String = { "" }
-    /// PR2: the fast path's own tools. `open` (apps, files, URLs) runs on `opener`, which
-    /// runs nothing until the app's live platform; the running apps and the last reply come
-    /// from the app (QuickPlatform).
-    var opener: any StdinCommandRunning = NoCommands()
+    /// PR2: the fast path's own tools. Their fixed commands (`open`, `pbcopy`, the volume
+    /// osascript) run on `quickRunner`, which runs nothing until the app's live platform; the
+    /// running apps, the default-browser switch and the last reply come from the app
+    /// (QuickPlatform).
+    var quickRunner: any StdinCommandRunning = NoCommands()
     var appExists: @Sendable (String) -> Bool = { _ in false }
     var pathExists: @Sendable (String) -> Bool = { _ in false }
     var quick: QuickPlatform = QuickPlatform()
@@ -233,7 +241,7 @@ struct ToolPlatform: Sendable {
         platform.contacts = LiveContacts()
         platform.calendar = LiveCalendar.shared
         platform.frontApp = { SummarizePage.liveFrontApp() }
-        platform.opener = BoundedRunner(environment: BoundedRunner.agentEnvironment())
+        platform.quickRunner = BoundedRunner(environment: BoundedRunner.agentEnvironment())
         platform.appExists = { QuickTables.liveAppExists($0) }
         platform.pathExists = QuickOpenPath.liveExists
         return platform

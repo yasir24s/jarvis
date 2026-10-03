@@ -59,11 +59,15 @@ struct QuickCommandsWiringTests {
     @Test func aTimerIsInstantAndAnythingElseReachesTheBrain() async throws {
         let harness = try CoreHarness(research: NullCounter())
         defer { harness.remove() }
-        let coordinator = Self.assembly(harness, owner: false, forgot: Count()).coordinator
+        let assembly = Self.assembly(harness, owner: false, forgot: Count())
+        let coordinator = assembly.coordinator
         let timer = await coordinator.submit(UserInput(text: "set a timer for 5 minutes", channel: .text),
                                              sink: RecordingSink())
         #expect(timer == .fastPath("Timer set for 5 minutes, sir."))
+        // PR2: the reply is kept for "copy that".
+        #expect(assembly.lastReply.value == "Timer set for 5 minutes, sir.")
         let other = await coordinator.submit(UserInput(text: "tell me a joke", channel: .text), sink: RecordingSink())
         #expect(other == .reply("Local reply, sir."))
+        #expect(assembly.lastReply.value == "Local reply, sir.")
     }
 }

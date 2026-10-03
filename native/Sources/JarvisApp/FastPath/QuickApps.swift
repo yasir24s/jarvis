@@ -28,3 +28,15 @@ struct LiveRunningApps: RunningAppsControlling {
         await MainActor.run { NSRunningApplication(processIdentifier: app.pid)?.terminate() ?? false }
     }
 }
+
+/// PR2: `_set_default_browser`'s switch: NSWorkspace makes the app the handler for http and
+/// macOS asks the user to confirm. Python does not wait for the answer, and neither does this.
+struct LiveBrowserSetter: DefaultBrowserSetting {
+    func setDefaultBrowser(appPath: String) async -> Bool {
+        await MainActor.run {
+            NSWorkspace.shared.setDefaultApplication(at: URL(fileURLWithPath: appPath), toOpenURLsWithScheme: "http",
+                                                     completion: { _ in })
+            return true
+        }
+    }
+}

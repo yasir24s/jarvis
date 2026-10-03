@@ -698,6 +698,306 @@
     "text": "I couldn't determine your default browser, sir.",
     "calls": []
    }
+  },
+  {
+   "name": "quit/kind_all_browsers",
+   "input": {
+    "fn": "quit",
+    "name": "all my browsers"
+   },
+   "expected": {
+    "text": "Closed Safari, Google Chrome, sir.",
+    "calls": [
+     [
+      "terminate",
+      "Safari"
+     ],
+     [
+      "terminate",
+      "Google Chrome"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "quit/kind_the_browsers",
+   "input": {
+    "fn": "quit",
+    "name": "the browsers"
+   },
+   "expected": {
+    "text": "Closed Safari, Google Chrome, sir.",
+    "calls": [
+     [
+      "terminate",
+      "Safari"
+     ],
+     [
+      "terminate",
+      "Google Chrome"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "quit/kind_none_running",
+   "input": {
+    "fn": "quit",
+    "name": "all editors"
+   },
+   "expected": {
+    "text": null,
+    "calls": []
+   }
+  },
+  {
+   "name": "quit/kind_refused",
+   "input": {
+    "fn": "quit",
+    "name": "all browsers",
+    "apps": [
+     {
+      "name": "Safari",
+      "policy": 0,
+      "terminates": false
+     },
+     {
+      "name": "Google Chrome",
+      "policy": 0
+     },
+     {
+      "name": "JARVIS Browser",
+      "policy": 0
+     }
+    ]
+   },
+   "expected": {
+    "text": "Closed Google Chrome, sir.",
+    "calls": [
+     [
+      "terminate",
+      "Safari"
+     ],
+     [
+      "terminate",
+      "Google Chrome"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "copy/said",
+   "input": {
+    "fn": "copy",
+    "last": "  The answer is 42.  "
+   },
+   "expected": {
+    "text": "Copied to your clipboard, sir.",
+    "calls": [
+     [
+      "pbcopy",
+      "The answer is 42."
+     ]
+    ]
+   }
+  },
+  {
+   "name": "copy/nothing",
+   "input": {
+    "fn": "copy",
+    "last": ""
+   },
+   "expected": {
+    "text": "I haven't said anything worth copying yet, sir.",
+    "calls": []
+   }
+  },
+  {
+   "name": "copy/blank",
+   "input": {
+    "fn": "copy",
+    "last": " \n "
+   },
+   "expected": {
+    "text": "I haven't said anything worth copying yet, sir.",
+    "calls": []
+   }
+  },
+  {
+   "name": "copy/pbcopy_fails",
+   "input": {
+    "fn": "copy",
+    "last": "Hello, sir.",
+    "pbcopy": false
+   },
+   "expected": {
+    "text": "I couldn't write to the clipboard, sir.",
+    "calls": [
+     [
+      "pbcopy",
+      "Hello, sir."
+     ]
+    ]
+   }
+  },
+  {
+   "name": "set_browser/chrome",
+   "input": {
+    "fn": "set_browser",
+    "name": "chrome"
+   },
+   "expected": {
+    "text": "Setting Google Chrome as your default browser, sir — please confirm the system prompt.",
+    "calls": [
+     [
+      "set_default",
+      "/Applications/Google Chrome.app",
+      "http"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "set_browser/exact_non_browser",
+   "input": {
+    "fn": "set_browser",
+    "name": "Xcode"
+   },
+   "expected": {
+    "text": "Setting Xcode as your default browser, sir — please confirm the system prompt.",
+    "calls": [
+     [
+      "set_default",
+      "/Applications/Xcode.app",
+      "http"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "set_browser/letter",
+   "input": {
+    "fn": "set_browser",
+    "name": "c"
+   },
+   "expected": {
+    "text": "Setting Google Chrome as your default browser, sir — please confirm the system prompt.",
+    "calls": [
+     [
+      "set_default",
+      "/Applications/Google Chrome.app",
+      "http"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "set_browser/unknown",
+   "input": {
+    "fn": "set_browser",
+    "name": "netscape"
+   },
+   "expected": {
+    "text": "I couldn't find a browser called netscape, sir.",
+    "calls": []
+   }
+  },
+  {
+   "name": "set_browser/refused",
+   "input": {
+    "fn": "set_browser",
+    "name": "safari",
+    "raise": true
+   },
+   "expected": {
+    "text": "macOS wouldn't let me switch it directly, sir — set Safari as default in System Settings, Desktop and Dock.",
+    "calls": []
+   }
+  },
+  {
+   "name": "nudge_volume/up",
+   "input": {
+    "fn": "nudge_volume",
+    "delta": 15
+   },
+   "expected": {
+    "text": null,
+    "calls": [
+     [
+      "osascript",
+      "-e",
+      "set volume output volume ((output volume of (get volume settings)) + (15))"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "nudge_volume/down",
+   "input": {
+    "fn": "nudge_volume",
+    "delta": -15
+   },
+   "expected": {
+    "text": null,
+    "calls": [
+     [
+      "osascript",
+      "-e",
+      "set volume output volume ((output volume of (get volume settings)) + (-15))"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "nudge_brightness/up",
+   "input": {
+    "fn": "nudge_brightness",
+    "steps": 4,
+    "osascript": ""
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "calls": [
+     [
+      "osascript",
+      "tell application \"System Events\"\n  repeat 4 times\n    key code 144\n  end repeat\nend tell"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "nudge_brightness/down",
+   "input": {
+    "fn": "nudge_brightness",
+    "steps": -4,
+    "osascript": ""
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "calls": [
+     [
+      "osascript",
+      "tell application \"System Events\"\n  repeat 4 times\n    key code 145\n  end repeat\nend tell"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "nudge_brightness/denied",
+   "input": {
+    "fn": "nudge_brightness",
+    "steps": 4,
+    "osascript": "execution error: System Events got an error: not allowed (-1743)"
+   },
+   "expected": {
+    "text": "I need Accessibility permission to change brightness, sir.",
+    "calls": [
+     [
+      "osascript",
+      "tell application \"System Events\"\n  repeat 4 times\n    key code 144\n  end repeat\nend tell"
+     ]
+    ]
+   }
   }
  ]
 }

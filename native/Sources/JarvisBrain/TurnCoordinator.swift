@@ -76,6 +76,8 @@ public actor TurnCoordinator {
     private let onConversationEnded: (@Sendable () -> Void)?
     private let archive: (any ExchangeArchiving)?
     private let activity: TurnActivity?
+    /// PR2: `_last_reply[0]`, for "copy that".
+    private let lastReply: LastReply?
     private var running = false
     /// UI1 part 5: where history stood before each recent turn, by turn id, oldest first; an
     /// edit rewinds to the first replaced turn's mark.
@@ -94,6 +96,8 @@ public actor TurnCoordinator {
     ///     `onConversationEnded`. A turn refused as `.empty` or `.busy` is not archived.
     ///   - activity: told when each accepted turn begins and ends, so background work (the
     ///     file scanner, D-51 P3) can wait for it.
+    ///   - lastReply: PR2: given each turn's reply (a confirmation's, the fast path's or the
+    ///     brain's), as handle_one keeps `_last_reply` for "copy that".
     ///   - voiceConfirmation: what a spoken confirmation must pass (M9a part 6, D-41); nil means
     ///     the owner check `textAuthenticator` is. M10 adds no voiceprint route (VoiceConfirmation).
     public init(brain: BrainRouter, fastPath: any FastPathRouting = NoFastPath(),
@@ -103,7 +107,8 @@ public actor TurnCoordinator {
                 onConversationEnded: (@Sendable () -> Void)? = nil,
                 archive: (any ExchangeArchiving)? = nil,
                 activity: TurnActivity? = nil,
-                voiceConfirmation: VoiceConfirmation? = nil) {
+                voiceConfirmation: VoiceConfirmation? = nil,
+                lastReply: LastReply? = nil) {
         self.brain = brain
         self.fastPath = fastPath
         self.confirmations = confirmations
@@ -114,6 +119,7 @@ public actor TurnCoordinator {
         self.onConversationEnded = onConversationEnded
         self.archive = archive
         self.activity = activity
+        self.lastReply = lastReply
     }
 
     /// Runs one turn, or returns `.busy` at once if one is already running. A confirmation
@@ -154,6 +160,7 @@ public actor TurnCoordinator {
         let port: InputPort = input.channel == .text ? textPort : voicePort
         if case .handled(let result) = await confirmations.consume(text, via: port, runIn: turn) {
             if !result.isEmpty { await sink.sentence(result) }
+            lastReply?.record(result)
             archive?.record(user: text, reply: result, channel: input.channel, turn: turnID)
             return .confirmation(result)
         }
@@ -167,6 +174,7 @@ public actor TurnCoordinator {
         }
         if let reply = await fastPath.route(text, turn: turn) {
             if !reply.isEmpty { await sink.sentence(reply) }
+            lastReply?.record(reply)
             archive?.record(user: text, reply: reply, channel: input.channel, turn: turnID)
             return .fastPath(reply)
         }
@@ -185,6 +193,7 @@ public actor TurnCoordinator {
             await turn.close()
             await dropConfirmation(stashedSince: started)
         }
+        lastReply?.record(answer.text)
         // The brain sent it; MEM1 part 3: the archive notes which brain.
         archive?.record(user: text, reply: answer.text, channel: input.channel, turn: turnID, brain: answer.brain)
         return .reply(answer.text)

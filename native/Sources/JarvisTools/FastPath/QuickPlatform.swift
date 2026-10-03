@@ -2,15 +2,32 @@ import Foundation
 import Synchronization
 
 /// PR2: what the fast path's own tools need from the app, which JarvisTools cannot reach
-/// without AppKit: the running apps (`NSWorkspace.runningApplications`) and the last reply.
+/// without AppKit: the running apps (`NSWorkspace.runningApplications`), the default-browser
+/// switch, and the last reply.
 public struct QuickPlatform: Sendable {
     public var runningApps: any RunningAppsControlling
+    public var browserSetter: any DefaultBrowserSetting
     public var lastReply: LastReply
 
-    public init(runningApps: any RunningAppsControlling = NoRunningApps(), lastReply: LastReply = LastReply()) {
+    public init(runningApps: any RunningAppsControlling = NoRunningApps(),
+                browserSetter: any DefaultBrowserSetting = NoBrowserSetter(), lastReply: LastReply = LastReply()) {
         self.runningApps = runningApps
+        self.browserSetter = browserSetter
         self.lastReply = lastReply
     }
+}
+
+/// `NSWorkspace.setDefaultApplication(at:toOpenURLsWithScheme:)` for "http", as
+/// `_set_default_browser` calls it: macOS then asks the user to confirm. False where the call
+/// could not be made (Python's exception).
+public protocol DefaultBrowserSetting: Sendable {
+    func setDefaultBrowser(appPath: String) async -> Bool
+}
+
+/// Sets nothing: what a platform has until the app supplies the real switch.
+public struct NoBrowserSetter: DefaultBrowserSetting {
+    public init() {}
+    public func setDefaultBrowser(appPath: String) async -> Bool { false }
 }
 
 /// One entry of `NSWorkspace.runningApplications`: its `localizedName` (or ""), whether its

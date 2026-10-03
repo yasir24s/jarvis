@@ -198,7 +198,8 @@ public struct FastPathRouter: Sendable {
         "note.make", "time", "battery", "backend", "volume.set", "volume.mute", "news", "screenshot",
         "brightness.set", "message.send", "type", "page.summarize", "shortcut.list", "quit.app",
         "browser.default.get", "apps.find", "toggle", "files.recent", "files.reveal", "web.google",
-        "web.youtube",
+        "web.youtube", "volume.up", "volume.down", "brightness.up", "brightness.down", "clipboard.copy_last",
+        "browser.default.set",
     ]
 
     /// `text.lower().strip().rstrip("?.")`.

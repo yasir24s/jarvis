@@ -200,8 +200,13 @@ public struct QuickCommands: Sendable {
             // not one of the system toggles, which the router has already ruled out.
             return act("Done, sir.", "system_control", ["feature": .string(thing), "enable": .bool(on)], turn: turn)
         case .openURL(let spoken, let url): return act(spoken, QuickOpenURL.name, ["url": .string(url)], turn: turn)
-        case .nudgeVolume, .nudgeBrightness, .copyLastReply, .setDefaultBrowser:
-            return nil
+        case .nudgeVolume(let spoken, let delta):
+            return act(spoken, QuickNudgeVolume.name, ["delta": .int(Int64(delta))], turn: turn)
+        case .nudgeBrightness(let spoken, let steps):
+            return act(spoken, QuickNudgeBrightness.name, ["steps": .int(Int64(steps))], turn: turn)
+        case .copyLastReply: return await tool(QuickCopyLastReply.name, turn: turn)
+        case .setDefaultBrowser(let name):
+            return await tool(QuickSetDefaultBrowser.name, ["name": .string(name)], turn: turn)
         }
     }
 
