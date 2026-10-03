@@ -111,7 +111,7 @@ struct BrainMenuTests {
             // In the menu-bar menu it sits right after Speak replies (V5's Speak First Sentence Early,
             // between them, is hidden while Qwen is the voice: V6).
             let titles = menus.bar.items.map(\.title)
-            let speak = try #require(titles.firstIndex(of: "Speak Replies"))
+            let speak = try #require(titles.firstIndex(of: "Speak replies"))
             #expect(titles.indices.contains(speak + 1) && titles[speak + 1] == BrainSetting.menuTitle)
         }
     }

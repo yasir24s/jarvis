@@ -63,7 +63,7 @@ struct SpeakEarlyMenuTests {
         menus.app.update()
         // Menu bar: right after Speak replies. App menu: right after Stop Speaking.
         let bar = menus.bar.items.map(\.title)
-        let speak = try #require(bar.firstIndex(of: "Speak Replies"))
+        let speak = try #require(bar.firstIndex(of: "Speak replies"))
         #expect(bar[speak + 1] == SpeakEarlySetting.menuTitle)
         let app = menus.app.items.map(\.title)
         let stop = try #require(app.firstIndex(of: "Stop Speaking"))

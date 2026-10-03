@@ -33,7 +33,7 @@ struct JarvisSwiftUIApp: App {
                              forgetVoice: { appDelegate.forgetVoice() }, openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours,
                         openLearningSources: { appDelegate.openLearningSources() },
                         checkAirPlay: { appDelegate.checkAirPlay() }, repairAirPlay: { appDelegate.repairAirPlay() },
-                        speak: appDelegate.speakReplies, resumeSpeaking: { appDelegate.resumeSpeaking() })
+                        mute: appDelegate.speechMute, resumeSpeaking: { appDelegate.resumeSpeaking() })
             }
         }
 
@@ -46,7 +46,7 @@ struct JarvisSwiftUIApp: App {
         .defaultLaunchBehavior(SetupCompletion.opensAtLaunch(arguments: CommandLine.arguments) ? .presented : .suppressed)
         .restorationBehavior(.disabled)
 
-        // Stop Speaking sticks: the icon shows a muted speaker while speaking is off.
+        // Stop Speaking sticks: the icon shows a muted speaker while he is muted.
         MenuBarExtra {
             #if DEBUG
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies, speakEarly: appDelegate.speakEarly,
@@ -56,6 +56,7 @@ struct JarvisSwiftUIApp: App {
                         updates: appDelegate.updates, voice: appDelegate.voiceStatus,
                         forgetVoice: { appDelegate.forgetVoice() },
                         stopSpeaking: { appDelegate.stopSpeaking() },
+                        mute: appDelegate.speechMute, resumeSpeaking: { appDelegate.resumeSpeaking() },
                         testConfirmation: { appDelegate.stashTestConfirmation() },
                         openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours,
                         openLearningSources: { appDelegate.openLearningSources() },
@@ -68,12 +69,13 @@ struct JarvisSwiftUIApp: App {
                         updates: appDelegate.updates, voice: appDelegate.voiceStatus,
                         forgetVoice: { appDelegate.forgetVoice() },
                         stopSpeaking: { appDelegate.stopSpeaking() },
+                        mute: appDelegate.speechMute, resumeSpeaking: { appDelegate.resumeSpeaking() },
                         openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours,
                         openLearningSources: { appDelegate.openLearningSources() },
                         checkAirPlay: { appDelegate.checkAirPlay() }, repairAirPlay: { appDelegate.repairAirPlay() })
             #endif
         } label: {
-            MenuBarIcon(speak: appDelegate.speakReplies)
+            MenuBarIcon(mute: appDelegate.speechMute)
         }
         .menuBarExtraStyle(.menu)
     }

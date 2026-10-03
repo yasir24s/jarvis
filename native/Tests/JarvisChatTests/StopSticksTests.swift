@@ -5,8 +5,8 @@ import JarvisCore
 import JarvisTools
 import Testing
 
-/// Stop Speaking sticks: Stop Speaking turns speaking off (the "Speak Replies" setting) until the
-/// user turns it back on. In a UserDefaults suite of the test's own, never the app's; the "voice"
+/// Stop Speaking sticks: Stop Speaking mutes him (`speechMuted`) until the user resumes speaking.
+/// Unmuted, "Speak replies" keeps its old meaning. In a UserDefaults suite of the test's own, never the app's; the "voice"
 /// is a recorded list, so nothing plays.
 @MainActor
 @Suite("Stop Speaking sticks", .timeLimit(.minutes(1)))
@@ -26,9 +26,9 @@ struct StopSticksTests {
         var spoken: [String] = []
         var shown: [String] = []
         var cancels = 0
-        init(_ toggle: SpeakRepliesToggle) {
+        init(_ defaults: UserDefaults) {
             var me: Voice?
-            mute = SpeechMute(toggle: toggle, cancel: { me?.cancels += 1 })
+            mute = SpeechMute(defaults: defaults, cancel: { me?.cancels += 1 })
             me = self
         }
         func speak(_ text: String) {
@@ -41,25 +41,25 @@ struct StopSticksTests {
         let suite = Suite()
         let toggle = SpeakRepliesToggle(defaults: suite.defaults)
         toggle.isOn = true
-        let voice = Voice(toggle)
-        #expect(!voice.mute.isMuted)
+        let voice = Voice(suite.defaults)
+        #expect(!voice.mute.isMuted, "not muted until Stop Speaking")
         voice.mute.stop()
         #expect(voice.mute.isMuted)
         #expect(voice.cancels == 1)
-        #expect(suite.defaults.object(forKey: SpeakRepliesToggle.defaultsKey) as? Bool == false)
+        #expect(suite.defaults.object(forKey: SpeechMute.defaultsKey) as? Bool == true)
+        #expect(toggle.isOn, "Speak replies is left alone")
     }
 
     @Test("a relaunch keeps speaking off; only the user's choice turns it back on")
     func relaunchKeepsTheState() {
         let suite = Suite()
-        let first = SpeakRepliesToggle(defaults: suite.defaults)
-        first.isOn = true
-        SpeechMute(toggle: first, cancel: {}).stop()
+        SpeechMute(defaults: suite.defaults, cancel: {}).stop()
         // A new launch reads the stored setting.
-        let relaunched = SpeechMute(toggle: SpeakRepliesToggle(defaults: suite.defaults), cancel: {})
+        let relaunched = SpeechMute(defaults: suite.defaults, cancel: {})
         #expect(relaunched.isMuted)
+        #expect(relaunched.muted)
         relaunched.resume()
-        #expect(!SpeechMute(toggle: SpeakRepliesToggle(defaults: suite.defaults), cancel: {}).isMuted)
+        #expect(!SpeechMute(defaults: suite.defaults, cancel: {}).isMuted)
     }
 
     @Test("a reply that arrives after Stop, for a request made before it, is not spoken; its text is shown")
@@ -67,7 +67,7 @@ struct StopSticksTests {
         let suite = Suite()
         let toggle = SpeakRepliesToggle(defaults: suite.defaults)
         toggle.isOn = true
-        let voice = Voice(toggle)
+        let voice = Voice(suite.defaults)
         let gate = Gate()
         let fake = FakeCoordinator { _, sink in
             await gate.park()
@@ -93,41 +93,66 @@ struct StopSticksTests {
         #expect(model.messages.last?.stopped == false)
     }
 
-    @Test("a new request while speaking is off is answered in text, not speech")
+    /// What the app does with a finished reply (AppDelegate's `onReplyFinished`): the speak policy,
+    /// then the voice.
+    func deliver(to voice: Voice, toggle: SpeakRepliesToggle, micOnly: Bool = false) -> (ChatMessage, TurnSummary) -> Void {
+        { message, turn in
+            let context = SpeakReplies.context(for: message, turn: turn, toggle: toggle, chatWindowIsKey: false,
+                                               userIdleSeconds: 0, ttsBackend: "qwen", speakAnyway: micOnly)
+            SpeakReplies.replyFinished(message, context: context, research: ResearchRecorder(),
+                                       speaker: { text, _ in voice.speak(text) }, log: { _ in })
+        }
+    }
+
+    func ask(_ voice: Voice, toggle: SpeakRepliesToggle, channel: Channel, micOnly: Bool = false) async -> ChatViewModel {
+        let model = ChatViewModel(submitter: FakeCoordinator(answering: .reply("It's ten past three, sir.")), minimumGap: .zero)
+        model.onReplyFinished = deliver(to: voice, toggle: toggle, micOnly: micOnly)
+        if channel == .voice {
+            await model.sendVoice("What's the time?")?.value
+        } else {
+            model.draft.text = "What's the time?"
+            await model.send()?.value
+        }
+        return model
+    }
+
+    @Test("unmuted, it is as before: Speak replies off still speaks voice turns, not typed ones")
+    func unmutedIsAsBefore() async {
+        let suite = Suite()
+        let toggle = SpeakRepliesToggle(defaults: suite.defaults)   // off, as on a new install
+        let voice = Voice(suite.defaults)
+        _ = await ask(voice, toggle: toggle, channel: .voice)
+        _ = await ask(voice, toggle: toggle, channel: .text)
+        #expect(voice.spoken == ["It's ten past three, sir."])
+        // Mic Only Mode keeps its "speak anyway" for typed replies too.
+        _ = await ask(voice, toggle: toggle, channel: .text, micOnly: true)
+        #expect(voice.spoken.count == 2)
+        toggle.isOn = true
+        _ = await ask(voice, toggle: toggle, channel: .text)
+        #expect(voice.spoken.count == 3)
+        #expect(voice.shown.isEmpty)
+    }
+
+    @Test("muted, nothing is spoken, voice turns, typed replies or Mic Only Mode; the text is delivered")
     func newRequestWhileMuted() async {
         let suite = Suite()
         let toggle = SpeakRepliesToggle(defaults: suite.defaults)
-        let voice = Voice(toggle)
+        toggle.isOn = true
+        let voice = Voice(suite.defaults)
         voice.mute.stop()
-        for channel in [Channel.voice, .text] {
-            let fake = FakeCoordinator(answering: .reply("It's ten past three, sir."))
-            let model = ChatViewModel(submitter: fake, minimumGap: .zero)
-            model.onReplyFinished = { message, turn in
-                // Mic Only Mode speaks every reply whatever the toggle says; speaking off still wins.
-                let context = SpeakReplies.context(for: message, turn: turn, toggle: toggle, chatWindowIsKey: false,
-                                                   userIdleSeconds: 0, ttsBackend: "qwen", speakAnyway: true)
-                SpeakReplies.replyFinished(message, context: context, research: ResearchRecorder(),
-                                           speaker: { text, _ in voice.speak(text) }, log: { _ in })
-            }
-            if channel == .voice {
-                await model.sendVoice("What's the time?")?.value
-            } else {
-                model.draft.text = "What's the time?"
-                await model.send()?.value
-            }
+        for (channel, micOnly) in [(Channel.voice, false), (.text, false), (.text, true)] {
+            let model = await ask(voice, toggle: toggle, channel: channel, micOnly: micOnly)
             #expect(model.messages.last?.text == "It's ten past three, sir.")
         }
         #expect(voice.spoken.isEmpty)
-        #expect(voice.shown == ["It's ten past three, sir.", "It's ten past three, sir."])
-        #expect(voice.mute.isMuted, "a new request does not turn speaking back on")
+        #expect(voice.shown.count == 3)
+        #expect(voice.mute.isMuted, "a new request does not unmute")
     }
 
-    @Test("a timer while speaking is off is a notification and the HUD, not speech; other lines go to the chat")
+    @Test("a timer while muted is a notification and the HUD, not speech; other lines go to the chat")
     func timerWhileMuted() {
         let suite = Suite()
-        let toggle = SpeakRepliesToggle(defaults: suite.defaults)
-        toggle.isOn = true
-        let mute = SpeechMute(toggle: toggle, cancel: {})
+        let mute = SpeechMute(defaults: suite.defaults, cancel: {})
         var spoken: [String] = []
         var alerted: [String] = []
         var posted: [String] = []
@@ -139,7 +164,7 @@ struct StopSticksTests {
         #expect(spoken.isEmpty)
         #expect(alerted == ["Sir, your timer is done."])
         #expect(posted == ["Welcome back, sir."])
-        // Stop Speaking does not suppress future alarms: back on, the next one is spoken.
+        // Stop Speaking does not suppress future alarms: unmuted, the next one is spoken.
         mute.resume()
         announcer.announce("Sir, your alarm.", urgent: true)
         #expect(spoken == ["Sir, your alarm."])
@@ -148,9 +173,7 @@ struct StopSticksTests {
     @Test("a line held behind a reply follows the setting as it is when it goes out")
     func heldLineFollowsTheSetting() async {
         let suite = Suite()
-        let toggle = SpeakRepliesToggle(defaults: suite.defaults)
-        toggle.isOn = true
-        let mute = SpeechMute(toggle: toggle, cancel: {})
+        let mute = SpeechMute(defaults: suite.defaults, cancel: {})
         var busy = true
         var spoken: [String] = []
         var alerted: [String] = []
@@ -168,11 +191,10 @@ struct StopSticksTests {
         #expect(alerted == ["Sir, your reminder."])
     }
 
-    @Test("\"resume speaking\" turns speaking back on and answers; other text goes on to the quick commands")
+    @Test("\"resume speaking\" unmutes and answers; other text goes on to the quick commands")
     func resumeCommand() async {
         let suite = Suite()
-        let toggle = SpeakRepliesToggle(defaults: suite.defaults)
-        let mute = SpeechMute(toggle: toggle, cancel: {})
+        let mute = SpeechMute(defaults: suite.defaults, cancel: {})
         mute.stop()
         let next = RecordingFastPath()
         let path = ResumeSpeakingFastPath(next: next, resume: { await MainActor.run { mute.resume() } })

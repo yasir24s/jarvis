@@ -1,40 +1,54 @@
 import Foundation
 import JarvisBrain
 import JarvisTools
+import Observation
 
-/// Stop Speaking sticks: the menus' Stop Speaking silences him now and turns speaking off until
-/// the user turns it back on. The state is the "Speak Replies" setting (`SpeakRepliesToggle`,
-/// `speakReplies` in UserDefaults), so it survives a relaunch and there is one source of truth.
-/// Off, nothing is spoken: replies typed or said aloud, acknowledgements, the loop's own lines and
-/// background lines. Time-critical alerts (timers, alarms, reminders, meetings) are shown as a
-/// notification and on the HUD instead (`ReminderAnnouncer`). Only the user turns it back on:
-/// the menu's toggle, or a command such as "resume speaking" (`ResumeSpeakingFastPath`).
+/// Stop Speaking sticks: the menus' Stop Speaking silences him now and keeps him silent until the
+/// user chooses to hear him again. The mute is its own setting (`speechMuted` in UserDefaults, off
+/// until set), so it survives a relaunch and leaves "Speak replies" its old meaning. While muted
+/// nothing is spoken: replies typed or said aloud, acknowledgements, the loop's own lines,
+/// background lines, Mic Only Mode's speech. Time-critical alerts (timers, alarms, reminders,
+/// meetings) are shown as a notification and on the HUD instead (`ReminderAnnouncer`). Unmuted,
+/// everything is as it was: "Speak replies" governs typed replies and voice turns are spoken.
+/// Only the user unmutes: the menus' "Resume Speaking", or a command such as "resume speaking"
+/// (`ResumeSpeakingFastPath`).
 @MainActor
+@Observable
 public final class SpeechMute {
-    public let toggle: SpeakRepliesToggle
-    private let cancel: @MainActor () -> Void
+    /// The UserDefaults key.
+    public static let defaultsKey = "speechMuted"
+
+    /// Muted; read again from the defaults each time it is asked through `isMuted`.
+    public private(set) var muted: Bool {
+        didSet { defaults.set(muted, forKey: Self.defaultsKey) }
+    }
+
+    @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private let cancel: @MainActor () -> Void
 
     /// - cancel: stops whatever is being spoken or generated now (the voice's `stop`).
-    public init(toggle: SpeakRepliesToggle, cancel: @escaping @MainActor () -> Void) {
-        self.toggle = toggle
+    public init(defaults: UserDefaults = .standard, cancel: @escaping @MainActor () -> Void) {
+        self.defaults = defaults
         self.cancel = cancel
+        muted = defaults.bool(forKey: Self.defaultsKey)
     }
 
-    /// Off: the setting as it is stored now, so a change made outside the menu holds at once.
+    /// Muted, as stored now, so a change made outside the menu (`defaults write`) holds at once.
     public var isMuted: Bool {
-        toggle.refresh()
-        return !toggle.isOn
+        let stored = defaults.bool(forKey: Self.defaultsKey)
+        if stored != muted { muted = stored }
+        return muted
     }
 
-    /// Stop Speaking: speaking goes off, and stays off, and what is speaking now stops.
+    /// Stop Speaking: muted, and what is speaking now stops.
     public func stop() {
-        toggle.isOn = false
+        muted = true
         cancel()
     }
 
     /// The user's own choice to hear him again.
     public func resume() {
-        toggle.isOn = true
+        muted = false
     }
 }
 

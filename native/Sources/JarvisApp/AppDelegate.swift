@@ -26,8 +26,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let chat = ChatViewModel()
     /// The menu's "Speak replies" toggle, the user's input to the speak policy.
     let speakReplies = SpeakRepliesToggle()
-    /// Stop Speaking sticks: off is `speakReplies` off, until the user turns it back on.
-    private(set) lazy var speechMute = SpeechMute(toggle: speakReplies, cancel: { [weak self] in self?.voice?.stop() })
+    /// Stop Speaking sticks: muted (`speechMuted`) until the user resumes speaking.
+    private(set) lazy var speechMute = SpeechMute(cancel: { [weak self] in self?.voice?.stop() })
     /// V5: the menus' "Speak First Sentence Early"; SpeechQueue reads the stored value itself.
     let speakEarly = SpeakEarlySetting()
     /// M9a part 7: the menus' "Brain", Claude, ChatGPT (B2) or On-device; BrainRouter reads it each
@@ -779,12 +779,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// The menus' "Stop Speaking": the reply being spoken stops, and so does anything queued, and
-    /// speaking stays off until the user turns it back on (`SpeechMute`).
+    /// he stays muted until the user resumes speaking (`SpeechMute`).
     func stopSpeaking() {
         speechMute.stop()
     }
 
-    /// The app menu's "Resume Speaking", shown while speaking is off.
+    /// The menus' "Resume Speaking", in place of "Stop Speaking" while muted.
     func resumeSpeaking() {
         speechMute.resume()
     }

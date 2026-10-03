@@ -26,8 +26,11 @@ struct MenuBarMenu: View {
     /// M10 part 5: the voiceprint's line and Forget My Voice (AppDelegate.forgetVoice).
     let voice: VoiceprintStatus
     let forgetVoice: () -> Void
-    /// Stops the reply being spoken and anything queued (AppDelegate.stopSpeaking).
+    /// Stops the reply being spoken and anything queued, and mutes him (AppDelegate.stopSpeaking).
     let stopSpeaking: () -> Void
+    /// Stop Speaking sticks: while muted the item is "Resume Speaking" (AppDelegate.resumeSpeaking).
+    var mute: SpeechMute?
+    var resumeSpeaking: () -> Void = {}
     #if DEBUG
     /// Stashes the harmless test confirmation (`TestConfirmation`); DEBUG builds only.
     let testConfirmation: () -> Void
@@ -51,15 +54,12 @@ struct MenuBarMenu: View {
         SetUpItem()
         VoiceMenuItems(status: voice, forget: forgetVoice)
         Text(chat.backendLine)
-        // The input to the user's speak policy (SpeakPolicy.swift); it persists across launches. Off
-        // (Stop Speaking, or unchecked here) he says nothing until it is checked again (SpeechMute).
-        Toggle("Speak Replies", isOn: $speak.isOn)
+        // The input to the user's speak policy (SpeakPolicy.swift); it persists across launches.
+        Toggle("Speak replies", isOn: $speak.isOn)
         SpeakEarlyToggle(setting: speakEarly)
         BrainPicker(setting: brain)
         ChatGPTSignInItem(account: chatgpt)
-        Button("Stop Speaking") {
-            stopSpeaking()
-        }
+        StopSpeakingItem(mute: mute, stop: stopSpeaking, resume: resumeSpeaking)
         FileLearningToggle(consent: learn)
         if let openLearningSources { Button(LearningSources.menuTitle) { openLearningSources() } }   // batch C part 4
         MemoryItem(open: openMemory)   // batch C part 3
@@ -114,17 +114,14 @@ struct AppMenuItems: View {
     /// Batch C part 6: "Check AirPlay" and "Repair AirPlay…".
     var checkAirPlay: (() -> Void)?
     var repairAirPlay: () -> Void = {}
-    /// Stop Speaking sticks: the setting it turns off, and "Resume Speaking", shown after Stop
-    /// Speaking while speaking is off (this menu has no "Speak Replies" toggle).
-    var speak: SpeakRepliesToggle?
+    /// Stop Speaking sticks: while muted the item is "Resume Speaking".
+    var mute: SpeechMute?
     var resumeSpeaking: () -> Void = {}
-    static let resumeTitle = "Resume Speaking"
 
     var body: some View {
         SetUpItem()
         VoiceMenuItems(status: voice, forget: forgetVoice)
-        Button("Stop Speaking") { stopSpeaking() }
-        if let speak, !speak.isOn { Button(Self.resumeTitle) { resumeSpeaking() } }
+        StopSpeakingItem(mute: mute, stop: stopSpeaking, resume: resumeSpeaking)
         SpeakEarlyToggle(setting: speakEarly)
         BrainPicker(setting: brain)
         ChatGPTSignInItem(account: chatgpt)
@@ -268,15 +265,32 @@ struct AirPlayMenuItems: View {
     }
 }
 
-/// The menu-bar icon. Stop Speaking sticks: while speaking is off (`SpeakRepliesToggle` off) it
-/// is a muted speaker, so the user can see why he is silent.
-struct MenuBarIcon: View {
-    @Bindable var speak: SpeakRepliesToggle
-
-    static func symbol(speaking: Bool) -> String { speaking ? "circle.hexagongrid.fill" : "speaker.slash.fill" }
+/// "Stop Speaking", or "Resume Speaking" while he is muted (Stop Speaking sticks, `SpeechMute`).
+struct StopSpeakingItem: View {
+    static let stopTitle = "Stop Speaking"
+    static let resumeTitle = "Resume Speaking"
+    let mute: SpeechMute?
+    let stop: () -> Void
+    let resume: () -> Void
 
     var body: some View {
-        Image(systemName: Self.symbol(speaking: speak.isOn))
-            .accessibilityLabel(speak.isOn ? "JARVIS" : "JARVIS, speaking off")
+        if mute?.muted == true {
+            Button(Self.resumeTitle) { resume() }
+        } else {
+            Button(Self.stopTitle) { stop() }
+        }
+    }
+}
+
+/// The menu-bar icon. Stop Speaking sticks: while he is muted (`speechMuted`) it is a muted
+/// speaker, so the user can see why he is silent.
+struct MenuBarIcon: View {
+    let mute: SpeechMute
+
+    static func symbol(muted: Bool) -> String { muted ? "speaker.slash.fill" : "circle.hexagongrid.fill" }
+
+    var body: some View {
+        Image(systemName: Self.symbol(muted: mute.muted))
+            .accessibilityLabel(mute.muted ? "JARVIS, muted" : "JARVIS")
     }
 }
