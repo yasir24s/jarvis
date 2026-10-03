@@ -29,7 +29,7 @@ Line numbers refer to jarvis.py @ 68cd112.
 | ☐ | `write_file` | M5 | X* | Write text to a file, creating or overwriting it. Instant for new files and files in the home folder; confirms when overwriting outside home; system p… | |
 | ☐ | `get_weather` | M6 |  | Get the current weather. Optional location, else uses current location. | |
 | ☐ | `get_location` | M6 |  | Get the user's approximate current location (city/region) via IP. | |
-| ☐ | `set_reminder` | M6 |  | Create a reminder. 'when' is natural language like 'at 5pm' or 'in 10 minutes'. | |
+| ☑ | `set_reminder` | M6 |  | Create a reminder. 'when' is natural language like 'at 5pm' or 'in 10 minutes'. | PR2 (3a96830): Apple Reminders through EventKit as Python, undated to Reminders only, dated also spoken from alarms.json; `SpokenRemindersTests` (everyReminderAlsoGoesToAppleReminders, withoutRemindersADatedReminderIsStillSpokenAndSaysSo, setReminderAndSetAlarmAnswerAsPythonDid); reply strings are Python's; live Reminders and iPhone sync not verified; DEV-PR2-02 |
 | ☑ | `get_messages` | M6 | U | Read the user's most recent received iMessages/texts. | `pb_messages.golden.json` over a real SQLite file, `PersonalToolsGoldenTests`, taint in `PBToolsTests` (b41d8c1); live chat.db not verified (needs FDA) |
 | ☑ | `get_calendar` | M6 |  | Get today's calendar events. | `pb_calendar.golden.json` (EventKit fake + AS fallback), `PersonalToolsGoldenTests` (b41d8c1); now U natively (DEV-PB-03); live EventKit not verified |
 | ☐ | `see_screen` | M5 | U | Read the text currently visible on the user's screen (OCR). Use this to help with what they're doing, explain errors, or summarize what's shown. | |
@@ -158,12 +158,12 @@ Native JARVIS reads the same names (LaunchAgent env or `defaults`). Obsolete one
 | ☐ | 3461 | Apple Shortcuts (smart home + user automations) | |
 | ☐ | 3524 | Browser awareness ("summarize this page") | |
 | ☐ | 3593 | Local vision (optional, JARVIS_VISION_MODEL) | |
-| ☐ | 3621 | Everyday controls: quit apps, sleep, clipboard, IP, Bluetooth battery | partial (PA batch A): quit all, sleep, IP, Bluetooth battery, lock, Trash `quick_system.golden.json`; quitting one app, clipboard copy and the default browser not ported |
+| ☑ | 3621 | Everyday controls: quit apps, sleep, clipboard, IP, Bluetooth battery | PA batch A: quit all, sleep, IP, Bluetooth battery, lock, Trash `quick_system.golden.json`; PR2 (c05ae8e, 21f6005): quit one app, quit by kind, copy last reply, default browser read and set `quick_helpers.golden.json` (quit/*, copy/*, set_browser/*, browser/*), `QuickDispatchTests`; nothing run live (fakes) |
 | ☐ | 3741 | Proactive nudges (opt-in; JARVIS is otherwise purely reactive) | |
 | ☐ | 3873 | Screen awareness, clipboard & notes | |
 | ☐ | 3985 | Alarms (persistent across restarts) | partial (PA batch A): list and cancel `quick_alarms.golden.json` |
 | ☐ | 4113 | Music identification (Shazam-style via AudD) & lyric search | |
-| ☐ | 4257 | Offline fast-path (instant common commands, no LLM needed) | partial (PA batch A): every branch matched in Python's order (`quick_router.golden.json`, 397 phrases); 19 branches answered, the rest go to the brain |
+| ☐ | 4257 | Offline fast-path (instant common commands, no LLM needed) | partial: every branch matched in Python's order (`quick_router.golden.json`, 397 phrases, helper call and arguments pinned for each); PR2 (c05ae8e, 21f6005): 65 of 68 branches answered natively (`QuickCommandsTests.everyBranchButTheModelHelpersIsCarried`, `QuickDispatchTests`, `quick_helpers.golden.json`); screen help (2 branches) and clipboard help go to the brain, as their Python helpers are model calls (DEV-PR2-01) |
 | ☐ | 4656 | Ollama brain → FoundationModels fallback (M3) | |
 | ☐ | 4815 | Claude Agent SDK backend (subscription auth) + local Ollama fallback | |
 | ☐ | 5107 | Wake word | |
