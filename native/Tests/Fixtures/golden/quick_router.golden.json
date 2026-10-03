@@ -1,0 +1,6418 @@
+{
+ "schema": 1,
+ "suite": "quick_router",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "000 'forget the correction for passion'",
+   "input": {
+    "text": "forget the correction for passion"
+   },
+   "expected": {
+    "t": "forget the correction for passion",
+    "branch": "corr.forget",
+    "kind": "helper",
+    "helper": {
+     "fn": "forget_correction",
+     "args": [
+      "forget the correction for passion"
+     ]
+    }
+   }
+  },
+  {
+   "name": "001 'please forget the corrections'",
+   "input": {
+    "text": "please forget the corrections"
+   },
+   "expected": {
+    "t": "please forget the corrections",
+    "branch": "corr.forget",
+    "kind": "helper",
+    "helper": {
+     "fn": "forget_correction",
+     "args": [
+      "please forget the corrections"
+     ]
+    }
+   }
+  },
+  {
+   "name": "002 'forget corrections'",
+   "input": {
+    "text": "forget corrections"
+   },
+   "expected": {
+    "t": "forget corrections",
+    "branch": "corr.forget",
+    "kind": "helper",
+    "helper": {
+     "fn": "forget_correction",
+     "args": [
+      "forget corrections"
+     ]
+    }
+   }
+  },
+  {
+   "name": "003 'forget all corrections'",
+   "input": {
+    "text": "forget all corrections"
+   },
+   "expected": {
+    "t": "forget all corrections",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "004 'i said passion not fashion'",
+   "input": {
+    "text": "i said passion not fashion"
+   },
+   "expected": {
+    "t": "i said passion not fashion",
+    "branch": "corr.teach",
+    "kind": "helper",
+    "helper": {
+     "fn": "learn_correction",
+     "args": [
+      "i said passion not fashion"
+     ]
+    }
+   }
+  },
+  {
+   "name": "005 'correct fashion to passion'",
+   "input": {
+    "text": "correct fashion to passion"
+   },
+   "expected": {
+    "t": "correct fashion to passion",
+    "branch": "corr.teach",
+    "kind": "helper",
+    "helper": {
+     "fn": "learn_correction",
+     "args": [
+      "correct fashion to passion"
+     ]
+    }
+   }
+  },
+  {
+   "name": "006 'when i say lamps i mean lights'",
+   "input": {
+    "text": "when i say lamps i mean lights"
+   },
+   "expected": {
+    "t": "when i say lamps i mean lights",
+    "branch": "corr.teach",
+    "kind": "helper",
+    "helper": {
+     "fn": "learn_correction",
+     "args": [
+      "when i say lamps i mean lights"
+     ]
+    }
+   }
+  },
+  {
+   "name": "007 \"it's drake not dray\"",
+   "input": {
+    "text": "it's drake not dray"
+   },
+   "expected": {
+    "t": "it's drake not dray",
+    "branch": "corr.teach",
+    "kind": "helper",
+    "helper": {
+     "fn": "learn_correction",
+     "args": [
+      "it's drake not dray"
+     ]
+    }
+   }
+  },
+  {
+   "name": "008 \"that's right not wrong\"",
+   "input": {
+    "text": "that's right not wrong"
+   },
+   "expected": {
+    "t": "that's right not wrong",
+    "branch": "corr.teach",
+    "kind": "helper",
+    "helper": {
+     "fn": "learn_correction",
+     "args": [
+      "that's right not wrong"
+     ]
+    }
+   }
+  },
+  {
+   "name": "009 'i said hello'",
+   "input": {
+    "text": "i said hello"
+   },
+   "expected": {
+    "t": "i said hello",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "010 'run diagnostics'",
+   "input": {
+    "text": "run diagnostics"
+   },
+   "expected": {
+    "t": "run diagnostics",
+    "branch": "diagnostics",
+    "kind": "helper",
+    "helper": {
+     "fn": "_system_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "011 'Run Diagnostics.'",
+   "input": {
+    "text": "Run Diagnostics."
+   },
+   "expected": {
+    "t": "run diagnostics",
+    "branch": "diagnostics",
+    "kind": "helper",
+    "helper": {
+     "fn": "_system_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "012 'system status'",
+   "input": {
+    "text": "system status"
+   },
+   "expected": {
+    "t": "system status",
+    "branch": "diagnostics",
+    "kind": "helper",
+    "helper": {
+     "fn": "_system_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "013 \"how's my system\"",
+   "input": {
+    "text": "how's my system"
+   },
+   "expected": {
+    "t": "how's my system",
+    "branch": "diagnostics",
+    "kind": "helper",
+    "helper": {
+     "fn": "_system_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "014 'run a systems check'",
+   "input": {
+    "text": "run a systems check"
+   },
+   "expected": {
+    "t": "run a systems check",
+    "branch": "diagnostics",
+    "kind": "helper",
+    "helper": {
+     "fn": "_system_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "015 'diagnostics?'",
+   "input": {
+    "text": "diagnostics?"
+   },
+   "expected": {
+    "t": "diagnostics",
+    "branch": "diagnostics",
+    "kind": "helper",
+    "helper": {
+     "fn": "_system_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "016 'run diagnostics please'",
+   "input": {
+    "text": "run diagnostics please"
+   },
+   "expected": {
+    "t": "run diagnostics please",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "diagnostics please"
+     ]
+    }
+   }
+  },
+  {
+   "name": "017 'run shortcut morning routine'",
+   "input": {
+    "text": "run shortcut morning routine"
+   },
+   "expected": {
+    "t": "run shortcut morning routine",
+    "branch": "shortcut.run",
+    "kind": "helper",
+    "helper": {
+     "fn": "_run_shortcut",
+     "args": [
+      "morning routine"
+     ]
+    }
+   }
+  },
+  {
+   "name": "018 'run the good night shortcut'",
+   "input": {
+    "text": "run the good night shortcut"
+   },
+   "expected": {
+    "t": "run the good night shortcut",
+    "branch": "shortcut.run",
+    "kind": "helper",
+    "helper": {
+     "fn": "_run_shortcut",
+     "args": [
+      "good night"
+     ]
+    }
+   }
+  },
+  {
+   "name": "019 'run the shortcuts app'",
+   "input": {
+    "text": "run the shortcuts app"
+   },
+   "expected": {
+    "t": "run the shortcuts app",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "the shortcuts app"
+     ]
+    }
+   }
+  },
+  {
+   "name": "020 'turn on the lights'",
+   "input": {
+    "text": "turn on the lights"
+   },
+   "expected": {
+    "t": "turn on the lights",
+    "branch": "lights",
+    "kind": "helper",
+    "helper": {
+     "fn": "_run_shortcut",
+     "args": [
+      "turn on lights"
+     ]
+    }
+   }
+  },
+  {
+   "name": "021 'switch off my lamp'",
+   "input": {
+    "text": "switch off my lamp"
+   },
+   "expected": {
+    "t": "switch off my lamp",
+    "branch": "lights",
+    "kind": "helper",
+    "helper": {
+     "fn": "_run_shortcut",
+     "args": [
+      "turn off lights"
+     ]
+    }
+   }
+  },
+  {
+   "name": "022 'lights off'",
+   "input": {
+    "text": "lights off"
+   },
+   "expected": {
+    "t": "lights off",
+    "branch": "lights",
+    "kind": "helper",
+    "helper": {
+     "fn": "_run_shortcut",
+     "args": [
+      "turn off lights"
+     ]
+    }
+   }
+  },
+  {
+   "name": "023 'the lights on'",
+   "input": {
+    "text": "the lights on"
+   },
+   "expected": {
+    "t": "the lights on",
+    "branch": "lights",
+    "kind": "helper",
+    "helper": {
+     "fn": "_run_shortcut",
+     "args": [
+      "turn on lights"
+     ]
+    }
+   }
+  },
+  {
+   "name": "024 'turn on the light switch'",
+   "input": {
+    "text": "turn on the light switch"
+   },
+   "expected": {
+    "t": "turn on the light switch",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "025 'turn off the tv'",
+   "input": {
+    "text": "turn off the tv"
+   },
+   "expected": {
+    "t": "turn off the tv",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "026 'open settings'",
+   "input": {
+    "text": "open settings"
+   },
+   "expected": {
+    "t": "open settings",
+    "branch": "settings.root",
+    "kind": "act",
+    "reply": "Opening System Settings, sir.",
+    "action": {
+     "fn": "_open_settings",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "027 'system settings'",
+   "input": {
+    "text": "system settings"
+   },
+   "expected": {
+    "t": "system settings",
+    "branch": "settings.root",
+    "kind": "act",
+    "reply": "Opening System Settings, sir.",
+    "action": {
+     "fn": "_open_settings",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "028 'settings'",
+   "input": {
+    "text": "settings"
+   },
+   "expected": {
+    "t": "settings",
+    "branch": "settings.root",
+    "kind": "act",
+    "reply": "Opening System Settings, sir.",
+    "action": {
+     "fn": "_open_settings",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "029 'open system preferences'",
+   "input": {
+    "text": "open system preferences"
+   },
+   "expected": {
+    "t": "open system preferences",
+    "branch": "settings.root",
+    "kind": "act",
+    "reply": "Opening System Settings, sir.",
+    "action": {
+     "fn": "_open_settings",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "030 'open settings app'",
+   "input": {
+    "text": "open settings app"
+   },
+   "expected": {
+    "t": "open settings app",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "settings app"
+     ]
+    }
+   }
+  },
+  {
+   "name": "031 'open microphone privacy settings'",
+   "input": {
+    "text": "open microphone privacy settings"
+   },
+   "expected": {
+    "t": "open microphone privacy settings",
+    "branch": "settings.privacy",
+    "kind": "act",
+    "reply": "Opening privacy settings, sir.",
+    "action": {
+     "fn": "_open_settings",
+     "args": [
+      "microphone"
+     ]
+    }
+   }
+  },
+  {
+   "name": "032 'open the camera permissions'",
+   "input": {
+    "text": "open the camera permissions"
+   },
+   "expected": {
+    "t": "open the camera permissions",
+    "branch": "settings.privacy",
+    "kind": "act",
+    "reply": "Opening privacy settings, sir.",
+    "action": {
+     "fn": "_open_settings",
+     "args": [
+      "camera"
+     ]
+    }
+   }
+  },
+  {
+   "name": "033 'open screen recording privacy'",
+   "input": {
+    "text": "open screen recording privacy"
+   },
+   "expected": {
+    "t": "open screen recording privacy",
+    "branch": "settings.privacy",
+    "kind": "act",
+    "reply": "Opening privacy settings, sir.",
+    "action": {
+     "fn": "_open_settings",
+     "args": [
+      "screen recording"
+     ]
+    }
+   }
+  },
+  {
+   "name": "034 'open bluetooth settings'",
+   "input": {
+    "text": "open bluetooth settings"
+   },
+   "expected": {
+    "t": "open bluetooth settings",
+    "branch": "settings.pane",
+    "kind": "act",
+    "reply": "Opening settings, sir.",
+    "action": {
+     "fn": "_open_settings",
+     "args": [
+      "bluetooth"
+     ]
+    }
+   }
+  },
+  {
+   "name": "035 'show display settings'",
+   "input": {
+    "text": "show display settings"
+   },
+   "expected": {
+    "t": "show display settings",
+    "branch": "settings.pane",
+    "kind": "act",
+    "reply": "Opening settings, sir.",
+    "action": {
+     "fn": "_open_settings",
+     "args": [
+      "display"
+     ]
+    }
+   }
+  },
+  {
+   "name": "036 'take me to the sound preferences'",
+   "input": {
+    "text": "take me to the sound preferences"
+   },
+   "expected": {
+    "t": "take me to the sound preferences",
+    "branch": "settings.pane",
+    "kind": "act",
+    "reply": "Opening settings, sir.",
+    "action": {
+     "fn": "_open_settings",
+     "args": [
+      "sound"
+     ]
+    }
+   }
+  },
+  {
+   "name": "037 'go to wifi settings'",
+   "input": {
+    "text": "go to wifi settings"
+   },
+   "expected": {
+    "t": "go to wifi settings",
+    "branch": "settings.pane",
+    "kind": "act",
+    "reply": "Opening settings, sir.",
+    "action": {
+     "fn": "_open_settings",
+     "args": [
+      "wifi"
+     ]
+    }
+   }
+  },
+  {
+   "name": "038 'open screen time settings'",
+   "input": {
+    "text": "open screen time settings"
+   },
+   "expected": {
+    "t": "open screen time settings",
+    "branch": "settings.pane",
+    "kind": "act",
+    "reply": "Opening settings, sir.",
+    "action": {
+     "fn": "_open_settings",
+     "args": [
+      "screen time"
+     ]
+    }
+   }
+  },
+  {
+   "name": "039 'open file budget.xlsx'",
+   "input": {
+    "text": "open file budget.xlsx"
+   },
+   "expected": {
+    "t": "open file budget.xlsx",
+    "branch": "open.file",
+    "kind": "helper",
+    "helper": {
+     "fn": "_open_path",
+     "args": [
+      "budget.xlsx"
+     ]
+    }
+   }
+  },
+  {
+   "name": "040 'open the file notes.txt'",
+   "input": {
+    "text": "open the file notes.txt"
+   },
+   "expected": {
+    "t": "open the file notes.txt",
+    "branch": "open.file",
+    "kind": "helper",
+    "helper": {
+     "fn": "_open_path",
+     "args": [
+      "notes.txt"
+     ]
+    }
+   }
+  },
+  {
+   "name": "041 'open safari'",
+   "input": {
+    "text": "open safari"
+   },
+   "expected": {
+    "t": "open safari",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "safari"
+     ]
+    }
+   }
+  },
+  {
+   "name": "042 'Open Safari!'",
+   "input": {
+    "text": "Open Safari!"
+   },
+   "expected": {
+    "t": "open safari!",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "safari!"
+     ]
+    }
+   }
+  },
+  {
+   "name": "043 'open youtube?'",
+   "input": {
+    "text": "open youtube?"
+   },
+   "expected": {
+    "t": "open youtube",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "youtube"
+     ]
+    }
+   }
+  },
+  {
+   "name": "044 'launch music'",
+   "input": {
+    "text": "launch music"
+   },
+   "expected": {
+    "t": "launch music",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "music"
+     ]
+    }
+   }
+  },
+  {
+   "name": "045 'open my browser'",
+   "input": {
+    "text": "open my browser"
+   },
+   "expected": {
+    "t": "open my browser",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "my browser"
+     ]
+    }
+   }
+  },
+  {
+   "name": "046 'open my music app'",
+   "input": {
+    "text": "open my music app"
+   },
+   "expected": {
+    "t": "open my music app",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "my music app"
+     ]
+    }
+   }
+  },
+  {
+   "name": "047 'open my game app'",
+   "input": {
+    "text": "open my game app"
+   },
+   "expected": {
+    "t": "open my game app",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "my game app"
+     ]
+    }
+   }
+  },
+  {
+   "name": "048 'open mail'",
+   "input": {
+    "text": "open mail"
+   },
+   "expected": {
+    "t": "open mail",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "mail"
+     ]
+    }
+   }
+  },
+  {
+   "name": "049 'fire up xcode'",
+   "input": {
+    "text": "fire up xcode"
+   },
+   "expected": {
+    "t": "fire up xcode",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "xcode"
+     ]
+    }
+   }
+  },
+  {
+   "name": "050 'open vs code'",
+   "input": {
+    "text": "open vs code"
+   },
+   "expected": {
+    "t": "open vs code",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "vs code"
+     ]
+    }
+   }
+  },
+  {
+   "name": "051 'bring up calculator'",
+   "input": {
+    "text": "bring up calculator"
+   },
+   "expected": {
+    "t": "bring up calculator",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "calculator"
+     ]
+    }
+   }
+  },
+  {
+   "name": "052 'pull up maps'",
+   "input": {
+    "text": "pull up maps"
+   },
+   "expected": {
+    "t": "pull up maps",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "maps"
+     ]
+    }
+   }
+  },
+  {
+   "name": "053 'open the tv'",
+   "input": {
+    "text": "open the tv"
+   },
+   "expected": {
+    "t": "open the tv",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "the tv"
+     ]
+    }
+   }
+  },
+  {
+   "name": "054 'open github.com'",
+   "input": {
+    "text": "open github.com"
+   },
+   "expected": {
+    "t": "open github.com",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "github.com"
+     ]
+    }
+   }
+  },
+  {
+   "name": "055 'open http://example.com'",
+   "input": {
+    "text": "open http://example.com"
+   },
+   "expected": {
+    "t": "open http://example.com",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "http://example.com"
+     ]
+    }
+   }
+  },
+  {
+   "name": "056 'open flurbo'",
+   "input": {
+    "text": "open flurbo"
+   },
+   "expected": {
+    "t": "open flurbo",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "flurbo"
+     ]
+    }
+   }
+  },
+  {
+   "name": "057 'open finder'",
+   "input": {
+    "text": "open finder"
+   },
+   "expected": {
+    "t": "open finder",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "finder"
+     ]
+    }
+   }
+  },
+  {
+   "name": "058 'go to google'",
+   "input": {
+    "text": "go to google"
+   },
+   "expected": {
+    "t": "go to google",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "google"
+     ]
+    }
+   }
+  },
+  {
+   "name": "059 'open weather'",
+   "input": {
+    "text": "open weather"
+   },
+   "expected": {
+    "t": "open weather",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "weather"
+     ]
+    }
+   }
+  },
+  {
+   "name": "060 'open notes'",
+   "input": {
+    "text": "open notes"
+   },
+   "expected": {
+    "t": "open notes",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "notes"
+     ]
+    }
+   }
+  },
+  {
+   "name": "061 'start music'",
+   "input": {
+    "text": "start music"
+   },
+   "expected": {
+    "t": "start music",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "music"
+     ]
+    },
+    "deviation": "DEV-M7-02"
+   }
+  },
+  {
+   "name": "062 'start the music'",
+   "input": {
+    "text": "start the music"
+   },
+   "expected": {
+    "t": "start the music",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "the music"
+     ]
+    },
+    "deviation": "DEV-M7-02"
+   }
+  },
+  {
+   "name": "063 'start a timer for 5 minutes'",
+   "input": {
+    "text": "start a timer for 5 minutes"
+   },
+   "expected": {
+    "t": "start a timer for 5 minutes",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "a timer for 5 minutes"
+     ]
+    },
+    "deviation": "DEV-M7-01"
+   }
+  },
+  {
+   "name": "064 'go to sleep'",
+   "input": {
+    "text": "go to sleep"
+   },
+   "expected": {
+    "t": "go to sleep",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "sleep"
+     ]
+    }
+   }
+  },
+  {
+   "name": "065 'play'",
+   "input": {
+    "text": "play"
+   },
+   "expected": {
+    "t": "play",
+    "branch": "media.play",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "066 'resume music'",
+   "input": {
+    "text": "resume music"
+   },
+   "expected": {
+    "t": "resume music",
+    "branch": "media.play",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "067 'unpause'",
+   "input": {
+    "text": "unpause"
+   },
+   "expected": {
+    "t": "unpause",
+    "branch": "media.play",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "068 'play some music'",
+   "input": {
+    "text": "play some music"
+   },
+   "expected": {
+    "t": "play some music",
+    "branch": "media.play",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "069 'play it'",
+   "input": {
+    "text": "play it"
+   },
+   "expected": {
+    "t": "play it",
+    "branch": "media.play",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "070 'pause'",
+   "input": {
+    "text": "pause"
+   },
+   "expected": {
+    "t": "pause",
+    "branch": "media.pause",
+    "kind": "act",
+    "reply": "Paused, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "pause"
+     ]
+    }
+   }
+  },
+  {
+   "name": "071 'stop'",
+   "input": {
+    "text": "stop"
+   },
+   "expected": {
+    "t": "stop",
+    "branch": "media.pause",
+    "kind": "act",
+    "reply": "Paused, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "pause"
+     ]
+    }
+   }
+  },
+  {
+   "name": "072 'stop music'",
+   "input": {
+    "text": "stop music"
+   },
+   "expected": {
+    "t": "stop music",
+    "branch": "media.pause",
+    "kind": "act",
+    "reply": "Paused, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "pause"
+     ]
+    }
+   }
+  },
+  {
+   "name": "073 'next'",
+   "input": {
+    "text": "next"
+   },
+   "expected": {
+    "t": "next",
+    "branch": "media.next",
+    "kind": "act",
+    "reply": "Next track, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "next track"
+     ]
+    }
+   }
+  },
+  {
+   "name": "074 'skip it'",
+   "input": {
+    "text": "skip it"
+   },
+   "expected": {
+    "t": "skip it",
+    "branch": "media.next",
+    "kind": "act",
+    "reply": "Next track, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "next track"
+     ]
+    }
+   }
+  },
+  {
+   "name": "075 'previous'",
+   "input": {
+    "text": "previous"
+   },
+   "expected": {
+    "t": "previous",
+    "branch": "media.previous",
+    "kind": "act",
+    "reply": "Going back, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "previous track"
+     ]
+    }
+   }
+  },
+  {
+   "name": "076 'replay'",
+   "input": {
+    "text": "replay"
+   },
+   "expected": {
+    "t": "replay",
+    "branch": "media.previous",
+    "kind": "act",
+    "reply": "Going back, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "previous track"
+     ]
+    }
+   }
+  },
+  {
+   "name": "077 \"what's playing\"",
+   "input": {
+    "text": "what's playing"
+   },
+   "expected": {
+    "t": "what's playing",
+    "branch": "media.now_playing",
+    "kind": "helper",
+    "helper": {
+     "fn": "_now_playing",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "078 'name this song'",
+   "input": {
+    "text": "name this song"
+   },
+   "expected": {
+    "t": "name this song",
+    "branch": "media.now_playing",
+    "kind": "helper",
+    "helper": {
+     "fn": "_now_playing",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "079 'play bohemian rhapsody'",
+   "input": {
+    "text": "play bohemian rhapsody"
+   },
+   "expected": {
+    "t": "play bohemian rhapsody",
+    "branch": "media.play_query",
+    "kind": "helper",
+    "helper": {
+     "fn": "_play_query",
+     "args": [
+      "bohemian rhapsody"
+     ]
+    }
+   }
+  },
+  {
+   "name": "080 'put on some jazz'",
+   "input": {
+    "text": "put on some jazz"
+   },
+   "expected": {
+    "t": "put on some jazz",
+    "branch": "media.play_query",
+    "kind": "helper",
+    "helper": {
+     "fn": "_play_query",
+     "args": [
+      "jazz"
+     ]
+    }
+   }
+  },
+  {
+   "name": "081 'listen to the song yellow'",
+   "input": {
+    "text": "listen to the song yellow"
+   },
+   "expected": {
+    "t": "listen to the song yellow",
+    "branch": "media.play_query",
+    "kind": "helper",
+    "helper": {
+     "fn": "_play_query",
+     "args": [
+      "yellow"
+     ]
+    }
+   }
+  },
+  {
+   "name": "082 'can you play hotel california please'",
+   "input": {
+    "text": "can you play hotel california please"
+   },
+   "expected": {
+    "t": "can you play hotel california please",
+    "branch": "media.play_query",
+    "kind": "helper",
+    "helper": {
+     "fn": "_play_query",
+     "args": [
+      "hotel california"
+     ]
+    }
+   }
+  },
+  {
+   "name": "083 'play songs'",
+   "input": {
+    "text": "play songs"
+   },
+   "expected": {
+    "t": "play songs",
+    "branch": "media.play_query",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "084 'i want to hear music'",
+   "input": {
+    "text": "i want to hear music"
+   },
+   "expected": {
+    "t": "i want to hear music",
+    "branch": "media.play_query",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "085 'play cats on youtube'",
+   "input": {
+    "text": "play cats on youtube"
+   },
+   "expected": {
+    "t": "play cats on youtube",
+    "branch": "media.play_query",
+    "kind": "helper",
+    "helper": {
+     "fn": "_play_query",
+     "args": [
+      "cats on youtube"
+     ]
+    }
+   }
+  },
+  {
+   "name": "086 'passion fruit by drake'",
+   "input": {
+    "text": "passion fruit by drake"
+   },
+   "expected": {
+    "t": "passion fruit by drake",
+    "branch": "media.song_by",
+    "kind": "helper",
+    "helper": {
+     "fn": "_play_query",
+     "args": [
+      "passion fruit by drake"
+     ]
+    }
+   }
+  },
+  {
+   "name": "087 'hello by adele'",
+   "input": {
+    "text": "hello by adele"
+   },
+   "expected": {
+    "t": "hello by adele",
+    "branch": "media.song_by",
+    "kind": "helper",
+    "helper": {
+     "fn": "_play_query",
+     "args": [
+      "hello by adele"
+     ]
+    }
+   }
+  },
+  {
+   "name": "088 \"what's up by 4 non blondes\"",
+   "input": {
+    "text": "what's up by 4 non blondes"
+   },
+   "expected": {
+    "t": "what's up by 4 non blondes",
+    "branch": "media.song_by",
+    "kind": "helper",
+    "helper": {
+     "fn": "_play_query",
+     "args": [
+      "what's up by 4 non blondes"
+     ]
+    }
+   }
+  },
+  {
+   "name": "089 'who sang yesterday by the beatles'",
+   "input": {
+    "text": "who sang yesterday by the beatles"
+   },
+   "expected": {
+    "t": "who sang yesterday by the beatles",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "090 'stand by me by ben e king'",
+   "input": {
+    "text": "stand by me by ben e king"
+   },
+   "expected": {
+    "t": "stand by me by ben e king",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "091 'written by shakespeare'",
+   "input": {
+    "text": "written by shakespeare"
+   },
+   "expected": {
+    "t": "written by shakespeare",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "092 'down by the river?'",
+   "input": {
+    "text": "down by the river?"
+   },
+   "expected": {
+    "t": "down by the river",
+    "branch": "media.song_by",
+    "kind": "helper",
+    "helper": {
+     "fn": "_play_query",
+     "args": [
+      "down by the river"
+     ]
+    }
+   }
+  },
+  {
+   "name": "093 'ac/dc by angus'",
+   "input": {
+    "text": "ac/dc by angus"
+   },
+   "expected": {
+    "t": "ac/dc by angus",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "094 'where am i'",
+   "input": {
+    "text": "where am i"
+   },
+   "expected": {
+    "t": "where am i",
+    "branch": "location",
+    "kind": "helper",
+    "helper": {
+     "fn": "_location",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "095 'locate me'",
+   "input": {
+    "text": "locate me"
+   },
+   "expected": {
+    "t": "locate me",
+    "branch": "location",
+    "kind": "helper",
+    "helper": {
+     "fn": "_location",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "096 \"what's the weather\"",
+   "input": {
+    "text": "what's the weather"
+   },
+   "expected": {
+    "t": "what's the weather",
+    "branch": "weather",
+    "kind": "helper",
+    "helper": {
+     "fn": "_weather",
+     "args": [
+      ""
+     ]
+    }
+   }
+  },
+  {
+   "name": "097 'weather in london'",
+   "input": {
+    "text": "weather in london"
+   },
+   "expected": {
+    "t": "weather in london",
+    "branch": "weather",
+    "kind": "helper",
+    "helper": {
+     "fn": "_weather",
+     "args": [
+      "london"
+     ]
+    }
+   }
+  },
+  {
+   "name": "098 \"what's the temperature in paris\"",
+   "input": {
+    "text": "what's the temperature in paris"
+   },
+   "expected": {
+    "t": "what's the temperature in paris",
+    "branch": "weather",
+    "kind": "helper",
+    "helper": {
+     "fn": "_weather",
+     "args": [
+      "paris"
+     ]
+    }
+   }
+  },
+  {
+   "name": "099 \"what's the weather like in new york\"",
+   "input": {
+    "text": "what's the weather like in new york"
+   },
+   "expected": {
+    "t": "what's the weather like in new york",
+    "branch": "weather",
+    "kind": "helper",
+    "helper": {
+     "fn": "_weather",
+     "args": [
+      "new york"
+     ]
+    }
+   }
+  },
+  {
+   "name": "100 'is it raining'",
+   "input": {
+    "text": "is it raining"
+   },
+   "expected": {
+    "t": "is it raining",
+    "branch": "weather",
+    "kind": "helper",
+    "helper": {
+     "fn": "_weather",
+     "args": [
+      ""
+     ]
+    }
+   }
+  },
+  {
+   "name": "101 'forecast for tomorrow'",
+   "input": {
+    "text": "forecast for tomorrow"
+   },
+   "expected": {
+    "t": "forecast for tomorrow",
+    "branch": "weather",
+    "kind": "helper",
+    "helper": {
+     "fn": "_weather",
+     "args": [
+      ""
+     ]
+    }
+   }
+  },
+  {
+   "name": "102 'will it rain today'",
+   "input": {
+    "text": "will it rain today"
+   },
+   "expected": {
+    "t": "will it rain today",
+    "branch": "weather",
+    "kind": "helper",
+    "helper": {
+     "fn": "_weather",
+     "args": [
+      ""
+     ]
+    }
+   }
+  },
+  {
+   "name": "103 'whether or not'",
+   "input": {
+    "text": "whether or not"
+   },
+   "expected": {
+    "t": "whether or not",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "104 'set a timer for 5 minutes'",
+   "input": {
+    "text": "set a timer for 5 minutes"
+   },
+   "expected": {
+    "t": "set a timer for 5 minutes",
+    "branch": "timer.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_timer",
+     "args": [
+      300
+     ]
+    }
+   }
+  },
+  {
+   "name": "105 'timer for 30 seconds'",
+   "input": {
+    "text": "timer for 30 seconds"
+   },
+   "expected": {
+    "t": "timer for 30 seconds",
+    "branch": "timer.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_timer",
+     "args": [
+      30
+     ]
+    }
+   }
+  },
+  {
+   "name": "106 'timer 2 hours'",
+   "input": {
+    "text": "timer 2 hours"
+   },
+   "expected": {
+    "t": "timer 2 hours",
+    "branch": "timer.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_timer",
+     "args": [
+      7200
+     ]
+    }
+   }
+  },
+  {
+   "name": "107 'set a timer for ten minutes'",
+   "input": {
+    "text": "set a timer for ten minutes"
+   },
+   "expected": {
+    "t": "set a timer for ten minutes",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "108 'remind me to call mum in 10 minutes'",
+   "input": {
+    "text": "remind me to call mum in 10 minutes"
+   },
+   "expected": {
+    "t": "remind me to call mum in 10 minutes",
+    "branch": "reminder",
+    "kind": "helper",
+    "helper": {
+     "fn": "_create_reminder",
+     "args": [
+      "call mum",
+      "in 10 minutes"
+     ]
+    }
+   }
+  },
+  {
+   "name": "109 'remind me to buy milk tomorrow'",
+   "input": {
+    "text": "remind me to buy milk tomorrow"
+   },
+   "expected": {
+    "t": "remind me to buy milk tomorrow",
+    "branch": "reminder",
+    "kind": "helper",
+    "helper": {
+     "fn": "_create_reminder",
+     "args": [
+      "buy milk",
+      "tomorrow"
+     ]
+    }
+   }
+  },
+  {
+   "name": "110 'set a reminder to pay rent at 5 pm'",
+   "input": {
+    "text": "set a reminder to pay rent at 5 pm"
+   },
+   "expected": {
+    "t": "set a reminder to pay rent at 5 pm",
+    "branch": "reminder",
+    "kind": "helper",
+    "helper": {
+     "fn": "_create_reminder",
+     "args": [
+      "pay rent",
+      "at 5 pm"
+     ]
+    }
+   }
+  },
+  {
+   "name": "111 'remind me'",
+   "input": {
+    "text": "remind me"
+   },
+   "expected": {
+    "t": "remind me",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "112 'set an alarm for 7 am'",
+   "input": {
+    "text": "set an alarm for 7 am"
+   },
+   "expected": {
+    "t": "set an alarm for 7 am",
+    "branch": "alarm.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "set_alarm",
+     "args": [
+      "7 am"
+     ]
+    }
+   }
+  },
+  {
+   "name": "113 'wake me up at 6:30'",
+   "input": {
+    "text": "wake me up at 6:30"
+   },
+   "expected": {
+    "t": "wake me up at 6:30",
+    "branch": "alarm.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "set_alarm",
+     "args": [
+      "6:30"
+     ]
+    }
+   }
+  },
+  {
+   "name": "114 'set alarm in 20 minutes'",
+   "input": {
+    "text": "set alarm in 20 minutes"
+   },
+   "expected": {
+    "t": "set alarm in 20 minutes",
+    "branch": "alarm.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "set_alarm",
+     "args": [
+      "20 minutes"
+     ]
+    }
+   }
+  },
+  {
+   "name": "115 'set an alarm for 7 every weekday'",
+   "input": {
+    "text": "set an alarm for 7 every weekday"
+   },
+   "expected": {
+    "t": "set an alarm for 7 every weekday",
+    "branch": "alarm.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "set_alarm",
+     "args": [
+      "7 every weekday"
+     ]
+    }
+   }
+  },
+  {
+   "name": "116 \"what's the song that goes never gonna give you up\"",
+   "input": {
+    "text": "what's the song that goes never gonna give you up"
+   },
+   "expected": {
+    "t": "what's the song that goes never gonna give you up",
+    "branch": "lyrics.find",
+    "kind": "helper",
+    "helper": {
+     "fn": "_find_song_by_lyrics",
+     "args": [
+      "never gonna give you up"
+     ]
+    }
+   }
+  },
+  {
+   "name": "117 'find the song with the lyrics hello from the other side'",
+   "input": {
+    "text": "find the song with the lyrics hello from the other side"
+   },
+   "expected": {
+    "t": "find the song with the lyrics hello from the other side",
+    "branch": "lyrics.find",
+    "kind": "helper",
+    "helper": {
+     "fn": "_find_song_by_lyrics",
+     "args": [
+      "hello from the other side"
+     ]
+    }
+   }
+  },
+  {
+   "name": "118 'song that goes we will rock you'",
+   "input": {
+    "text": "song that goes we will rock you"
+   },
+   "expected": {
+    "t": "song that goes we will rock you",
+    "branch": "lyrics.find",
+    "kind": "helper",
+    "helper": {
+     "fn": "_find_song_by_lyrics",
+     "args": [
+      "we will rock you"
+     ]
+    }
+   }
+  },
+  {
+   "name": "119 'read my messages'",
+   "input": {
+    "text": "read my messages"
+   },
+   "expected": {
+    "t": "read my messages",
+    "branch": "messages.read",
+    "kind": "helper",
+    "helper": {
+     "fn": "_recent_messages",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "120 'any new texts'",
+   "input": {
+    "text": "any new texts"
+   },
+   "expected": {
+    "t": "any new texts",
+    "branch": "messages.read",
+    "kind": "helper",
+    "helper": {
+     "fn": "_recent_messages",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "121 \"what's on my calendar\"",
+   "input": {
+    "text": "what's on my calendar"
+   },
+   "expected": {
+    "t": "what's on my calendar",
+    "branch": "calendar.today",
+    "kind": "helper",
+    "helper": {
+     "fn": "_calendar_today",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "122 'my schedule today'",
+   "input": {
+    "text": "my schedule today"
+   },
+   "expected": {
+    "t": "my schedule today",
+    "branch": "calendar.today",
+    "kind": "helper",
+    "helper": {
+     "fn": "_calendar_today",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "123 'brief me'",
+   "input": {
+    "text": "brief me"
+   },
+   "expected": {
+    "t": "brief me",
+    "branch": "briefing",
+    "kind": "helper",
+    "helper": {
+     "fn": "_briefing",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "124 'good morning'",
+   "input": {
+    "text": "good morning"
+   },
+   "expected": {
+    "t": "good morning",
+    "branch": "briefing",
+    "kind": "helper",
+    "helper": {
+     "fn": "_briefing",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "125 'good morning jarvis'",
+   "input": {
+    "text": "good morning jarvis"
+   },
+   "expected": {
+    "t": "good morning jarvis",
+    "branch": "briefing",
+    "kind": "helper",
+    "helper": {
+     "fn": "_briefing",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "126 \"what's on my screen\"",
+   "input": {
+    "text": "what's on my screen"
+   },
+   "expected": {
+    "t": "what's on my screen",
+    "branch": "screen.exact",
+    "kind": "helper",
+    "helper": {
+     "fn": "_screen_help",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "127 \"what's on my screen?\"",
+   "input": {
+    "text": "what's on my screen?"
+   },
+   "expected": {
+    "t": "what's on my screen",
+    "branch": "screen.exact",
+    "kind": "helper",
+    "helper": {
+     "fn": "_screen_help",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "128 'help me with this'",
+   "input": {
+    "text": "help me with this"
+   },
+   "expected": {
+    "t": "help me with this",
+    "branch": "screen.exact",
+    "kind": "helper",
+    "helper": {
+     "fn": "_screen_help",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "129 'give me ideas'",
+   "input": {
+    "text": "give me ideas"
+   },
+   "expected": {
+    "t": "give me ideas",
+    "branch": "screen.exact",
+    "kind": "helper",
+    "helper": {
+     "fn": "_screen_help",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "130 \"what's on the screen\"",
+   "input": {
+    "text": "what's on the screen"
+   },
+   "expected": {
+    "t": "what's on the screen",
+    "branch": "screen.fuzzy",
+    "kind": "helper",
+    "helper": {
+     "fn": "_screen_help",
+     "args": [
+      "what's on the screen"
+     ]
+    }
+   }
+  },
+  {
+   "name": "131 'explain my screen'",
+   "input": {
+    "text": "explain my screen"
+   },
+   "expected": {
+    "t": "explain my screen",
+    "branch": "screen.fuzzy",
+    "kind": "helper",
+    "helper": {
+     "fn": "_screen_help",
+     "args": [
+      "explain my screen"
+     ]
+    }
+   }
+  },
+  {
+   "name": "132 'can you see my screen'",
+   "input": {
+    "text": "can you see my screen"
+   },
+   "expected": {
+    "t": "can you see my screen",
+    "branch": "screen.fuzzy",
+    "kind": "helper",
+    "helper": {
+     "fn": "_screen_help",
+     "args": [
+      "can you see my screen"
+     ]
+    }
+   }
+  },
+  {
+   "name": "133 'see screen time'",
+   "input": {
+    "text": "see screen time"
+   },
+   "expected": {
+    "t": "see screen time",
+    "branch": "screen.fuzzy",
+    "kind": "helper",
+    "helper": {
+     "fn": "_screen_help",
+     "args": [
+      "see screen time"
+     ]
+    }
+   }
+  },
+  {
+   "name": "134 'lock my screen'",
+   "input": {
+    "text": "lock my screen"
+   },
+   "expected": {
+    "t": "lock my screen",
+    "branch": "lock",
+    "kind": "act",
+    "reply": "Locking, sir.",
+    "action": {
+     "fn": "_lock_screen",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "135 'take a screenshot'",
+   "input": {
+    "text": "take a screenshot"
+   },
+   "expected": {
+    "t": "take a screenshot",
+    "branch": "screenshot",
+    "kind": "helper",
+    "helper": {
+     "fn": "_take_screenshot",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "136 'screen brighter'",
+   "input": {
+    "text": "screen brighter"
+   },
+   "expected": {
+    "t": "screen brighter",
+    "branch": "brightness.up",
+    "kind": "act",
+    "reply": "Brighter, sir.",
+    "action": {
+     "fn": "_nudge_brightness",
+     "args": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "name": "137 \"what's on my clipboard\"",
+   "input": {
+    "text": "what's on my clipboard"
+   },
+   "expected": {
+    "t": "what's on my clipboard",
+    "branch": "clipboard.help",
+    "kind": "helper",
+    "helper": {
+     "fn": "_clipboard_help",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "138 'explain this'",
+   "input": {
+    "text": "explain this"
+   },
+   "expected": {
+    "t": "explain this",
+    "branch": "clipboard.help",
+    "kind": "helper",
+    "helper": {
+     "fn": "_clipboard_help",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "139 'what is this'",
+   "input": {
+    "text": "what is this"
+   },
+   "expected": {
+    "t": "what is this",
+    "branch": "clipboard.help",
+    "kind": "helper",
+    "helper": {
+     "fn": "_clipboard_help",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "140 'explain this page'",
+   "input": {
+    "text": "explain this page"
+   },
+   "expected": {
+    "t": "explain this page",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "141 'take a note buy eggs'",
+   "input": {
+    "text": "take a note buy eggs"
+   },
+   "expected": {
+    "t": "take a note buy eggs",
+    "branch": "note.make",
+    "kind": "helper",
+    "helper": {
+     "fn": "_make_note",
+     "args": [
+      "buy eggs"
+     ]
+    }
+   }
+  },
+  {
+   "name": "142 'note: call the bank'",
+   "input": {
+    "text": "note: call the bank"
+   },
+   "expected": {
+    "t": "note: call the bank",
+    "branch": "note.make",
+    "kind": "helper",
+    "helper": {
+     "fn": "_make_note",
+     "args": [
+      "call the bank"
+     ]
+    }
+   }
+  },
+  {
+   "name": "143 'note that the meeting moved'",
+   "input": {
+    "text": "note that the meeting moved"
+   },
+   "expected": {
+    "t": "note that the meeting moved",
+    "branch": "note.make",
+    "kind": "helper",
+    "helper": {
+     "fn": "_make_note",
+     "args": [
+      "the meeting moved"
+     ]
+    }
+   }
+  },
+  {
+   "name": "144 'jot down meeting at noon'",
+   "input": {
+    "text": "jot down meeting at noon"
+   },
+   "expected": {
+    "t": "jot down meeting at noon",
+    "branch": "note.make",
+    "kind": "helper",
+    "helper": {
+     "fn": "_make_note",
+     "args": [
+      "meeting at noon"
+     ]
+    }
+   }
+  },
+  {
+   "name": "145 'notes'",
+   "input": {
+    "text": "notes"
+   },
+   "expected": {
+    "t": "notes",
+    "branch": "note.make",
+    "kind": "helper",
+    "helper": {
+     "fn": "_make_note",
+     "args": [
+      "s"
+     ]
+    }
+   }
+  },
+  {
+   "name": "146 'notebook'",
+   "input": {
+    "text": "notebook"
+   },
+   "expected": {
+    "t": "notebook",
+    "branch": "note.make",
+    "kind": "helper",
+    "helper": {
+     "fn": "_make_note",
+     "args": [
+      "book"
+     ]
+    }
+   }
+  },
+  {
+   "name": "147 'note'",
+   "input": {
+    "text": "note"
+   },
+   "expected": {
+    "t": "note",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "148 'what time is it'",
+   "input": {
+    "text": "what time is it"
+   },
+   "expected": {
+    "t": "what time is it",
+    "branch": "time",
+    "kind": "helper",
+    "helper": {
+     "fn": "_get_system_info",
+     "args": [
+      "time"
+     ]
+    }
+   }
+  },
+  {
+   "name": "149 'What Time Is It?'",
+   "input": {
+    "text": "What Time Is It?"
+   },
+   "expected": {
+    "t": "what time is it",
+    "branch": "time",
+    "kind": "helper",
+    "helper": {
+     "fn": "_get_system_info",
+     "args": [
+      "time"
+     ]
+    }
+   }
+  },
+  {
+   "name": "150 'time'",
+   "input": {
+    "text": "time"
+   },
+   "expected": {
+    "t": "time",
+    "branch": "time",
+    "kind": "helper",
+    "helper": {
+     "fn": "_get_system_info",
+     "args": [
+      "time"
+     ]
+    }
+   }
+  },
+  {
+   "name": "151 \"what's the time\"",
+   "input": {
+    "text": "what's the time"
+   },
+   "expected": {
+    "t": "what's the time",
+    "branch": "time",
+    "kind": "helper",
+    "helper": {
+     "fn": "_get_system_info",
+     "args": [
+      "time"
+     ]
+    }
+   }
+  },
+  {
+   "name": "152 'what time is it in tokyo'",
+   "input": {
+    "text": "what time is it in tokyo"
+   },
+   "expected": {
+    "t": "what time is it in tokyo",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "153 'what  time is it'",
+   "input": {
+    "text": "what  time is it"
+   },
+   "expected": {
+    "t": "what  time is it",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "154 'battery level'",
+   "input": {
+    "text": "battery level"
+   },
+   "expected": {
+    "t": "battery level",
+    "branch": "battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_get_system_info",
+     "args": [
+      "battery"
+     ]
+    }
+   }
+  },
+  {
+   "name": "155 'battery'",
+   "input": {
+    "text": "battery"
+   },
+   "expected": {
+    "t": "battery",
+    "branch": "battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_get_system_info",
+     "args": [
+      "battery"
+     ]
+    }
+   }
+  },
+  {
+   "name": "156 'how much battery do i have'",
+   "input": {
+    "text": "how much battery do i have"
+   },
+   "expected": {
+    "t": "how much battery do i have",
+    "branch": "battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_get_system_info",
+     "args": [
+      "battery"
+     ]
+    }
+   }
+  },
+  {
+   "name": "157 \"what's my airpods battery status\"",
+   "input": {
+    "text": "what's my airpods battery status"
+   },
+   "expected": {
+    "t": "what's my airpods battery status",
+    "branch": "battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_get_system_info",
+     "args": [
+      "battery"
+     ]
+    }
+   }
+  },
+  {
+   "name": "158 'my battery'",
+   "input": {
+    "text": "my battery"
+   },
+   "expected": {
+    "t": "my battery",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "159 'which model are you using'",
+   "input": {
+    "text": "which model are you using"
+   },
+   "expected": {
+    "t": "which model are you using",
+    "branch": "backend",
+    "kind": "helper",
+    "helper": {
+     "fn": "_backend_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "160 'backend status'",
+   "input": {
+    "text": "backend status"
+   },
+   "expected": {
+    "t": "backend status",
+    "branch": "backend",
+    "kind": "helper",
+    "helper": {
+     "fn": "_backend_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "161 'hello'",
+   "input": {
+    "text": "hello"
+   },
+   "expected": {
+    "t": "hello",
+    "branch": "presence",
+    "kind": "say",
+    "reply": "At your service, sir."
+   }
+  },
+  {
+   "name": "162 '  hello  '",
+   "input": {
+    "text": "  hello  "
+   },
+   "expected": {
+    "t": "hello",
+    "branch": "presence",
+    "kind": "say",
+    "reply": "At your service, sir."
+   }
+  },
+  {
+   "name": "163 'hello!'",
+   "input": {
+    "text": "hello!"
+   },
+   "expected": {
+    "t": "hello!",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "164 'hello jarvis'",
+   "input": {
+    "text": "hello jarvis"
+   },
+   "expected": {
+    "t": "hello jarvis",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "165 'are you there'",
+   "input": {
+    "text": "are you there"
+   },
+   "expected": {
+    "t": "are you there",
+    "branch": "presence",
+    "kind": "say",
+    "reply": "At your service, sir."
+   }
+  },
+  {
+   "name": "166 'status'",
+   "input": {
+    "text": "status"
+   },
+   "expected": {
+    "t": "status",
+    "branch": "presence",
+    "kind": "say",
+    "reply": "At your service, sir."
+   }
+  },
+  {
+   "name": "167 'forget my voice'",
+   "input": {
+    "text": "forget my voice"
+   },
+   "expected": {
+    "t": "forget my voice",
+    "branch": "voice.forget",
+    "kind": "helper",
+    "helper": {
+     "fn": "forget_voice",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "168 'respond to everyone'",
+   "input": {
+    "text": "respond to everyone"
+   },
+   "expected": {
+    "t": "respond to everyone",
+    "branch": "voice.forget",
+    "kind": "helper",
+    "helper": {
+     "fn": "forget_voice",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "169 'volume 50'",
+   "input": {
+    "text": "volume 50"
+   },
+   "expected": {
+    "t": "volume 50",
+    "branch": "volume.set",
+    "kind": "act",
+    "reply": "Setting volume to 50, sir.",
+    "action": {
+     "fn": "_set_volume",
+     "args": [
+      50
+     ]
+    }
+   }
+  },
+  {
+   "name": "170 'set volume to 30'",
+   "input": {
+    "text": "set volume to 30"
+   },
+   "expected": {
+    "t": "set volume to 30",
+    "branch": "volume.set",
+    "kind": "act",
+    "reply": "Setting volume to 30, sir.",
+    "action": {
+     "fn": "_set_volume",
+     "args": [
+      30
+     ]
+    }
+   }
+  },
+  {
+   "name": "171 'volume to 150'",
+   "input": {
+    "text": "volume to 150"
+   },
+   "expected": {
+    "t": "volume to 150",
+    "branch": "volume.set",
+    "kind": "act",
+    "reply": "Setting volume to 100, sir.",
+    "action": {
+     "fn": "_set_volume",
+     "args": [
+      100
+     ]
+    }
+   }
+  },
+  {
+   "name": "172 'set volume to 0'",
+   "input": {
+    "text": "set volume to 0"
+   },
+   "expected": {
+    "t": "set volume to 0",
+    "branch": "volume.set",
+    "kind": "act",
+    "reply": "Setting volume to 0, sir.",
+    "action": {
+     "fn": "_set_volume",
+     "args": [
+      0
+     ]
+    }
+   }
+  },
+  {
+   "name": "173 'volume fifty'",
+   "input": {
+    "text": "volume fifty"
+   },
+   "expected": {
+    "t": "volume fifty",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "174 'mute'",
+   "input": {
+    "text": "mute"
+   },
+   "expected": {
+    "t": "mute",
+    "branch": "volume.mute",
+    "kind": "act",
+    "reply": "Muting, sir.",
+    "action": {
+     "fn": "_set_volume",
+     "args": [
+      0
+     ]
+    }
+   }
+  },
+  {
+   "name": "175 'volume up'",
+   "input": {
+    "text": "volume up"
+   },
+   "expected": {
+    "t": "volume up",
+    "branch": "volume.up",
+    "kind": "act",
+    "reply": "Turning it up, sir.",
+    "action": {
+     "fn": "_nudge_volume",
+     "args": [
+      15
+     ]
+    }
+   }
+  },
+  {
+   "name": "176 'louder'",
+   "input": {
+    "text": "louder"
+   },
+   "expected": {
+    "t": "louder",
+    "branch": "volume.up",
+    "kind": "act",
+    "reply": "Turning it up, sir.",
+    "action": {
+     "fn": "_nudge_volume",
+     "args": [
+      15
+     ]
+    }
+   }
+  },
+  {
+   "name": "177 'quieter'",
+   "input": {
+    "text": "quieter"
+   },
+   "expected": {
+    "t": "quieter",
+    "branch": "volume.down",
+    "kind": "act",
+    "reply": "Turning it down, sir.",
+    "action": {
+     "fn": "_nudge_volume",
+     "args": [
+      -15
+     ]
+    }
+   }
+  },
+  {
+   "name": "178 'news'",
+   "input": {
+    "text": "news"
+   },
+   "expected": {
+    "t": "news",
+    "branch": "news",
+    "kind": "helper",
+    "helper": {
+     "fn": "_get_news",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "179 'top headlines'",
+   "input": {
+    "text": "top headlines"
+   },
+   "expected": {
+    "t": "top headlines",
+    "branch": "news",
+    "kind": "helper",
+    "helper": {
+     "fn": "_get_news",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "180 \"what's the news\"",
+   "input": {
+    "text": "what's the news"
+   },
+   "expected": {
+    "t": "what's the news",
+    "branch": "news",
+    "kind": "helper",
+    "helper": {
+     "fn": "_get_news",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "181 'screenshot'",
+   "input": {
+    "text": "screenshot"
+   },
+   "expected": {
+    "t": "screenshot",
+    "branch": "screenshot",
+    "kind": "helper",
+    "helper": {
+     "fn": "_take_screenshot",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "182 \"i'm stepping away\"",
+   "input": {
+    "text": "i'm stepping away"
+   },
+   "expected": {
+    "t": "i'm stepping away",
+    "branch": "lock",
+    "kind": "act",
+    "reply": "Locking, sir.",
+    "action": {
+     "fn": "_lock_screen",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "183 'lock it'",
+   "input": {
+    "text": "lock it"
+   },
+   "expected": {
+    "t": "lock it",
+    "branch": "lock",
+    "kind": "act",
+    "reply": "Locking, sir.",
+    "action": {
+     "fn": "_lock_screen",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "184 'empty the trash'",
+   "input": {
+    "text": "empty the trash"
+   },
+   "expected": {
+    "t": "empty the trash",
+    "branch": "trash",
+    "kind": "act",
+    "reply": "Taking out the trash, sir.",
+    "action": {
+     "fn": "_empty_trash",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "185 'brightness 70'",
+   "input": {
+    "text": "brightness 70"
+   },
+   "expected": {
+    "t": "brightness 70",
+    "branch": "brightness.set",
+    "kind": "act",
+    "reply": "Brightness to 70, sir.",
+    "action": {
+     "fn": "_set_brightness",
+     "args": [
+      70
+     ]
+    }
+   }
+  },
+  {
+   "name": "186 'set brightness to 40 percent'",
+   "input": {
+    "text": "set brightness to 40 percent"
+   },
+   "expected": {
+    "t": "set brightness to 40 percent",
+    "branch": "brightness.set",
+    "kind": "act",
+    "reply": "Brightness to 40, sir.",
+    "action": {
+     "fn": "_set_brightness",
+     "args": [
+      40
+     ]
+    }
+   }
+  },
+  {
+   "name": "187 'brightness to 200'",
+   "input": {
+    "text": "brightness to 200"
+   },
+   "expected": {
+    "t": "brightness to 200",
+    "branch": "brightness.set",
+    "kind": "act",
+    "reply": "Brightness to 100, sir.",
+    "action": {
+     "fn": "_set_brightness",
+     "args": [
+      100
+     ]
+    }
+   }
+  },
+  {
+   "name": "188 'brighter'",
+   "input": {
+    "text": "brighter"
+   },
+   "expected": {
+    "t": "brighter",
+    "branch": "brightness.up",
+    "kind": "act",
+    "reply": "Brighter, sir.",
+    "action": {
+     "fn": "_nudge_brightness",
+     "args": [
+      4
+     ]
+    }
+   }
+  },
+  {
+   "name": "189 'dim the screen'",
+   "input": {
+    "text": "dim the screen"
+   },
+   "expected": {
+    "t": "dim the screen",
+    "branch": "brightness.down",
+    "kind": "act",
+    "reply": "Dimming, sir.",
+    "action": {
+     "fn": "_nudge_brightness",
+     "args": [
+      -4
+     ]
+    }
+   }
+  },
+  {
+   "name": "190 \"text mum saying i'll be late\"",
+   "input": {
+    "text": "text mum saying i'll be late"
+   },
+   "expected": {
+    "t": "text mum saying i'll be late",
+    "branch": "message.send",
+    "kind": "helper",
+    "helper": {
+     "fn": "_send_message",
+     "args": [
+      "mum",
+      "i'll be late"
+     ]
+    }
+   }
+  },
+  {
+   "name": "191 'send a message to dad that says happy birthday'",
+   "input": {
+    "text": "send a message to dad that says happy birthday"
+   },
+   "expected": {
+    "t": "send a message to dad that says happy birthday",
+    "branch": "message.send",
+    "kind": "helper",
+    "helper": {
+     "fn": "_send_message",
+     "args": [
+      "dad",
+      "happy birthday"
+     ]
+    }
+   }
+  },
+  {
+   "name": "192 \"message sarah telling her i'm outside\"",
+   "input": {
+    "text": "message sarah telling her i'm outside"
+   },
+   "expected": {
+    "t": "message sarah telling her i'm outside",
+    "branch": "message.send",
+    "kind": "helper",
+    "helper": {
+     "fn": "_send_message",
+     "args": [
+      "sarah",
+      "i'm outside"
+     ]
+    }
+   }
+  },
+  {
+   "name": "193 'text mum'",
+   "input": {
+    "text": "text mum"
+   },
+   "expected": {
+    "t": "text mum",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "194 'type hello world'",
+   "input": {
+    "text": "type hello world"
+   },
+   "expected": {
+    "t": "type hello world",
+    "branch": "type",
+    "kind": "helper",
+    "helper": {
+     "fn": "_type_text",
+     "args": [
+      "hello world"
+     ]
+    }
+   }
+  },
+  {
+   "name": "195 'dictate: dear sir'",
+   "input": {
+    "text": "dictate: dear sir"
+   },
+   "expected": {
+    "t": "dictate: dear sir",
+    "branch": "type",
+    "kind": "helper",
+    "helper": {
+     "fn": "_type_text",
+     "args": [
+      "dear sir"
+     ]
+    }
+   }
+  },
+  {
+   "name": "196 'take this down the meeting is at noon'",
+   "input": {
+    "text": "take this down the meeting is at noon"
+   },
+   "expected": {
+    "t": "take this down the meeting is at noon",
+    "branch": "type",
+    "kind": "helper",
+    "helper": {
+     "fn": "_type_text",
+     "args": [
+      "the meeting is at noon"
+     ]
+    }
+   }
+  },
+  {
+   "name": "197 'summarize this page'",
+   "input": {
+    "text": "summarize this page"
+   },
+   "expected": {
+    "t": "summarize this page",
+    "branch": "page.summarize",
+    "kind": "helper",
+    "helper": {
+     "fn": "_summarize_page",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "198 'tldr'",
+   "input": {
+    "text": "tldr"
+   },
+   "expected": {
+    "t": "tldr",
+    "branch": "page.summarize",
+    "kind": "helper",
+    "helper": {
+     "fn": "_summarize_page",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "199 'list my shortcuts'",
+   "input": {
+    "text": "list my shortcuts"
+   },
+   "expected": {
+    "t": "list my shortcuts",
+    "branch": "shortcut.list",
+    "kind": "helper",
+    "helper": {
+     "fn": "_list_shortcuts",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "200 'what shortcuts do i have'",
+   "input": {
+    "text": "what shortcuts do i have"
+   },
+   "expected": {
+    "t": "what shortcuts do i have",
+    "branch": "shortcut.list",
+    "kind": "helper",
+    "helper": {
+     "fn": "_list_shortcuts",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "201 'cancel the timer'",
+   "input": {
+    "text": "cancel the timer"
+   },
+   "expected": {
+    "t": "cancel the timer",
+    "branch": "timer.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_timers",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "202 'stop my timers'",
+   "input": {
+    "text": "stop my timers"
+   },
+   "expected": {
+    "t": "stop my timers",
+    "branch": "timer.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_timers",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "203 'kill all timers'",
+   "input": {
+    "text": "kill all timers"
+   },
+   "expected": {
+    "t": "kill all timers",
+    "branch": "timer.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_timers",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "204 'how long is left on the timer'",
+   "input": {
+    "text": "how long is left on the timer"
+   },
+   "expected": {
+    "t": "how long is left on the timer",
+    "branch": "timer.status",
+    "kind": "helper",
+    "helper": {
+     "fn": "_timer_status",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "205 'timer status'",
+   "input": {
+    "text": "timer status"
+   },
+   "expected": {
+    "t": "timer status",
+    "branch": "timer.status",
+    "kind": "helper",
+    "helper": {
+     "fn": "_timer_status",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "206 'how long left'",
+   "input": {
+    "text": "how long left"
+   },
+   "expected": {
+    "t": "how long left",
+    "branch": "timer.status",
+    "kind": "helper",
+    "helper": {
+     "fn": "_timer_status",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "207 'cancel my alarm'",
+   "input": {
+    "text": "cancel my alarm"
+   },
+   "expected": {
+    "t": "cancel my alarm",
+    "branch": "alarm.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "208 'turn off the alarm'",
+   "input": {
+    "text": "turn off the alarm"
+   },
+   "expected": {
+    "t": "turn off the alarm",
+    "branch": "alarm.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "209 'delete all alarms'",
+   "input": {
+    "text": "delete all alarms"
+   },
+   "expected": {
+    "t": "delete all alarms",
+    "branch": "alarm.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "210 'list my alarms'",
+   "input": {
+    "text": "list my alarms"
+   },
+   "expected": {
+    "t": "list my alarms",
+    "branch": "alarm.list",
+    "kind": "helper",
+    "helper": {
+     "fn": "_list_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "211 'do i have any alarms'",
+   "input": {
+    "text": "do i have any alarms"
+   },
+   "expected": {
+    "t": "do i have any alarms",
+    "branch": "alarm.list",
+    "kind": "helper",
+    "helper": {
+     "fn": "_list_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "212 'quit everything'",
+   "input": {
+    "text": "quit everything"
+   },
+   "expected": {
+    "t": "quit everything",
+    "branch": "quit.all",
+    "kind": "helper",
+    "helper": {
+     "fn": "_quit_all_apps",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "213 'close all apps'",
+   "input": {
+    "text": "close all apps"
+   },
+   "expected": {
+    "t": "close all apps",
+    "branch": "quit.all",
+    "kind": "helper",
+    "helper": {
+     "fn": "_quit_all_apps",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "214 'quit safari'",
+   "input": {
+    "text": "quit safari"
+   },
+   "expected": {
+    "t": "quit safari",
+    "branch": "quit.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_quit_app",
+     "args": [
+      "safari"
+     ]
+    }
+   }
+  },
+  {
+   "name": "215 'close the deal'",
+   "input": {
+    "text": "close the deal"
+   },
+   "expected": {
+    "t": "close the deal",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "216 'close all my browsers'",
+   "input": {
+    "text": "close all my browsers"
+   },
+   "expected": {
+    "t": "close all my browsers",
+    "branch": "quit.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_quit_app",
+     "args": [
+      "all my browsers"
+     ]
+    }
+   }
+  },
+  {
+   "name": "217 'exit'",
+   "input": {
+    "text": "exit"
+   },
+   "expected": {
+    "t": "exit",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "218 'goodnight'",
+   "input": {
+    "text": "goodnight"
+   },
+   "expected": {
+    "t": "goodnight",
+    "branch": "sleep",
+    "kind": "act",
+    "reply": "Goodnight, sir.",
+    "action": {
+     "fn": "_sleep_mac",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "219 'goodnight jarvis'",
+   "input": {
+    "text": "goodnight jarvis"
+   },
+   "expected": {
+    "t": "goodnight jarvis",
+    "branch": "sleep",
+    "kind": "act",
+    "reply": "Goodnight, sir.",
+    "action": {
+     "fn": "_sleep_mac",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "220 'put the mac to sleep'",
+   "input": {
+    "text": "put the mac to sleep"
+   },
+   "expected": {
+    "t": "put the mac to sleep",
+    "branch": "sleep",
+    "kind": "act",
+    "reply": "Goodnight, sir.",
+    "action": {
+     "fn": "_sleep_mac",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "221 'copy that'",
+   "input": {
+    "text": "copy that"
+   },
+   "expected": {
+    "t": "copy that",
+    "branch": "clipboard.copy_last",
+    "kind": "helper",
+    "helper": {
+     "fn": "_copy_last_reply",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "222 'copy it'",
+   "input": {
+    "text": "copy it"
+   },
+   "expected": {
+    "t": "copy it",
+    "branch": "clipboard.copy_last",
+    "kind": "helper",
+    "helper": {
+     "fn": "_copy_last_reply",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "223 \"what's my default browser\"",
+   "input": {
+    "text": "what's my default browser"
+   },
+   "expected": {
+    "t": "what's my default browser",
+    "branch": "browser.default.get",
+    "kind": "say",
+    "reply": "Your default browser is Safari, sir."
+   }
+  },
+  {
+   "name": "224 'set my default browser to chrome'",
+   "input": {
+    "text": "set my default browser to chrome"
+   },
+   "expected": {
+    "t": "set my default browser to chrome",
+    "branch": "browser.default.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_default_browser",
+     "args": [
+      "chrome"
+     ]
+    }
+   }
+  },
+  {
+   "name": "225 'make firefox my default browser'",
+   "input": {
+    "text": "make firefox my default browser"
+   },
+   "expected": {
+    "t": "make firefox my default browser",
+    "branch": "browser.default.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_default_browser",
+     "args": [
+      "firefox"
+     ]
+    }
+   }
+  },
+  {
+   "name": "226 'what browsers do i have'",
+   "input": {
+    "text": "what browsers do i have"
+   },
+   "expected": {
+    "t": "what browsers do i have",
+    "branch": "apps.find",
+    "kind": "helper",
+    "helper": {
+     "fn": "_find_apps",
+     "args": [
+      "browsers"
+     ]
+    }
+   }
+  },
+  {
+   "name": "227 'which music apps do i have installed'",
+   "input": {
+    "text": "which music apps do i have installed"
+   },
+   "expected": {
+    "t": "which music apps do i have installed",
+    "branch": "apps.find",
+    "kind": "helper",
+    "helper": {
+     "fn": "_find_apps",
+     "args": [
+      "music"
+     ]
+    }
+   }
+  },
+  {
+   "name": "228 'what games do i have'",
+   "input": {
+    "text": "what games do i have"
+   },
+   "expected": {
+    "t": "what games do i have",
+    "branch": "apps.find",
+    "kind": "helper",
+    "helper": {
+     "fn": "_find_apps",
+     "args": [
+      "games"
+     ]
+    }
+   }
+  },
+  {
+   "name": "229 'what friends do i have'",
+   "input": {
+    "text": "what friends do i have"
+   },
+   "expected": {
+    "t": "what friends do i have",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "230 'turn on dark mode'",
+   "input": {
+    "text": "turn on dark mode"
+   },
+   "expected": {
+    "t": "turn on dark mode",
+    "branch": "toggle",
+    "kind": "act",
+    "reply": "Turning on dark mode, sir.",
+    "action": {
+     "fn": "_toggle_system",
+     "args": [
+      "dark mode",
+      true
+     ]
+    }
+   }
+  },
+  {
+   "name": "231 'turn off wifi'",
+   "input": {
+    "text": "turn off wifi"
+   },
+   "expected": {
+    "t": "turn off wifi",
+    "branch": "toggle",
+    "kind": "act",
+    "reply": "Turning off wifi, sir.",
+    "action": {
+     "fn": "_toggle_system",
+     "args": [
+      "wifi",
+      false
+     ]
+    }
+   }
+  },
+  {
+   "name": "232 'enable bluetooth'",
+   "input": {
+    "text": "enable bluetooth"
+   },
+   "expected": {
+    "t": "enable bluetooth",
+    "branch": "toggle",
+    "kind": "act",
+    "reply": "Done, sir.",
+    "action": {
+     "fn": "_toggle_system",
+     "args": [
+      "bluetooth",
+      true
+     ]
+    }
+   }
+  },
+  {
+   "name": "233 'show hidden files'",
+   "input": {
+    "text": "show hidden files"
+   },
+   "expected": {
+    "t": "show hidden files",
+    "branch": "toggle",
+    "kind": "act",
+    "reply": "Done, sir.",
+    "action": {
+     "fn": "_macos_tweak",
+     "args": [
+      "hidden files",
+      true
+     ]
+    }
+   }
+  },
+  {
+   "name": "234 'hide the dock'",
+   "input": {
+    "text": "hide the dock"
+   },
+   "expected": {
+    "t": "hide the dock",
+    "branch": "toggle",
+    "kind": "act",
+    "reply": "Done, sir.",
+    "action": {
+     "fn": "_macos_tweak",
+     "args": [
+      "the dock",
+      false
+     ]
+    }
+   }
+  },
+  {
+   "name": "235 'disable do not disturb'",
+   "input": {
+    "text": "disable do not disturb"
+   },
+   "expected": {
+    "t": "disable do not disturb",
+    "branch": "toggle",
+    "kind": "act",
+    "reply": "Done, sir.",
+    "action": {
+     "fn": "_toggle_system",
+     "args": [
+      "do not disturb",
+      false
+     ]
+    }
+   }
+  },
+  {
+   "name": "236 'switch on focus'",
+   "input": {
+    "text": "switch on focus"
+   },
+   "expected": {
+    "t": "switch on focus",
+    "branch": "toggle",
+    "kind": "act",
+    "reply": "Turning on focus, sir.",
+    "action": {
+     "fn": "_toggle_system",
+     "args": [
+      "focus",
+      true
+     ]
+    }
+   }
+  },
+  {
+   "name": "237 'turn on the kettle'",
+   "input": {
+    "text": "turn on the kettle"
+   },
+   "expected": {
+    "t": "turn on the kettle",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "238 'show me the money'",
+   "input": {
+    "text": "show me the money"
+   },
+   "expected": {
+    "t": "show me the money",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "239 'recent files'",
+   "input": {
+    "text": "recent files"
+   },
+   "expected": {
+    "t": "recent files",
+    "branch": "files.recent",
+    "kind": "helper",
+    "helper": {
+     "fn": "_spotlight",
+     "args": [
+      ""
+     ],
+     "kwargs": {
+      "recent": true
+     }
+    }
+   }
+  },
+  {
+   "name": "240 'what have i been working on'",
+   "input": {
+    "text": "what have i been working on"
+   },
+   "expected": {
+    "t": "what have i been working on",
+    "branch": "files.recent",
+    "kind": "helper",
+    "helper": {
+     "fn": "_spotlight",
+     "args": [
+      ""
+     ],
+     "kwargs": {
+      "recent": true
+     }
+    }
+   }
+  },
+  {
+   "name": "241 'reveal the file budget.pdf'",
+   "input": {
+    "text": "reveal the file budget.pdf"
+   },
+   "expected": {
+    "t": "reveal the file budget.pdf",
+    "branch": "files.reveal",
+    "kind": "helper",
+    "helper": {
+     "fn": "_reveal_in_finder",
+     "args": [
+      "budget.pdf"
+     ]
+    }
+   }
+  },
+  {
+   "name": "242 'where is the file thesis.docx'",
+   "input": {
+    "text": "where is the file thesis.docx"
+   },
+   "expected": {
+    "t": "where is the file thesis.docx",
+    "branch": "files.reveal",
+    "kind": "helper",
+    "helper": {
+     "fn": "_reveal_in_finder",
+     "args": [
+      "thesis.docx"
+     ]
+    }
+   }
+  },
+  {
+   "name": "243 'find the file resume in finder'",
+   "input": {
+    "text": "find the file resume in finder"
+   },
+   "expected": {
+    "t": "find the file resume in finder",
+    "branch": "files.reveal",
+    "kind": "helper",
+    "helper": {
+     "fn": "_reveal_in_finder",
+     "args": [
+      "resume"
+     ]
+    }
+   }
+  },
+  {
+   "name": "244 'where is my phone'",
+   "input": {
+    "text": "where is my phone"
+   },
+   "expected": {
+    "t": "where is my phone",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "245 \"what's my ip\"",
+   "input": {
+    "text": "what's my ip"
+   },
+   "expected": {
+    "t": "what's my ip",
+    "branch": "ip",
+    "kind": "helper",
+    "helper": {
+     "fn": "_ip_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "246 'ip address'",
+   "input": {
+    "text": "ip address"
+   },
+   "expected": {
+    "t": "ip address",
+    "branch": "ip",
+    "kind": "helper",
+    "helper": {
+     "fn": "_ip_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "247 'airpods battery'",
+   "input": {
+    "text": "airpods battery"
+   },
+   "expected": {
+    "t": "airpods battery",
+    "branch": "bt.battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_bt_battery",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "248 'how are my headphones'",
+   "input": {
+    "text": "how are my headphones"
+   },
+   "expected": {
+    "t": "how are my headphones",
+    "branch": "bt.battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_bt_battery",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "249 'google swift concurrency'",
+   "input": {
+    "text": "google swift concurrency"
+   },
+   "expected": {
+    "t": "google swift concurrency",
+    "branch": "web.google",
+    "kind": "act",
+    "reply": "Googling swift concurrency, sir.",
+    "action": {
+     "fn": "_open_url",
+     "args": [
+      "https://www.google.com/search?q=swift%20concurrency"
+     ]
+    }
+   }
+  },
+  {
+   "name": "250 'google how tall is everest'",
+   "input": {
+    "text": "google how tall is everest"
+   },
+   "expected": {
+    "t": "google how tall is everest",
+    "branch": "web.google",
+    "kind": "act",
+    "reply": "Googling how tall is everest, sir.",
+    "action": {
+     "fn": "_open_url",
+     "args": [
+      "https://www.google.com/search?q=how%20tall%20is%20everest"
+     ]
+    }
+   }
+  },
+  {
+   "name": "251 'youtube lofi beats'",
+   "input": {
+    "text": "youtube lofi beats"
+   },
+   "expected": {
+    "t": "youtube lofi beats",
+    "branch": "web.youtube",
+    "kind": "act",
+    "reply": "Searching YouTube for lofi beats, sir.",
+    "action": {
+     "fn": "_open_url",
+     "args": [
+      "https://www.youtube.com/results?search_query=lofi%20beats"
+     ]
+    }
+   }
+  },
+  {
+   "name": "252 'search youtube for cats'",
+   "input": {
+    "text": "search youtube for cats"
+   },
+   "expected": {
+    "t": "search youtube for cats",
+    "branch": "web.youtube",
+    "kind": "act",
+    "reply": "Searching YouTube for cats, sir.",
+    "action": {
+     "fn": "_open_url",
+     "args": [
+      "https://www.youtube.com/results?search_query=cats"
+     ]
+    }
+   }
+  },
+  {
+   "name": "253 'find cooking videos on youtube'",
+   "input": {
+    "text": "find cooking videos on youtube"
+   },
+   "expected": {
+    "t": "find cooking videos on youtube",
+    "branch": "web.youtube",
+    "kind": "act",
+    "reply": "Searching YouTube for cooking videos, sir.",
+    "action": {
+     "fn": "_open_url",
+     "args": [
+      "https://www.youtube.com/results?search_query=cooking%20videos"
+     ]
+    }
+   }
+  },
+  {
+   "name": "254 'look up youtube for guitar lessons'",
+   "input": {
+    "text": "look up youtube for guitar lessons"
+   },
+   "expected": {
+    "t": "look up youtube for guitar lessons",
+    "branch": "web.youtube",
+    "kind": "act",
+    "reply": "Searching YouTube for guitar lessons, sir.",
+    "action": {
+     "fn": "_open_url",
+     "args": [
+      "https://www.youtube.com/results?search_query=guitar%20lessons"
+     ]
+    }
+   }
+  },
+  {
+   "name": "255 'tell me a joke'",
+   "input": {
+    "text": "tell me a joke"
+   },
+   "expected": {
+    "t": "tell me a joke",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "256 \"what's the capital of france\"",
+   "input": {
+    "text": "what's the capital of france"
+   },
+   "expected": {
+    "t": "what's the capital of france",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "257 'who are you'",
+   "input": {
+    "text": "who are you"
+   },
+   "expected": {
+    "t": "who are you",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "258 'how are you doing today'",
+   "input": {
+    "text": "how are you doing today"
+   },
+   "expected": {
+    "t": "how are you doing today",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "259 'thank you'",
+   "input": {
+    "text": "thank you"
+   },
+   "expected": {
+    "t": "thank you",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "260 ''",
+   "input": {
+    "text": ""
+   },
+   "expected": {
+    "t": "",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "261 'open my games'",
+   "input": {
+    "text": "open my games"
+   },
+   "expected": {
+    "t": "open my games",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "my games"
+     ]
+    }
+   }
+  },
+  {
+   "name": "262 'open a game'",
+   "input": {
+    "text": "open a game"
+   },
+   "expected": {
+    "t": "open a game",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "a game"
+     ]
+    }
+   }
+  },
+  {
+   "name": "263 'stop the timer'",
+   "input": {
+    "text": "stop the timer"
+   },
+   "expected": {
+    "t": "stop the timer",
+    "branch": "timer.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_timers",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "264 'stop the music'",
+   "input": {
+    "text": "stop the music"
+   },
+   "expected": {
+    "t": "stop the music",
+    "branch": "media.pause",
+    "kind": "act",
+    "reply": "Paused, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "pause"
+     ]
+    }
+   }
+  },
+  {
+   "name": "265 'turn the lights off'",
+   "input": {
+    "text": "turn the lights off"
+   },
+   "expected": {
+    "t": "turn the lights off",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "266 'open the pod bay doors'",
+   "input": {
+    "text": "open the pod bay doors"
+   },
+   "expected": {
+    "t": "open the pod bay doors",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "the pod bay doors"
+     ]
+    }
+   }
+  },
+  {
+   "name": "267 'hide'",
+   "input": {
+    "text": "hide"
+   },
+   "expected": {
+    "t": "hide",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "268 'play music by drake'",
+   "input": {
+    "text": "play music by drake"
+   },
+   "expected": {
+    "t": "play music by drake",
+    "branch": "media.play_query",
+    "kind": "helper",
+    "helper": {
+     "fn": "_play_query",
+     "args": [
+      "music by drake"
+     ]
+    }
+   }
+  },
+  {
+   "name": "269 \"WHAT'S PLAYING?\"",
+   "input": {
+    "text": "WHAT'S PLAYING?"
+   },
+   "expected": {
+    "t": "what's playing",
+    "branch": "media.now_playing",
+    "kind": "helper",
+    "helper": {
+     "fn": "_now_playing",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "270 'what’s playing'",
+   "input": {
+    "text": "what’s playing"
+   },
+   "expected": {
+    "t": "what’s playing",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "271 'open system settings'",
+   "input": {
+    "text": "open system settings"
+   },
+   "expected": {
+    "t": "open system settings",
+    "branch": "settings.root",
+    "kind": "act",
+    "reply": "Opening System Settings, sir.",
+    "action": {
+     "fn": "_open_settings",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "272 'turn off the lights'",
+   "input": {
+    "text": "turn off the lights"
+   },
+   "expected": {
+    "t": "turn off the lights",
+    "branch": "lights",
+    "kind": "helper",
+    "helper": {
+     "fn": "_run_shortcut",
+     "args": [
+      "turn off lights"
+     ]
+    }
+   }
+  },
+  {
+   "name": "273 \"what's the weather in london?\"",
+   "input": {
+    "text": "what's the weather in london?"
+   },
+   "expected": {
+    "t": "what's the weather in london",
+    "branch": "weather",
+    "kind": "helper",
+    "helper": {
+     "fn": "_weather",
+     "args": [
+      "london"
+     ]
+    }
+   }
+  },
+  {
+   "name": "274 'launch spotify'",
+   "input": {
+    "text": "launch spotify"
+   },
+   "expected": {
+    "t": "launch spotify",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "spotify"
+     ]
+    }
+   }
+  },
+  {
+   "name": "275 'déjà vu by olivia rodrigo'",
+   "input": {
+    "text": "déjà vu by olivia rodrigo"
+   },
+   "expected": {
+    "t": "déjà vu by olivia rodrigo",
+    "branch": "media.song_by",
+    "kind": "helper",
+    "helper": {
+     "fn": "_play_query",
+     "args": [
+      "déjà vu by olivia rodrigo"
+     ]
+    }
+   }
+  },
+  {
+   "name": "276 'play déjà vu'",
+   "input": {
+    "text": "play déjà vu"
+   },
+   "expected": {
+    "t": "play déjà vu",
+    "branch": "media.play_query",
+    "kind": "helper",
+    "helper": {
+     "fn": "_play_query",
+     "args": [
+      "déjà vu"
+     ]
+    }
+   }
+  },
+  {
+   "name": "277 'turn on the lights\\xa0'",
+   "input": {
+    "text": "turn on the lights "
+   },
+   "expected": {
+    "t": "turn on the lights",
+    "branch": "lights",
+    "kind": "helper",
+    "helper": {
+     "fn": "_run_shortcut",
+     "args": [
+      "turn on lights"
+     ]
+    }
+   }
+  },
+  {
+   "name": "278 'open safari\\n?'",
+   "input": {
+    "text": "open safari\n?"
+   },
+   "expected": {
+    "t": "open safari\n",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "safari"
+     ]
+    }
+   }
+  },
+  {
+   "name": "279 'hello.'",
+   "input": {
+    "text": "hello."
+   },
+   "expected": {
+    "t": "hello",
+    "branch": "presence",
+    "kind": "say",
+    "reply": "At your service, sir."
+   }
+  },
+  {
+   "name": "280 'Forget The Correction For Passion?'",
+   "input": {
+    "text": "Forget The Correction For Passion?"
+   },
+   "expected": {
+    "t": "forget the correction for passion",
+    "branch": "corr.forget",
+    "kind": "helper",
+    "helper": {
+     "fn": "forget_correction",
+     "args": [
+      "forget the correction for passion"
+     ]
+    }
+   }
+  },
+  {
+   "name": "281 'forget the correction for fashion please'",
+   "input": {
+    "text": "forget the correction for fashion please"
+   },
+   "expected": {
+    "t": "forget the correction for fashion please",
+    "branch": "corr.forget",
+    "kind": "helper",
+    "helper": {
+     "fn": "forget_correction",
+     "args": [
+      "forget the correction for fashion please"
+     ]
+    }
+   }
+  },
+  {
+   "name": "282 'when i say jarvis i meant travis'",
+   "input": {
+    "text": "when i say jarvis i meant travis"
+   },
+   "expected": {
+    "t": "when i say jarvis i meant travis",
+    "branch": "corr.teach",
+    "kind": "helper",
+    "helper": {
+     "fn": "learn_correction",
+     "args": [
+      "when i say jarvis i meant travis"
+     ]
+    }
+   }
+  },
+  {
+   "name": "283 'correct jervis to jarvis.'",
+   "input": {
+    "text": "correct jervis to jarvis."
+   },
+   "expected": {
+    "t": "correct jervis to jarvis",
+    "branch": "corr.teach",
+    "kind": "helper",
+    "helper": {
+     "fn": "learn_correction",
+     "args": [
+      "correct jervis to jarvis"
+     ]
+    }
+   }
+  },
+  {
+   "name": "284 'the word is gif not jif'",
+   "input": {
+    "text": "the word is gif not jif"
+   },
+   "expected": {
+    "t": "the word is gif not jif",
+    "branch": "corr.teach",
+    "kind": "helper",
+    "helper": {
+     "fn": "learn_correction",
+     "args": [
+      "the word is gif not jif"
+     ]
+    }
+   }
+  },
+  {
+   "name": "285 'set a timer for 0 seconds'",
+   "input": {
+    "text": "set a timer for 0 seconds"
+   },
+   "expected": {
+    "t": "set a timer for 0 seconds",
+    "branch": "timer.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_timer",
+     "args": [
+      0
+     ]
+    }
+   }
+  },
+  {
+   "name": "286 'start a timer for 90 seconds'",
+   "input": {
+    "text": "start a timer for 90 seconds"
+   },
+   "expected": {
+    "t": "start a timer for 90 seconds",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "a timer for 90 seconds"
+     ]
+    },
+    "deviation": "DEV-M7-01"
+   }
+  },
+  {
+   "name": "287 'timer of 1 hour'",
+   "input": {
+    "text": "timer of 1 hour"
+   },
+   "expected": {
+    "t": "timer of 1 hour",
+    "branch": "timer.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_timer",
+     "args": [
+      3600
+     ]
+    }
+   }
+  },
+  {
+   "name": "288 'a timer for 3 min'",
+   "input": {
+    "text": "a timer for 3 min"
+   },
+   "expected": {
+    "t": "a timer for 3 min",
+    "branch": "timer.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_timer",
+     "args": [
+      180
+     ]
+    }
+   }
+  },
+  {
+   "name": "289 'an timer for 2 hrs'",
+   "input": {
+    "text": "an timer for 2 hrs"
+   },
+   "expected": {
+    "t": "an timer for 2 hrs",
+    "branch": "timer.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_timer",
+     "args": [
+      7200
+     ]
+    }
+   }
+  },
+  {
+   "name": "290 'set timer for 10 minutes'",
+   "input": {
+    "text": "set timer for 10 minutes"
+   },
+   "expected": {
+    "t": "set timer for 10 minutes",
+    "branch": "timer.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_timer",
+     "args": [
+      600
+     ]
+    }
+   }
+  },
+  {
+   "name": "291 'timer for 5minutes'",
+   "input": {
+    "text": "timer for 5minutes"
+   },
+   "expected": {
+    "t": "timer for 5minutes",
+    "branch": "timer.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_timer",
+     "args": [
+      300
+     ]
+    }
+   }
+  },
+  {
+   "name": "292 'timer for 45 secs and then remind me'",
+   "input": {
+    "text": "timer for 45 secs and then remind me"
+   },
+   "expected": {
+    "t": "timer for 45 secs and then remind me",
+    "branch": "timer.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_timer",
+     "args": [
+      45
+     ]
+    }
+   }
+  },
+  {
+   "name": "293 'timer for 2 hours 30 minutes'",
+   "input": {
+    "text": "timer for 2 hours 30 minutes"
+   },
+   "expected": {
+    "t": "timer for 2 hours 30 minutes",
+    "branch": "timer.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_timer",
+     "args": [
+      7200
+     ]
+    }
+   }
+  },
+  {
+   "name": "294 'set a timer for ٣ minutes'",
+   "input": {
+    "text": "set a timer for ٣ minutes"
+   },
+   "expected": {
+    "t": "set a timer for ٣ minutes",
+    "branch": "timer.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_timer",
+     "args": [
+      180
+     ]
+    }
+   }
+  },
+  {
+   "name": "295 'set a timer for 00012 seconds'",
+   "input": {
+    "text": "set a timer for 00012 seconds"
+   },
+   "expected": {
+    "t": "set a timer for 00012 seconds",
+    "branch": "timer.set",
+    "kind": "helper",
+    "helper": {
+     "fn": "_set_timer",
+     "args": [
+      12
+     ]
+    }
+   }
+  },
+  {
+   "name": "296 'timer'",
+   "input": {
+    "text": "timer"
+   },
+   "expected": {
+    "t": "timer",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "297 'timer for five minutes'",
+   "input": {
+    "text": "timer for five minutes"
+   },
+   "expected": {
+    "t": "timer for five minutes",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "298 'set a timer'",
+   "input": {
+    "text": "set a timer"
+   },
+   "expected": {
+    "t": "set a timer",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "299 'timers'",
+   "input": {
+    "text": "timers"
+   },
+   "expected": {
+    "t": "timers",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "300 'cancel timers'",
+   "input": {
+    "text": "cancel timers"
+   },
+   "expected": {
+    "t": "cancel timers",
+    "branch": "timer.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_timers",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "301 'kill the timer'",
+   "input": {
+    "text": "kill the timer"
+   },
+   "expected": {
+    "t": "kill the timer",
+    "branch": "timer.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_timers",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "302 'stop all timers'",
+   "input": {
+    "text": "stop all timers"
+   },
+   "expected": {
+    "t": "stop all timers",
+    "branch": "timer.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_timers",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "303 'cancel my timers'",
+   "input": {
+    "text": "cancel my timers"
+   },
+   "expected": {
+    "t": "cancel my timers",
+    "branch": "timer.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_timers",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "304 'cancel the timers please'",
+   "input": {
+    "text": "cancel the timers please"
+   },
+   "expected": {
+    "t": "cancel the timers please",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "305 'how much time is left on my timer'",
+   "input": {
+    "text": "how much time is left on my timer"
+   },
+   "expected": {
+    "t": "how much time is left on my timer",
+    "branch": "timer.status",
+    "kind": "helper",
+    "helper": {
+     "fn": "_timer_status",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "306 'how long until the timer'",
+   "input": {
+    "text": "how long until the timer"
+   },
+   "expected": {
+    "t": "how long until the timer",
+    "branch": "timer.status",
+    "kind": "helper",
+    "helper": {
+     "fn": "_timer_status",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "307 \"how's the timer\"",
+   "input": {
+    "text": "how's the timer"
+   },
+   "expected": {
+    "t": "how's the timer",
+    "branch": "timer.status",
+    "kind": "helper",
+    "helper": {
+     "fn": "_timer_status",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "308 'hows the timer'",
+   "input": {
+    "text": "hows the timer"
+   },
+   "expected": {
+    "t": "hows the timer",
+    "branch": "timer.status",
+    "kind": "helper",
+    "helper": {
+     "fn": "_timer_status",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "309 'check the timer'",
+   "input": {
+    "text": "check the timer"
+   },
+   "expected": {
+    "t": "check the timer",
+    "branch": "timer.status",
+    "kind": "helper",
+    "helper": {
+     "fn": "_timer_status",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "310 'check my timer'",
+   "input": {
+    "text": "check my timer"
+   },
+   "expected": {
+    "t": "check my timer",
+    "branch": "timer.status",
+    "kind": "helper",
+    "helper": {
+     "fn": "_timer_status",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "311 'timer status?'",
+   "input": {
+    "text": "timer status?"
+   },
+   "expected": {
+    "t": "timer status",
+    "branch": "timer.status",
+    "kind": "helper",
+    "helper": {
+     "fn": "_timer_status",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "312 'cancel alarms'",
+   "input": {
+    "text": "cancel alarms"
+   },
+   "expected": {
+    "t": "cancel alarms",
+    "branch": "alarm.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "313 'stop the alarm'",
+   "input": {
+    "text": "stop the alarm"
+   },
+   "expected": {
+    "t": "stop the alarm",
+    "branch": "alarm.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "314 'kill my alarms'",
+   "input": {
+    "text": "kill my alarms"
+   },
+   "expected": {
+    "t": "kill my alarms",
+    "branch": "alarm.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "315 'delete the alarm'",
+   "input": {
+    "text": "delete the alarm"
+   },
+   "expected": {
+    "t": "delete the alarm",
+    "branch": "alarm.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "316 'turn off all alarms'",
+   "input": {
+    "text": "turn off all alarms"
+   },
+   "expected": {
+    "t": "turn off all alarms",
+    "branch": "alarm.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "317 'cancel all alarms.'",
+   "input": {
+    "text": "cancel all alarms."
+   },
+   "expected": {
+    "t": "cancel all alarms",
+    "branch": "alarm.cancel",
+    "kind": "helper",
+    "helper": {
+     "fn": "_cancel_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "318 'what alarms do i have'",
+   "input": {
+    "text": "what alarms do i have"
+   },
+   "expected": {
+    "t": "what alarms do i have",
+    "branch": "alarm.list",
+    "kind": "helper",
+    "helper": {
+     "fn": "_list_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "319 'my alarms'",
+   "input": {
+    "text": "my alarms"
+   },
+   "expected": {
+    "t": "my alarms",
+    "branch": "alarm.list",
+    "kind": "helper",
+    "helper": {
+     "fn": "_list_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "320 'list alarms'",
+   "input": {
+    "text": "list alarms"
+   },
+   "expected": {
+    "t": "list alarms",
+    "branch": "alarm.list",
+    "kind": "helper",
+    "helper": {
+     "fn": "_list_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "321 'what alarms are set'",
+   "input": {
+    "text": "what alarms are set"
+   },
+   "expected": {
+    "t": "what alarms are set",
+    "branch": "alarm.list",
+    "kind": "helper",
+    "helper": {
+     "fn": "_list_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "322 'what alarms do i have?'",
+   "input": {
+    "text": "what alarms do i have?"
+   },
+   "expected": {
+    "t": "what alarms do i have",
+    "branch": "alarm.list",
+    "kind": "helper",
+    "helper": {
+     "fn": "_list_alarms",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "323 'do i have any alarms set'",
+   "input": {
+    "text": "do i have any alarms set"
+   },
+   "expected": {
+    "t": "do i have any alarms set",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "324 'lock my mac'",
+   "input": {
+    "text": "lock my mac"
+   },
+   "expected": {
+    "t": "lock my mac",
+    "branch": "lock",
+    "kind": "act",
+    "reply": "Locking, sir.",
+    "action": {
+     "fn": "_lock_screen",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "325 'lock the mac'",
+   "input": {
+    "text": "lock the mac"
+   },
+   "expected": {
+    "t": "lock the mac",
+    "branch": "lock",
+    "kind": "act",
+    "reply": "Locking, sir.",
+    "action": {
+     "fn": "_lock_screen",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "326 'lock my computer'",
+   "input": {
+    "text": "lock my computer"
+   },
+   "expected": {
+    "t": "lock my computer",
+    "branch": "lock",
+    "kind": "act",
+    "reply": "Locking, sir.",
+    "action": {
+     "fn": "_lock_screen",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "327 'lock the computer'",
+   "input": {
+    "text": "lock the computer"
+   },
+   "expected": {
+    "t": "lock the computer",
+    "branch": "lock",
+    "kind": "act",
+    "reply": "Locking, sir.",
+    "action": {
+     "fn": "_lock_screen",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "328 'lock up'",
+   "input": {
+    "text": "lock up"
+   },
+   "expected": {
+    "t": "lock up",
+    "branch": "lock",
+    "kind": "act",
+    "reply": "Locking, sir.",
+    "action": {
+     "fn": "_lock_screen",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "329 'im stepping away'",
+   "input": {
+    "text": "im stepping away"
+   },
+   "expected": {
+    "t": "im stepping away",
+    "branch": "lock",
+    "kind": "act",
+    "reply": "Locking, sir.",
+    "action": {
+     "fn": "_lock_screen",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "330 'going away for a bit'",
+   "input": {
+    "text": "going away for a bit"
+   },
+   "expected": {
+    "t": "going away for a bit",
+    "branch": "lock",
+    "kind": "act",
+    "reply": "Locking, sir.",
+    "action": {
+     "fn": "_lock_screen",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "331 'lock the screen'",
+   "input": {
+    "text": "lock the screen"
+   },
+   "expected": {
+    "t": "lock the screen",
+    "branch": "lock",
+    "kind": "act",
+    "reply": "Locking, sir.",
+    "action": {
+     "fn": "_lock_screen",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "332 'lock'",
+   "input": {
+    "text": "lock"
+   },
+   "expected": {
+    "t": "lock",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "333 'empty trash'",
+   "input": {
+    "text": "empty trash"
+   },
+   "expected": {
+    "t": "empty trash",
+    "branch": "trash",
+    "kind": "act",
+    "reply": "Taking out the trash, sir.",
+    "action": {
+     "fn": "_empty_trash",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "334 'empty the bin'",
+   "input": {
+    "text": "empty the bin"
+   },
+   "expected": {
+    "t": "empty the bin",
+    "branch": "trash",
+    "kind": "act",
+    "reply": "Taking out the trash, sir.",
+    "action": {
+     "fn": "_empty_trash",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "335 'empty my trash'",
+   "input": {
+    "text": "empty my trash"
+   },
+   "expected": {
+    "t": "empty my trash",
+    "branch": "trash",
+    "kind": "act",
+    "reply": "Taking out the trash, sir.",
+    "action": {
+     "fn": "_empty_trash",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "336 'take out the trash'",
+   "input": {
+    "text": "take out the trash"
+   },
+   "expected": {
+    "t": "take out the trash",
+    "branch": "trash",
+    "kind": "act",
+    "reply": "Taking out the trash, sir.",
+    "action": {
+     "fn": "_empty_trash",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "337 'empty the recycle bin'",
+   "input": {
+    "text": "empty the recycle bin"
+   },
+   "expected": {
+    "t": "empty the recycle bin",
+    "branch": "trash",
+    "kind": "act",
+    "reply": "Taking out the trash, sir.",
+    "action": {
+     "fn": "_empty_trash",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "338 'empty the trash please'",
+   "input": {
+    "text": "empty the trash please"
+   },
+   "expected": {
+    "t": "empty the trash please",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "339 'good night'",
+   "input": {
+    "text": "good night"
+   },
+   "expected": {
+    "t": "good night",
+    "branch": "sleep",
+    "kind": "act",
+    "reply": "Goodnight, sir.",
+    "action": {
+     "fn": "_sleep_mac",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "340 'good night jarvis'",
+   "input": {
+    "text": "good night jarvis"
+   },
+   "expected": {
+    "t": "good night jarvis",
+    "branch": "sleep",
+    "kind": "act",
+    "reply": "Goodnight, sir.",
+    "action": {
+     "fn": "_sleep_mac",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "341 'put my mac to sleep'",
+   "input": {
+    "text": "put my mac to sleep"
+   },
+   "expected": {
+    "t": "put my mac to sleep",
+    "branch": "sleep",
+    "kind": "act",
+    "reply": "Goodnight, sir.",
+    "action": {
+     "fn": "_sleep_mac",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "342 'sleep the mac'",
+   "input": {
+    "text": "sleep the mac"
+   },
+   "expected": {
+    "t": "sleep the mac",
+    "branch": "sleep",
+    "kind": "act",
+    "reply": "Goodnight, sir.",
+    "action": {
+     "fn": "_sleep_mac",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "343 'put the computer to sleep'",
+   "input": {
+    "text": "put the computer to sleep"
+   },
+   "expected": {
+    "t": "put the computer to sleep",
+    "branch": "sleep",
+    "kind": "act",
+    "reply": "Goodnight, sir.",
+    "action": {
+     "fn": "_sleep_mac",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "344 'sleep'",
+   "input": {
+    "text": "sleep"
+   },
+   "expected": {
+    "t": "sleep",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "345 'close everything'",
+   "input": {
+    "text": "close everything"
+   },
+   "expected": {
+    "t": "close everything",
+    "branch": "quit.all",
+    "kind": "helper",
+    "helper": {
+     "fn": "_quit_all_apps",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "346 'quit all apps'",
+   "input": {
+    "text": "quit all apps"
+   },
+   "expected": {
+    "t": "quit all apps",
+    "branch": "quit.all",
+    "kind": "helper",
+    "helper": {
+     "fn": "_quit_all_apps",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "347 'close all my apps'",
+   "input": {
+    "text": "close all my apps"
+   },
+   "expected": {
+    "t": "close all my apps",
+    "branch": "quit.all",
+    "kind": "helper",
+    "helper": {
+     "fn": "_quit_all_apps",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "348 'quit all applications'",
+   "input": {
+    "text": "quit all applications"
+   },
+   "expected": {
+    "t": "quit all applications",
+    "branch": "quit.all",
+    "kind": "helper",
+    "helper": {
+     "fn": "_quit_all_apps",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "349 'close every app'",
+   "input": {
+    "text": "close every app"
+   },
+   "expected": {
+    "t": "close every app",
+    "branch": "quit.all",
+    "kind": "helper",
+    "helper": {
+     "fn": "_quit_all_apps",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "350 'quit everything please'",
+   "input": {
+    "text": "quit everything please"
+   },
+   "expected": {
+    "t": "quit everything please",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "351 'whats my ip'",
+   "input": {
+    "text": "whats my ip"
+   },
+   "expected": {
+    "t": "whats my ip",
+    "branch": "ip",
+    "kind": "helper",
+    "helper": {
+     "fn": "_ip_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "352 \"what's my ip address\"",
+   "input": {
+    "text": "what's my ip address"
+   },
+   "expected": {
+    "t": "what's my ip address",
+    "branch": "ip",
+    "kind": "helper",
+    "helper": {
+     "fn": "_ip_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "353 'whats my ip address'",
+   "input": {
+    "text": "whats my ip address"
+   },
+   "expected": {
+    "t": "whats my ip address",
+    "branch": "ip",
+    "kind": "helper",
+    "helper": {
+     "fn": "_ip_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "354 'what is my ip address'",
+   "input": {
+    "text": "what is my ip address"
+   },
+   "expected": {
+    "t": "what is my ip address",
+    "branch": "ip",
+    "kind": "helper",
+    "helper": {
+     "fn": "_ip_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "355 'my ip address'",
+   "input": {
+    "text": "my ip address"
+   },
+   "expected": {
+    "t": "my ip address",
+    "branch": "ip",
+    "kind": "helper",
+    "helper": {
+     "fn": "_ip_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "356 \"what's my public ip\"",
+   "input": {
+    "text": "what's my public ip"
+   },
+   "expected": {
+    "t": "what's my public ip",
+    "branch": "ip",
+    "kind": "helper",
+    "helper": {
+     "fn": "_ip_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "357 'whats my public ip'",
+   "input": {
+    "text": "whats my public ip"
+   },
+   "expected": {
+    "t": "whats my public ip",
+    "branch": "ip",
+    "kind": "helper",
+    "helper": {
+     "fn": "_ip_report",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "358 'what is my ip'",
+   "input": {
+    "text": "what is my ip"
+   },
+   "expected": {
+    "t": "what is my ip",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "359 'airpod battery'",
+   "input": {
+    "text": "airpod battery"
+   },
+   "expected": {
+    "t": "airpod battery",
+    "branch": "bt.battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_bt_battery",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "360 'how are my airpods'",
+   "input": {
+    "text": "how are my airpods"
+   },
+   "expected": {
+    "t": "how are my airpods",
+    "branch": "bt.battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_bt_battery",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "361 'check my airpods'",
+   "input": {
+    "text": "check my airpods"
+   },
+   "expected": {
+    "t": "check my airpods",
+    "branch": "bt.battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_bt_battery",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "362 \"how's my airpods battery\"",
+   "input": {
+    "text": "how's my airpods battery"
+   },
+   "expected": {
+    "t": "how's my airpods battery",
+    "branch": "bt.battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_bt_battery",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "363 'hows my airpods battery'",
+   "input": {
+    "text": "hows my airpods battery"
+   },
+   "expected": {
+    "t": "hows my airpods battery",
+    "branch": "bt.battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_bt_battery",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "364 'whats my airpods battery'",
+   "input": {
+    "text": "whats my airpods battery"
+   },
+   "expected": {
+    "t": "whats my airpods battery",
+    "branch": "bt.battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_bt_battery",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "365 \"what's my airpods battery\"",
+   "input": {
+    "text": "what's my airpods battery"
+   },
+   "expected": {
+    "t": "what's my airpods battery",
+    "branch": "bt.battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_bt_battery",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "366 'headphones battery'",
+   "input": {
+    "text": "headphones battery"
+   },
+   "expected": {
+    "t": "headphones battery",
+    "branch": "bt.battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_bt_battery",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "367 'headphone battery'",
+   "input": {
+    "text": "headphone battery"
+   },
+   "expected": {
+    "t": "headphone battery",
+    "branch": "bt.battery",
+    "kind": "helper",
+    "helper": {
+     "fn": "_bt_battery",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "368 'resume'",
+   "input": {
+    "text": "resume"
+   },
+   "expected": {
+    "t": "resume",
+    "branch": "media.play",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "369 'play music'",
+   "input": {
+    "text": "play music"
+   },
+   "expected": {
+    "t": "play music",
+    "branch": "media.play",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "370 'continue playing'",
+   "input": {
+    "text": "continue playing"
+   },
+   "expected": {
+    "t": "continue playing",
+    "branch": "media.play",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "371 'play a song'",
+   "input": {
+    "text": "play a song"
+   },
+   "expected": {
+    "t": "play a song",
+    "branch": "media.play",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "372 'play something'",
+   "input": {
+    "text": "play something"
+   },
+   "expected": {
+    "t": "play something",
+    "branch": "media.play",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "373 'play tunes'",
+   "input": {
+    "text": "play tunes"
+   },
+   "expected": {
+    "t": "play tunes",
+    "branch": "media.play",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "374 'play me music'",
+   "input": {
+    "text": "play me music"
+   },
+   "expected": {
+    "t": "play me music",
+    "branch": "media.play",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "375 'play me some music'",
+   "input": {
+    "text": "play me some music"
+   },
+   "expected": {
+    "t": "play me some music",
+    "branch": "media.play",
+    "kind": "act",
+    "reply": "Playing, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "play"
+     ]
+    }
+   }
+  },
+  {
+   "name": "376 'pause music'",
+   "input": {
+    "text": "pause music"
+   },
+   "expected": {
+    "t": "pause music",
+    "branch": "media.pause",
+    "kind": "act",
+    "reply": "Paused, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "pause"
+     ]
+    }
+   }
+  },
+  {
+   "name": "377 'pause it'",
+   "input": {
+    "text": "pause it"
+   },
+   "expected": {
+    "t": "pause it",
+    "branch": "media.pause",
+    "kind": "act",
+    "reply": "Paused, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "pause"
+     ]
+    }
+   }
+  },
+  {
+   "name": "378 'next song'",
+   "input": {
+    "text": "next song"
+   },
+   "expected": {
+    "t": "next song",
+    "branch": "media.next",
+    "kind": "act",
+    "reply": "Next track, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "next track"
+     ]
+    }
+   }
+  },
+  {
+   "name": "379 'next track'",
+   "input": {
+    "text": "next track"
+   },
+   "expected": {
+    "t": "next track",
+    "branch": "media.next",
+    "kind": "act",
+    "reply": "Next track, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "next track"
+     ]
+    }
+   }
+  },
+  {
+   "name": "380 'skip'",
+   "input": {
+    "text": "skip"
+   },
+   "expected": {
+    "t": "skip",
+    "branch": "media.next",
+    "kind": "act",
+    "reply": "Next track, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "next track"
+     ]
+    }
+   }
+  },
+  {
+   "name": "381 'skip song'",
+   "input": {
+    "text": "skip song"
+   },
+   "expected": {
+    "t": "skip song",
+    "branch": "media.next",
+    "kind": "act",
+    "reply": "Next track, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "next track"
+     ]
+    }
+   }
+  },
+  {
+   "name": "382 'skip this'",
+   "input": {
+    "text": "skip this"
+   },
+   "expected": {
+    "t": "skip this",
+    "branch": "media.next",
+    "kind": "act",
+    "reply": "Next track, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "next track"
+     ]
+    }
+   }
+  },
+  {
+   "name": "383 'previous song'",
+   "input": {
+    "text": "previous song"
+   },
+   "expected": {
+    "t": "previous song",
+    "branch": "media.previous",
+    "kind": "act",
+    "reply": "Going back, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "previous track"
+     ]
+    }
+   }
+  },
+  {
+   "name": "384 'previous track'",
+   "input": {
+    "text": "previous track"
+   },
+   "expected": {
+    "t": "previous track",
+    "branch": "media.previous",
+    "kind": "act",
+    "reply": "Going back, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "previous track"
+     ]
+    }
+   }
+  },
+  {
+   "name": "385 'last song'",
+   "input": {
+    "text": "last song"
+   },
+   "expected": {
+    "t": "last song",
+    "branch": "media.previous",
+    "kind": "act",
+    "reply": "Going back, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "previous track"
+     ]
+    }
+   }
+  },
+  {
+   "name": "386 'go back a song'",
+   "input": {
+    "text": "go back a song"
+   },
+   "expected": {
+    "t": "go back a song",
+    "branch": "media.previous",
+    "kind": "act",
+    "reply": "Going back, sir.",
+    "action": {
+     "fn": "_media",
+     "args": [
+      "previous track"
+     ]
+    }
+   }
+  },
+  {
+   "name": "387 'you there'",
+   "input": {
+    "text": "you there"
+   },
+   "expected": {
+    "t": "you there",
+    "branch": "presence",
+    "kind": "say",
+    "reply": "At your service, sir."
+   }
+  },
+  {
+   "name": "388 'you online'",
+   "input": {
+    "text": "you online"
+   },
+   "expected": {
+    "t": "you online",
+    "branch": "presence",
+    "kind": "say",
+    "reply": "At your service, sir."
+   }
+  },
+  {
+   "name": "389 'are you online'",
+   "input": {
+    "text": "are you online"
+   },
+   "expected": {
+    "t": "are you online",
+    "branch": "presence",
+    "kind": "say",
+    "reply": "At your service, sir."
+   }
+  },
+  {
+   "name": "390 'reset voice recognition'",
+   "input": {
+    "text": "reset voice recognition"
+   },
+   "expected": {
+    "t": "reset voice recognition",
+    "branch": "voice.forget",
+    "kind": "helper",
+    "helper": {
+     "fn": "forget_voice",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "391 'disable voice recognition'",
+   "input": {
+    "text": "disable voice recognition"
+   },
+   "expected": {
+    "t": "disable voice recognition",
+    "branch": "voice.forget",
+    "kind": "helper",
+    "helper": {
+     "fn": "forget_voice",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "392 'clear my voice'",
+   "input": {
+    "text": "clear my voice"
+   },
+   "expected": {
+    "t": "clear my voice",
+    "branch": "voice.forget",
+    "kind": "helper",
+    "helper": {
+     "fn": "forget_voice",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "393 'stop recognizing only me'",
+   "input": {
+    "text": "stop recognizing only me"
+   },
+   "expected": {
+    "t": "stop recognizing only me",
+    "branch": "voice.forget",
+    "kind": "helper",
+    "helper": {
+     "fn": "forget_voice",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "394 'forget my voice please'",
+   "input": {
+    "text": "forget my voice please"
+   },
+   "expected": {
+    "t": "forget my voice please",
+    "branch": "defer",
+    "kind": "defer"
+   }
+  },
+  {
+   "name": "395 'Forget my voice.'",
+   "input": {
+    "text": "Forget my voice."
+   },
+   "expected": {
+    "t": "forget my voice",
+    "branch": "voice.forget",
+    "kind": "helper",
+    "helper": {
+     "fn": "forget_voice",
+     "args": []
+    }
+   }
+  },
+  {
+   "name": "396 'start timer for 2 hours'",
+   "input": {
+    "text": "start timer for 2 hours"
+   },
+   "expected": {
+    "t": "start timer for 2 hours",
+    "branch": "open.app",
+    "kind": "helper",
+    "helper": {
+     "fn": "_resolve_open",
+     "args": [
+      "timer for 2 hours"
+     ]
+    },
+    "deviation": "DEV-M7-01"
+   }
+  },
+  {
+   "name": "tables",
+   "input": {},
+   "expected": {
+    "ALL_KINDS": [
+     "ai",
+     "browser",
+     "business",
+     "chat",
+     "design",
+     "developer",
+     "editor",
+     "education",
+     "email",
+     "entertainment",
+     "finance",
+     "game",
+     "lifestyle",
+     "medical",
+     "music",
+     "news",
+     "notes",
+     "office",
+     "photo",
+     "productivity",
+     "reference",
+     "terminal",
+     "travel",
+     "utility",
+     "video",
+     "weather"
+    ],
+    "TWEAKS": [
+     "dark mode",
+     "hidden files",
+     "show hidden files",
+     "file extensions",
+     "dock autohide",
+     "auto hide the dock",
+     "dock magnification",
+     "path bar",
+     "status bar",
+     "desktop icons",
+     "screenshot shadow",
+     "spring loading",
+     "key repeat",
+     "natural scrolling"
+    ],
+    "QUIT_RUNNING": [
+     "safari",
+     "music",
+     "xcode",
+     "all my browsers"
+    ],
+    "BRANCHES": [
+     "corr.forget",
+     "corr.teach",
+     "diagnostics",
+     "shortcut.run",
+     "lights",
+     "settings.root",
+     "settings.privacy",
+     "settings.pane",
+     "open.file",
+     "open.app",
+     "media.play",
+     "media.pause",
+     "media.next",
+     "media.previous",
+     "media.now_playing",
+     "media.play_query",
+     "media.song_by",
+     "location",
+     "weather",
+     "timer.set",
+     "reminder",
+     "alarm.set",
+     "lyrics.find",
+     "messages.read",
+     "calendar.today",
+     "briefing",
+     "screen.exact",
+     "screen.fuzzy",
+     "clipboard.help",
+     "note.make",
+     "time",
+     "battery",
+     "backend",
+     "presence",
+     "voice.forget",
+     "volume.set",
+     "volume.mute",
+     "volume.up",
+     "volume.down",
+     "news",
+     "screenshot",
+     "lock",
+     "trash",
+     "brightness.set",
+     "brightness.up",
+     "brightness.down",
+     "message.send",
+     "type",
+     "page.summarize",
+     "shortcut.list",
+     "timer.cancel",
+     "timer.status",
+     "alarm.cancel",
+     "alarm.list",
+     "quit.all",
+     "quit.app",
+     "sleep",
+     "clipboard.copy_last",
+     "browser.default.get",
+     "browser.default.set",
+     "apps.find",
+     "toggle",
+     "files.recent",
+     "files.reveal",
+     "ip",
+     "bt.battery",
+     "web.google",
+     "web.youtube",
+     "defer"
+    ]
+   }
+  }
+ ]
+}

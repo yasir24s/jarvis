@@ -1,0 +1,760 @@
+{
+ "schema": 1,
+ "suite": "quick_system",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "ip/both",
+   "input": {
+    "fn": "ip",
+    "en0": "192.168.1.20\n",
+    "en1": null,
+    "online": true,
+    "public": {
+     "ip": "203.0.113.7",
+     "success": true
+    }
+   },
+   "expected": {
+    "text": "Your local IP 192.168.1.20 and public IP 203.0.113.7, sir.",
+    "calls": [
+     [
+      "ipconfig",
+      "getifaddr",
+      "en0"
+     ],
+     [
+      "GET",
+      "https://ipwho.is/"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "ip/en1_only",
+   "input": {
+    "fn": "ip",
+    "en0": "",
+    "en1": "10.0.0.5\n",
+    "online": true,
+    "public": {
+     "ip": "203.0.113.7"
+    }
+   },
+   "expected": {
+    "text": "Your local IP 10.0.0.5 and public IP 203.0.113.7, sir.",
+    "calls": [
+     [
+      "ipconfig",
+      "getifaddr",
+      "en0"
+     ],
+     [
+      "ipconfig",
+      "getifaddr",
+      "en1"
+     ],
+     [
+      "GET",
+      "https://ipwho.is/"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "ip/local_offline",
+   "input": {
+    "fn": "ip",
+    "en0": "192.168.1.20\n",
+    "en1": null,
+    "online": false,
+    "public": null
+   },
+   "expected": {
+    "text": "Your local IP 192.168.1.20, sir.",
+    "calls": [
+     [
+      "ipconfig",
+      "getifaddr",
+      "en0"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "ip/public_only",
+   "input": {
+    "fn": "ip",
+    "en0": "",
+    "en1": "",
+    "online": true,
+    "public": {
+     "ip": "198.51.100.2"
+    }
+   },
+   "expected": {
+    "text": "Your public IP 198.51.100.2, sir.",
+    "calls": [
+     [
+      "ipconfig",
+      "getifaddr",
+      "en0"
+     ],
+     [
+      "ipconfig",
+      "getifaddr",
+      "en1"
+     ],
+     [
+      "GET",
+      "https://ipwho.is/"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "ip/public_fails",
+   "input": {
+    "fn": "ip",
+    "en0": "192.168.1.20\n",
+    "en1": null,
+    "online": true,
+    "public": "raise"
+   },
+   "expected": {
+    "text": "Your local IP 192.168.1.20, sir.",
+    "calls": [
+     [
+      "ipconfig",
+      "getifaddr",
+      "en0"
+     ],
+     [
+      "GET",
+      "https://ipwho.is/"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "ip/public_missing_key",
+   "input": {
+    "fn": "ip",
+    "en0": "192.168.1.20\n",
+    "en1": null,
+    "online": true,
+    "public": {
+     "success": false
+    }
+   },
+   "expected": {
+    "text": "Your local IP 192.168.1.20, sir.",
+    "calls": [
+     [
+      "ipconfig",
+      "getifaddr",
+      "en0"
+     ],
+     [
+      "GET",
+      "https://ipwho.is/"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "ip/nothing",
+   "input": {
+    "fn": "ip",
+    "en0": "",
+    "en1": "",
+    "online": false,
+    "public": null
+   },
+   "expected": {
+    "text": "I couldn't determine your IP address, sir.",
+    "calls": [
+     [
+      "ipconfig",
+      "getifaddr",
+      "en0"
+     ],
+     [
+      "ipconfig",
+      "getifaddr",
+      "en1"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "ip/commands_fail",
+   "input": {
+    "fn": "ip",
+    "en0": null,
+    "en1": null,
+    "online": false,
+    "public": null
+   },
+   "expected": {
+    "text": "I couldn't determine your IP address, sir.",
+    "calls": [
+     [
+      "ipconfig",
+      "getifaddr",
+      "en0"
+     ],
+     [
+      "ipconfig",
+      "getifaddr",
+      "en1"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "ip/whitespace_en0",
+   "input": {
+    "fn": "ip",
+    "en0": "  \n",
+    "en1": "172.16.0.9",
+    "online": false,
+    "public": null
+   },
+   "expected": {
+    "text": "Your local IP 172.16.0.9, sir.",
+    "calls": [
+     [
+      "ipconfig",
+      "getifaddr",
+      "en0"
+     ],
+     [
+      "ipconfig",
+      "getifaddr",
+      "en1"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "bt/airpods",
+   "input": {
+    "fn": "bt",
+    "ioreg": "+-o AppleDeviceManagementHIDEventService  <class AppleDeviceManagementHIDEventService>\n    {\n      \"BatteryPercentLeft\" = 80\n      \"Product\" = \"The Den's AirPods Pro\"\n      \"BatteryPercentRight\" = 75\n      \"BatteryPercentCase\" = 40\n    }\n"
+   },
+   "expected": {
+    "text": "The Den's AirPods Pro: left 80 percent, right 75 percent, case 40 percent, sir.",
+    "calls": [
+     [
+      "ioreg",
+      "-r",
+      "-l",
+      "-k",
+      "BatteryPercentLeft"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "bt/one_bud",
+   "input": {
+    "fn": "bt",
+    "ioreg": "+-o Service\n    {\n      \"Product\" = \"Beats Fit Pro\"\n      \"BatteryPercentRight\" = 5\n    }\n"
+   },
+   "expected": {
+    "text": "Beats Fit Pro: right 5 percent, sir.",
+    "calls": [
+     [
+      "ioreg",
+      "-r",
+      "-l",
+      "-k",
+      "BatteryPercentLeft"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "bt/no_name",
+   "input": {
+    "fn": "bt",
+    "ioreg": "+-o Service\n    {\n      \"BatteryPercentLeft\" = 100\n    }\n"
+   },
+   "expected": {
+    "text": "Your headphones: left 100 percent, sir.",
+    "calls": [
+     [
+      "ioreg",
+      "-r",
+      "-l",
+      "-k",
+      "BatteryPercentLeft"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "bt/no_levels",
+   "input": {
+    "fn": "bt",
+    "ioreg": "+-o Service\n    {\n      \"Product\" = \"Headset\"\n      \"BatteryPercentLeft\" = full\n    }\n"
+   },
+   "expected": {
+    "text": "I don't see battery levels for your Bluetooth devices, sir.",
+    "calls": [
+     [
+      "ioreg",
+      "-r",
+      "-l",
+      "-k",
+      "BatteryPercentLeft"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "bt/two_devices",
+   "input": {
+    "fn": "bt",
+    "ioreg": "+-o Service\n    {\n      \"Product\" = \"Beats Fit Pro\"\n      \"BatteryPercentRight\" = 5\n    }\n+-o AppleDeviceManagementHIDEventService  <class AppleDeviceManagementHIDEventService>\n    {\n      \"BatteryPercentLeft\" = 80\n      \"Product\" = \"The Den's AirPods Pro\"\n      \"BatteryPercentRight\" = 75\n      \"BatteryPercentCase\" = 40\n    }\n"
+   },
+   "expected": {
+    "text": "Beats Fit Pro: left 80 percent, right 5 percent, case 40 percent, sir.",
+    "calls": [
+     [
+      "ioreg",
+      "-r",
+      "-l",
+      "-k",
+      "BatteryPercentLeft"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "bt/empty",
+   "input": {
+    "fn": "bt",
+    "ioreg": ""
+   },
+   "expected": {
+    "text": "I don't see any Bluetooth audio devices with battery levels, sir.",
+    "calls": [
+     [
+      "ioreg",
+      "-r",
+      "-l",
+      "-k",
+      "BatteryPercentLeft"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "bt/blank",
+   "input": {
+    "fn": "bt",
+    "ioreg": " \n"
+   },
+   "expected": {
+    "text": "I don't see any Bluetooth audio devices with battery levels, sir.",
+    "calls": [
+     [
+      "ioreg",
+      "-r",
+      "-l",
+      "-k",
+      "BatteryPercentLeft"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "bt/fails",
+   "input": {
+    "fn": "bt",
+    "ioreg": null
+   },
+   "expected": {
+    "text": "I don't see any Bluetooth audio devices with battery levels, sir.",
+    "calls": [
+     [
+      "ioreg",
+      "-r",
+      "-l",
+      "-k",
+      "BatteryPercentLeft"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "quit_all/several",
+   "input": {
+    "fn": "quit_all",
+    "apps": [
+     {
+      "name": "Finder",
+      "policy": 0
+     },
+     {
+      "name": "Safari",
+      "policy": 0
+     },
+     {
+      "name": "Notes",
+      "policy": 0
+     },
+     {
+      "name": "JARVIS",
+      "policy": 0
+     },
+     {
+      "name": "Spotlight",
+      "policy": 2
+     },
+     {
+      "name": "Dock",
+      "policy": 1
+     },
+     {
+      "name": "Jarvis Helper",
+      "policy": 0
+     }
+    ]
+   },
+   "expected": {
+    "text": "Closed 2 apps, sir.",
+    "calls": [
+     [
+      "terminate",
+      "Safari"
+     ],
+     [
+      "terminate",
+      "Notes"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "quit_all/one",
+   "input": {
+    "fn": "quit_all",
+    "apps": [
+     {
+      "name": "Finder",
+      "policy": 0
+     },
+     {
+      "name": "Mail",
+      "policy": 0
+     }
+    ]
+   },
+   "expected": {
+    "text": "Closed 1 app, sir.",
+    "calls": [
+     [
+      "terminate",
+      "Mail"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "quit_all/refused",
+   "input": {
+    "fn": "quit_all",
+    "apps": [
+     {
+      "name": "Pages",
+      "policy": 0,
+      "terminates": false
+     },
+     {
+      "name": "Xcode",
+      "policy": 0
+     }
+    ]
+   },
+   "expected": {
+    "text": "Closed 1 app, sir.",
+    "calls": [
+     [
+      "terminate",
+      "Pages"
+     ],
+     [
+      "terminate",
+      "Xcode"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "quit_all/none",
+   "input": {
+    "fn": "quit_all",
+    "apps": [
+     {
+      "name": "Finder",
+      "policy": 0
+     },
+     {
+      "name": "Dock",
+      "policy": 1
+     }
+    ]
+   },
+   "expected": {
+    "text": "There's nothing to close, sir.",
+    "calls": []
+   }
+  },
+  {
+   "name": "quit_all/all_refuse",
+   "input": {
+    "fn": "quit_all",
+    "apps": [
+     {
+      "name": "Pages",
+      "policy": 0,
+      "terminates": false
+     }
+    ]
+   },
+   "expected": {
+    "text": "There's nothing to close, sir.",
+    "calls": [
+     [
+      "terminate",
+      "Pages"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "quit_all/finder_substring",
+   "input": {
+    "fn": "quit_all",
+    "apps": [
+     {
+      "name": "Path Finder",
+      "policy": 0
+     },
+     {
+      "name": "TextEdit",
+      "policy": 0
+     }
+    ]
+   },
+   "expected": {
+    "text": "Closed 1 app, sir.",
+    "calls": [
+     [
+      "terminate",
+      "TextEdit"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "quit_all/workspace_fails",
+   "input": {
+    "fn": "quit_all",
+    "apps": "raise"
+   },
+   "expected": {
+    "text": "I had trouble closing everything, sir.",
+    "calls": []
+   }
+  },
+  {
+   "name": "trash/ok",
+   "input": {
+    "fn": "trash",
+    "osascript": ""
+   },
+   "expected": {
+    "text": "Trash emptied, sir.",
+    "calls": [
+     [
+      "osascript",
+      "tell application \"Finder\" to empty trash"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "trash/error",
+   "input": {
+    "fn": "trash",
+    "osascript": "37:52: execution error: Finder got an error: (-128)"
+   },
+   "expected": {
+    "text": "I couldn't empty the trash, sir.",
+    "calls": [
+     [
+      "osascript",
+      "tell application \"Finder\" to empty trash"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "trash/Error_caps",
+   "input": {
+    "fn": "trash",
+    "osascript": "ERROR"
+   },
+   "expected": {
+    "text": "I couldn't empty the trash, sir.",
+    "calls": [
+     [
+      "osascript",
+      "tell application \"Finder\" to empty trash"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "lock",
+   "input": {
+    "fn": "lock"
+   },
+   "expected": {
+    "text": "Locked, sir.",
+    "calls": [
+     [
+      "pmset",
+      "displaysleepnow"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "sleep",
+   "input": {
+    "fn": "sleep"
+   },
+   "expected": {
+    "text": null,
+    "calls": [
+     [
+      "pmset",
+      "sleepnow"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "media/play",
+   "input": {
+    "fn": "media",
+    "cmd": "play"
+   },
+   "expected": {
+    "text": "ok",
+    "calls": [
+     [
+      "osascript",
+      "if application \"Spotify\" is running then\n  tell application \"Spotify\" to play\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    play\n  end tell\nend if\nreturn \"ok\""
+     ]
+    ]
+   }
+  },
+  {
+   "name": "media/pause",
+   "input": {
+    "fn": "media",
+    "cmd": "pause"
+   },
+   "expected": {
+    "text": "ok",
+    "calls": [
+     [
+      "osascript",
+      "if application \"Spotify\" is running then\n  tell application \"Spotify\" to pause\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    pause\n  end tell\nend if\nreturn \"ok\""
+     ]
+    ]
+   }
+  },
+  {
+   "name": "media/next",
+   "input": {
+    "fn": "media",
+    "cmd": "next track"
+   },
+   "expected": {
+    "text": "ok",
+    "calls": [
+     [
+      "osascript",
+      "if application \"Spotify\" is running then\n  tell application \"Spotify\" to next track\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    next track\n  end tell\nend if\nreturn \"ok\""
+     ]
+    ]
+   }
+  },
+  {
+   "name": "media/previous",
+   "input": {
+    "fn": "media",
+    "cmd": "previous track"
+   },
+   "expected": {
+    "text": "ok",
+    "calls": [
+     [
+      "osascript",
+      "if application \"Spotify\" is running then\n  tell application \"Spotify\" to previous track\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    previous track\n  end tell\nend if\nreturn \"ok\""
+     ]
+    ]
+   }
+  },
+  {
+   "name": "forget_voice/enrolled",
+   "input": {
+    "fn": "forget_voice",
+    "enrolled": true
+   },
+   "expected": {
+    "text": "Voice recognition cleared, sir. I'll respond to any voice now.",
+    "calls": [
+     [
+      "voiceprint_exists_after",
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "name": "forget_voice/not_enrolled",
+   "input": {
+    "fn": "forget_voice",
+    "enrolled": false
+   },
+   "expected": {
+    "text": "Voice recognition cleared, sir. I'll respond to any voice now.",
+    "calls": [
+     [
+      "voiceprint_exists_after",
+      false
+     ]
+    ]
+   }
+  }
+ ]
+}

@@ -89,6 +89,35 @@ public final class AlarmBook: Sendable {
         }
     }
 
+    /// PA batch A, `_list_alarms`' view of the file: how many items are alarms (every list item
+    /// that is not a reminder, the ones that do not parse included, as Python's `len(a)`), and
+    /// the alarms that parse, in file order.
+    public func alarms() -> (count: Int, parsed: [AlarmEntry]) {
+        lock.withLock { _ in
+            let items = (loadList() ?? []).filter { !Self.isReminder($0) }
+            return (items.count, items.compactMap { entry($0) })
+        }
+    }
+
+    /// PA batch A, `_cancel_alarms`: removes every alarm and returns how many there were. The
+    /// reminders F1 keeps in the same file stay (Python had none there on macOS). Nothing is
+    /// written when there was no alarm or the file is not a list.
+    @discardableResult
+    public func cancelAlarms() -> Int {
+        lock.withLock { _ in
+            guard let list = loadList() else { return 0 }
+            let kept = list.filter(Self.isReminder)
+            let removed = list.count - kept.count
+            if removed > 0 { store.save(.alarms, .array(kept)) }
+            return removed
+        }
+    }
+
+    private static func isReminder(_ value: JSONValue) -> Bool {
+        if case .object(let o) = value, o["kind"]?.stringValue == AlarmEntry.Kind.reminder.rawValue { return true }
+        return false
+    }
+
     /// The entries due later on `now`'s day (local), soonest first: the briefing's agenda.
     public func dueLaterToday(_ now: Date) -> [AlarmEntry] {
         var cal = Calendar(identifier: .gregorian)

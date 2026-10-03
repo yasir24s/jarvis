@@ -85,6 +85,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var idleCompile: IdleCompile?
     /// F1: speaks the alarms and reminders JARVIS set as they come due; stopped at quit.
     private var reminders: ReminderSchedule?
+    /// PA batch A: the fast path's timers (in memory, as Python's).
+    private var quickTimers: QuickTimers?
     private var reminderAnnouncer: ReminderAnnouncer?
     /// W1: the web memory's background summaries, stopped at quit before the lock is released.
     private var webSummaries: WebSummaryQueue?
@@ -243,6 +245,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         personality = nil
         reminders?.stop()   // nor a reminder check (F1)
         reminders = nil
+        quickTimers?.stop()   // nor a timer (PA batch A)
+        quickTimers = nil
         idleCompile?.stop()   // nor an idle compile
         idleCompile = nil
         webSummaries?.stop()   // nor a page summary (W1)
@@ -308,6 +312,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         research?.stop()   // flushes enqueued bumps while the lease is still held
         personality?.stop()
         reminders?.stop()
+        quickTimers?.stop()
         idleCompile?.stop()
         files?.cancel()
         lock = nil   // closes the fd: releases the flock before the helper starts
@@ -480,6 +485,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                       enabled: { consent.isOn })
         // F1: alarms.json, which set_reminder and set_alarm write and ReminderSchedule reads.
         let alarms = AlarmBook(store: store, timeZone: .autoupdatingCurrent)
+        // PA batch A: the fast path. Its timers are spoken as a due reminder is; forgetting the
+        // voice and emptying the Trash wait for the same confirmation as any other.
+        let timers = QuickTimers(announce: { [weak self] line in
+            await MainActor.run { self?.reminderAnnouncer?.announce(line) }
+        })
+        quickTimers = timers
+        let quickHooks = QuickCommands.Hooks(
+            forgetVoice: self.speaker.map { speaker -> @Sendable () async -> String in
+                { [weak self] in
+                    let reply = await speaker.forget()
+                    await MainActor.run {
+                        self?.voiceStatus.forgotten()
+                        JarvisLog.log("voice: voiceprint forgotten by voice command", category: .voice)
+                    }
+                    return reply
+                }
+            },
+            quitAllApps: { await MainActor.run { QuickApps.quitAll() } },
+            afterGoodnight: { [queue = voice.queue] in
+                try? await Task.sleep(for: .milliseconds(1200))
+                await queue.idle()
+            })
         let assembly = BrainAssembly(
             core: core, research: research, config: config, environment: environment,
             runDirectory: folders.run, claudeWorkingDirectory: folders.claudeWorkingDirectory,
@@ -490,6 +517,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             reader: WebReader(), waitForSilence: { [queue = voice.queue] in await queue.idle() },
             alarms: alarms,
             textAuthenticator: authenticator,
+            makeFastPath: { gate in
+                QuickCommands(core: core, confirmations: gate, timers: timers, alarms: alarms, hooks: quickHooks,
+                              online: { await Net.isOnline() })
+            },
             // Python's is_online(): asked only when a turn reaches the brain.
             online: { await Net.isOnline() },
             // M9a part 6 (D-41): a spoken confirmation passes the same owner check, a fresh
@@ -795,6 +826,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.research?.stop()   // flushes enqueued bumps while the lease is still held
                 self.personality?.stop()   // no personality pass outlives the lease
                 self.reminders?.stop()   // nor a reminder check (F1)
+                self.quickTimers?.stop()   // nor a timer (PA batch A)
                 self.idleCompile?.stop()   // nor an idle compile
                 self.webSummaries?.stop()   // nor a page summary (W1)
                 self.reading?.stop()   // nor a background reading pass (W1)

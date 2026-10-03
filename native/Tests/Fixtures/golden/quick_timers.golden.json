@@ -1,0 +1,576 @@
+{
+ "schema": 1,
+ "suite": "quick_timers",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "set_one_minute",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 60
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 1 minute, sir."
+    ]
+   }
+  },
+  {
+   "name": "set_zero_is_one_second",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 0
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 1 seconds, sir."
+    ]
+   }
+  },
+  {
+   "name": "set_seconds",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 45
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 45 seconds, sir."
+    ]
+   }
+  },
+  {
+   "name": "set_one_second",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 1
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 1 seconds, sir."
+    ]
+   }
+  },
+  {
+   "name": "set_ninety",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 90
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 1 minute 30 seconds, sir."
+    ]
+   }
+  },
+  {
+   "name": "set_two_minutes",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 120
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 2 minutes, sir."
+    ]
+   }
+  },
+  {
+   "name": "set_minute_and_one",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 61
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 1 minute 1 seconds, sir."
+    ]
+   }
+  },
+  {
+   "name": "set_hour",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 3600
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 60 minutes, sir."
+    ]
+   }
+  },
+  {
+   "name": "set_two_hours",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 7200
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 120 minutes, sir."
+    ]
+   }
+  },
+  {
+   "name": "set_odd",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 3725
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 62 minutes 5 seconds, sir."
+    ]
+   }
+  },
+  {
+   "name": "status_none",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "status"
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "No timers running, sir."
+    ]
+   }
+  },
+  {
+   "name": "cancel_none",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "cancel"
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "There are no timers running, sir."
+    ]
+   }
+  },
+  {
+   "name": "status_one",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 300
+     },
+     {
+      "op": "status",
+      "at": 1790582500
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 5 minutes, sir.",
+     "3 minutes 20 seconds left, sir."
+    ]
+   }
+  },
+  {
+   "name": "status_fraction",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 300
+     },
+     {
+      "op": "status",
+      "at": 1790582500.75
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 5 minutes, sir.",
+     "3 minutes 19 seconds left, sir."
+    ]
+   }
+  },
+  {
+   "name": "status_last_second",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 300
+     },
+     {
+      "op": "status",
+      "at": 1790582699.5
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 5 minutes, sir.",
+     "0 seconds left, sir."
+    ]
+   }
+  },
+  {
+   "name": "status_overdue",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 10
+     },
+     {
+      "op": "status",
+      "at": 1790582420
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 10 seconds, sir.",
+     "0 seconds left, sir."
+    ]
+   }
+  },
+  {
+   "name": "status_two_sorted",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 600
+     },
+     {
+      "op": "set",
+      "secs": 60,
+      "at": 1790582405
+     },
+     {
+      "op": "status",
+      "at": 1790582410
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 10 minutes, sir.",
+     "Timer set for 1 minute, sir.",
+     "55 seconds left, 9 minutes 50 seconds left, sir."
+    ]
+   }
+  },
+  {
+   "name": "status_tie_keeps_order",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 60
+     },
+     {
+      "op": "set",
+      "secs": 60
+     },
+     {
+      "op": "status",
+      "at": 1790582401
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 1 minute, sir.",
+     "Timer set for 1 minute, sir.",
+     "59 seconds left, 59 seconds left, sir."
+    ]
+   }
+  },
+  {
+   "name": "cancel_one",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 60
+     },
+     {
+      "op": "cancel"
+     },
+     {
+      "op": "status"
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 1 minute, sir.",
+     "Timer cancelled, sir.",
+     "No timers running, sir."
+    ]
+   }
+  },
+  {
+   "name": "cancel_three",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 60
+     },
+     {
+      "op": "set",
+      "secs": 120
+     },
+     {
+      "op": "set",
+      "secs": 5
+     },
+     {
+      "op": "cancel"
+     },
+     {
+      "op": "cancel"
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 1 minute, sir.",
+     "Timer set for 2 minutes, sir.",
+     "Timer set for 5 seconds, sir.",
+     "All 3 timers cancelled, sir.",
+     "There are no timers running, sir."
+    ]
+   }
+  },
+  {
+   "name": "fire_one",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 60
+     },
+     {
+      "op": "fire",
+      "at": 1790582460
+     },
+     {
+      "op": "status"
+     },
+     {
+      "op": "cancel"
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 1 minute, sir.",
+     [
+      "Sir, your timer is complete."
+     ],
+     "No timers running, sir.",
+     "There are no timers running, sir."
+    ]
+   }
+  },
+  {
+   "name": "fire_early_nothing",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 60
+     },
+     {
+      "op": "fire",
+      "at": 1790582459.9
+     },
+     {
+      "op": "status"
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 1 minute, sir.",
+     [],
+     "0 seconds left, sir."
+    ]
+   }
+  },
+  {
+   "name": "fire_soonest_first",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 120
+     },
+     {
+      "op": "set",
+      "secs": 30
+     },
+     {
+      "op": "fire",
+      "at": 1790582430
+     },
+     {
+      "op": "status",
+      "at": 1790582430
+     },
+     {
+      "op": "fire",
+      "at": 1790582900
+     },
+     {
+      "op": "status"
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 2 minutes, sir.",
+     "Timer set for 30 seconds, sir.",
+     [
+      "Sir, your timer is complete."
+     ],
+     "1 minute 30 seconds left, sir.",
+     [
+      "Sir, your timer is complete."
+     ],
+     "No timers running, sir."
+    ]
+   }
+  },
+  {
+   "name": "fire_after_cancel_silent",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 30
+     },
+     {
+      "op": "cancel"
+     },
+     {
+      "op": "fire",
+      "at": 1790582500
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 30 seconds, sir.",
+     "Timer cancelled, sir.",
+     []
+    ]
+   }
+  },
+  {
+   "name": "fire_late_wakes",
+   "input": {
+    "epoch": 1790582400,
+    "steps": [
+     {
+      "op": "set",
+      "secs": 30
+     },
+     {
+      "op": "fire",
+      "at": 1790586400
+     }
+    ]
+   },
+   "expected": {
+    "out": [
+     "Timer set for 30 seconds, sir.",
+     [
+      "Sir, your timer is complete."
+     ]
+    ]
+   }
+  }
+ ]
+}

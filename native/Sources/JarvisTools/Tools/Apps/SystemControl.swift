@@ -134,6 +134,8 @@ struct SystemControl: ToolImpl {
         let name: String, domain: String, key: String, on: String, off: String
         let restart: String?
     }
+    /// The tweaks' names in table order (the fast path's toggle branch matches against them).
+    static var tweakNames: [String] { tweaks.map(\.name) }
     private static let tweaks: [Tweak] = [
         Tweak(name: "hidden files", domain: "com.apple.finder", key: "AppleShowAllFiles", on: "true", off: "false", restart: "Finder"),
         Tweak(name: "show hidden files", domain: "com.apple.finder", key: "AppleShowAllFiles", on: "true", off: "false", restart: "Finder"),

@@ -142,6 +142,8 @@ public final class BrainAssembly: Sendable {
     ///   - embedding: the sentence vectors for recall and duplicate merging.
     ///   - alarms: F1: the alarms and reminders set_reminder and set_alarm write; nil means
     ///     neither tool has a body.
+    ///   - makeFastPath: PA batch A: builds the fast path on this assembly's confirmation gate;
+    ///     when given, it replaces `fastPath`.
     ///   - log: every log line of the parts, with its category. Tests pass their own.
     public init(core: CoreState, research: any ResearchCounting,
                 config: ClaudeConfig, environment: [String: String],
@@ -156,6 +158,7 @@ public final class BrainAssembly: Sendable {
                 embedding: any SentenceEmbedding = SystemSentenceEmbedding(),
                 alarms: AlarmBook? = nil,
                 textAuthenticator: any ConfirmAuthenticator, fastPath: any FastPathRouting = NoFastPath(),
+                makeFastPath: ((ConfirmationGate) -> any FastPathRouting)? = nil,
                 online: @escaping @Sendable () async -> Bool,
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
                 voiceConfirmation: VoiceConfirmation? = nil,
@@ -284,6 +287,8 @@ public final class BrainAssembly: Sendable {
                 await facts?.compile()
             })
         self.personality = personality
+        // PA batch A: a fast path made here stashes into the gate this coordinator consumes.
+        let fastPath = makeFastPath?(confirmations) ?? fastPath
         coordinator = TurnCoordinator(brain: router, fastPath: fastPath, confirmations: confirmations,
                                       textAuthenticator: textAuthenticator, online: online,
                                       onTurnStart: onTurnStart,
