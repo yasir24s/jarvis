@@ -26,8 +26,10 @@ struct UpdateScriptTests {
         func url(_ relative: String) -> URL { dist.appending(path: relative) }
 
         /// A fake JARVIS.app at `relative` whose executable is a shell script, labelled `name`
-        /// inside the bundle; `version` also writes the version.json beside it.
+        /// inside the bundle; `version` also writes the version.json beside it, and `bundleID`
+        /// (unless nil) an Info.plist with that CFBundleIdentifier.
         func bundle(_ relative: String, name: String, version: Bool = true,
+                    bundleID: String? = AppIdentity.bundleID,
                     executable: String = "#!/bin/sh\nexit 0\n") throws {
             let app = url(relative)
             let fm = FileManager.default
@@ -37,6 +39,11 @@ struct UpdateScriptTests {
             try Data(executable.utf8).write(to: exe)
             try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: exe.path(percentEncoded: false))
             try Data(name.utf8).write(to: app.appending(path: "Contents/Resources/name"))
+            if let bundleID {
+                let plist = try PropertyListSerialization.data(fromPropertyList: ["CFBundleIdentifier": bundleID],
+                                                               format: .xml, options: 0)
+                try plist.write(to: app.appending(path: "Contents/Info.plist"))
+            }
             if version {
                 try Data(#"{"commit": "\#(name)", "dirty": false, "built": "2026-10-01T00:00:00Z"}"#.utf8)
                     .write(to: app.deletingLastPathComponent().appending(path: "version.json"))

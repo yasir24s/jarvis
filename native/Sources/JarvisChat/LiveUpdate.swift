@@ -71,6 +71,15 @@ public struct UpdateFolders: Sendable, Equatable {
               isDirectory.boolValue else { return nil }
         return BuildID.read(stagedVersion)
     }
+
+    /// The staged bundle's CFBundleIdentifier, read from its Info.plist; nil if there is none.
+    public func stagedBundleID() -> String? {
+        let plist = stagedApp.appending(path: "Contents/Info.plist", directoryHint: .notDirectory)
+        guard let data = try? Data(contentsOf: plist),
+              let object = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
+        else { return nil }
+        return object["CFBundleIdentifier"] as? String
+    }
 }
 
 /// When a staged build may replace the running one (D-58). Every signal is passed in.
@@ -164,12 +173,19 @@ public final class UpdateWatcher {
     @ObservationIgnored private var poll: Task<Void, Never>?
     @ObservationIgnored private var source: (any DispatchSourceFileSystemObject)?
     @ObservationIgnored private var lastHold: UpdateRule.Hold?
+    @ObservationIgnored private let runningBundleID: String?
+    @ObservationIgnored private var refused: BuildID?
 
     /// `folders` nil (not a dist/JARVIS.app bundle) makes a watcher that never sees a build.
+    /// `runningBundleID` is this app's bundle ID: a staged build under any other ID (the move to
+    /// com.jarv1s.assistant) is never swapped in, since its settings, keychain access and
+    /// permissions belong to another app; it needs a manual install with JARVIS quit.
     public init(folders: UpdateFolders?, clock: any JarvisClock = SystemClock(),
+                runningBundleID: String? = Bundle.main.bundleIdentifier,
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0) }) {
         self.folders = folders
         self.clock = clock
+        self.runningBundleID = runningBundleID
         self.log = log
     }
 
@@ -220,8 +236,23 @@ public final class UpdateWatcher {
             hold = nil
             lastHold = nil
             updateNowRequested = false
+            refused = nil
             return
         }
+        let stagedID = folders.stagedBundleID()
+        guard stagedID == runningBundleID else {
+            if refused != build {
+                log("update: build \(build.label) has bundle ID \(stagedID ?? "none"), not this app's "
+                    + "\(runningBundleID ?? "none"); not swapping, manual install needed")
+                refused = build
+            }
+            ready = nil
+            hold = nil
+            lastHold = nil
+            updateNowRequested = false
+            return
+        }
+        refused = nil
         if ready != build {
             log("update: build \(build.label) is staged")
             ready = build

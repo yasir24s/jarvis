@@ -123,7 +123,7 @@ struct LiveUpdateTests {
             signals = LiveUpdateTests.idle(lastUse: clock.now())
             let lines = self.lines
             watcher = UpdateWatcher(folders: UpdateFolders(dist: fake.dist), clock: clock,
-                                    log: { lines.append($0) })
+                                    runningBundleID: AppIdentity.bundleID, log: { lines.append($0) })
         }
 
         /// Starts the watcher with a poll that never fires, so only `check()` looks.
@@ -133,7 +133,49 @@ struct LiveUpdateTests {
                           sleep: { _ in try await Task.sleep(for: .seconds(3600)) })
         }
 
-        func stage(_ name: String) throws { try fake.bundle("staged/JARVIS.app", name: name) }
+        func stage(_ name: String, bundleID: String? = AppIdentity.bundleID) throws {
+            try fake.bundle("staged/JARVIS.app", name: name, bundleID: bundleID)
+        }
+    }
+
+    @Test("a staged build under another bundle ID is never swapped in: manual install needed")
+    func watcherRefusesAnotherBundleID() throws {
+        let rig = try Rig()
+        defer { rig.watcher.stop(); rig.fake.remove() }
+        rig.start()
+        try rig.stage("moved", bundleID: AppIdentity.legacyBundleID)
+        #expect(UpdateFolders(dist: rig.fake.dist).stagedBundleID() == AppIdentity.legacyBundleID)
+        rig.watcher.check()
+        rig.watcher.updateNow()   // nothing is ready, so Update Now does nothing
+        rig.clock.advance(3600)
+        rig.watcher.check()
+        #expect(rig.watcher.ready == nil)
+        #expect(!rig.watcher.updateNowRequested)
+        #expect(!rig.watcher.swapping)
+        #expect(rig.swaps.isEmpty)
+        let refusals = rig.lines.all.filter { $0.hasSuffix("manual install needed") }
+        #expect(refusals == ["update: build moved 2026-10-01T00:00:00Z has bundle ID \(AppIdentity.legacyBundleID), "
+                             + "not this app's \(AppIdentity.bundleID); not swapping, manual install needed"])
+        // A build under this app's own ID, staged over it, is taken up as usual.
+        try FileManager.default.removeItem(at: rig.fake.url("staged"))
+        try rig.stage("fixed")
+        rig.watcher.check()
+        #expect(rig.watcher.ready?.commit == "fixed")
+        rig.clock.advance(600)
+        rig.watcher.check()
+        #expect(rig.swaps.map(\.commit) == ["fixed"])
+    }
+
+    @Test("a staged build with no Info.plist is refused too")
+    func watcherRefusesAMissingBundleID() throws {
+        let rig = try Rig()
+        defer { rig.watcher.stop(); rig.fake.remove() }
+        rig.start()
+        try rig.stage("bare", bundleID: nil)
+        rig.clock.advance(3600)
+        rig.watcher.check()
+        #expect(rig.watcher.ready == nil && rig.swaps.isEmpty)
+        #expect(rig.lines.all.contains { $0.contains("has bundle ID none") && $0.hasSuffix("manual install needed") })
     }
 
     @Test("a staged build is shown as ready, and swapped to once 10 quiet minutes have passed")
