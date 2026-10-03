@@ -134,8 +134,11 @@ public enum BuiltInTools {
             await gateway.register(Capped(CorrectMemory(memory: memory.store, clock: clock)))
             await gateway.register(Capped(RestoreMemory(memory: memory.store)))
         }
+        // PR2: set_reminder is registered as Python registered it; without the alarms book it
+        // writes to Apple Reminders only.
+        await gateway.register(Capped(SetReminder(book: alarms, reminders: platform.reminders, clock: clock,
+                                                  timeZone: timeZone)))
         if let alarms {
-            await gateway.register(Capped(SetReminder(book: alarms, clock: clock, timeZone: timeZone)))
             await gateway.register(Capped(SetAlarm(book: alarms, clock: clock, timeZone: timeZone)))
         }
         // PR2: the fast path's own helpers, never offered to a model (FastPathOnly).
@@ -214,6 +217,8 @@ struct ToolPlatform: Sendable {
     var messages: any MessagesReading = NoMessages()
     var contacts: any ContactsReading = NoContacts()
     var calendar: any CalendarStoring = NoCalendar()
+    /// PR2: Apple Reminders, for set_reminder (none until the app's live platform).
+    var reminders: any RemindersStoring = NoReminders()
     /// PB: `_front_app()`, for summarize_page's browser order.
     var frontApp: @Sendable () async -> String = { "" }
     /// PR2: the fast path's own tools. Their fixed commands (`open`, `pbcopy`, the volume
@@ -240,6 +245,7 @@ struct ToolPlatform: Sendable {
         platform.messages = LiveMessages(home: platform.home)
         platform.contacts = LiveContacts()
         platform.calendar = LiveCalendar.shared
+        platform.reminders = LiveReminders.shared
         platform.frontApp = { SummarizePage.liveFrontApp() }
         platform.quickRunner = BoundedRunner(environment: BoundedRunner.agentEnvironment())
         platform.appExists = { QuickTables.liveAppExists($0) }

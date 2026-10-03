@@ -1,19 +1,22 @@
 import Foundation
 import JarvisCore
 
-/// `set_reminder` (F1). Python created an Apple Reminder through AppleScript on macOS
-/// (`_create_reminder`, jarvis.py 2955-2973), which only ever showed Reminders' silent
-/// notification. Native keeps the reminder in JARVIS's own alarms.json, as Python did on
-/// Windows, marked `"kind": "reminder"`, and ReminderSchedule speaks it when it comes due. The
-/// time comes from `when`, else from the text (`_parse_when(when_text or text)`). With no time
-/// in either, nothing is saved and he asks for one (Python made an undated Apple Reminder).
+/// `set_reminder` (F1, PR2). Python's `_create_reminder` (jarvis.py 2954-2975) made an Apple
+/// Reminder (AppleScript), so it reached the iPhone: dated with a `remind me date`, undated
+/// without one. Native makes the same reminder through EventKit, and a dated one also goes into
+/// JARVIS's own alarms.json, marked `"kind": "reminder"`, so ReminderSchedule speaks it when it
+/// comes due. The time comes from `when`, else from the text (`_parse_when(when_text or text)`).
+/// An undated reminder goes to Reminders only, as Python's did. Without access to Reminders a
+/// dated reminder is still spoken and the reply says it did not reach Reminders (DEV-PR2-02).
 struct SetReminder: ToolImpl {
     static let name = "set_reminder"
     static let schema = BuiltInTools.catalogSchema(named: name)
-    static let askWhen = "When should I remind you, sir? Try 'at 5pm' or 'in 10 minutes'."
     static let failed = "I couldn't set that reminder, sir."
+    static let added = "Reminder added, sir."
 
-    let book: AlarmBook
+    /// Nil when the app gave no alarms book: Reminders only.
+    let book: AlarmBook?
+    let reminders: any RemindersStoring
     let clock: any JarvisClock
     let timeZone: TimeZone
 
@@ -23,10 +26,18 @@ struct SetReminder: ToolImpl {
         let whenText = PyArgs.str(args["when"] ?? .string(""))
         let now = Date(timeIntervalSince1970: clock.now())
         guard let when = WhenParser.parse(whenText.isEmpty ? text : whenText, now: now, timeZone: timeZone) else {
-            return .text(Self.askWhen)
+            return .text(await reminders.add(title: text, due: nil) == true ? Self.added : Self.failed)
         }
-        guard book.add(at: when, label: text, kind: .reminder) else { return .text(Self.failed) }
-        return .text("Reminder set for \(AlarmTime.spoken(when, timeZone)), sir.")
+        let spoken = book?.add(at: when, label: text, kind: .reminder) ?? false
+        let synced = await reminders.add(title: text, due: when) == true
+        let set = "Reminder set for \(AlarmTime.spoken(when, timeZone)), sir."
+        switch (spoken, synced) {
+        case (_, true): return .text(set)
+        case (true, false):
+            return .text("Reminder set for \(AlarmTime.spoken(when, timeZone)), sir — but I couldn't add it to "
+                         + "Reminders, so it won't reach your iPhone.")
+        case (false, false): return .text(Self.failed)
+        }
     }
 }
 

@@ -110,10 +110,29 @@ struct SpokenRemindersTests {
 
     // MARK: the tools, through the gateway
 
-    private static func gateway(_ sandbox: ToolCoreSandbox, clock: ManualClock) async -> (ToolGateway, AlarmBook) {
+    /// PR2: Apple Reminders as a fake that keeps what it was given (nil access when `access`
+    /// is false), so no test reaches EventKit.
+    final class FakeReminders: RemindersStoring {
+        let access: Bool
+        private let saved = Mutex<[(title: String, due: Date?)]>([])
+        init(access: Bool = true) { self.access = access }
+        var all: [(title: String, due: Date?)] { saved.withLock { $0 } }
+        func add(title: String, due: Date?) async -> Bool? {
+            guard access else { return nil }
+            saved.withLock { $0.append((title, due)) }
+            return true
+        }
+    }
+
+    private static func gateway(_ sandbox: ToolCoreSandbox, clock: ManualClock,
+                                reminders: FakeReminders = FakeReminders(),
+                                withBook: Bool = true) async -> (ToolGateway, AlarmBook) {
         let gateway = ToolGateway(confirmationGate: ConfirmationGate(), log: { _ in })
         let book = AlarmBook(store: sandbox.store, timeZone: zone)
-        await BuiltInTools.register(on: gateway, core: sandbox.core, clock: clock, timeZone: zone, alarms: book)
+        var platform = ToolPlatform.fake()
+        platform.reminders = reminders
+        await BuiltInTools.register(on: gateway, core: sandbox.core, clock: clock, timeZone: zone, platform: platform,
+                                    alarms: withBook ? book : nil)
         return (gateway, book)
     }
 
@@ -137,7 +156,8 @@ struct SpokenRemindersTests {
             == "Alarm set for 7:00 AM on weekdays, sir.")
         #expect(await Self.call(gateway, "set_alarm", ["when": "every day at 6:30am"])
             == "Alarm set for 6:30 AM every day, sir.")
-        #expect(await Self.call(gateway, "set_reminder", ["text": "water the plants"]) == SetReminder.askWhen)
+        // PR2: as Python, an undated reminder goes to Apple Reminders only.
+        #expect(await Self.call(gateway, "set_reminder", ["text": "water the plants"]) == "Reminder added, sir.")
         #expect(await Self.call(gateway, "set_alarm", ["when": "soon"]) == SetAlarm.askWhen)
         let entries = book.entries()
         #expect(entries.map(\.label) == ["call a friend", "stretch in 10 minutes", "work", ""])
@@ -146,6 +166,44 @@ struct SpokenRemindersTests {
         // As in Python, the first occurrence is simply the next 7am (a Sunday here); only the
         // roll-forward skips weekends.
         #expect(entries[2].stamp == "2026-10-04T07:00:00")
+    }
+
+    @Test func everyReminderAlsoGoesToAppleReminders() async throws {
+        let sandbox = try ToolCoreSandbox()
+        defer { sandbox.remove() }
+        let clock = ManualClock(Self.at(3, 15))
+        let reminders = FakeReminders()
+        let (gateway, book) = await Self.gateway(sandbox, clock: clock, reminders: reminders)
+        _ = await Self.call(gateway, "set_reminder", ["text": "call a friend", "when": "at 6pm"])
+        _ = await Self.call(gateway, "set_reminder", ["text": "water the plants"])
+        #expect(reminders.all.map(\.title) == ["call a friend", "water the plants"])
+        #expect(reminders.all.map(\.due) == [Date(timeIntervalSince1970: Self.at(3, 18)), nil])
+        // Only the dated one is spoken by JARVIS.
+        #expect(book.entries().map(\.label) == ["call a friend"])
+    }
+
+    @Test func withoutRemindersADatedReminderIsStillSpokenAndSaysSo() async throws {
+        let sandbox = try ToolCoreSandbox()
+        defer { sandbox.remove() }
+        let clock = ManualClock(Self.at(3, 15))
+        let (gateway, book) = await Self.gateway(sandbox, clock: clock, reminders: FakeReminders(access: false))
+        #expect(await Self.call(gateway, "set_reminder", ["text": "call a friend", "when": "at 6pm"])
+            == "Reminder set for 6:00 PM, sir — but I couldn't add it to Reminders, so it won't reach your iPhone.")
+        #expect(await Self.call(gateway, "set_reminder", ["text": "water the plants"]) == SetReminder.failed)
+        #expect(book.entries().map(\.label) == ["call a friend"])
+    }
+
+    @Test func withoutTheAlarmsBookSetReminderIsStillThereForReminders() async throws {
+        let sandbox = try ToolCoreSandbox()
+        defer { sandbox.remove() }
+        let reminders = FakeReminders()
+        let (gateway, book) = await Self.gateway(sandbox, clock: ManualClock(Self.at(3, 15)), reminders: reminders,
+                                                 withBook: false)
+        #expect(await Self.call(gateway, "set_reminder", ["text": "call a friend", "when": "at 6pm"])
+            == "Reminder set for 6:00 PM, sir.")
+        #expect(reminders.all.count == 1)
+        #expect(book.entries().isEmpty)
+        #expect(await Self.call(gateway, "set_alarm", ["when": "7am"]).hasPrefix("Unknown tool"))
     }
 
     // MARK: ReminderSchedule
