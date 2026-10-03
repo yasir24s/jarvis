@@ -59,10 +59,30 @@ public protocol TVAccessibility: Sendable {
     func snapshot() async -> TVAXNode?
     /// Types `text` into the element at `path` (by setting its value).
     func setText(_ text: String, at path: [Int]) async -> Bool
-    /// AXPress on the element at `path`.
-    func press(_ path: [Int]) async -> Bool
-    /// AXConfirm on the element at `path` (Return in a search field).
-    func confirm(_ path: [Int]) async -> Bool
+    /// The AX actions the element at `path` supports (AXPress, AXShowDefaultUI, …).
+    func actions(_ path: [Int]) async -> [String]
+    /// Performs one AX action on the element at `path`.
+    func perform(_ action: String, at path: [Int]) async -> Bool
+}
+
+/// The TV app's own AXIdentifiers, from its real window (macOS 27.2, en-GB, a show page).
+/// Matched before any title; titles (`TVUITitles`) are the fallback.
+public enum TVAXIDs {
+    /// The show page's banner; its text area names the latest or up-next episode ("S4, E10 · …").
+    public static let banner = "UIA.TV.Cell.canonicalBanner"
+    /// A playable episode cell: `UIA.TV.Cell.episodeLockup.play.parentId="<show>".id="<episode>"`.
+    public static let episodeCell = "UIA.TV.Cell.episodeLockup.play."
+    public static let seasonPicker = "UIA.TV.Button.seasonPicker"
+    public static let searchTab = "UIA.TV.Tabs.search"
+    /// The Episodes row's forward chevron (the list shows a few cells at a time).
+    public static let forwardChevron = "ChevronDirection(rawValue: 1)"
+    /// Trailers and bonus content (`UIA.TV.Cell.lockup.play…uts.col.Trailers…`): never an episode.
+    public static let excluded = ["uts.col.", "Trailers", "BonusContent"]
+
+    static func isExcluded(_ id: String?) -> Bool {
+        guard let id else { return false }
+        return excluded.contains { id.contains($0) }
+    }
 }
 
 /// The words the TV app's UI shows, per language. Matching prefers roles, subroles and
@@ -91,8 +111,11 @@ public struct TVUITitles: Sendable, Equatable {
 
     public static let table = TVUITitles(
         search: ["Search", "Rechercher", "Suchen", "Buscar", "Cerca", "Zoeken", "Pesquisar"],
+        // The titles route only (no episode cells exposed); the cell route never presses these.
         play: ["Play", "Resume", "Lire", "Reprendre", "Wiedergeben", "Fortsetzen", "Reproducir", "Reanudar",
-               "Riproduci", "Riprendi", "Afspelen", "Hervatten", "Reproduzir", "Retomar"],
+               "Riproduci", "Riprendi", "Afspelen", "Hervatten", "Reproduzir", "Retomar",
+               "Watch Again", "Play from Beginning", "Restart", "Revoir", "Recommencer", "Erneut ansehen",
+               "Von Anfang an", "Ver de nuevo", "Desde el principio", "Guarda di nuovo", "Dall'inizio"],
         season: ["Season", "Saison", "Staffel", "Temporada", "Stagione", "Seizoen"],
         episode: ["Episode", "Épisode", "Folge", "Episodio", "Aflevering", "Episódio"],
         watched: ["Watched", "Played", "Vu", "Gesehen", "Visto", "Bekeken", "Assistido"],
@@ -196,6 +219,7 @@ public enum TVUIReader {
 
     /// The control that opens the search page (a sidebar row or tab), when no field is showing.
     public static func searchTab(in root: TVAXNode, titles: TVUITitles = .table) -> TVAXNode? {
+        if let tab = root.all.first(where: { $0.identifier?.hasPrefix(TVAXIDs.searchTab) == true }) { return tab }
         let candidates = root.all.filter { pressRoles.contains($0.role) || $0.role == "AXStaticText" }
         return candidates.first { pressRoles.contains($0.role) && idHas($0, titles.searchIdentifiers) }
             ?? candidates.first { matchesAny($0.ownText, titles.search) || matchesAny($0.fullText, titles.search) }
@@ -252,6 +276,7 @@ public enum TVUIReader {
         func inside(_ path: [Int], _ parent: [Int]) -> Bool { path.count >= parent.count && Array(path.prefix(parent.count)) == parent }
         func visit(_ node: TVAXNode) {
             if claimed.contains(where: { inside(node.path, $0) }) { return }
+            if TVAXIDs.isExcluded(node.identifier) || node.identifier?.hasPrefix(TVAXIDs.banner) == true { return }
             let isRow = rowRoles.contains(node.role) && episodeNumber(node.fullText, titles: titles) != nil
                 && !node.children.flatMap(\.all).contains { rowRoles.contains($0.role) && episodeNumber($0.fullText, titles: titles) != nil }
             if isRow, let n = episodeNumber(node.fullText, titles: titles) {
@@ -299,6 +324,83 @@ public enum TVUIReader {
     public static func playButton(in root: TVAXNode, titles: TVUITitles = .table) -> TVAXNode? {
         let buttons = root.all.filter { $0.role == "AXButton" }
         return buttons.first { idHas($0, titles.playIdentifiers) } ?? buttons.first { matchesAny($0.ownText, titles.play) }
+    }
+}
+
+// MARK: - The show page by identifier
+
+/// One playable episode cell. The real cells carry no text, so the episode number is the
+/// cell's place in the Episodes row unless its text names one.
+public struct TVEpisodeCell: Sendable, Equatable {
+    public var episodeID: String
+    public var season: Int?
+    public var episode: Int?
+    public var watch: MediaItem.WatchState
+    public var path: [Int]
+}
+
+public struct TVShowPage: Sendable, Equatable {
+    /// The banner's episode ("S4, E10").
+    public var banner: (season: Int?, episode: Int)?
+    public var picker: TVAXNode?
+    /// The season the picker shows, when it says.
+    public var season: Int?
+    public var cells: [TVEpisodeCell]
+    /// The titles route's rows, for a page without episode cells.
+    public var rows: [TVEpisodeRow]
+
+    public var isShowPage: Bool { banner != nil || picker != nil || !cells.isEmpty || !rows.isEmpty }
+
+    public static func == (a: TVShowPage, b: TVShowPage) -> Bool {
+        a.banner?.season == b.banner?.season && a.banner?.episode == b.banner?.episode && a.picker == b.picker
+            && a.season == b.season && a.cells == b.cells && a.rows == b.rows
+    }
+}
+
+extension TVUIReader {
+    /// The show page as the TV app's identifiers describe it.
+    public static func showPage(in root: TVAXNode, titles: TVUITitles = .table) -> TVShowPage {
+        let nodes = root.all
+        var banner: (season: Int?, episode: Int)?
+        if let b = nodes.first(where: { $0.identifier?.hasPrefix(TVAXIDs.banner) == true }) {
+            let texts = b.all.filter { $0.role == "AXTextArea" } + b.all
+            for t in texts {
+                if let n = episodeNumber(t.ownText, titles: titles) { banner = n; break }
+            }
+        }
+        let picker = nodes.first { $0.identifier?.hasPrefix(TVAXIDs.seasonPicker) == true }
+        let season = picker.flatMap { seasonHeader([$0.value, $0.title].compactMap { $0 }.joined(separator: " "), titles: titles) }
+        let cells = nodes.filter { n in
+            guard let id = n.identifier else { return false }
+            return id.hasPrefix(TVAXIDs.episodeCell) && !TVAXIDs.isExcluded(id)
+        }.map { n in
+            let number = episodeNumber(n.fullText, titles: titles)
+            return TVEpisodeCell(episodeID: episodeID(n.identifier ?? ""), season: number?.season ?? season, episode: number?.episode,
+                                 watch: watchState(of: n, titles: titles), path: n.path)
+        }
+        return TVShowPage(banner: banner, picker: picker, season: season, cells: cells,
+                          rows: cells.isEmpty ? episodes(in: root, titles: titles) : [])
+    }
+
+    /// The `id="…"` at the end of a cell's identifier (the whole identifier when there is none).
+    static func episodeID(_ identifier: String) -> String {
+        firstMatch(#"\.id="([^"]+)"$"#, in: identifier)?[1] ?? identifier
+    }
+
+    /// The seasons an open season menu offers, as (season, element). The picker itself is
+    /// skipped.
+    public static func seasonChoices(in root: TVAXNode, titles: TVUITitles = .table) -> [(season: Int, node: TVAXNode)] {
+        root.all.compactMap { n in
+            guard n.identifier?.hasPrefix(TVAXIDs.seasonPicker) != true,
+                  ["AXMenuItem", "AXButton", "AXRadioButton", "AXCell", "AXRow", "AXStaticText"].contains(n.role),
+                  let s = seasonHeader(n.ownText, titles: titles) else { return nil }
+            return (s, n)
+        }
+    }
+
+    /// The Episodes row's forward chevron.
+    public static func forwardChevron(in root: TVAXNode) -> TVAXNode? {
+        root.all.first { ($0.identifier ?? "").contains(TVAXIDs.forwardChevron) || ($0.label ?? "").contains(TVAXIDs.forwardChevron) }
     }
 }
 
@@ -403,13 +505,15 @@ public struct LiveTVAccessibility: TVAccessibility {
         return AXUIElementSetAttributeValue(e, kAXValueAttribute as CFString, text as CFString) == .success
     }
 
-    public func press(_ path: [Int]) async -> Bool {
-        guard let e = element(at: path) else { return false }
-        return AXUIElementPerformAction(e, kAXPressAction as CFString) == .success
+    public func actions(_ path: [Int]) async -> [String] {
+        guard let e = element(at: path) else { return [] }
+        var names: CFArray?
+        guard AXUIElementCopyActionNames(e, &names) == .success, let list = names as? [String] else { return [] }
+        return list
     }
 
-    public func confirm(_ path: [Int]) async -> Bool {
+    public func perform(_ action: String, at path: [Int]) async -> Bool {
         guard let e = element(at: path) else { return false }
-        return AXUIElementPerformAction(e, kAXConfirmAction as CFString) == .success
+        return AXUIElementPerformAction(e, action as CFString) == .success
     }
 }

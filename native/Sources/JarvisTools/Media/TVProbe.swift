@@ -97,6 +97,10 @@ public enum TVProbe {
         } else {
             out.append("tv-app search field: not exposed on this screen")
         }
+        let page = TVUIReader.showPage(in: root, titles: titles)
+        out.append("tv-app banner: " + (page.banner.map { "names S\($0.season.map(String.init) ?? "?")E\($0.episode)" } ?? "none"))
+        out.append("tv-app season picker: " + (page.picker.map { _ in "exposed" + (page.season.map { ", showing season \($0)" } ?? "") } ?? "none"))
+        out.append("tv-app episode cells: \(page.cells.count) exposed (by identifier)")
         let rows = TVUIReader.episodes(in: root, titles: titles)
         if rows.isEmpty {
             out.append("tv-app episode list: none on this screen (open a show page in the TV app and run again)")
