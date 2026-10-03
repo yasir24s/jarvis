@@ -758,6 +758,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                               conversationOver: { assembly.personality.conversationEnded() },
                                               prompt: { [weak self] in self?.confirmationPrompt() },
                                               pushToTalkOn: { [weak self] in self?.talk.isOn ?? false },
+                                              userStarting: { assembly.turnActivity.preemptBackground() },
                                               // PR2: after "Going offline, sir.", the same clean exit as SIGTERM.
                                               goOffline: { [weak self] in _ = self?.exitCleanly("received SIGINT — exiting.") })
                 self.applyHandsFree()
@@ -844,7 +845,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// any reply being written (UI1's stop); the HUD listens with the microphone's level; what is
     /// heard is sent as a voice turn, whose reply is always spoken.
     private func startPushToTalk() {
-        talk.onStart = { [weak self] in _ = self?.chat.stop() }
+        talk.onStart = { [weak self] in
+            _ = self?.chat.stop()
+            self?.brain?.turnActivity.preemptBackground()   // live fix 1: the user comes first
+        }
         talk.onListening = { [weak self] in
             self?.hud.listening()
             if let prompt = self?.confirmationPrompt() { self?.hud.caption(prompt) }   // M11 part 5

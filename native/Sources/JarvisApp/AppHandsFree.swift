@@ -50,6 +50,9 @@ final class AppHandsFree {
     private let prompt: @MainActor () -> String?
     /// Push-to-talk is listening: its words are its own turn, so the loop takes no command then.
     private let pushToTalkOn: @MainActor () -> Bool
+    /// Live fix 1: the user is about to speak (the loop listens for a command): background
+    /// on-device work gives way (`TurnActivity.preemptBackground`).
+    private let userStarting: @MainActor () -> Void
     /// `JARVIS_KEEP_AWAKE` (J:5462): while listening, idle system sleep is held off.
     private var awake: (any NSObjectProtocol)?
     /// PR2: Ctrl-C while listening says "Going offline, sir." and then ends JARVIS (`goOffline`).
@@ -74,6 +77,7 @@ final class AppHandsFree {
          exitForRelaunch: @escaping @Sendable () -> Never? = AppHandsFree.launchdExit,
          prompt: @escaping @MainActor () -> String? = { nil },
          pushToTalkOn: @escaping @MainActor () -> Bool = { false },
+         userStarting: @escaping @MainActor () -> Void = {},
          goOffline: @escaping @MainActor () -> Void = { exit(0) },
          log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .voice) }) {
         self.core = core
@@ -88,6 +92,7 @@ final class AppHandsFree {
         self.exitForRelaunch = exitForRelaunch
         self.prompt = prompt
         self.pushToTalkOn = pushToTalkOn
+        self.userStarting = userStarting
         self.goOffline = goOffline
         self.log = log
         mic = MicCapture(makeInput: makeInput, log: log)
@@ -258,6 +263,7 @@ final class AppHandsFree {
         switch state {
         case .idle: hud.state(.idle)
         case .listening:
+            userStarting()
             hud.listening()
             if let prompt = prompt() { hud.caption(prompt) }
         case .thinking: hud.state(.thinking)

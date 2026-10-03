@@ -74,6 +74,7 @@ struct TurnActivityTests {
         try await turnWaiter.value
         activity.speechEnded()                                             // never below zero
         #expect(!activity.isSpeaking)
+        clock.advance(TurnActivity.graceSeconds)                          // live fix 1: past the turn's grace
         try await activity.waitUntilQuiet(sleep: { _ in Issue.record("slept while quiet") })
     }
 }

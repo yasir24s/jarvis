@@ -242,10 +242,14 @@ public final class BrainAssembly: Sendable {
         // they, and P3's file reading, stay on Claude whichever brain the Brain item picks for
         // replies; only JARVIS_USE_CLAUDE=0 moves them on-device.
         let localWriter = LocalPersonaLLM()
+        // Live fix 1: background work's on-device calls give way to the user's turns.
+        let turns = TurnActivity()
+        turnActivity = turns
+        let backgroundLocal = YieldingPersonaLLM(localWriter, turns: turns)
         let claudeWriter = ClaudePersonaLLM(config: config, executable: executable,
                                             workingDirectory: claudeWorkingDirectory,
                                             parentEnvironment: environment, online: online, log: brainLog)
-        let writer = personaWriter ?? CollaborativePersonaLLM(local: localWriter, claude: claudeWriter)
+        let writer = personaWriter ?? CollaborativePersonaLLM(local: backgroundLocal, claude: claudeWriter)
         // MEM1 part 4: the memory writer's fallback when Claude cannot write: ChatGPT with no tools.
         let chatgptWriter = ChatGPTPersonaLLM(
             config: codexConfig, executable: codexPath,
@@ -256,10 +260,8 @@ public final class BrainAssembly: Sendable {
             preflight: { [home = codexHome ?? CodexHome.directory] in
                 await CodexLogin(executable: codexPath, codexHome: home, parentEnvironment: environment).status()
             }, log: brainLog)
-        let summarizer = FallbackSummarizer(LocalPageSummarizer(model: localWriter, budget: .system()))
+        let summarizer = FallbackSummarizer(LocalPageSummarizer(model: backgroundLocal, budget: .system()))
         pageSummarizer = summarizer
-        let turns = TurnActivity()
-        turnActivity = turns
         let summaries = webMemory.map { WebSummaryQueue(memory: $0, summarizer: summarizer, turns: turns) }
         webSummaries = summaries
         self.reader = reader
@@ -278,7 +280,7 @@ public final class BrainAssembly: Sendable {
             }, model: localWriter)   // PB: summarize_page and find_song_by_lyrics ask the on-device model
         }
         let facts = memory.map {
-            FactCompiler(memory: $0, writer: factWriter ?? Self.factWriter(local: localWriter, claude: claudeWriter,
+            FactCompiler(memory: $0, writer: factWriter ?? Self.factWriter(local: backgroundLocal, claude: claudeWriter,
                                                                            chatgpt: chatgptWriter),
                          vectors: vectors, turns: turns)
         }
@@ -287,7 +289,7 @@ public final class BrainAssembly: Sendable {
         fileScanner = memory.flatMap { memory in
             files.map { files in
                 let quota = ClaudeReadQuota()
-                let reader = FileFactReader(memory: memory, local: localWriter, claude: claudeWriter,
+                let reader = FileFactReader(memory: memory, local: backgroundLocal, claude: claudeWriter,
                                             budget: .system(), quota: quota, turns: turns, vectors: vectors,
                                             userName: NSFullUserName())
                 return FileScanner(home: files.home, stateRoot: files.stateRoot, store: files.store,
