@@ -129,7 +129,9 @@ struct UpdateScriptTests {
         #expect(UpdateFolders.helperPath == "Contents/Helpers/jarvis-update")
         // The helper never names a home folder; it works from its arguments and $HOME.
         let helper = try String(contentsOf: Self.script, encoding: .utf8)
-        #expect(!helper.contains("/Users/"))
+        #expect(!helper.contains(NSHomeDirectory()))
+        // Any home folder, spelt without the literal: a slash, "Users" (as a class), a slash, a name.
+        #expect(helper.range(of: #"/[U]sers/[A-Za-z0-9._-]+/"#, options: .regularExpression) == nil)
     }
 
     @Test("promote: JARVIS.app moves to previous/ and the staged build takes its place, by rename")

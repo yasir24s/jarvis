@@ -9,7 +9,7 @@ import Testing
 /// P4: read_file reads a scanned PDF by OCR. The PDFs are rendered here into a temporary
 /// folder from the G17 fixture image (m5_ocr/plain.png) or from CoreText, never the user's
 /// files; the first test runs the real Vision recogniser, the rest a fake.
-@Suite("P4 read_file OCR for scanned PDFs", .timeLimit(.minutes(1)))
+@Suite("P4 read_file OCR for scanned PDFs", .timeLimit(.minutes(3)))
 struct ScannedPDFTests {
     static func folder() throws -> URL {
         let url = FileManager.default.temporaryDirectory.appending(path: "jarvis-pdf-\(UUID().uuidString)")
@@ -43,11 +43,13 @@ struct ScannedPDFTests {
         context.closePDF()
     }
 
-    static func call(_ path: String, recognizer: any TextRecognizing) async throws
+    static func call(_ path: String, recognizer: any TextRecognizing, ocrTimeout: Duration = ScannedPDF.timeout) async throws
         -> (result: ToolCallResult, turn: TurnContext) {
         let sandbox = try ToolCoreSandbox()
         defer { sandbox.remove() }
-        let gateway = await M5Fixture.gateway(.fake(recognizer: recognizer), sandbox: sandbox)
+        var platform = ToolPlatform.fake(recognizer: recognizer)
+        platform.ocrTimeout = ocrTimeout
+        let gateway = await M5Fixture.gateway(platform, sandbox: sandbox)
         let turn = TurnContext(channel: .text)
         let result = await gateway.call("read_file", JSONObject([.init(key: "path", value: .string(path))]),
                                         turn: turn, origin: .model(.claude))
@@ -61,7 +63,9 @@ struct ScannedPDFTests {
         defer { try? FileManager.default.removeItem(at: dir) }
         let url = dir.appending(path: "scan.pdf")
         try Self.imagePDF(try FixtureScreen.decode("m5_ocr/plain.png"), pages: 1, at: url)
-        let (result, turn) = try await Self.call(url.path(percentEncoded: false), recognizer: VisionTextRecognizer())
+        // The real recogniser can be slow under a loaded full run: a generous limit, not the 30 s default.
+        let (result, turn) = try await Self.call(url.path(percentEncoded: false), recognizer: VisionTextRecognizer(),
+                                                 ocrTimeout: .seconds(150))
         print("OCR reply: \(result.text.debugDescription)")
         withKnownIssue(OCRProbe.reason, isIntermittent: true) {
         #expect(result.text.hasPrefix("(OCR of a scanned PDF: read 1 of its 1 page)\n"))

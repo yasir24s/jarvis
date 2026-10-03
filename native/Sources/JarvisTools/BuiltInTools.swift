@@ -78,7 +78,7 @@ public enum BuiltInTools {
         await gateway.register(Capped(SearchFiles(spotlight: spotlight)))
         await gateway.register(Capped(FindFiles(spotlight: spotlight)))
         await gateway.register(Capped(ReadFile(home: platform.home, userHome: platform.userHome,
-                                               recognizer: platform.recognizer)))
+                                               recognizer: platform.recognizer, ocrTimeout: platform.ocrTimeout)))
         await gateway.register(Capped(RunCommand(runner: platform.commandRunner)))
         await gateway.register(Capped(RunAppleScript(runner: platform.scriptRunner)))
         await gateway.register(Capped(WriteFile(session: platform.files)))
@@ -171,6 +171,8 @@ struct ToolPlatform: Sendable {
     var clipboard: any ClipboardReading
     var screen: any ScreenCapturing
     var recognizer: any TextRecognizing
+    /// read_file's OCR time limit for a scanned PDF (tests under load pass a longer one).
+    var ocrTimeout: Duration = ScannedPDF.timeout
     /// `$HOME`, as Python's `os.path.expanduser` reads it.
     var home: String
     /// Built on the first find_apps, then kept for the process, as Python's APP_INDEX.

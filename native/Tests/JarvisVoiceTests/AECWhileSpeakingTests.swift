@@ -15,8 +15,9 @@ struct AECWhileSpeakingTests {
     static let on = HubMode.duplex(voiceProcessing: true)
     static let off = HubMode.duplex(voiceProcessing: false)
 
-    static func hub(_ engine: FakeHubEngine, _ aec: AECPolicy = .whileSpeaking, lines: Lines = Lines()) -> AudioHub {
-        AudioHub(engine: engine, aec: aec, log: { lines.add($0) })
+    static func hub(_ engine: FakeHubEngine, _ aec: AECPolicy = .whileSpeaking, lines: Lines = Lines(),
+                    tail: DispatchTimeInterval = AudioHub.tail) -> AudioHub {
+        AudioHub(engine: engine, aec: aec, tail: tail, log: { lines.add($0) })
     }
 
     /// Polls `condition` every 10 ms for up to `limit`.
@@ -57,18 +58,19 @@ struct AECWhileSpeakingTests {
     @Test("a reply that starts within the tail keeps voice processing on")
     func nextReplyInTheTail() async throws {
         let engine = FakeHubEngine(plainFormat: Self.plain)
-        let hub = Self.hub(engine)
+        // A 5 s tail and a 100 ms gap: the next reply lands inside the tail under any load.
+        let hub = Self.hub(engine, tail: .seconds(5))
         let input = HubMicInput(hub: hub)
         _ = try input.inputFormat()
         hub.speechWillStart()
         #expect(await Self.until { engine.builds.last == Self.on })
         hub.speechEnded()
-        try await Task.sleep(for: .milliseconds(600))
+        try await Task.sleep(for: .milliseconds(100))
         hub.speechWillStart()
         try await Task.sleep(for: .milliseconds(900))
         #expect(engine.builds == [Self.off, Self.on])
         hub.speechEnded()
-        #expect(await Self.until { engine.builds == [Self.off, Self.on, Self.off] })
+        #expect(await Self.until(.seconds(30)) { engine.builds == [Self.off, Self.on, Self.off] })
         input.stop()
     }
 

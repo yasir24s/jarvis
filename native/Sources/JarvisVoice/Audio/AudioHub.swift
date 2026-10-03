@@ -340,6 +340,8 @@ public final class AudioHub: @unchecked Sendable {
     /// tail timer whether it is still the latest.
     private var inTail = false
     private var tailToken = 0
+    /// This hub's tail: `AudioHub.tail` unless a test gives a longer one.
+    private let tailLength: DispatchTimeInterval
     /// A hands-free conversation is open; voice processing a reply turned on is kept on
     /// (`lingering`) until it closes.
     private var conversation = false
@@ -357,8 +359,10 @@ public final class AudioHub: @unchecked Sendable {
     private var lastBuffer: (hostTime: UInt64, frames: AVAudioFrameCount, rate: Double)?
     private var measureGap: (reason: String, at: UInt64)?
 
-    init(engine: any HubEngine, aec: AECPolicy, log: @escaping @Sendable (String) -> Void) {
+    init(engine: any HubEngine, aec: AECPolicy, tail: DispatchTimeInterval = AudioHub.tail,
+         log: @escaping @Sendable (String) -> Void) {
         self.engine = engine
+        self.tailLength = tail
         self.policy = aec
         self.log = log
         engine.deviceChanges.set { [weak self] force in self?.devicesChanged(force: force) }
@@ -551,7 +555,7 @@ public final class AudioHub: @unchecked Sendable {
         tailToken += 1
         let token = tailToken
         inTail = policy == .whileSpeaking
-        queue.asyncAfter(deadline: .now() + Self.tail) { [weak self] in self?.tailEnded(token) }
+        queue.asyncAfter(deadline: .now() + tailLength) { [weak self] in self?.tailEnded(token) }
     }
 
     /// Returns once no switch is pending, queued or running (at most `readyLimit`), logging how

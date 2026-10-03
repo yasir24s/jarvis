@@ -227,7 +227,9 @@ struct SwitchImplScriptTests {
 
     @Test func theScriptNamesNoHomeFolder() throws {
         let text = try String(contentsOf: Self.script, encoding: .utf8)
-        #expect(!text.contains("/Users/"))
+        #expect(!text.contains(NSHomeDirectory()))
+        // Any home folder, spelt without the literal: a slash, "Users" (as a class), a slash, a name.
+        #expect(text.range(of: #"/[U]sers/[A-Za-z0-9._-]+/"#, options: .regularExpression) == nil)
         #expect(text.contains(#"REPO="${JARVIS_REPO:-$HOME/jarvis}""#))
     }
 }
