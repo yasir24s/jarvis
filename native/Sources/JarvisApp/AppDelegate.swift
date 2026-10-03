@@ -849,6 +849,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             _ = self?.chat.stop()
             self?.brain?.turnActivity.preemptBackground()   // live fix 1: the user comes first
         }
+        // Live fix 4: his speech has stopped before the microphone opens.
+        talk.beforeListening = { [weak self] in await self?.voice?.stopAndWait() }
         talk.onListening = { [weak self] in
             self?.hud.listening()
             if let prompt = self?.confirmationPrompt() { self?.hud.caption(prompt) }   // M11 part 5
@@ -857,8 +859,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         talk.onEnded = { [weak self] sent in
             if !sent { self?.hud.listeningEnded() }
         }
-        talk.onHeard = { [weak self] text in
+        talk.onHeard = { [weak self] heard in
             guard let self else { return }
+            let text = self.voice?.withoutEcho(heard) ?? heard   // live fix 4
             // The turn's start makes the HUD think. A turn never taken (refused, or nothing sent)
             // must not leave it listening.
             guard let turn = self.chat.sendVoice(text) else {

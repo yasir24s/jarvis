@@ -94,6 +94,9 @@ public final class PushToTalkModel {
 
     /// UI1's stop: his speech and any reply being written stop when listening starts.
     @ObservationIgnored public var onStart: (() -> Void)?
+    /// Live fix 4: awaited before the microphone opens, so his speech (a reply or an
+    /// acknowledgement) has stopped and cannot be heard as the user's words.
+    @ObservationIgnored public var beforeListening: (@MainActor () async -> Void)?
     /// The microphone opened (the HUD listens).
     @ObservationIgnored public var onListening: (() -> Void)?
     /// Each level change (the HUD's bars).
@@ -215,6 +218,8 @@ public final class PushToTalkModel {
         clearNotice()
         onStart?()
         Task {
+            await self.beforeListening?()
+            guard mine == self.session else { return }
             let access = await listener.access()
             guard mine == self.session else { return }
             guard access == .granted else {

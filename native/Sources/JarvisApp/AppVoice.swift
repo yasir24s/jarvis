@@ -1,5 +1,6 @@
 import Foundation
 import JarvisBrain
+import JarvisChat
 import JarvisCore
 import JarvisVoice
 
@@ -110,6 +111,9 @@ final class AppVoice {
     private(set) var inFlight = 0
     /// When the last of them finished, by the wall clock; nil before the first.
     private(set) var lastSpoke: Double?
+    /// Live fix 4: the text of the last line he started to say (an acknowledgement, a reply or a
+    /// loop line), for the echo filter.
+    private(set) var lastLine: String?
     var isSpeaking: Bool { inFlight > 0 }
 
     /// V1 part 1: plays an acknowledgement of a typed message the moment it is sent (Speak
@@ -127,6 +131,7 @@ final class AppVoice {
         recentAcknowledgements = Array((recentAcknowledgements + [line.name]).suffix(Acknowledgement.recentLimit))
         acknowledgementClip = clip
         acknowledgedSinceReply = true
+        lastLine = line.text
         let queue = self.queue
         let activity = self.activity
         let stops = self.stops
@@ -184,6 +189,7 @@ final class AppVoice {
             SpeechQueue.parts($0, early: speakEarlyApplies && SpeechQueue.speakEarlyFromDefaults(), sentences: Self.sentences)
         } ?? []
         acknowledgedSinceReply = false
+        lastLine = heardReply
         inFlight += 1
         repliesPending += 1
         activity?.speechBegan()
@@ -211,6 +217,7 @@ final class AppVoice {
         let stops = self.stops
         heardReply = nil
         heardParts = []
+        lastLine = text
         inFlight += 1
         activity?.speechBegan()
         await queue.say(text, turn: UUID(), stops: stops)
@@ -233,11 +240,34 @@ final class AppVoice {
     /// also turns speaking off (`SpeechMute`); the chat's Stop, a message sent while he speaks
     /// and barge-in call only this.
     func stop() {
+        let stopping = stopNow()
+        Task { await stopping() }
+    }
+
+    /// Live fix 4: `stop()`, returning once his audio has stopped. Push-to-talk waits for this
+    /// before the microphone opens.
+    func stopAndWait() async {
+        let speaking = isSpeaking
+        await stopNow()()
+        if speaking { JarvisLog.log("voice: his speech stopped before the microphone opened", category: .voice) }
+    }
+
+    private func stopNow() -> @Sendable () async -> Void {
         let queue = self.queue
         acknowledgedSinceReply = false   // as the queue's cancelAll forgets it
         stops += 1
         let stops = self.stops
-        Task { await queue.cancelAll(through: stops) }
+        return { await queue.cancelAll(through: stops) }
+    }
+
+    /// Live fix 4: a voice transcript without a trailing ", sir" that echoed his last line
+    /// (`EchoFilter`), logged when it is taken off.
+    func withoutEcho(_ transcript: String) -> String {
+        let now = SystemClock().now()
+        let at = isSpeaking ? now : lastSpoke
+        guard let clean = EchoFilter.strip(transcript, lastLine: lastLine, spokeAt: at, now: now) else { return transcript }
+        JarvisLog.log("voice: took an echo of his last line off the end of what was heard", category: .voice)
+        return clean
     }
 
     private func silenced(_ text: String) {

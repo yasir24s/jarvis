@@ -284,7 +284,7 @@ final class AppHandsFree {
             return
         }
         await chimes.play(.tink)
-        guard let turn = chat.sendVoice(command) else { return }
+        guard let turn = chat.sendVoice(voice.withoutEcho(command)) else { return }   // live fix 4
         await turn.value
         await voice.quiet()
     }
