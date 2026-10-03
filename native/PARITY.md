@@ -138,12 +138,12 @@ Native JARVIS reads the same names (LaunchAgent env or `defaults`). Obsolete one
 | ☐ | 651 | Text-to-Speech (Piper, local) | |
 | ☐ | 666 | Barge-in (opt-in interruption while JARVIS is talking) | |
 | ☐ | 804 | Speech-to-Text (online Google / offline Whisper) | |
-| ☐ | 815 | Self-correcting transcription (explicit, user-taught) | |
+| ☐ | 815 | Self-correcting transcription (explicit, user-taught) | partial (PA batch A): teaching and forgetting by voice wired through the fast path: `QuickCommandsTests.correctionsAreTaughtAndForgottenByVoice`, `quick_router.golden.json` (corr.forget, corr.teach) |
 | ☐ | 976 | Sentence-aware listening + vocal tone | |
 | ☐ | 1068 | Wake-word detector (openWakeWord, always-on, cheap) | |
 | ☐ | 1144 | Tools | |
 | ☐ | 1146 | Security guards | |
-| ☐ | 1422 | Media control (AppleScript on macOS / media keys on Windows) | |
+| ☐ | 1422 | Media control (AppleScript on macOS / media keys on Windows) | partial (PA batch A): `_media` play/pause/next/previous from the fast path, script text `quick_system.golden.json` (media/*); not run live (speakers stay silent); the music tools are batch B |
 | ☐ | 1603 | Application index (every app on the drive) | |
 | ☐ | 1647 | App intelligence: know WHAT each app is, not just its name | |
 | ☐ | 1820 | System Settings deep-linking + hidden macOS options | |
@@ -152,18 +152,18 @@ Native JARVIS reads the same names (LaunchAgent env or `defaults`). Obsolete one
 | ☐ | 2126 | Personality (J.A.R.V.I.S. persona + style notes learned from conversations) | |
 | ☐ | 2285 | Virtual emotions (persistent mood that colours JARVIS's delivery) | |
 | ☐ | 2431 | Dissertation research log (local-only longitudinal dataset) | |
-| ☐ | 2822 | Assistant skills: weather, timers, reminders, messages, calendar | |
+| ☐ | 2822 | Assistant skills: weather, timers, reminders, messages, calendar | partial (PA batch A): timers `quick_timers.golden.json`, `QuickCommandsTests.aTimerThatEndedDuringSleepIsSpokenOnWaking` |
 | ☐ | 2999 | Calendar via EventKit (reliable) with AppleScript fallback | |
 | ☐ | 3137 | Outbound comms, calendar write, news, diagnostics, dictation | |
 | ☐ | 3461 | Apple Shortcuts (smart home + user automations) | |
 | ☐ | 3524 | Browser awareness ("summarize this page") | |
 | ☐ | 3593 | Local vision (optional, JARVIS_VISION_MODEL) | |
-| ☐ | 3621 | Everyday controls: quit apps, sleep, clipboard, IP, Bluetooth battery | |
+| ☐ | 3621 | Everyday controls: quit apps, sleep, clipboard, IP, Bluetooth battery | partial (PA batch A): quit all, sleep, IP, Bluetooth battery, lock, Trash `quick_system.golden.json`; quitting one app, clipboard copy and the default browser not ported |
 | ☐ | 3741 | Proactive nudges (opt-in; JARVIS is otherwise purely reactive) | |
 | ☐ | 3873 | Screen awareness, clipboard & notes | |
-| ☐ | 3985 | Alarms (persistent across restarts) | |
+| ☐ | 3985 | Alarms (persistent across restarts) | partial (PA batch A): list and cancel `quick_alarms.golden.json` |
 | ☐ | 4113 | Music identification (Shazam-style via AudD) & lyric search | |
-| ☐ | 4257 | Offline fast-path (instant common commands, no LLM needed) | |
+| ☐ | 4257 | Offline fast-path (instant common commands, no LLM needed) | partial (PA batch A): every branch matched in Python's order (`quick_router.golden.json`, 397 phrases); 19 branches answered, the rest go to the brain |
 | ☐ | 4656 | Ollama brain → FoundationModels fallback (M3) | |
 | ☐ | 4815 | Claude Agent SDK backend (subscription auth) + local Ollama fallback | |
 | ☐ | 5107 | Wake word | |
@@ -177,7 +177,7 @@ Native JARVIS reads the same names (LaunchAgent env or `defaults`). Obsolete one
 - [ ] Fast-path router: every intent in `fast_path()` (golden corpus, M7)
 - [ ] Wake word: hard + soft tier, speaker-gated wake (wake audio checked before chime/HUD)
 - [ ] Conversation mode: follow-ups without wake word until dismissed or 30 s silence
-- [ ] Dismiss phrases (`is_dismiss`), enrolment / forget voice by voice
+- [ ] Dismiss phrases (`is_dismiss`), enrolment / forget voice by voice — forget voice by voice: PA batch A, behind the owner check (`QuickCommandsWiringTests`)
 - [ ] Spoken + typed confirmation gate for risk-tier `confirm` actions (25 s, enrolled voice)
 - [ ] Prompt-injection taint guard on BOTH backends
 - [ ] Claude → local fallback on any failure; partial-answer salvage; "which model are you using"
