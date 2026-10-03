@@ -21,7 +21,7 @@ import JarvisCore
 public actor SpeechQueue {
     /// The app's defaults suite, where the voice settings are read from.
     public static let defaultsSuite = "com.jarvis.assistant"
-    /// The UserDefaults key of Speak First Sentence Early (V5); on when unset.
+    /// The UserDefaults key of Speak First Sentence Early (V5); off when unset.
     public static let speakEarlyKey = "speakEarly"
     /// The shortest first sentence spoken on its own (V5), in Unicode scalars.
     public static let earlyMinimum = 20
@@ -150,13 +150,13 @@ public actor SpeechQueue {
         return [first, rest]
     }
 
-    /// Speak First Sentence Early as stored in the app's defaults suite: on unless switched off.
+    /// Speak First Sentence Early as stored in the app's defaults suite: off until switched on.
     public static func speakEarlyFromDefaults() -> Bool {
         speakEarly(in: UserDefaults(suiteName: defaultsSuite))
     }
 
     public static func speakEarly(in defaults: UserDefaults?) -> Bool {
-        defaults?.object(forKey: speakEarlyKey) as? Bool ?? true
+        defaults?.object(forKey: speakEarlyKey) as? Bool ?? false
     }
 
     /// V1 part 5: has the voice get ready for a reply that is coming (the user is typing). When

@@ -7,7 +7,7 @@ import JarvisVoice
 import SwiftUI
 import Testing
 
-/// V5: "Speak First Sentence Early" in both menus, on until switched off, kept as `speakEarly`;
+/// V5: "Speak First Sentence Early" in both menus, off until switched on, kept as `speakEarly`;
 /// and the queue's two parts as the app's own sentence splitter makes them.
 @MainActor
 @Suite("V5 Speak First Sentence Early menu item", .serialized)
@@ -44,7 +44,7 @@ struct SpeakEarlyMenuTests {
         return VoiceMenuTests.item(menu, SpeakEarlySetting.menuTitle).flatMap { $0.state == state ? $0 : nil }
     }
 
-    @Test func onByDefaultInBothMenusAndChoosingItSwitchesItOff() async throws {
+    @Test func offByDefaultInBothMenusAndChoosingItSwitchesItOn() async throws {
         let folder = FileManager.default.temporaryDirectory.appending(path: "jarvis-tests-early-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -53,8 +53,8 @@ struct SpeakEarlyMenuTests {
         defer { defaults.removePersistentDomain(forName: name) }
 
         let setting = SpeakEarlySetting(defaults: defaults)
-        #expect(setting.isOn)
-        #expect(SpeechQueue.speakEarly(in: defaults), "nothing stored: the queue reads it as on")
+        #expect(!setting.isOn)
+        #expect(!SpeechQueue.speakEarly(in: defaults), "nothing stored: the queue reads it as off")
         let menus = Self.menus(defaults, setting: setting)
         menus.bar.update()
         menus.app.update()
@@ -66,18 +66,18 @@ struct SpeakEarlyMenuTests {
         let stop = try #require(app.firstIndex(of: "Stop Speaking"))
         #expect(app[stop + 1] == SpeakEarlySetting.menuTitle)
         for menu in [menus.bar, menus.app] {
-            #expect(try await Self.shows(menu, .on) != nil)
+            #expect(try await Self.shows(menu, .off) != nil, "unticked by default")
         }
 
         let item = try #require(VoiceMenuTests.item(menus.bar, SpeakEarlySetting.menuTitle))
         NSApp.sendAction(try #require(item.action), to: item.target, from: item)
-        #expect(!setting.isOn)
-        #expect(defaults.object(forKey: SpeechQueue.speakEarlyKey) as? Bool == false)
-        #expect(!SpeechQueue.speakEarly(in: defaults))
+        #expect(setting.isOn)
+        #expect(defaults.object(forKey: SpeechQueue.speakEarlyKey) as? Bool == true)
+        #expect(SpeechQueue.speakEarly(in: defaults))
         for menu in [menus.bar, menus.app] {
-            #expect(try await Self.shows(menu, .off) != nil, "both menus follow")
+            #expect(try await Self.shows(menu, .on) != nil, "both menus follow")
         }
-        #expect(!SpeakEarlySetting(defaults: defaults).isOn, "kept across launches")
+        #expect(SpeakEarlySetting(defaults: defaults).isOn, "kept across launches")
     }
 
     /// The parts as the app makes them, with the app's own `SentenceSplitter` (`AppVoice.sentences`).

@@ -274,12 +274,12 @@ struct SpeakEarlyTests {
         #expect(await player2.played == [Self.first.unicodeScalars.count, Self.rest.unicodeScalars.count])
     }
 
-    /// The setting is on until it is switched off.
-    @Test func theSettingIsOnByDefault() throws {
+    /// The setting is off until it is switched on.
+    @Test func theSettingIsOffByDefault() throws {
         let name = "speak-early-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: name))
         defer { defaults.removePersistentDomain(forName: name) }
-        #expect(SpeechQueue.speakEarly(in: defaults))
+        #expect(!SpeechQueue.speakEarly(in: defaults))
         defaults.set(false, forKey: SpeechQueue.speakEarlyKey)
         #expect(!SpeechQueue.speakEarly(in: defaults))
         defaults.set(true, forKey: SpeechQueue.speakEarlyKey)

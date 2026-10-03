@@ -4,7 +4,7 @@ import Observation
 import SwiftUI
 
 /// V5: "Speak First Sentence Early", kept as `speakEarly` in the voice's defaults suite
-/// (`SpeechQueue.defaultsSuite`) and on until the user switches it off. SpeechQueue reads the
+/// (`SpeechQueue.defaultsSuite`) and off until the user switches it on. SpeechQueue reads the
 /// stored value for each reply, so a switch holds from the next reply.
 @MainActor
 @Observable
@@ -19,7 +19,7 @@ final class SpeakEarlySetting {
 
     init(defaults: UserDefaults? = UserDefaults(suiteName: SpeechQueue.defaultsSuite)) {
         self.defaults = defaults
-        isOn = defaults?.object(forKey: SpeechQueue.speakEarlyKey) as? Bool ?? true
+        isOn = defaults?.object(forKey: SpeechQueue.speakEarlyKey) as? Bool ?? false
     }
 }
 
