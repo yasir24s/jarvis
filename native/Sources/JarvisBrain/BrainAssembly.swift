@@ -91,6 +91,8 @@ public final class BrainAssembly: Sendable {
     /// The memory tools' store and search (P4), registered by `start()`. nil without a
     /// `memory` store.
     private let memoryTools: BuiltInTools.Memory?
+    /// Batch C: tools the app adds, served after the memory tools and registered at start.
+    private let extraTools: [any ToolImpl]
     /// F1: alarms.json, which set_reminder and set_alarm write, registered by `start()`. nil
     /// means neither tool has a body.
     private let alarms: AlarmBook?
@@ -163,15 +165,18 @@ public final class BrainAssembly: Sendable {
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
                 voiceConfirmation: VoiceConfirmation? = nil,
                 brainChoice: @escaping @Sendable () -> BrainChoice = { .claude },
+                extraTools: [any ToolImpl] = [],
                 log: @escaping @Sendable (String, LogCategory) -> Void = { JarvisLog.log($0, category: $1) }) {
         let brainLog: @Sendable (String) -> Void = { log($0, .brain) }
         self.core = core
+        self.extraTools = extraTools
         self.alarms = alarms
         confirmations = ConfirmationGate()
         gateway = ToolGateway(confirmationGate: confirmations, log: { log($0, .tools) }, research: research,
                               journal: memory.map { ToolJournal(memory: $0) })
         registry = MCPTurnRegistry(runDirectory: runDirectory)
-        let claudeTools = Self.claudeTools(memory: memory != nil, deepWeb: reader != nil)
+        let claudeTools = Self.claudeTools(memory: memory != nil, deepWeb: reader != nil,
+                                           extra: extraTools.map { type(of: $0).schema })
         server = MCPServer(runDirectory: runDirectory, registry: registry, gateway: gateway,
                            tools: claudeTools.tools, log: brainLog)
         backend = BackendReporter(research: research, log: brainLog)
@@ -304,6 +309,8 @@ public final class BrainAssembly: Sendable {
     public func start() async throws {
         await BuiltInTools.register(on: gateway, core: core, clock: SystemClock(), timeZone: .autoupdatingCurrent,
                                     memory: memoryTools, web: webTools, alarms: alarms)
+        // Batch C: the app's own tools (identify_song, the media catalogue, TV and AirPlay).
+        for tool in extraTools { await gateway.register(tool) }
         try await server.start()
     }
 
@@ -315,10 +322,10 @@ public final class BrainAssembly: Sendable {
     /// memory tools. The MCP server serves `tools` and `--allowedTools` lists `allowed`, which
     /// R3 requires to be the same set; without memory both are Python's 46.
     /// W1 part 4: with a page reader (`deepWeb`), web_search is offered with its deep flag.
-    static func claudeTools(memory: Bool, deepWeb: Bool = false) -> (tools: [ToolSchema], allowed: [String]) {
+    static func claudeTools(memory: Bool, deepWeb: Bool = false, extra: [ToolSchema] = []) -> (tools: [ToolSchema], allowed: [String]) {
         let python = deepWeb ? ToolCatalog.tools.map { $0.name == "web_search" ? NativeToolCatalog.webSearchDeep : $0 }
             : ToolCatalog.tools
-        let tools = python + (memory ? NativeToolCatalog.memoryTools : [])
+        let tools = python + (memory ? NativeToolCatalog.memoryTools : []) + extra
         return (tools, tools.map { ClaudeInvocation.allowedToolName($0.name) })
     }
 

@@ -557,7 +557,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // counting wrapper: the text_confirm_* counters count typed confirmations only.
             voiceConfirmation: .ownerCheck(LAConfirmAuthenticator()),
             // M9a part 7: the menus' Brain item, read from UserDefaults as each turn begins.
-            brainChoice: { BrainSetting.stored(in: .standard) })
+            brainChoice: { BrainSetting.stored(in: .standard) },
+            // Batch C: identify_song (ShazamKit, behind its feature check).
+            extraTools: [IdentifySong()])
         brain = assembly
         voice.activity = assembly.turnActivity   // V1 part 5: speech holds the file scan back
         // P1: the hourly consolidation check starts now (first pass in 120 s); the chat's
