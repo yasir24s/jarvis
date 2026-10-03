@@ -8,6 +8,8 @@ import Synchronization
 /// switches are off.
 public final class MediaLibrary: Sendable {
     public static let refreshEvery: Double = 86_400
+    /// A forced refresh comes at most this often (seconds); one asked for sooner waits.
+    public static let changeDebounce: Double = 600
     public static let queuePlaylist = "JARVIS Up Next"
 
     public struct Switches: Sendable {
@@ -32,13 +34,24 @@ public final class MediaLibrary: Sendable {
     let timeZone: TimeZone
     let switches: Switches
     let log: @Sendable (String) -> Void
+    let sleep: @Sendable (Duration) async throws -> Void
     private let lock = Mutex(())
+    /// The refresh running now, whether it was forced, when the last one started, and a forced
+    /// one held back (`refresh`).
+    private struct Flight {
+        var running: Task<MediaCatalogue?, Never>?
+        var runningForced = false
+        var lastRun: Double?
+        var pending: Task<Void, Never>?
+    }
+    private let flight = Mutex(Flight())
 
     public init(store: StateStore, memory: MemoryStore?, music: any MusicLibraryReading = ITunesLibraryReader(),
                 tv: any TVLibraryReading = TVAppLibraryReader(scripts: LiveScripts()),
                 folders: any MediaFolderReading = MediaFolderReader(), scripts: any ScriptRunning = LiveScripts(),
                 opener: any MediaOpening = LiveOpener(), clock: any JarvisClock = SystemClock(),
                 timeZone: TimeZone = .autoupdatingCurrent, switches: Switches,
+                sleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0, clock: .suspending) },
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .state) }) {
         self.store = store
         self.memory = memory
@@ -50,6 +63,7 @@ public final class MediaLibrary: Sendable {
         self.clock = clock
         self.timeZone = timeZone
         self.switches = switches
+        self.sleep = sleep
         self.log = log
     }
 
@@ -73,13 +87,79 @@ public final class MediaLibrary: Sendable {
     }
 
     /// Refreshes when due (a day since the last, or `force`); nil when nothing was read.
+    ///
+    /// One refresh runs at a time: a call made while one runs waits for it and gets its result
+    /// (a forced call behind an unforced one runs after it), so a burst of calls reads the library
+    /// once. Before, each call checked whether a refresh was due before any had finished (a read
+    /// of the whole library takes seconds), so a burst at launch read and rewrote it once per call.
+    /// A forced refresh (a switch turned on, folders picked) within `changeDebounce` of the last
+    /// one is held until that time has passed, and a burst of them makes one.
     @discardableResult
     public func refresh(force: Bool = false) async -> MediaCatalogue? {
+        while true {
+            let step: FlightStep = flight.withLock { f in
+                if let running = f.running {
+                    return force && !f.runningForced ? .waitThenRetry(running) : .join(running)
+                }
+                guard switches.music() || switches.library() else { return .skip }
+                let now = clock.now()
+                if force {
+                    if let last = f.lastRun, now - last < Self.changeDebounce {
+                        if f.pending == nil { f.pending = holdForced(seconds: Self.changeDebounce - (now - last)) }
+                        return .skip
+                    }
+                } else if now - load().refreshed < Self.refreshEvery {
+                    return .skip
+                }
+                f.lastRun = now
+                f.runningForced = force
+                let task = Task { await self.read(force: force) }
+                f.running = task
+                return .start(task)
+            }
+            switch step {
+            case .skip:
+                return nil
+            case .join(let task):
+                return await task.value
+            case .waitThenRetry(let task):
+                _ = await task.value
+            case .start(let task):
+                let result = await task.value
+                flight.withLock { f in
+                    if f.running == task { f.running = nil }
+                }
+                return result
+            }
+        }
+    }
+
+    private enum FlightStep {
+        case skip
+        case join(Task<MediaCatalogue?, Never>)
+        case waitThenRetry(Task<MediaCatalogue?, Never>)
+        case start(Task<MediaCatalogue?, Never>)
+    }
+
+    /// A forced refresh held back by `changeDebounce`, made once the time has passed.
+    private func holdForced(seconds: Double) -> Task<Void, Never> {
+        let sleep = self.sleep
+        return Task {
+            try? await sleep(.milliseconds(Int((seconds * 1000).rounded(.up))))
+            self.flight.withLock { $0.pending = nil }
+            _ = await self.refresh(force: true)
+        }
+    }
+
+    /// A forced refresh still held back (tests).
+    var heldRefresh: Task<Void, Never>? { flight.withLock { $0.pending } }
+
+    /// One refresh: the library read and the catalogue written.
+    private func read(force: Bool) async -> MediaCatalogue? {
         let learnMusic = switches.music(), library = switches.library()
         guard learnMusic || library else { return nil }
         let current = load()
         let now = clock.now()
-        guard force || now - current.refreshed >= Self.refreshEvery else { return nil }
         var fresh: [MediaItem] = []
         var replacing: Set<MediaItem.Source> = []
         var lists: [MediaPlaylist]?
@@ -114,14 +194,20 @@ public final class MediaLibrary: Sendable {
     }
 
     /// The music facts, replacing the last ones (they are this source's own, so the guard lets
-    /// them go).
+    /// them go). Nothing is written when they are the same as the saved ones.
     func distil(_ catalogue: MediaCatalogue, now: Double) {
         guard let memory else { return }
         let weekday = Calendar(identifier: .gregorian).component(.weekday, from: Date(timeIntervalSince1970: now))
         let sinceMonday = Double((weekday + 5) % 7) * 86_400
         let lines = MusicDistillation.facts(catalogue, today: day(now), weekStart: day(now - sinceMonday),
                                             lastWeekStart: day(now - sinceMonday - 7 * 86_400))
-        let old = Set((memory.loadFacts()?.facts ?? []).filter { $0.source == MusicDistillation.source }.map(\.id))
+        let saved = (memory.loadFacts()?.facts ?? []).filter { $0.source == MusicDistillation.source }
+        // Unchanged facts are left as they are: no write, no new ids.
+        if saved.map(\.text).sorted() == lines.sorted() {
+            log("media: \(lines.count) music fact(s) unchanged")
+            return
+        }
+        let old = Set(saved.map(\.id))
         let outcome = memory.writeFacts(allowingRemovalOf: old) { file in
             file.facts.removeAll { $0.source == MusicDistillation.source }
             for line in lines {
