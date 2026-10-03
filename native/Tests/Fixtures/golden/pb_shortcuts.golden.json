@@ -1,0 +1,825 @@
+{
+ "schema": 1,
+ "suite": "pb_shortcuts",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "run_shortcut/0",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "lights on"
+    },
+    "cli": false,
+    "list": null,
+    "run": null
+   },
+   "expected": {
+    "text": "I couldn't find a shortcut matching lights on, sir.",
+    "argv": []
+   }
+  },
+  {
+   "name": "run_shortcut/1",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "lights on"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "I couldn't find a shortcut matching lights on, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/2",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "Lights ON"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Lights On"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/3",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "  lights off  "
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Lights Off"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/4",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "lights"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Lights On"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/5",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "morning"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Morning Routine"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/6",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "run my morning routine now"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Morning Routine"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/7",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "routine for the morning"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Morning Routine"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/8",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "living room"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "626f6f6d",
+     "status": 1,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "The Living Room Lights shortcut failed, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Living Room Lights"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/9",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "lights on"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": true,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "The Lights On shortcut is taking a while, sir — it may still be running.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Lights On"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/10",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "lights on"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": 2
+    }
+   },
+   "expected": {
+    "text": "Shortcut error: [Errno 2] No such file or directory: 'shortcuts'",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Lights On"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/11",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "lights on"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "ff",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "Shortcut error: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Lights On"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/12",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "garage"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "I couldn't find a shortcut matching garage, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/13",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": ""
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "I couldn't find a shortcut matching , sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/14",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {},
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "I couldn't find a shortcut matching , sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/15",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": null
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "I couldn't find a shortcut matching None, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/16",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": 5
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'lower'",
+    "argv": []
+   }
+  },
+  {
+   "name": "run_shortcut/17",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "lights on"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": true,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "I couldn't find a shortcut matching lights on, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/18",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "lights on"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a",
+     "stderr_hex": "ff",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "I couldn't find a shortcut matching lights on, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "run_shortcut/19",
+   "input": {
+    "tool": "run_shortcut",
+    "args": {
+     "name": "lights on"
+    },
+    "cli": true,
+    "list": {
+     "stdout_hex": "20204c6967687473204f6e20200d0a0d0a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    }
+   },
+   "expected": {
+    "text": "Done, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ],
+     [
+      "shortcuts",
+      "run",
+      "Lights On"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "list_shortcuts/20",
+   "input": {
+    "tool": "list_shortcuts",
+    "args": {},
+    "cli": false,
+    "list": null,
+    "run": null
+   },
+   "expected": {
+    "text": "You have no shortcuts set up, sir.",
+    "argv": []
+   }
+  },
+  {
+   "name": "list_shortcuts/21",
+   "input": {
+    "tool": "list_shortcuts",
+    "args": {},
+    "cli": true,
+    "list": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "You have no shortcuts set up, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "list_shortcuts/22",
+   "input": {
+    "tool": "list_shortcuts",
+    "args": {},
+    "cli": true,
+    "list": {
+     "stdout_hex": "4c6967687473204f6e0a4c6967687473204f66660a4d6f726e696e6720526f7574696e650a4c6976696e6720526f6f6d204c69676874730a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "Your shortcuts: Lights On, Lights Off, Morning Routine, Living Room Lights.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "list_shortcuts/23",
+   "input": {
+    "tool": "list_shortcuts",
+    "args": {},
+    "cli": true,
+    "list": {
+     "stdout_hex": "53686f727463757420310a53686f727463757420320a53686f727463757420330a53686f727463757420340a53686f727463757420350a53686f727463757420360a53686f727463757420370a53686f727463757420380a53686f727463757420390a53686f72746375742031300a53686f72746375742031310a53686f72746375742031320a53686f72746375742031330a53686f72746375742031340a53686f72746375742031350a53686f72746375742031360a53686f72746375742031370a53686f72746375742031380a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "Your shortcuts: Shortcut 1, Shortcut 2, Shortcut 3, Shortcut 4, Shortcut 5, Shortcut 6, Shortcut 7, Shortcut 8, Shortcut 9, Shortcut 10, Shortcut 11, Shortcut 12, Shortcut 13, Shortcut 14, Shortcut 15, and 3 more.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "list_shortcuts/24",
+   "input": {
+    "tool": "list_shortcuts",
+    "args": {},
+    "cli": true,
+    "list": {
+     "stdout_hex": "53300a53310a53320a53330a53340a53350a53360a53370a53380a53390a5331300a5331310a5331320a5331330a5331340a",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "Your shortcuts: S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "list_shortcuts/25",
+   "input": {
+    "tool": "list_shortcuts",
+    "args": {},
+    "cli": true,
+    "list": {
+     "stdout_hex": "",
+     "stderr_hex": "",
+     "status": 0,
+     "timeout": true,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "You have no shortcuts set up, sir.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "list_shortcuts/26",
+   "input": {
+    "tool": "list_shortcuts",
+    "args": {},
+    "cli": true,
+    "list": {
+     "stdout_hex": "410a",
+     "stderr_hex": "",
+     "status": 1,
+     "timeout": false,
+     "errno": null
+    },
+    "run": null
+   },
+   "expected": {
+    "text": "Your shortcuts: A.",
+    "argv": [
+     [
+      "shortcuts",
+      "list"
+     ]
+    ]
+   }
+  }
+ ]
+}

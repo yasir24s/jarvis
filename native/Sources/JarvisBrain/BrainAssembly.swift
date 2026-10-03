@@ -259,7 +259,7 @@ public final class BrainAssembly: Sendable {
             BuiltInTools.Web(reader: reader, keep: { page, query in
                 webMemory?.store(page, source: .search, query: query)
                 summaries?.kick()
-            })
+            }, model: localWriter)   // PB: summarize_page and find_song_by_lyrics ask the on-device model
         }
         let facts = memory.map {
             FactCompiler(memory: $0, writer: factWriter ?? Self.factWriter(local: localWriter, claude: claudeWriter,

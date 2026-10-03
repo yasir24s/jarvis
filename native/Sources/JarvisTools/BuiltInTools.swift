@@ -27,10 +27,15 @@ public enum BuiltInTools {
     public struct Web: Sendable {
         public let reader: any PageReading
         public let keep: @Sendable (ReadPage, String) -> Void
+        /// PB: the on-device model summarize_page and find_song_by_lyrics ask, as Python asked
+        /// Ollama. Never a cloud model: the page and the snippet stay on the Mac.
+        public let model: (any PersonaLLM)?
 
-        public init(reader: any PageReading, keep: @escaping @Sendable (ReadPage, String) -> Void) {
+        public init(reader: any PageReading, keep: @escaping @Sendable (ReadPage, String) -> Void,
+                    model: (any PersonaLLM)? = nil) {
             self.reader = reader
             self.keep = keep
+            self.model = model
         }
     }
 
@@ -109,6 +114,17 @@ public enum BuiltInTools {
                                                   timeZone: timeZone, pause: platform.pause)))
         await gateway.register(Capped(CreateEvent(calendar: platform.calendar, scripts: scripts, clock: clock,
                                                   timeZone: timeZone, pause: platform.pause)))
+        // PB: Notes, Shortcuts, the front browser page and lyrics.
+        await gateway.register(Capped(MakeNote(runner: platform.scriptRunner)))
+        let shortcuts = ShortcutsCLI(runner: platform.actionRunner, executable: platform.executable)
+        await gateway.register(Capped(RunShortcut(shortcuts: shortcuts, log: platform.webLog)))
+        await gateway.register(Capped(ListShortcuts(shortcuts: shortcuts)))
+        await gateway.register(Capped(SummarizePage(runner: platform.scriptRunner, web: platform.web,
+                                                    online: platform.online, frontApp: platform.frontApp,
+                                                    reader: web?.reader, model: web?.model,
+                                                    log: platform.webLog)))
+        await gateway.register(Capped(FindSongByLyrics(web: platform.web, online: platform.online, model: web?.model,
+                                                       log: platform.webLog)))
         if let memory {
             await gateway.register(Capped(SearchMemory(memory: memory.store, search: memory.search)))
             await gateway.register(Capped(ForgetMemory(memory: memory.store)))
@@ -180,6 +196,8 @@ struct ToolPlatform: Sendable {
     var messages: any MessagesReading = NoMessages()
     var contacts: any ContactsReading = NoContacts()
     var calendar: any CalendarStoring = NoCalendar()
+    /// PB: `_front_app()`, for summarize_page's browser order.
+    var frontApp: @Sendable () async -> String = { "" }
 
     static var live: ToolPlatform {
         var platform = ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard(), screen: LiveScreenCapture(),
@@ -196,6 +214,7 @@ struct ToolPlatform: Sendable {
         platform.messages = LiveMessages(home: platform.home)
         platform.contacts = LiveContacts()
         platform.calendar = LiveCalendar.shared
+        platform.frontApp = { SummarizePage.liveFrontApp() }
         return platform
     }
 }

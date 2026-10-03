@@ -1,0 +1,906 @@
+{
+ "schema": 1,
+ "suite": "pb_browser",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "summarize_page/0",
+   "input": {
+    "tool": "summarize_page",
+    "args": {},
+    "front": "Safari",
+    "outputs": [
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "body": "<html><head><title>T</title><style>p{}</style><script>var x=1;</script></head><body><nav>Home | About</nav><header>Site</header><h1>Big &amp; news</h1>\n<p>First   para.</p><aside>ads</aside><p>Caf&eacute; &#8212; second.</p><footer>(c)</footer></body></html>"
+     }
+    },
+    "model": "  It says big news.  "
+   },
+   "expected": {
+    "text": "It says big news.",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": [
+     "You are JARVIS. Below is the text of the web page the user is reading. In two or three short spoken sentences, summarize the key points for me. No markdown or lists.\n\nPAGE:\nT Big & news First para. Café — second."
+    ]
+   }
+  },
+  {
+   "name": "summarize_page/1",
+   "input": {
+    "tool": "summarize_page",
+    "args": {
+     "question": "what is the main claim"
+    },
+    "front": "Safari",
+    "outputs": [
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "body": "<html><head><title>T</title><style>p{}</style><script>var x=1;</script></head><body><nav>Home | About</nav><header>Site</header><h1>Big &amp; news</h1>\n<p>First   para.</p><aside>ads</aside><p>Caf&eacute; &#8212; second.</p><footer>(c)</footer></body></html>"
+     }
+    },
+    "model": "  It says big news.  "
+   },
+   "expected": {
+    "text": "It says big news.",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": [
+     "You are JARVIS. Below is the text of the web page the user is reading. In two or three short spoken sentences, what is the main claim. No markdown or lists.\n\nPAGE:\nT Big & news First para. Café — second."
+    ]
+   }
+  },
+  {
+   "name": "summarize_page/2",
+   "input": {
+    "tool": "summarize_page",
+    "args": {
+     "question": ""
+    },
+    "front": "Safari",
+    "outputs": [
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "body": "<html><head><title>T</title><style>p{}</style><script>var x=1;</script></head><body><nav>Home | About</nav><header>Site</header><h1>Big &amp; news</h1>\n<p>First   para.</p><aside>ads</aside><p>Caf&eacute; &#8212; second.</p><footer>(c)</footer></body></html>"
+     }
+    },
+    "model": "  It says big news.  "
+   },
+   "expected": {
+    "text": "It says big news.",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": [
+     "You are JARVIS. Below is the text of the web page the user is reading. In two or three short spoken sentences, summarize the key points for me. No markdown or lists.\n\nPAGE:\nT Big & news First para. Café — second."
+    ]
+   }
+  },
+  {
+   "name": "summarize_page/3",
+   "input": {
+    "tool": "summarize_page",
+    "args": {
+     "question": null
+    },
+    "front": "Safari",
+    "outputs": [
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "body": "<html><head><title>T</title><style>p{}</style><script>var x=1;</script></head><body><nav>Home | About</nav><header>Site</header><h1>Big &amp; news</h1>\n<p>First   para.</p><aside>ads</aside><p>Caf&eacute; &#8212; second.</p><footer>(c)</footer></body></html>"
+     }
+    },
+    "model": "  It says big news.  "
+   },
+   "expected": {
+    "text": "It says big news.",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": [
+     "You are JARVIS. Below is the text of the web page the user is reading. In two or three short spoken sentences, summarize the key points for me. No markdown or lists.\n\nPAGE:\nT Big & news First para. Café — second."
+    ]
+   }
+  },
+  {
+   "name": "summarize_page/4",
+   "input": {
+    "tool": "summarize_page",
+    "args": {
+     "question": 5
+    },
+    "front": "Safari",
+    "outputs": [
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "body": "<html><head><title>T</title><style>p{}</style><script>var x=1;</script></head><body><nav>Home | About</nav><header>Site</header><h1>Big &amp; news</h1>\n<p>First   para.</p><aside>ads</aside><p>Caf&eacute; &#8212; second.</p><footer>(c)</footer></body></html>"
+     }
+    },
+    "model": "x"
+   },
+   "expected": {
+    "text": "Tool error: can only concatenate str (not \"int\") to str",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": []
+   }
+  },
+  {
+   "name": "summarize_page/5",
+   "input": {
+    "tool": "summarize_page",
+    "args": {},
+    "front": "Safari",
+    "outputs": [
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "body": "<html><head><title>T</title><style>p{}</style><script>var x=1;</script></head><body><nav>Home | About</nav><header>Site</header><h1>Big &amp; news</h1>\n<p>First   para.</p><aside>ads</aside><p>Caf&eacute; &#8212; second.</p><footer>(c)</footer></body></html>"
+     }
+    },
+    "model": ""
+   },
+   "expected": {
+    "text": "I read the page, sir, but couldn't distil it.",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": [
+     "You are JARVIS. Below is the text of the web page the user is reading. In two or three short spoken sentences, summarize the key points for me. No markdown or lists.\n\nPAGE:\nT Big & news First para. Café — second."
+    ]
+   }
+  },
+  {
+   "name": "summarize_page/6",
+   "input": {
+    "tool": "summarize_page",
+    "args": {},
+    "front": "Finder",
+    "outputs": [
+     "no",
+     "no"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "body": "<html><head><title>T</title><style>p{}</style><script>var x=1;</script></head><body><nav>Home | About</nav><header>Site</header><h1>Big &amp; news</h1>\n<p>First   para.</p><aside>ads</aside><p>Caf&eacute; &#8212; second.</p><footer>(c)</footer></body></html>"
+     }
+    },
+    "model": "x"
+   },
+   "expected": {
+    "text": "I can't see an open web page, sir — bring Safari or Chrome to the front.",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "if application \"Google Chrome\" is running then return \"yes\"\nreturn \"no\""
+    ],
+    "requests": [],
+    "prompts": []
+   }
+  },
+  {
+   "name": "summarize_page/7",
+   "input": {
+    "tool": "summarize_page",
+    "args": {},
+    "front": "Finder",
+    "outputs": [
+     "no",
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "body": "<html><head><title>T</title><style>p{}</style><script>var x=1;</script></head><body><nav>Home | About</nav><header>Site</header><h1>Big &amp; news</h1>\n<p>First   para.</p><aside>ads</aside><p>Caf&eacute; &#8212; second.</p><footer>(c)</footer></body></html>"
+     }
+    },
+    "model": "x"
+   },
+   "expected": {
+    "text": "x",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "if application \"Google Chrome\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Google Chrome\" to return URL of active tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": [
+     "You are JARVIS. Below is the text of the web page the user is reading. In two or three short spoken sentences, summarize the key points for me. No markdown or lists.\n\nPAGE:\nT Big & news First para. Café — second."
+    ]
+   }
+  },
+  {
+   "name": "summarize_page/8",
+   "input": {
+    "tool": "summarize_page",
+    "args": {},
+    "front": "Google Chrome",
+    "outputs": [
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "body": "<html><head><title>T</title><style>p{}</style><script>var x=1;</script></head><body><nav>Home | About</nav><header>Site</header><h1>Big &amp; news</h1>\n<p>First   para.</p><aside>ads</aside><p>Caf&eacute; &#8212; second.</p><footer>(c)</footer></body></html>"
+     }
+    },
+    "model": "x"
+   },
+   "expected": {
+    "text": "x",
+    "scripts": [
+     "if application \"Google Chrome\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Google Chrome\" to return URL of active tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": [
+     "You are JARVIS. Below is the text of the web page the user is reading. In two or three short spoken sentences, summarize the key points for me. No markdown or lists.\n\nPAGE:\nT Big & news First para. Café — second."
+    ]
+   }
+  },
+  {
+   "name": "summarize_page/9",
+   "input": {
+    "tool": "summarize_page",
+    "args": {},
+    "front": "Google Chrome",
+    "outputs": [
+     "no",
+     "yes",
+     "favorites://"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "body": "<html><head><title>T</title><style>p{}</style><script>var x=1;</script></head><body><nav>Home | About</nav><header>Site</header><h1>Big &amp; news</h1>\n<p>First   para.</p><aside>ads</aside><p>Caf&eacute; &#8212; second.</p><footer>(c)</footer></body></html>"
+     }
+    },
+    "model": "x"
+   },
+   "expected": {
+    "text": "I can't see an open web page, sir — bring Safari or Chrome to the front.",
+    "scripts": [
+     "if application \"Google Chrome\" is running then return \"yes\"\nreturn \"no\"",
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window"
+    ],
+    "requests": [],
+    "prompts": []
+   }
+  },
+  {
+   "name": "summarize_page/10",
+   "input": {
+    "tool": "summarize_page",
+    "args": {},
+    "front": "Safari",
+    "outputs": [
+     "yes",
+     "file:///tmp/x.html",
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "body": "<html><head><title>T</title><style>p{}</style><script>var x=1;</script></head><body><nav>Home | About</nav><header>Site</header><h1>Big &amp; news</h1>\n<p>First   para.</p><aside>ads</aside><p>Caf&eacute; &#8212; second.</p><footer>(c)</footer></body></html>"
+     }
+    },
+    "model": "x"
+   },
+   "expected": {
+    "text": "x",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window",
+     "if application \"Google Chrome\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Google Chrome\" to return URL of active tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": [
+     "You are JARVIS. Below is the text of the web page the user is reading. In two or three short spoken sentences, summarize the key points for me. No markdown or lists.\n\nPAGE:\nT Big & news First para. Café — second."
+    ]
+   }
+  },
+  {
+   "name": "summarize_page/11",
+   "input": {
+    "tool": "summarize_page",
+    "args": {},
+    "front": "Safari",
+    "outputs": [
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": false,
+    "pages": {
+     "https://example.com/article": {
+      "body": "<html><head><title>T</title><style>p{}</style><script>var x=1;</script></head><body><nav>Home | About</nav><header>Site</header><h1>Big &amp; news</h1>\n<p>First   para.</p><aside>ads</aside><p>Caf&eacute; &#8212; second.</p><footer>(c)</footer></body></html>"
+     }
+    },
+    "model": "x"
+   },
+   "expected": {
+    "text": "I'm offline, sir, so I can't fetch that page.",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window"
+    ],
+    "requests": [],
+    "prompts": []
+   }
+  },
+  {
+   "name": "summarize_page/12",
+   "input": {
+    "tool": "summarize_page",
+    "args": {},
+    "front": "Safari",
+    "outputs": [
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {},
+    "model": "x"
+   },
+   "expected": {
+    "text": "I couldn't fetch that page, sir.",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": []
+   }
+  },
+  {
+   "name": "summarize_page/13",
+   "input": {
+    "tool": "summarize_page",
+    "args": {},
+    "front": "Safari",
+    "outputs": [
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "status": 404
+     }
+    },
+    "model": "x"
+   },
+   "expected": {
+    "text": "I couldn't fetch that page, sir.",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": []
+   }
+  },
+  {
+   "name": "summarize_page/14",
+   "input": {
+    "tool": "summarize_page",
+    "args": {},
+    "front": "Safari",
+    "outputs": [
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "body": "<script>x</script>  "
+     }
+    },
+    "model": "x"
+   },
+   "expected": {
+    "text": "That page appears to be empty, sir.",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": []
+   }
+  },
+  {
+   "name": "summarize_page/15",
+   "input": {
+    "tool": "summarize_page",
+    "args": {},
+    "front": "Safari",
+    "outputs": [
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "body": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word "
+     }
+    },
+    "model": "x"
+   },
+   "expected": {
+    "text": "x",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": [
+     "You are JARVIS. Below is the text of the web page the user is reading. In two or three short spoken sentences, summarize the key points for me. No markdown or lists.\n\nPAGE:\nword word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word "
+    ]
+   }
+  },
+  {
+   "name": "summarize_page/16",
+   "input": {
+    "tool": "summarize_page",
+    "args": {},
+    "front": "Safari",
+    "outputs": [
+     "yes",
+     "https://example.com/article"
+    ],
+    "online": true,
+    "pages": {
+     "https://example.com/article": {
+      "hex": "3c703e636166c3a920ff3c2f703e"
+     }
+    },
+    "model": "x"
+   },
+   "expected": {
+    "text": "x",
+    "scripts": [
+     "if application \"Safari\" is running then return \"yes\"\nreturn \"no\"",
+     "tell application \"Safari\" to return URL of current tab of front window"
+    ],
+    "requests": [
+     {
+      "url": "https://example.com/article",
+      "user_agent": "Mozilla/5.0 (JARVIS)",
+      "timeout": 10
+     }
+    ],
+    "prompts": [
+     "You are JARVIS. Below is the text of the web page the user is reading. In two or three short spoken sentences, summarize the key points for me. No markdown or lists.\n\nPAGE:\ncafé �"
+    ]
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/17",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {
+     "lyrics": ""
+    },
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "x"
+   },
+   "expected": {
+    "text": "Say or sing a few of the words, sir.",
+    "scripts": [],
+    "requests": [],
+    "prompts": []
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/18",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {
+     "lyrics": " ,:'\". "
+    },
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "x"
+   },
+   "expected": {
+    "text": "Say or sing a few of the words, sir.",
+    "scripts": [],
+    "requests": [],
+    "prompts": []
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/19",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {
+     "lyrics": "is this the real life"
+    },
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "Bohemian Rhapsody by Queen"
+   },
+   "expected": {
+    "text": "That sounds like Bohemian Rhapsody by Queen, sir.",
+    "scripts": [],
+    "requests": [],
+    "prompts": [
+     "You identify songs from a short lyric snippet a user spoke or sang. Reply with ONLY the song title and performing artist, formatted exactly as Title by Artist, and nothing else. Never quote, repeat, or continue the lyrics. If you genuinely don't recognise it, reply exactly: unknown.\n\nSnippet: is this the real life"
+    ]
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/20",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {
+     "lyrics": "'is this the real life,'"
+    },
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "\"Bohemian Rhapsody by Queen\"\nMore text"
+   },
+   "expected": {
+    "text": "That sounds like Bohemian Rhapsody by Queen, sir.",
+    "scripts": [],
+    "requests": [],
+    "prompts": [
+     "You identify songs from a short lyric snippet a user spoke or sang. Reply with ONLY the song title and performing artist, formatted exactly as Title by Artist, and nothing else. Never quote, repeat, or continue the lyrics. If you genuinely don't recognise it, reply exactly: unknown.\n\nSnippet: is this the real life"
+    ]
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/21",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {
+     "lyrics": "hello from the other side"
+    },
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "unknown"
+   },
+   "expected": {
+    "text": "I couldn't place that song, sir.",
+    "scripts": [],
+    "requests": [],
+    "prompts": [
+     "You identify songs from a short lyric snippet a user spoke or sang. Reply with ONLY the song title and performing artist, formatted exactly as Title by Artist, and nothing else. Never quote, repeat, or continue the lyrics. If you genuinely don't recognise it, reply exactly: unknown.\n\nSnippet: hello from the other side"
+    ]
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/22",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {
+     "lyrics": "x"
+    },
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "I don't know"
+   },
+   "expected": {
+    "text": "I couldn't place that song, sir.",
+    "scripts": [],
+    "requests": [],
+    "prompts": [
+     "You identify songs from a short lyric snippet a user spoke or sang. Reply with ONLY the song title and performing artist, formatted exactly as Title by Artist, and nothing else. Never quote, repeat, or continue the lyrics. If you genuinely don't recognise it, reply exactly: unknown.\n\nSnippet: x"
+    ]
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/23",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {
+     "lyrics": "x"
+    },
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "  "
+   },
+   "expected": {
+    "text": "I couldn't place that song, sir.",
+    "scripts": [],
+    "requests": [],
+    "prompts": [
+     "You identify songs from a short lyric snippet a user spoke or sang. Reply with ONLY the song title and performing artist, formatted exactly as Title by Artist, and nothing else. Never quote, repeat, or continue the lyrics. If you genuinely don't recognise it, reply exactly: unknown.\n\nSnippet: x"
+    ]
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/24",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {
+     "lyrics": "x"
+    },
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "Unknown."
+   },
+   "expected": {
+    "text": "That sounds like Unknown., sir.",
+    "scripts": [],
+    "requests": [],
+    "prompts": [
+     "You identify songs from a short lyric snippet a user spoke or sang. Reply with ONLY the song title and performing artist, formatted exactly as Title by Artist, and nothing else. Never quote, repeat, or continue the lyrics. If you genuinely don't recognise it, reply exactly: unknown.\n\nSnippet: x"
+    ]
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/25",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {
+     "lyrics": "x"
+    },
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "I DO NOT KNOW"
+   },
+   "expected": {
+    "text": "I couldn't place that song, sir.",
+    "scripts": [],
+    "requests": [],
+    "prompts": [
+     "You identify songs from a short lyric snippet a user spoke or sang. Reply with ONLY the song title and performing artist, formatted exactly as Title by Artist, and nothing else. Never quote, repeat, or continue the lyrics. If you genuinely don't recognise it, reply exactly: unknown.\n\nSnippet: x"
+    ]
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/26",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {
+     "lyrics": "x"
+    },
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+   },
+   "expected": {
+    "text": "That sounds like AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA, sir.",
+    "scripts": [],
+    "requests": [],
+    "prompts": [
+     "You identify songs from a short lyric snippet a user spoke or sang. Reply with ONLY the song title and performing artist, formatted exactly as Title by Artist, and nothing else. Never quote, repeat, or continue the lyrics. If you genuinely don't recognise it, reply exactly: unknown.\n\nSnippet: x"
+    ]
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/27",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {
+     "lyrics": "x"
+    },
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "'  Song by Band '"
+   },
+   "expected": {
+    "text": "That sounds like Song by Band, sir.",
+    "scripts": [],
+    "requests": [],
+    "prompts": [
+     "You identify songs from a short lyric snippet a user spoke or sang. Reply with ONLY the song title and performing artist, formatted exactly as Title by Artist, and nothing else. Never quote, repeat, or continue the lyrics. If you genuinely don't recognise it, reply exactly: unknown.\n\nSnippet: x"
+    ]
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/28",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {
+     "lyrics": null
+    },
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "x"
+   },
+   "expected": {
+    "text": "Say or sing a few of the words, sir.",
+    "scripts": [],
+    "requests": [],
+    "prompts": []
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/29",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {
+     "lyrics": 5
+    },
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "x"
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'strip'",
+    "scripts": [],
+    "requests": [],
+    "prompts": []
+   }
+  },
+  {
+   "name": "find_song_by_lyrics/30",
+   "input": {
+    "tool": "find_song_by_lyrics",
+    "args": {},
+    "front": "",
+    "outputs": [],
+    "online": false,
+    "pages": {},
+    "model": "x"
+   },
+   "expected": {
+    "text": "Say or sing a few of the words, sir.",
+    "scripts": [],
+    "requests": [],
+    "prompts": []
+   }
+  }
+ ]
+}

@@ -1,0 +1,208 @@
+{
+ "schema": 1,
+ "suite": "pb_notes",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "make_note/0",
+   "input": {
+    "args": {
+     "text": ""
+    },
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "What should the note say, sir?",
+    "scripts": []
+   }
+  },
+  {
+   "name": "make_note/1",
+   "input": {
+    "args": {
+     "text": "  "
+    },
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "What should the note say, sir?",
+    "scripts": []
+   }
+  },
+  {
+   "name": "make_note/2",
+   "input": {
+    "args": {
+     "text": "Buy milk"
+    },
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Note saved, sir.",
+    "scripts": [
+     "tell application \"Notes\" to make new note with properties {body:\"Buy milk\"}"
+    ]
+   }
+  },
+  {
+   "name": "make_note/3",
+   "input": {
+    "args": {
+     "text": " say \"hi\" \\ there \n"
+    },
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Note saved, sir.",
+    "scripts": [
+     "tell application \"Notes\" to make new note with properties {body:\"say \\\"hi\\\" \\\\ there\"}"
+    ]
+   }
+  },
+  {
+   "name": "make_note/4",
+   "input": {
+    "args": {
+     "text": "🙂 café"
+    },
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Note saved, sir.",
+    "scripts": [
+     "tell application \"Notes\" to make new note with properties {body:\"🙂 café\"}"
+    ]
+   }
+  },
+  {
+   "name": "make_note/5",
+   "input": {
+    "args": {
+     "text": null
+    },
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "What should the note say, sir?",
+    "scripts": []
+   }
+  },
+  {
+   "name": "make_note/6",
+   "input": {
+    "args": {
+     "text": 0
+    },
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "What should the note say, sir?",
+    "scripts": []
+   }
+  },
+  {
+   "name": "make_note/7",
+   "input": {
+    "args": {
+     "text": 5
+    },
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'strip'",
+    "scripts": []
+   }
+  },
+  {
+   "name": "make_note/8",
+   "input": {
+    "args": {},
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "What should the note say, sir?",
+    "scripts": []
+   }
+  },
+  {
+   "name": "make_note/9",
+   "input": {
+    "args": {
+     "text": "x"
+    },
+    "outputs": [
+     "execution error: Notes got an error (-1743)"
+    ]
+   },
+   "expected": {
+    "text": "I couldn't save the note, sir.",
+    "scripts": [
+     "tell application \"Notes\" to make new note with properties {body:\"x\"}"
+    ]
+   }
+  },
+  {
+   "name": "make_note/10",
+   "input": {
+    "args": {
+     "text": "x"
+    },
+    "outputs": [
+     "Error"
+    ]
+   },
+   "expected": {
+    "text": "I couldn't save the note, sir.",
+    "scripts": [
+     "tell application \"Notes\" to make new note with properties {body:\"x\"}"
+    ]
+   }
+  },
+  {
+   "name": "make_note/11",
+   "input": {
+    "args": {
+     "text": "x"
+    },
+    "outputs": [
+     "note id x-coredata://1"
+    ]
+   },
+   "expected": {
+    "text": "Note saved, sir.",
+    "scripts": [
+     "tell application \"Notes\" to make new note with properties {body:\"x\"}"
+    ]
+   }
+  }
+ ]
+}
