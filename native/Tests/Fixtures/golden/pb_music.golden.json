@@ -1,0 +1,1931 @@
+{
+ "schema": 1,
+ "suite": "pb_music",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "music_now_playing/0",
+   "input": {
+    "tool": "music_now_playing",
+    "args": {},
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Nothing is playing, sir.",
+    "scripts": [
+     "if application \"Music\" is running then\n  tell application \"Music\"\n    if player state is playing then\n      return (name of current track) & \" | \" & (artist of current track) & \" | \" & (album of current track)\n    end if\n  end tell\nend if\nreturn \"nothing\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_now_playing/1",
+   "input": {
+    "tool": "music_now_playing",
+    "args": {},
+    "outputs": [
+     "nothing"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Nothing is playing, sir.",
+    "scripts": [
+     "if application \"Music\" is running then\n  tell application \"Music\"\n    if player state is playing then\n      return (name of current track) & \" | \" & (artist of current track) & \" | \" & (album of current track)\n    end if\n  end tell\nend if\nreturn \"nothing\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_now_playing/2",
+   "input": {
+    "tool": "music_now_playing",
+    "args": {},
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Now playing Song by Artist, from Album, sir.",
+    "scripts": [
+     "if application \"Music\" is running then\n  tell application \"Music\"\n    if player state is playing then\n      return (name of current track) & \" | \" & (artist of current track) & \" | \" & (album of current track)\n    end if\n  end tell\nend if\nreturn \"nothing\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_now_playing/3",
+   "input": {
+    "tool": "music_now_playing",
+    "args": {},
+    "outputs": [
+     "Song |  | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Now playing Song, from Album, sir.",
+    "scripts": [
+     "if application \"Music\" is running then\n  tell application \"Music\"\n    if player state is playing then\n      return (name of current track) & \" | \" & (artist of current track) & \" | \" & (album of current track)\n    end if\n  end tell\nend if\nreturn \"nothing\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_now_playing/4",
+   "input": {
+    "tool": "music_now_playing",
+    "args": {},
+    "outputs": [
+     "Song | Artist |"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Now playing Song by Artist, sir.",
+    "scripts": [
+     "if application \"Music\" is running then\n  tell application \"Music\"\n    if player state is playing then\n      return (name of current track) & \" | \" & (artist of current track) & \" | \" & (album of current track)\n    end if\n  end tell\nend if\nreturn \"nothing\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_now_playing/5",
+   "input": {
+    "tool": "music_now_playing",
+    "args": {},
+    "outputs": [
+     "Song"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Now playing Song, sir.",
+    "scripts": [
+     "if application \"Music\" is running then\n  tell application \"Music\"\n    if player state is playing then\n      return (name of current track) & \" | \" & (artist of current track) & \" | \" & (album of current track)\n    end if\n  end tell\nend if\nreturn \"nothing\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_now_playing/6",
+   "input": {
+    "tool": "music_now_playing",
+    "args": {},
+    "outputs": [
+     "A | B | C | D"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Now playing A by B, from C, sir.",
+    "scripts": [
+     "if application \"Music\" is running then\n  tell application \"Music\"\n    if player state is playing then\n      return (name of current track) & \" | \" & (artist of current track) & \" | \" & (album of current track)\n    end if\n  end tell\nend if\nreturn \"nothing\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_now_playing/7",
+   "input": {
+    "tool": "music_now_playing",
+    "args": {},
+    "outputs": [
+     "Héllo 🎵 | Ünïcode | Ålbum"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Now playing Héllo 🎵 by Ünïcode, from Ålbum, sir.",
+    "scripts": [
+     "if application \"Music\" is running then\n  tell application \"Music\"\n    if player state is playing then\n      return (name of current track) & \" | \" & (artist of current track) & \" | \" & (album of current track)\n    end if\n  end tell\nend if\nreturn \"nothing\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_now_playing/8",
+   "input": {
+    "tool": "music_now_playing",
+    "args": {},
+    "outputs": [
+     "execution error: Music got an error (-600)"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Nothing is playing, sir.",
+    "scripts": [
+     "if application \"Music\" is running then\n  tell application \"Music\"\n    if player state is playing then\n      return (name of current track) & \" | \" & (artist of current track) & \" | \" & (album of current track)\n    end if\n  end tell\nend if\nreturn \"nothing\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_now_playing/9",
+   "input": {
+    "tool": "music_now_playing",
+    "args": {},
+    "outputs": [
+     "AppleScript error: [Errno 2] No such file or directory: 'osascript'"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Nothing is playing, sir.",
+    "scripts": [
+     "if application \"Music\" is running then\n  tell application \"Music\"\n    if player state is playing then\n      return (name of current track) & \" | \" & (artist of current track) & \" | \" & (album of current track)\n    end if\n  end tell\nend if\nreturn \"nothing\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_now_playing/10",
+   "input": {
+    "tool": "music_now_playing",
+    "args": {},
+    "outputs": [
+     "Not running"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Nothing is playing, sir.",
+    "scripts": [
+     "if application \"Music\" is running then\n  tell application \"Music\"\n    if player state is playing then\n      return (name of current track) & \" | \" & (artist of current track) & \" | \" & (album of current track)\n    end if\n  end tell\nend if\nreturn \"nothing\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/11",
+   "input": {
+    "tool": "music_search",
+    "args": {},
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "What should I search for, sir?",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/12",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": ""
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "What should I search for, sir?",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/13",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "   "
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "What should I search for, sir?",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/14",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": 0
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "What should I search for, sir?",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/15",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": null
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "What should I search for, sir?",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/16",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": 5
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'strip'",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/17",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": [
+      "x"
+     ]
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Tool error: 'list' object has no attribute 'strip'",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/18",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen",
+     "by": 7
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'lower'",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/19",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen",
+     "by": ""
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Found 1: Song by Artist on Album, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose (name contains \"queen\" or artist contains \"queen\" or album contains \"queen\"))\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/20",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen",
+     "by": "artist"
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Found 1: Song by Artist on Album, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose artist contains \"queen\")\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/21",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen",
+     "by": " Album "
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Found 1: Song by Artist on Album, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose album contains \"queen\")\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/22",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen",
+     "by": "SONG"
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Found 1: Song by Artist on Album, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose name contains \"queen\")\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/23",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen",
+     "by": "track"
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Found 1: Song by Artist on Album, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose name contains \"queen\")\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/24",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen",
+     "by": "title"
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Found 1: Song by Artist on Album, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose name contains \"queen\")\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/25",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen",
+     "by": "genre"
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Found 1: Song by Artist on Album, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose (name contains \"queen\" or artist contains \"queen\" or album contains \"queen\"))\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/26",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen",
+     "by": null
+    },
+    "outputs": [
+     "Song | Artist | Album"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Found 1: Song by Artist on Album, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose (name contains \"queen\" or artist contains \"queen\" or album contains \"queen\"))\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/27",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "say \"hi\" \\ there "
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "I found nothing matching say \"hi\" \\ there  in your library, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose (name contains \"say \\\"hi\\\" \\\\ there\" or artist contains \"say \\\"hi\\\" \\\\ there\" or album contains \"say \\\"hi\\\" \\\\ there\"))\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/28",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen"
+    },
+    "outputs": [
+     "Song 1 | Artist 1 | Album 1\nSong 2 | Artist 2 | Album 2\nSong 3 | Artist 3 | Album 3\nSong 4 | Artist 4 | Album 4\nSong 5 | Artist 5 | Album 5\nSong 6 | Artist 6 | Album 6\nSong 7 | Artist 7 | Album 7\nSong 8 | Artist 8 | Album 8"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Found 8 (first 8): Song 1 by Artist 1 on Album 1; Song 2 by Artist 2 on Album 2; Song 3 by Artist 3 on Album 3; Song 4 by Artist 4 on Album 4; Song 5 by Artist 5 on Album 5; Song 6 by Artist 6 on Album 6; Song 7 by Artist 7 on Album 7; Song 8 by Artist 8 on Album 8, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose (name contains \"queen\" or artist contains \"queen\" or album contains \"queen\"))\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/29",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen"
+    },
+    "outputs": [
+     "Song 1 | Artist 1 | Album 1\nSong 2 | Artist 2 | Album 2\nSong 3 | Artist 3 | Album 3\nSong 4 | Artist 4 | Album 4\nSong 5 | Artist 5 | Album 5\nSong 6 | Artist 6 | Album 6\nSong 7 | Artist 7 | Album 7\nSong 8 | Artist 8 | Album 8\nSong 9 | A | B"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Found 9: Song 1 by Artist 1 on Album 1; Song 2 by Artist 2 on Album 2; Song 3 by Artist 3 on Album 3; Song 4 by Artist 4 on Album 4; Song 5 by Artist 5 on Album 5; Song 6 by Artist 6 on Album 6; Song 7 by Artist 7 on Album 7; Song 8 by Artist 8 on Album 8; Song 9 by A on B, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose (name contains \"queen\" or artist contains \"queen\" or album contains \"queen\"))\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/30",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen"
+    },
+    "outputs": [
+     "A | | \n\n  \nB | Art | \nC |  | Alb"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Found 3: A; B by Art; C on Alb, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose (name contains \"queen\" or artist contains \"queen\" or album contains \"queen\"))\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/31",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen"
+    },
+    "outputs": [
+     "execution error: Music got an error: (-600)",
+     "",
+     "X | Y | Z"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Found 1: X by Y on Z, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose (name contains \"queen\" or artist contains \"queen\" or album contains \"queen\"))\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell",
+     "tell application \"Music\" to launch",
+     "tell application \"Music\"\n  set out to \"\"\n  try\n    set theTracks to (every track whose (name contains \"queen\" or artist contains \"queen\" or album contains \"queen\"))\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_search/32",
+   "input": {
+    "tool": "music_search",
+    "args": {
+     "query": "queen"
+    },
+    "outputs": [
+     "execution error (-600)",
+     "",
+     "execution error (-600)"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "I couldn't reach your music library, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  set out to \"\"\n  try\n    set theTracks to (every track whose (name contains \"queen\" or artist contains \"queen\" or album contains \"queen\"))\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell",
+     "tell application \"Music\" to launch",
+     "tell application \"Music\"\n  set out to \"\"\n  try\n    set theTracks to (every track whose (name contains \"queen\" or artist contains \"queen\" or album contains \"queen\"))\n    set n to (count of theTracks)\n    if n > 8 then set n to 8\n    repeat with i from 1 to n\n      set t to item i of theTracks\n      set out to out & (name of t) & \" | \" & (artist of t) & \" | \" & (album of t) & linefeed\n    end repeat\n  end try\n  return out\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/33",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "play"
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Playing, sir.",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to play\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    play\n  end tell\nend if\nreturn \"ok\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/34",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "Resume"
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Playing, sir.",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to play\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    play\n  end tell\nend if\nreturn \"ok\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/35",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": " unpause "
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Playing, sir.",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to play\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    play\n  end tell\nend if\nreturn \"ok\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/36",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "pause"
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Paused, sir.",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to pause\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    pause\n  end tell\nend if\nreturn \"ok\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/37",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "stop"
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Paused, sir.",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to pause\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    pause\n  end tell\nend if\nreturn \"ok\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/38",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "next"
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Next track, sir.",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to next track\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    next track\n  end tell\nend if\nreturn \"ok\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/39",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "SKIP"
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Next track, sir.",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to next track\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    next track\n  end tell\nend if\nreturn \"ok\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/40",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "next track"
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Next track, sir.",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to next track\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    next track\n  end tell\nend if\nreturn \"ok\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/41",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "previous"
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Previous track, sir.",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to previous track\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    previous track\n  end tell\nend if\nreturn \"ok\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/42",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "prev"
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Previous track, sir.",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to previous track\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    previous track\n  end tell\nend if\nreturn \"ok\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/43",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "back"
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Previous track, sir.",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to previous track\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    previous track\n  end tell\nend if\nreturn \"ok\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/44",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "previous track"
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Previous track, sir.",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to previous track\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    previous track\n  end tell\nend if\nreturn \"ok\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/45",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": ""
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Nothing to do, sir.",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/46",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "dance"
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "I don't know the music action 'dance', sir.",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/47",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": null
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Nothing to do, sir.",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/48",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": 0
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Nothing to do, sir.",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/49",
+   "input": {
+    "tool": "music_control",
+    "args": {},
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Nothing to do, sir.",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/50",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": 5
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'lower'",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/51",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "it's"
+    },
+    "outputs": [
+     "ok"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "I don't know the music action \"it's\", sir.",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/52",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": 0
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Music volume 0, sir.",
+    "scripts": [
+     "tell application \"Music\" to set sound volume to 0"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/53",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": 50
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Music volume 50, sir.",
+    "scripts": [
+     "tell application \"Music\" to set sound volume to 50"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/54",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": 100
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Music volume 100, sir.",
+    "scripts": [
+     "tell application \"Music\" to set sound volume to 100"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/55",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": 150
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Music volume 100, sir.",
+    "scripts": [
+     "tell application \"Music\" to set sound volume to 100"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/56",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": -5
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Music volume 0, sir.",
+    "scripts": [
+     "tell application \"Music\" to set sound volume to 0"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/57",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": 55.9
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Music volume 55, sir.",
+    "scripts": [
+     "tell application \"Music\" to set sound volume to 55"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/58",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": "40"
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Music volume 40, sir.",
+    "scripts": [
+     "tell application \"Music\" to set sound volume to 40"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/59",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": " 30 "
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Music volume 30, sir.",
+    "scripts": [
+     "tell application \"Music\" to set sound volume to 30"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/60",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": "1_0"
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Music volume 10, sir.",
+    "scripts": [
+     "tell application \"Music\" to set sound volume to 10"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/61",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": "loud"
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "What volume should I set, sir?",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/62",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": "55.5"
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "What volume should I set, sir?",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/63",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": true
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Music volume 1, sir.",
+    "scripts": [
+     "tell application \"Music\" to set sound volume to 1"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/64",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": null
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Nothing to do, sir.",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/65",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": [
+      1
+     ]
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "What volume should I set, sir?",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/66",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "dance",
+     "volume": 20
+    },
+    "outputs": [
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Music volume 20, sir.",
+    "scripts": [
+     "tell application \"Music\" to set sound volume to 20"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/67",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "pause",
+     "volume": 20
+    },
+    "outputs": [
+     "ok",
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Paused, sir. Music volume 20, sir.",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to pause\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    pause\n  end tell\nend if\nreturn \"ok\"",
+     "tell application \"Music\" to set sound volume to 20"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/68",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "action": "pause",
+     "volume": "x"
+    },
+    "outputs": [
+     "ok",
+     ""
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "What volume should I set, sir?",
+    "scripts": [
+     "if application \"Spotify\" is running then\n  tell application \"Spotify\" to pause\nelse\n  tell application \"Music\"\n    if it is not running then launch\n    pause\n  end tell\nend if\nreturn \"ok\""
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_control/69",
+   "input": {
+    "tool": "music_control",
+    "args": {
+     "volume": 20
+    },
+    "outputs": [
+     "execution error: Music got an error"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "I couldn't set the music volume, sir.",
+    "scripts": [
+     "tell application \"Music\" to set sound volume to 20"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_play/70",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": "Redbone by Childish Gambino"
+    },
+    "outputs": [
+     "playing"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Playing Redbone by Childish Gambino from your library, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"Redbone\" and artist contains \"Childish Gambino\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_play/71",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": "  bohemian rhapsody "
+    },
+    "outputs": [
+     "playing"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Playing bohemian rhapsody from your library, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"bohemian rhapsody\" or artist contains \"bohemian rhapsody\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_play/72",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": "say \"hi\" by \\me"
+    },
+    "outputs": [
+     "playing"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Playing say \"hi\" by \\me from your library, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"say \\\"hi\\\"\" and artist contains \"\\\\me\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_play/73",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": "by the way"
+    },
+    "outputs": [
+     "playing"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Playing by the way from your library, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"by the way\" or artist contains \"by the way\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_play/74",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": "standby"
+    },
+    "outputs": [
+     "playing"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Playing standby from your library, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"standby\" or artist contains \"standby\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_play/75",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": ""
+    },
+    "outputs": [
+     "playing"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Playing  from your library, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"\" or artist contains \"\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_play/76",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": "Song by   "
+    },
+    "outputs": [
+     "playing"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Playing Song by from your library, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"Song by\" or artist contains \"Song by\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_play/77",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": "Redbone by Childish Gambino"
+    },
+    "outputs": [
+     "notfound"
+    ],
+    "online": false,
+    "pages": {}
+   },
+   "expected": {
+    "text": "I couldn't play Redbone by Childish Gambino directly, sir; opening a search.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"Redbone\" and artist contains \"Childish Gambino\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [
+     "https://music.apple.com/us/search?term=Redbone%20by%20Childish%20Gambino"
+    ],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_play/78",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": "Redbone by Childish Gambino"
+    },
+    "outputs": [
+     "notfound"
+    ],
+    "online": true,
+    "pages": {
+     "https://www.youtube.com/results?search_query=Redbone%20by%20Childish%20Gambino": {
+      "body": "<html>... \"videoId\":\"dQw4w9WgXcQ\", \"videoId\":\"zzzzzzzzzzz\" ...</html>"
+     }
+    }
+   },
+   "expected": {
+    "text": "Playing Redbone by Childish Gambino, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"Redbone\" and artist contains \"Childish Gambino\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [
+     "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    ],
+    "requests": [
+     {
+      "url": "https://www.youtube.com/results?search_query=Redbone%20by%20Childish%20Gambino",
+      "user_agent": "Mozilla/5.0",
+      "timeout": 8
+     }
+    ]
+   }
+  },
+  {
+   "name": "music_play/79",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": "café/ñ & co"
+    },
+    "outputs": [
+     "notfound"
+    ],
+    "online": true,
+    "pages": {
+     "https://www.youtube.com/results?search_query=caf%C3%A9/%C3%B1%20%26%20co": {
+      "body": "<html>... \"videoId\":\"dQw4w9WgXcQ\", \"videoId\":\"zzzzzzzzzzz\" ...</html>"
+     }
+    }
+   },
+   "expected": {
+    "text": "Playing café/ñ & co, sir.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"café/ñ & co\" or artist contains \"café/ñ & co\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [
+     "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    ],
+    "requests": [
+     {
+      "url": "https://www.youtube.com/results?search_query=caf%C3%A9/%C3%B1%20%26%20co",
+      "user_agent": "Mozilla/5.0",
+      "timeout": 8
+     }
+    ]
+   }
+  },
+  {
+   "name": "music_play/80",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": "zz"
+    },
+    "outputs": [
+     "notfound"
+    ],
+    "online": true,
+    "pages": {
+     "https://www.youtube.com/results?search_query=zz": {
+      "body": "<html>nothing</html>"
+     }
+    }
+   },
+   "expected": {
+    "text": "I couldn't play zz directly, sir; opening a search.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"zz\" or artist contains \"zz\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [
+     "https://music.apple.com/us/search?term=zz"
+    ],
+    "requests": [
+     {
+      "url": "https://www.youtube.com/results?search_query=zz",
+      "user_agent": "Mozilla/5.0",
+      "timeout": 8
+     }
+    ]
+   }
+  },
+  {
+   "name": "music_play/81",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": "zz"
+    },
+    "outputs": [
+     "notfound"
+    ],
+    "online": true,
+    "pages": {
+     "https://www.youtube.com/results?search_query=zz": {
+      "status": 429
+     }
+    }
+   },
+   "expected": {
+    "text": "I couldn't play zz directly, sir; opening a search.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"zz\" or artist contains \"zz\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [
+     "https://music.apple.com/us/search?term=zz"
+    ],
+    "requests": [
+     {
+      "url": "https://www.youtube.com/results?search_query=zz",
+      "user_agent": "Mozilla/5.0",
+      "timeout": 8
+     }
+    ]
+   }
+  },
+  {
+   "name": "music_play/82",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": "zz"
+    },
+    "outputs": [
+     "notfound"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "I couldn't play zz directly, sir; opening a search.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"zz\" or artist contains \"zz\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [
+     "https://music.apple.com/us/search?term=zz"
+    ],
+    "requests": [
+     {
+      "url": "https://www.youtube.com/results?search_query=zz",
+      "user_agent": "Mozilla/5.0",
+      "timeout": 8
+     }
+    ]
+   }
+  },
+  {
+   "name": "music_play/83",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": "zz"
+    },
+    "outputs": [
+     "execution error (-1743)"
+    ],
+    "online": false,
+    "pages": {}
+   },
+   "expected": {
+    "text": "I couldn't play zz directly, sir; opening a search.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"zz\" or artist contains \"zz\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [
+     "https://music.apple.com/us/search?term=zz"
+    ],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_play/84",
+   "input": {
+    "tool": "music_play",
+    "args": {
+     "query": 7
+    },
+    "outputs": [
+     "playing"
+    ],
+    "online": true,
+    "pages": {}
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'strip'",
+    "scripts": [],
+    "opened": [],
+    "requests": []
+   }
+  },
+  {
+   "name": "music_play/85",
+   "input": {
+    "tool": "music_play",
+    "args": {},
+    "outputs": [
+     "notfound"
+    ],
+    "online": false,
+    "pages": {}
+   },
+   "expected": {
+    "text": "I couldn't play  directly, sir; opening a search.",
+    "scripts": [
+     "tell application \"Music\"\n  launch\n  try\n    set theTracks to (every track whose name contains \"\" or artist contains \"\")\n    if (count of theTracks) > 0 then\n      play (item 1 of theTracks)\n      return \"playing\"\n    end if\n  end try\n  return \"notfound\"\nend tell"
+    ],
+    "opened": [
+     "https://music.apple.com/us/search?term="
+    ],
+    "requests": []
+   }
+  }
+ ]
+}

@@ -91,6 +91,12 @@ public enum BuiltInTools {
         await gateway.register(Capped(GetLocation(web: platform.web, online: platform.online)))
         await gateway.register(Capped(GetNews(web: platform.web, online: platform.online, feed: platform.newsFeed,
                                               log: platform.webLog)))
+        // PB: Python's four music tools (osascript, as Python; YouTube through the platform's GET).
+        await gateway.register(Capped(MusicNowPlaying(runner: platform.scriptRunner)))
+        await gateway.register(Capped(MusicSearch(runner: platform.scriptRunner, pause: platform.pause)))
+        await gateway.register(Capped(MusicControl(runner: platform.scriptRunner)))
+        await gateway.register(Capped(MusicPlay(runner: platform.scriptRunner, web: platform.web, online: platform.online,
+                                                opener: platform.urlOpener, log: platform.webLog)))
         if let memory {
             await gateway.register(Capped(SearchMemory(memory: memory.store, search: memory.search)))
             await gateway.register(Capped(ForgetMemory(memory: memory.store)))
@@ -153,6 +159,10 @@ struct ToolPlatform: Sendable {
     var newsFeed: String = GetNews.defaultFeed
     /// The web tools' log (error kinds only, never a query or a URL).
     var webLog: @Sendable (String) -> Void = { _ in }
+    /// PB: music_play's `open URL`. Until the app gives it LaunchServices, nothing is opened.
+    var urlOpener: any SettingsOpening = NoURLOpener()
+    /// PB: `time.sleep`, for `_ensure_app_running`'s wait. Tests pass none.
+    var pause: @Sendable (Double) async -> Void = { _ in }
 
     static var live: ToolPlatform {
         var platform = ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard(), screen: LiveScreenCapture(),
@@ -164,6 +174,8 @@ struct ToolPlatform: Sendable {
         platform.online = { await Net.isOnline() }
         platform.newsFeed = GetNews.feed(ProcessInfo.processInfo.environment)
         platform.webLog = { JarvisLog.log($0, category: .tools) }
+        platform.urlOpener = LiveSettingsOpener()
+        platform.pause = { try? await Task.sleep(for: .seconds($0)) }
         return platform
     }
 }
