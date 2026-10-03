@@ -120,6 +120,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var files: FileScanner?
     /// M8's voice (AppVoice), built with the brain. Its helper starts only when a reply is spoken.
     private var voice: AppVoice?
+    /// Live fix 5: the Qwen helper's load after launch, and voice processing switched on as a
+    /// spoken turn starts.
+    private var qwenPrewarm: Task<Void, Never>?
+    private let processingAhead = VoiceProcessingAhead(willStart: { AudioHub.shared.speechWillStart() },
+                                                       ended: { AudioHub.shared.speechEnded() })
     private var sigterm: DispatchSourceSignal?
     /// Opens the chat window. Set by the window each time it appears, for the Dock icon.
     var openChat: (() -> Void)?
@@ -556,6 +561,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.speakReplies.refresh()
             guard self.speakReplies.isOn else { return }
             voice.acknowledge(text, sentAt: sentAt)
+            if !self.speechMute.isMuted { self.processingAhead.turnStarting() }   // live fix 5
         }
         // V1 part 5: typing with Speak replies on starts the voice, so the reply does not wait for it.
         chat.onTyping = { [weak self] in
@@ -751,6 +757,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.chat.watchConfirmations(assembly.confirmations, authenticator: authenticator)
             // M9a: push-to-talk listens once turns can run.
             self.talk.connect(AppListening(core: core, research: research))
+            // Live fix 5: the Qwen helper loads once JARVIS is idle after launch.
+            if let voice = self.voice {
+                self.qwenPrewarm = QwenPrewarm(.init(
+                    usesQwen: { voice.backend == "qwen" },
+                    isIdle: { [weak self] in
+                        guard let self else { return false }
+                        return !assembly.turnActivity.isRunning && !self.chat.responding && !voice.isSpeaking
+                            && !self.talk.isOn
+                    },
+                    memoryFreePercent: { QwenPrewarm.systemFreePercent() },
+                    warm: { voice.warm() })).start()
+            }
             // M11: hands-free listening can start once turns can run (the menus turn it on).
             if let voice = self.voice {
                 self.handsFree = AppHandsFree(core: core, research: research, voiceprint: self.speaker, voice: voice,
@@ -838,6 +856,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         chat.onTurnEnded = { [weak self] in
             guard let self else { return }
             self.hud.turnEnded(speechFollows: (self.voice?.repliesPending ?? 0) > 0)
+            self.processingAhead.turnOver()   // live fix 5
         }
     }
 
@@ -862,6 +881,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         talk.onHeard = { [weak self] heard in
             guard let self else { return }
             let text = self.voice?.withoutEcho(heard) ?? heard   // live fix 4
+            if !self.speechMute.isMuted { self.processingAhead.turnStarting() }   // live fix 5: always spoken
             // The turn's start makes the HUD think. A turn never taken (refused, or nothing sent)
             // must not leave it listening.
             guard let turn = self.chat.sendVoice(text) else {
