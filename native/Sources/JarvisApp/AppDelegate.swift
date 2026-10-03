@@ -58,6 +58,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let showHUD = ShowHUDSetting()
     /// F1: the menus' "Morning Briefing", on by default, and the day of the last briefing.
     let morningBriefing = MorningBriefingSetting()
+    /// Batch C part 3: the JARVIS Memory window. Its store is attached once the lock is held.
+    let memoryEditor = MemoryEditor()
+    private(set) lazy var memoryWindow = MemoryWindowController(editor: memoryEditor)
     let hud = HUDModel()
     private var hudController: HUDController?
     /// M9a: push-to-talk. The mic button and ⌥Space in the chat window and ⌃⌥J anywhere drive
@@ -198,6 +201,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Closing the chat window leaves JARVIS running (D-43).
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
+    }
+
+    /// Batch C part 3: `jarvis://memory` (the Desktop shortcut, or any link) opens the Memory
+    /// window. LaunchServices starts JARVIS first when he is closed.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            switch JarvisURLRoute(url) {
+            case .memory?: openMemory()
+            case nil: JarvisLog.log("url: ignored a link that is not one of JARVIS's", category: .state)
+            }
+        }
+    }
+
+    /// Batch C part 3: the menus' "Memory…" and `jarvis://memory`.
+    func openMemory() {
+        memoryWindow.show()
     }
 
     /// The Dock icon with the chat window closed opens it again (D-43). The window hands over
@@ -478,6 +497,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // P6: before anything writes, an unreadable facts.json, personality.json or profile.json
         // is put back from its newest backup, and one that shrank is logged with both kept.
         memory.checkAtLaunch()
+        // Batch C part 3: the Memory window edits through this same store.
+        memoryEditor.attach(memory)
         // P3: the home folder is read in the background into the same facts; JARVIS's own state
         // root is never read. PDFKit and AppKit read pdf, docx and rtf here (D-13).
         let consent = fileLearning.shared

@@ -5,15 +5,19 @@ import Foundation
 
 /// Which writer produced (or last confirmed) a fact. MEM1 part 4 adds `chatgpt`, the memory
 /// writer's fallback when Claude cannot write; `both` is any fact more than one writer produced.
+/// Batch C adds `user`: a fact the user added or edited by hand in the Memory window. It stays
+/// `user` when a brain later produces the same fact, so a human edit is never relabelled.
 public enum FactWriter: String, Sendable, CaseIterable {
     case local
     case claude
     case both
     case chatgpt
+    case user
 
     /// The writer after `other` also produced the same fact.
     public func merged(with other: FactWriter) -> FactWriter {
-        self == other ? self : .both
+        if self == .user { return .user }
+        return self == other ? self : .both
     }
 }
 

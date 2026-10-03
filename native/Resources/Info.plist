@@ -10,6 +10,17 @@
 	<string>JARVIS</string>
 	<key>CFBundleExecutable</key>
 	<string>JARVIS</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.jarvis.assistant.url</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>jarvis</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>NSLocationUsageDescription</key>

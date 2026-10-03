@@ -102,7 +102,7 @@ struct MemoryWriterChatGPTTests {
                                                                     author: .improvedByChatGPT(draft: Self.draft)),
                                                isSimilar: { _, _ in false })
         #expect(improved.candidates.map(\.by) == [.both, .chatgpt])
-        #expect(FactWriter.allCases.map(\.rawValue) == ["local", "claude", "both", "chatgpt"])
+        #expect(FactWriter.allCases.map(\.rawValue) == ["local", "claude", "both", "chatgpt", "user"])
         #expect(FactWriter.chatgpt.merged(with: .chatgpt) == .chatgpt)
         #expect(FactWriter.chatgpt.merged(with: .claude) == .both)
         #expect(FactWriter.local.merged(with: .chatgpt) == .both)

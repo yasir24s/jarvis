@@ -164,6 +164,8 @@ cp "$STAGED/JARVIS.app/Contents/Resources/version.json" "$STAGED/.version.json.t
 mv "$STAGED/.version.json.tmp" "$STAGED/version.json"
 LABEL=""
 if [[ "$CONFIGURATION" == debug ]]; then LABEL=" (debug configuration)"; fi
+# Batch C part 3: the "JARVIS Memory" shortcut on the Desktop (jarvis://memory), only if absent.
+"$NATIVE/scripts/install-memory-shortcut.sh" || echo "warning: the Desktop memory shortcut was not placed" >&2
 if "$NATIVE/scripts/jarvis-update" lock-free "${JARVIS_HOME:-$REPO}/.jarvis.lock"; then
     "$NATIVE/scripts/jarvis-update" promote "$NATIVE/dist"
     echo "Built: $APP$LABEL"

@@ -32,6 +32,8 @@ struct MenuBarMenu: View {
     /// Stashes the harmless test confirmation (`TestConfirmation`); DEBUG builds only.
     let testConfirmation: () -> Void
     #endif
+    /// Batch C part 3: "Memory…", the JARVIS Memory window (AppDelegate.openMemory).
+    var openMemory: () -> Void = {}
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
@@ -51,6 +53,7 @@ struct MenuBarMenu: View {
             stopSpeaking()
         }
         FileLearningToggle(consent: learn)
+        MemoryItem(open: openMemory)   // batch C part 3
         ShowHUDToggle(setting: showHUD, hud: hud)
         HandsFreeMenuItems()   // M11 part 5
         MorningBriefingToggle(setting: briefing)   // F1
@@ -91,6 +94,8 @@ struct AppMenuItems: View {
     let updates: UpdateWatcher
     let voice: VoiceprintStatus
     let forgetVoice: () -> Void
+    /// Batch C part 3: "Memory…".
+    var openMemory: () -> Void = {}
 
     var body: some View {
         SetUpItem()
@@ -100,6 +105,7 @@ struct AppMenuItems: View {
         BrainPicker(setting: brain)
         ChatGPTSignInItem(account: chatgpt)
         FileLearningToggle(consent: learn)
+        MemoryItem(open: openMemory)   // batch C part 3
         ShowHUDToggle(setting: showHUD, hud: hud)
         HandsFreeMenuItems()   // M11 part 5
         MorningBriefingToggle(setting: briefing)   // F1
