@@ -1,11 +1,12 @@
 import Foundation
 
-/// Batch C: the app's own tools (identify_song, the media catalogue, AirPlay and Sidecar), for
-/// BrainAssembly's `extraTools`. The tool bodies stay internal in Tools/ and are reached only
+/// Batch C: the app's own tools (identify_song, the media catalogue, AirPlay and Sidecar, and the
+/// TV tools), for BrainAssembly's `extraTools`. The tool bodies stay internal in Tools/ and are reached only
 /// through the gateway; this is the one public way to hand them over.
 public enum AppTools {
-    public static func all(media: MediaLibrary, display: DisplayRoutes) -> [any ToolImpl] {
+    public static func all(media: MediaLibrary, display: DisplayRoutes, tv: TVControl) -> [any ToolImpl] {
         [IdentifySong(), MediaSearch(library: media), MediaPlay(library: media),
-         AirPlayDevices(routes: display), AirPlayTo(routes: display), AirPlayStop(routes: display)]
+         AirPlayDevices(routes: display), AirPlayTo(routes: display), AirPlayStop(routes: display),
+         TVFind(tv: tv), TVPlay(tv: tv), TVNowPlaying(tv: tv)]
     }
 }

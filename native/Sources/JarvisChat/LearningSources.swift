@@ -29,7 +29,7 @@ public struct LearningSourceInfo: Sendable, Equatable {
               onDevice: true, factSource: "music", readerBuilt: true),
         .init(id: .mediaLibrary, title: "Media Library", reads: "Your Music and TV libraries and the media folders you pick, to search and play.",
               onDevice: true, factSource: "media", readerBuilt: true),
-        .init(id: .tv, title: "TV", reads: "What the TV app is playing, when you ask.", onDevice: true, factSource: "tv", readerBuilt: false),
+        .init(id: .tv, title: "TV", reads: "What the TV app is playing, when you ask.", onDevice: true, factSource: "tv", readerBuilt: true),
         .init(id: .calendar, title: "Calendar", reads: "Your events: titles, times and places.", onDevice: true, factSource: "calendar", readerBuilt: false),
         .init(id: .reminders, title: "Reminders", reads: "Your reminders and their lists.", onDevice: true, factSource: "reminders", readerBuilt: false),
         .init(id: .notes, title: "Notes", reads: "Your notes in the Notes app.", onDevice: true, factSource: "notes", readerBuilt: false),
@@ -94,7 +94,7 @@ public protocol SourcePermissions: Sendable {
 public final class LearningSources {
     public static let windowTitle = "What JARVIS Learns From"
     public static let menuTitle = "Learning Sources…"
-    static let enabledKey = "learningSources"
+    nonisolated static let enabledKey = "learningSources"
     static let customKey = "learningSourcesCustom"
     static let messageTextKey = "learningSourcesMessageText"
 
@@ -131,6 +131,12 @@ public final class LearningSources {
         case .mediaLibrary: media.library
         default: enabled.contains(id)
         }
+    }
+
+    /// A switch without a consent of its own, read straight from the defaults so a tool can ask
+    /// from any thread (TV tools: the TV switch gates tv_now_playing).
+    public nonisolated static func storedOn(_ id: LearningSourceID, defaults: UserDefaults) -> Bool {
+        (defaults.stringArray(forKey: enabledKey) ?? []).contains(id.rawValue)
     }
 
     public func permission(_ id: LearningSourceID) -> SourcePermission { permissions.status(id) }

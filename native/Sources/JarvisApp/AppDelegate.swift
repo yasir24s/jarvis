@@ -660,7 +660,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // M9a part 7: the menus' Brain item, read from UserDefaults as each turn begins.
             brainChoice: { BrainSetting.stored(in: .standard) },
             // Batch C: identify_song (ShazamKit, behind its feature check).
-            extraTools: AppTools.all(media: media, display: display))
+            // TV tools: the TV switch in Learning Sources gates what's on; tv_play works when asked.
+            extraTools: AppTools.all(media: media, display: display,
+                                     tv: TVControl(library: media, tvSwitch: { [suite = FileLearningConsent.defaultsSuite] in
+                                         LearningSources.storedOn(.tv, defaults: UserDefaults(suiteName: suite) ?? .standard) })))
         brain = assembly
         voice.activity = assembly.turnActivity   // V1 part 5: speech holds the file scan back
         // P1: the hourly consolidation check starts now (first pass in 120 s); the chat's
