@@ -67,16 +67,16 @@ Native JARVIS reads the same names (LaunchAgent env or `defaults`). Obsolete one
 |---|---|---|---|
 | ☐ | `AUDD_API_KEY` |  | |
 | ☐ | `JARVIS_BARGE_IN` |  | |
-| ☐ | `JARVIS_BRIEFING_TIME` |  | |
+| ☑ | `JARVIS_BRIEFING_TIME` | "HH:MM"; invalid is off with a log line; skipped in quiet hours (batch C) | `BackgroundAlertsTests` "the timed briefing" (1de3778); the spoken turn not verified live |
 | ☐ | `JARVIS_CLAUDE_EFFORT` |  | |
 | ☐ | `JARVIS_CLAUDE_MAX_TURNS` |  | |
 | ☐ | `JARVIS_CLAUDE_MODEL` |  | |
 | ☐ | `JARVIS_CLAUDE_TIMEOUT_MS` |  | |
-| ☐ | `JARVIS_GREET_UNLOCK` |  | |
+| ☑ | `JARVIS_GREET_UNLOCK` | on unless "0"; more than 120 s locked | `BackgroundAlertsTests` greeting tests (1de3778); a real lock and unlock not verified |
 | ☐ | `JARVIS_KEEP_ALIVE` | Ollama-only | |
 | ☐ | `JARVIS_KEEP_AWAKE` |  | |
-| ☐ | `JARVIS_LOW_BATTERY` |  | |
-| ☐ | `JARVIS_MEETING_ALERTS` |  | |
+| ☑ | `JARVIS_LOW_BATTERY` | opt-in threshold, 5 min poll, 1 h cooldown; IOKit power sources instead of pmset | `BackgroundAlertsTests` "low battery" with a fake battery (1de3778); live battery not verified |
+| ☑ | `JARVIS_MEETING_ALERTS` | lead minutes, 2 min poll, each event once; EventKit only when full access is already granted | `BackgroundAlertsTests` "meeting alerts" with a fake calendar (1de3778); live calendar not verified |
 | ☐ | `JARVIS_MODEL` | Ollama model → FoundationModels (keep as opt-in Ollama override?) | |
 | ☐ | `JARVIS_NEWS_FEED` |  | |
 | ☐ | `JARVIS_NO_HUD` |  | |
