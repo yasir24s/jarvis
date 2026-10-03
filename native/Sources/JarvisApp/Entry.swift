@@ -1,4 +1,5 @@
 import Foundation
+import JarvisCore
 
 /// Process entry (plan: M00 §3.9). Headless flags are handled here, before any AppKit/SwiftUI
 /// object exists, so they may be exec'd from a terminal: they touch no TCC service and never
@@ -86,6 +87,9 @@ enum Entry {
             FileHandle.standardError.write(Data("JARVIS: --permissions is not implemented in this build\n".utf8))
             exit(64)   // EX_USAGE
         }
+        // The bundle ID moved to com.jarv1s.assistant: the old domain's settings are copied into
+        // the new one on the first launch, before anything reads them.
+        DefaultsMigration.runAtLaunch()
         JarvisSwiftUIApp.main()
     }
 
