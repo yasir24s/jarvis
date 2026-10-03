@@ -49,8 +49,11 @@ public actor LocalBrain: LocalGenerating {
     public static let stuckReply = "I got stuck working through that, sir."
     public static let errorReply = "My local reasoning core had an error, sir."
     /// The last line of the instructions. web_search and search_memory are pinned, so they are
-    /// offered on every turn and this can say so.
-    public static let toolHint = "\n\nUse web_search for current facts and search_memory for what the user said before."
+    /// offered on every turn and this can say so. Live fix 6: the on-device model took
+    /// SYSTEM_PROMPT's example "Done, sir." as an opener ("Done, sir. Your query is vague…") and
+    /// invented offers ("Shall I also alert the fire brigade?"). The last two sentences are for
+    /// it alone, so Claude's prompt stays Python's; the line stays within D-7's 30 tokens.
+    public static let toolHint = "\n\nUse web_search for current facts, search_memory for past chats. Say done only if a tool ran. No offers."
 
     private let gateway: ToolGateway
     private let model: any LocalLanguageModel

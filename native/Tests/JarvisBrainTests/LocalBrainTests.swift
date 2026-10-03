@@ -78,10 +78,10 @@ struct LocalBrainTests {
         #expect(run.logs.lines.isEmpty)
     }
 
-    @Test("the tool hint is one short line that names the two pinned tools")
+    @Test("the tool hint is one short line that names the two pinned tools and forbids unearned 'Done' (live fix 6)")
     func toolHint() {
         #expect(LocalBrain.toolHint
-                == "\n\nUse web_search for current facts and search_memory for what the user said before.")
+                == "\n\nUse web_search for current facts, search_memory for past chats. Say done only if a tool ran. No offers.")
         #expect(LocalBrain.toolHint.dropFirst(2).contains("\n") == false)
         for name in LocalToolset.pinned.dropFirst() { #expect(LocalBrain.toolHint.contains(name)) }
     }
