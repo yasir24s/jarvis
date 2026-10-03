@@ -3,7 +3,8 @@ import Foundation
 public enum TaintPolicy {
     public static let untrusted: Set<String> = [
         "web_search", "see_screen", "read_clipboard", "read_file", "get_messages", "get_news", "summarize_page",
-        "search_memory"   // native (P6b): it quotes past conversations word for word
+        "search_memory",  // native (P6b): it quotes past conversations word for word
+        "get_calendar"    // native (PB): invitations are written by other people
     ]
     public static let executors: Set<String> = [
         "run_command", "run_applescript", "run_powershell", "send_message", "send_email", "type_text", "run_shortcut",

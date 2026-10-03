@@ -97,6 +97,18 @@ public enum BuiltInTools {
         await gateway.register(Capped(MusicControl(runner: platform.scriptRunner)))
         await gateway.register(Capped(MusicPlay(runner: platform.scriptRunner, web: platform.web, online: platform.online,
                                                 opener: platform.urlOpener, log: platform.webLog)))
+        // PB: Python's personal-data tools. Messages, contacts and the calendar tag the turn as
+        // personal (DataSourceMap); sending and creating events wait for the confirmation gate.
+        let scripts = AppleScriptRunner(runner: platform.scriptRunner)
+        let contacts = ContactLookup(contacts: platform.contacts, scripts: scripts)
+        await gateway.register(Capped(GetMessages(messages: platform.messages)))
+        await gateway.register(Capped(FindContact(lookup: contacts)))
+        await gateway.register(Capped(SendMessage(lookup: contacts, log: platform.webLog)))
+        await gateway.register(Capped(SendEmail(lookup: contacts, log: platform.webLog)))
+        await gateway.register(Capped(GetCalendar(calendar: platform.calendar, scripts: scripts, clock: clock,
+                                                  timeZone: timeZone, pause: platform.pause)))
+        await gateway.register(Capped(CreateEvent(calendar: platform.calendar, scripts: scripts, clock: clock,
+                                                  timeZone: timeZone, pause: platform.pause)))
         if let memory {
             await gateway.register(Capped(SearchMemory(memory: memory.store, search: memory.search)))
             await gateway.register(Capped(ForgetMemory(memory: memory.store)))
@@ -163,6 +175,11 @@ struct ToolPlatform: Sendable {
     var urlOpener: any SettingsOpening = NoURLOpener()
     /// PB: `time.sleep`, for `_ensure_app_running`'s wait. Tests pass none.
     var pause: @Sendable (Double) async -> Void = { _ in }
+    /// PB: Messages' chat.db, the address book and EventKit. A platform has none of them until
+    /// the app gives it the real ones, so no fake platform reads personal data.
+    var messages: any MessagesReading = NoMessages()
+    var contacts: any ContactsReading = NoContacts()
+    var calendar: any CalendarStoring = NoCalendar()
 
     static var live: ToolPlatform {
         var platform = ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard(), screen: LiveScreenCapture(),
@@ -176,6 +193,9 @@ struct ToolPlatform: Sendable {
         platform.webLog = { JarvisLog.log($0, category: .tools) }
         platform.urlOpener = LiveSettingsOpener()
         platform.pause = { try? await Task.sleep(for: .seconds($0)) }
+        platform.messages = LiveMessages(home: platform.home)
+        platform.contacts = LiveContacts()
+        platform.calendar = LiveCalendar.shared
         return platform
     }
 }

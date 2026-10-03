@@ -1,0 +1,242 @@
+{
+ "schema": 1,
+ "suite": "pb_calendar",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "get_calendar/0",
+   "input": {
+    "events": [],
+    "outputs": []
+   },
+   "expected": {
+    "text": "You have nothing on your calendar today, sir.",
+    "window": [
+     1790550000.0,
+     1790636400.0
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "get_calendar/1",
+   "input": {
+    "events": [
+     [
+      "Standup",
+      1790586000,
+      false
+     ]
+    ],
+    "outputs": []
+   },
+   "expected": {
+    "text": "Today's schedule. Standup at 10:00 AM.",
+    "window": [
+     1790550000.0,
+     1790636400.0
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "get_calendar/2",
+   "input": {
+    "events": [
+     [
+      "Standup",
+      1790586000,
+      false
+     ],
+     [
+      "Holiday",
+      1790550000,
+      true
+     ],
+     [
+      "Lunch",
+      1790598600,
+      false
+     ],
+     [
+      "Untitled",
+      1790622000,
+      false
+     ]
+    ],
+    "outputs": []
+   },
+   "expected": {
+    "text": "Today's schedule. Standup at 10:00 AM. Holiday, all day. Lunch at 1:30 PM. Untitled at 8:00 PM.",
+    "window": [
+     1790550000.0,
+     1790636400.0
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "get_calendar/3",
+   "input": {
+    "events": [
+     [
+      "Late",
+      1790632740,
+      false
+     ],
+     [
+      "Early",
+      1790550060,
+      false
+     ]
+    ],
+    "outputs": []
+   },
+   "expected": {
+    "text": "Today's schedule. Late at 10:59 PM. Early at 12:01 AM.",
+    "window": [
+     1790550000.0,
+     1790636400.0
+    ],
+    "scripts": []
+   }
+  },
+  {
+   "name": "get_calendar/4",
+   "input": {
+    "events": null,
+    "outputs": [
+     "Dentist at 10:00:00. Gym at 18:30:00. "
+    ]
+   },
+   "expected": {
+    "text": "Today's schedule. Dentist at 10:00:00. Gym at 18:30:00.",
+    "window": [
+     1790550000.0,
+     1790636400.0
+    ],
+    "scripts": [
+     "set output to \"\"\nset startD to (current date) - (time of (current date))\nset endD to startD + (1 * days)\ntell application \"Calendar\"\n  launch\n  repeat with c in calendars\n    repeat with e in (every event of c whose start date ≥ startD and start date < endD)\n      set output to output & (summary of e) & \" at \" & (time string of (start date of e)) & \". \"\n    end repeat\n  end repeat\nend tell\nreturn output"
+    ]
+   }
+  },
+  {
+   "name": "get_calendar/5",
+   "input": {
+    "events": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "You have nothing on your calendar today, sir.",
+    "window": [
+     1790550000.0,
+     1790636400.0
+    ],
+    "scripts": [
+     "set output to \"\"\nset startD to (current date) - (time of (current date))\nset endD to startD + (1 * days)\ntell application \"Calendar\"\n  launch\n  repeat with c in calendars\n    repeat with e in (every event of c whose start date ≥ startD and start date < endD)\n      set output to output & (summary of e) & \" at \" & (time string of (start date of e)) & \". \"\n    end repeat\n  end repeat\nend tell\nreturn output"
+    ]
+   }
+  },
+  {
+   "name": "get_calendar/6",
+   "input": {
+    "events": null,
+    "outputs": [
+     "Done."
+    ]
+   },
+   "expected": {
+    "text": "You have nothing on your calendar today, sir.",
+    "window": [
+     1790550000.0,
+     1790636400.0
+    ],
+    "scripts": [
+     "set output to \"\"\nset startD to (current date) - (time of (current date))\nset endD to startD + (1 * days)\ntell application \"Calendar\"\n  launch\n  repeat with c in calendars\n    repeat with e in (every event of c whose start date ≥ startD and start date < endD)\n      set output to output & (summary of e) & \" at \" & (time string of (start date of e)) & \". \"\n    end repeat\n  end repeat\nend tell\nreturn output"
+    ]
+   }
+  },
+  {
+   "name": "get_calendar/7",
+   "input": {
+    "events": null,
+    "outputs": [
+     "execution error: Calendar got an error: Application isn't running. (-600)",
+     "",
+     "Standup at 09:30:00. "
+    ]
+   },
+   "expected": {
+    "text": "Today's schedule. Standup at 09:30:00.",
+    "window": [
+     1790550000.0,
+     1790636400.0
+    ],
+    "scripts": [
+     "set output to \"\"\nset startD to (current date) - (time of (current date))\nset endD to startD + (1 * days)\ntell application \"Calendar\"\n  launch\n  repeat with c in calendars\n    repeat with e in (every event of c whose start date ≥ startD and start date < endD)\n      set output to output & (summary of e) & \" at \" & (time string of (start date of e)) & \". \"\n    end repeat\n  end repeat\nend tell\nreturn output",
+     "tell application \"Calendar\" to launch",
+     "set output to \"\"\nset startD to (current date) - (time of (current date))\nset endD to startD + (1 * days)\ntell application \"Calendar\"\n  launch\n  repeat with c in calendars\n    repeat with e in (every event of c whose start date ≥ startD and start date < endD)\n      set output to output & (summary of e) & \" at \" & (time string of (start date of e)) & \". \"\n    end repeat\n  end repeat\nend tell\nreturn output"
+    ]
+   }
+  },
+  {
+   "name": "get_calendar/8",
+   "input": {
+    "events": null,
+    "outputs": [
+     "execution error (-600)",
+     "",
+     "execution error (-600)"
+    ]
+   },
+   "expected": {
+    "text": "I couldn't reach Calendar, sir — you may need to grant JARVIS calendar access in System Settings, Privacy and Security.",
+    "window": [
+     1790550000.0,
+     1790636400.0
+    ],
+    "scripts": [
+     "set output to \"\"\nset startD to (current date) - (time of (current date))\nset endD to startD + (1 * days)\ntell application \"Calendar\"\n  launch\n  repeat with c in calendars\n    repeat with e in (every event of c whose start date ≥ startD and start date < endD)\n      set output to output & (summary of e) & \" at \" & (time string of (start date of e)) & \". \"\n    end repeat\n  end repeat\nend tell\nreturn output",
+     "tell application \"Calendar\" to launch",
+     "set output to \"\"\nset startD to (current date) - (time of (current date))\nset endD to startD + (1 * days)\ntell application \"Calendar\"\n  launch\n  repeat with c in calendars\n    repeat with e in (every event of c whose start date ≥ startD and start date < endD)\n      set output to output & (summary of e) & \" at \" & (time string of (start date of e)) & \". \"\n    end repeat\n  end repeat\nend tell\nreturn output"
+    ]
+   }
+  },
+  {
+   "name": "get_calendar/9",
+   "input": {
+    "events": null,
+    "outputs": [
+     "AppleScript error: Command '['osascript', '-']' timed out after 30 seconds",
+     "",
+     ""
+    ]
+   },
+   "expected": {
+    "text": "You have nothing on your calendar today, sir.",
+    "window": [
+     1790550000.0,
+     1790636400.0
+    ],
+    "scripts": [
+     "set output to \"\"\nset startD to (current date) - (time of (current date))\nset endD to startD + (1 * days)\ntell application \"Calendar\"\n  launch\n  repeat with c in calendars\n    repeat with e in (every event of c whose start date ≥ startD and start date < endD)\n      set output to output & (summary of e) & \" at \" & (time string of (start date of e)) & \". \"\n    end repeat\n  end repeat\nend tell\nreturn output",
+     "tell application \"Calendar\" to launch",
+     "set output to \"\"\nset startD to (current date) - (time of (current date))\nset endD to startD + (1 * days)\ntell application \"Calendar\"\n  launch\n  repeat with c in calendars\n    repeat with e in (every event of c whose start date ≥ startD and start date < endD)\n      set output to output & (summary of e) & \" at \" & (time string of (start date of e)) & \". \"\n    end repeat\n  end repeat\nend tell\nreturn output"
+    ]
+   }
+  }
+ ]
+}

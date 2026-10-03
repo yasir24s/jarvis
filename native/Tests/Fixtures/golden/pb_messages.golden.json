@@ -1,0 +1,106 @@
+{
+ "schema": 1,
+ "suite": "pb_messages",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "get_messages/0",
+   "input": {
+    "sql": null
+   },
+   "expected": {
+    "text": "I can't find your Messages database, sir."
+   }
+  },
+  {
+   "name": "get_messages/1",
+   "input": {
+    "sql": []
+   },
+   "expected": {
+    "text": "I couldn't read Messages — please grant Full Disk Access, sir."
+   }
+  },
+  {
+   "name": "get_messages/2",
+   "input": {
+    "sql": [
+     "CREATE TABLE handle (ROWID INTEGER PRIMARY KEY, id TEXT)",
+     "CREATE TABLE message (ROWID INTEGER PRIMARY KEY, handle_id INTEGER, text TEXT, is_from_me INTEGER, date INTEGER)"
+    ]
+   },
+   "expected": {
+    "text": "No readable recent messages, sir."
+   }
+  },
+  {
+   "name": "get_messages/3",
+   "input": {
+    "sql": [
+     "CREATE TABLE handle (ROWID INTEGER PRIMARY KEY, id TEXT)",
+     "CREATE TABLE message (ROWID INTEGER PRIMARY KEY, handle_id INTEGER, text TEXT, is_from_me INTEGER, date INTEGER)",
+     "INSERT INTO handle (ROWID, id) VALUES (1, '+447700900001')",
+     "INSERT INTO handle (ROWID, id) VALUES (2, 'friend@example.com')",
+     "INSERT INTO handle (ROWID, id) VALUES (3, '')",
+     "INSERT INTO message (handle_id, text, is_from_me, date) VALUES (1, 'hello', 0, 10)"
+    ]
+   },
+   "expected": {
+    "text": "Your latest messages. From +447700900001: hello"
+   }
+  },
+  {
+   "name": "get_messages/4",
+   "input": {
+    "sql": [
+     "CREATE TABLE handle (ROWID INTEGER PRIMARY KEY, id TEXT)",
+     "CREATE TABLE message (ROWID INTEGER PRIMARY KEY, handle_id INTEGER, text TEXT, is_from_me INTEGER, date INTEGER)",
+     "INSERT INTO handle (ROWID, id) VALUES (1, '+447700900001')",
+     "INSERT INTO handle (ROWID, id) VALUES (2, 'friend@example.com')",
+     "INSERT INTO handle (ROWID, id) VALUES (3, '')",
+     "INSERT INTO message (handle_id, text, is_from_me, date) VALUES (1, 'one', 0, 10)",
+     "INSERT INTO message (handle_id, text, is_from_me, date) VALUES (2, 'two', 0, 30)",
+     "INSERT INTO message (handle_id, text, is_from_me, date) VALUES (9, 'orphan', 0, 20)",
+     "INSERT INTO message (handle_id, text, is_from_me, date) VALUES (3, 'blank handle', 0, 25)",
+     "INSERT INTO message (handle_id, text, is_from_me, date) VALUES (1, 'mine', 1, 40)",
+     "INSERT INTO message (handle_id, text, is_from_me, date) VALUES (1, NULL, 0, 50)",
+     "INSERT INTO message (handle_id, text, is_from_me, date) VALUES (1, '', 0, 60)",
+     "INSERT INTO message (handle_id, text, is_from_me, date) VALUES (2, 'it''s 🙂 café', 0, 35)",
+     "INSERT INTO message (handle_id, text, is_from_me, date) VALUES (1, 'six', 0, 5)",
+     "INSERT INTO message (handle_id, text, is_from_me, date) VALUES (2, 'seven', 0, 1)"
+    ]
+   },
+   "expected": {
+    "text": "Your latest messages. From friend@example.com: it's 🙂 café ... From friend@example.com: two ... From unknown: blank handle ... From unknown: orphan ... From +447700900001: one"
+   }
+  },
+  {
+   "name": "get_messages/5",
+   "input": {
+    "sql": [
+     "CREATE TABLE handle (ROWID INTEGER PRIMARY KEY, id TEXT)",
+     "CREATE TABLE message (ROWID INTEGER PRIMARY KEY, handle_id INTEGER, text TEXT, is_from_me INTEGER, date INTEGER)",
+     "INSERT INTO handle (ROWID, id) VALUES (1, '+447700900001')",
+     "INSERT INTO handle (ROWID, id) VALUES (2, 'friend@example.com')",
+     "INSERT INTO handle (ROWID, id) VALUES (3, '')",
+     "INSERT INTO message (handle_id, text, is_from_me, date) VALUES (1, 'line one\nline two', 0, 10)",
+     "INSERT INTO message (handle_id, text, is_from_me, date) VALUES (2, '  spaced  ', 0, 9)"
+    ]
+   },
+   "expected": {
+    "text": "Your latest messages. From +447700900001: line one\nline two ... From friend@example.com:   spaced  "
+   }
+  }
+ ]
+}

@@ -1,0 +1,1400 @@
+{
+ "schema": 1,
+ "suite": "pb_contacts",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "find_contact/0",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": ""
+    },
+    "ek": null,
+    "outputs": [
+     "Jane Doe, phone +44 7700 900000, phone 020 7946 0000, email jane@example.com"
+    ]
+   },
+   "expected": {
+    "text": "Who am I looking for, sir?",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/1",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": "   "
+    },
+    "ek": null,
+    "outputs": [
+     "Jane Doe, phone +44 7700 900000, phone 020 7946 0000, email jane@example.com"
+    ]
+   },
+   "expected": {
+    "text": "Who am I looking for, sir?",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/2",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": null
+    },
+    "ek": null,
+    "outputs": [
+     "Jane Doe, phone +44 7700 900000, phone 020 7946 0000, email jane@example.com"
+    ]
+   },
+   "expected": {
+    "text": "Who am I looking for, sir?",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/3",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": 0
+    },
+    "ek": null,
+    "outputs": [
+     "Jane Doe, phone +44 7700 900000, phone 020 7946 0000, email jane@example.com"
+    ]
+   },
+   "expected": {
+    "text": "Who am I looking for, sir?",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/4",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": 5
+    },
+    "ek": null,
+    "outputs": [
+     "Jane Doe, phone +44 7700 900000, phone 020 7946 0000, email jane@example.com"
+    ]
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'strip'",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/5",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": [
+      "x"
+     ]
+    },
+    "ek": null,
+    "outputs": [
+     "Jane Doe, phone +44 7700 900000, phone 020 7946 0000, email jane@example.com"
+    ]
+   },
+   "expected": {
+    "text": "Tool error: 'list' object has no attribute 'strip'",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/6",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": "Jane"
+    },
+    "ek": null,
+    "outputs": [
+     "Jane Doe, phone +44 7700 900000, phone 020 7946 0000, email jane@example.com"
+    ]
+   },
+   "expected": {
+    "text": "Jane Doe, phone +44 7700 900000, phone 020 7946 0000, email jane@example.com",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Jane\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  set out to (name of p)\n  repeat with ph in (phones of p)\n    set out to out & \", phone \" & (value of ph)\n  end repeat\n  repeat with em in (emails of p)\n    set out to out & \", email \" & (value of em)\n  end repeat\n  return out\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/7",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": " jane doe "
+    },
+    "ek": null,
+    "outputs": [
+     "Jane Doe, phone +44 7700 900000, phone 020 7946 0000, email jane@example.com"
+    ]
+   },
+   "expected": {
+    "text": "Jane Doe, phone +44 7700 900000, phone 020 7946 0000, email jane@example.com",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"jane doe\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"jane doe\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"jane doe\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  set out to (name of p)\n  repeat with ph in (phones of p)\n    set out to out & \", phone \" & (value of ph)\n  end repeat\n  repeat with em in (emails of p)\n    set out to out & \", email \" & (value of em)\n  end repeat\n  return out\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/8",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": "O\"Brien \\ Jr"
+    },
+    "ek": null,
+    "outputs": [
+     "Jane Doe, phone +44 7700 900000, phone 020 7946 0000, email jane@example.com"
+    ]
+   },
+   "expected": {
+    "text": "Jane Doe, phone +44 7700 900000, phone 020 7946 0000, email jane@example.com",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"O\\\"Brien \\\\ Jr\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"O\\\"Brien \\\\ Jr\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"O\\\"Brien \\\\ Jr\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  set out to (name of p)\n  repeat with ph in (phones of p)\n    set out to out & \", phone \" & (value of ph)\n  end repeat\n  repeat with em in (emails of p)\n    set out to out & \", email \" & (value of em)\n  end repeat\n  return out\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/9",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": "Jane"
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "I couldn't find Jane in your contacts, sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Jane\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  set out to (name of p)\n  repeat with ph in (phones of p)\n    set out to out & \", phone \" & (value of ph)\n  end repeat\n  repeat with em in (emails of p)\n    set out to out & \", email \" & (value of em)\n  end repeat\n  return out\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/10",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": "Jane"
+    },
+    "ek": null,
+    "outputs": [
+     "Done."
+    ]
+   },
+   "expected": {
+    "text": "I couldn't find Jane in your contacts, sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Jane\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  set out to (name of p)\n  repeat with ph in (phones of p)\n    set out to out & \", phone \" & (value of ph)\n  end repeat\n  repeat with em in (emails of p)\n    set out to out & \", email \" & (value of em)\n  end repeat\n  return out\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/11",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": "Jane"
+    },
+    "ek": null,
+    "outputs": [
+     "AppleScript error: [Errno 2] No such file or directory: 'osascript'"
+    ]
+   },
+   "expected": {
+    "text": "I couldn't find Jane in your contacts, sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Jane\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  set out to (name of p)\n  repeat with ph in (phones of p)\n    set out to out & \", phone \" & (value of ph)\n  end repeat\n  repeat with em in (emails of p)\n    set out to out & \", email \" & (value of em)\n  end repeat\n  return out\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/12",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": "Jane"
+    },
+    "ek": null,
+    "outputs": [
+     "execution error: Contacts got an error (-1743)"
+    ]
+   },
+   "expected": {
+    "text": "execution error: Contacts got an error (-1743)",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Jane\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  set out to (name of p)\n  repeat with ph in (phones of p)\n    set out to out & \", phone \" & (value of ph)\n  end repeat\n  repeat with em in (emails of p)\n    set out to out & \", email \" & (value of em)\n  end repeat\n  return out\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/13",
+   "input": {
+    "tool": "find_contact",
+    "args": {
+     "name": "Jane"
+    },
+    "ek": null,
+    "outputs": [
+     "Jane"
+    ]
+   },
+   "expected": {
+    "text": "Jane",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Jane\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  set out to (name of p)\n  repeat with ph in (phones of p)\n    set out to out & \", phone \" & (value of ph)\n  end repeat\n  repeat with em in (emails of p)\n    set out to out & \", email \" & (value of em)\n  end repeat\n  return out\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "find_contact/14",
+   "input": {
+    "tool": "find_contact",
+    "args": {},
+    "ek": null,
+    "outputs": [
+     "Jane Doe, phone +44 7700 900000, phone 020 7946 0000, email jane@example.com"
+    ]
+   },
+   "expected": {
+    "text": "Who am I looking for, sir?",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/15",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "Jane",
+     "text": ""
+    },
+    "ek": null,
+    "outputs": []
+   },
+   "expected": {
+    "text": "What would you like the message to say, sir?",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/16",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "Jane",
+     "text": "   "
+    },
+    "ek": null,
+    "outputs": []
+   },
+   "expected": {
+    "text": "What would you like the message to say, sir?",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/17",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "Jane"
+    },
+    "ek": null,
+    "outputs": []
+   },
+   "expected": {
+    "text": "What would you like the message to say, sir?",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/18",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "Jane",
+     "text": 5
+    },
+    "ek": null,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'strip'",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/19",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": 5,
+     "text": "hi"
+    },
+    "ek": null,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'strip'",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/20",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "jane@example.com",
+     "text": " on my way "
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Message sent to jane@example.com, sir.",
+    "scripts": [
+     "tell application \"Messages\"\n  set svc to 1st account whose service type = iMessage\n  send \"on my way\" to participant \"jane@example.com\" of svc\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/21",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "+44 (0) 7700-900 000",
+     "text": "hi"
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Message sent to +44 (0) 7700-900 000, sir.",
+    "scripts": [
+     "tell application \"Messages\"\n  set svc to 1st account whose service type = iMessage\n  send \"hi\" to participant \"+4407700900000\" of svc\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/22",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "07700 900000",
+     "text": "say \"hi\" \\ there"
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Message sent to 07700 900000, sir.",
+    "scripts": [
+     "tell application \"Messages\"\n  set svc to 1st account whose service type = iMessage\n  send \"say \\\"hi\\\" \\\\ there\" to participant \"07700900000\" of svc\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/23",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "123456",
+     "text": "hi"
+    },
+    "ek": null,
+    "outputs": [
+     "",
+     ""
+    ]
+   },
+   "expected": {
+    "text": "I couldn't find 123456 in your contacts, sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"123456\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"123456\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"123456\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  if (count of phones of p) > 0 then return value of item 1 of phones of p\n  if (count of emails of p) > 0 then return value of item 1 of emails of p\n  return \"\"\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/24",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "Mum",
+     "text": "home soon"
+    },
+    "ek": null,
+    "outputs": [
+     "+44 (7700) 900-000",
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Message sent to Mum, sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Mum\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  if (count of phones of p) > 0 then return value of item 1 of phones of p\n  if (count of emails of p) > 0 then return value of item 1 of emails of p\n  return \"\"\nend tell",
+     "tell application \"Messages\"\n  set svc to 1st account whose service type = iMessage\n  send \"home soon\" to participant \"+447700900000\" of svc\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/25",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "Mum",
+     "text": "home soon"
+    },
+    "ek": null,
+    "outputs": [
+     "mum@example.com",
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Message sent to Mum, sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Mum\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  if (count of phones of p) > 0 then return value of item 1 of phones of p\n  if (count of emails of p) > 0 then return value of item 1 of emails of p\n  return \"\"\nend tell",
+     "tell application \"Messages\"\n  set svc to 1st account whose service type = iMessage\n  send \"home soon\" to participant \"mum@example.com\" of svc\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/26",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "Mum",
+     "text": "home soon"
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "I couldn't find Mum in your contacts, sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Mum\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  if (count of phones of p) > 0 then return value of item 1 of phones of p\n  if (count of emails of p) > 0 then return value of item 1 of emails of p\n  return \"\"\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/27",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "Mum",
+     "text": "home soon"
+    },
+    "ek": null,
+    "outputs": [
+     "Done."
+    ]
+   },
+   "expected": {
+    "text": "I couldn't find Mum in your contacts, sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Mum\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  if (count of phones of p) > 0 then return value of item 1 of phones of p\n  if (count of emails of p) > 0 then return value of item 1 of emails of p\n  return \"\"\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/28",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "Mum",
+     "text": "home soon"
+    },
+    "ek": null,
+    "outputs": [
+     "AppleScript error: timed out"
+    ]
+   },
+   "expected": {
+    "text": "I couldn't find Mum in your contacts, sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Mum\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  if (count of phones of p) > 0 then return value of item 1 of phones of p\n  if (count of emails of p) > 0 then return value of item 1 of emails of p\n  return \"\"\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/29",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "Mum",
+     "text": "home soon"
+    },
+    "ek": null,
+    "outputs": [
+     "07700900000",
+     "execution error: Messages got an error: Can't get account (-1728)",
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Message sent to Mum, sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Mum\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  if (count of phones of p) > 0 then return value of item 1 of phones of p\n  if (count of emails of p) > 0 then return value of item 1 of emails of p\n  return \"\"\nend tell",
+     "tell application \"Messages\"\n  set svc to 1st account whose service type = iMessage\n  send \"home soon\" to participant \"07700900000\" of svc\nend tell",
+     "tell application \"Messages\" to send \"home soon\" to buddy \"07700900000\" of (service 1 whose service type is iMessage)"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/30",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "Mum",
+     "text": "home soon"
+    },
+    "ek": null,
+    "outputs": [
+     "07700900000",
+     "execution error (-1728)",
+     "execution error: Messages got an error (-1743)"
+    ]
+   },
+   "expected": {
+    "text": "I couldn't send that message, sir — check Messages automation permission.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Mum\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  if (count of phones of p) > 0 then return value of item 1 of phones of p\n  if (count of emails of p) > 0 then return value of item 1 of emails of p\n  return \"\"\nend tell",
+     "tell application \"Messages\"\n  set svc to 1st account whose service type = iMessage\n  send \"home soon\" to participant \"07700900000\" of svc\nend tell",
+     "tell application \"Messages\" to send \"home soon\" to buddy \"07700900000\" of (service 1 whose service type is iMessage)"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_message/31",
+   "input": {
+    "tool": "send_message",
+    "args": {
+     "recipient": "  Mum  ",
+     "text": "x"
+    },
+    "ek": null,
+    "outputs": [
+     "07700900000",
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Message sent to   Mum  , sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Mum\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Mum\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  if (count of phones of p) > 0 then return value of item 1 of phones of p\n  if (count of emails of p) > 0 then return value of item 1 of emails of p\n  return \"\"\nend tell",
+     "tell application \"Messages\"\n  set svc to 1st account whose service type = iMessage\n  send \"x\" to participant \"07700900000\" of svc\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_email/32",
+   "input": {
+    "tool": "send_email",
+    "args": {
+     "to": "jane@example.com",
+     "subject": "Hi",
+     "body": "Hello"
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Email sent to jane@example.com, sir.",
+    "scripts": [
+     "tell application \"Mail\"\n  set m to make new outgoing message with properties {subject:\"Hi\", content:\"Hello\", visible:false}\n  tell m to make new to recipient at end of to recipients with properties {address:\"jane@example.com\"}\n  send m\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_email/33",
+   "input": {
+    "tool": "send_email",
+    "args": {
+     "to": " jane@example.com ",
+     "subject": "a \"b\"",
+     "body": "line\\one\nline two"
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Email sent to  jane@example.com , sir.",
+    "scripts": [
+     "tell application \"Mail\"\n  set m to make new outgoing message with properties {subject:\"a \\\"b\\\"\", content:\"line\\\\one\nline two\", visible:false}\n  tell m to make new to recipient at end of to recipients with properties {address:\"jane@example.com\"}\n  send m\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_email/34",
+   "input": {
+    "tool": "send_email",
+    "args": {
+     "to": "Jane",
+     "subject": "Hi",
+     "body": "Hello"
+    },
+    "ek": null,
+    "outputs": [
+     "jane@example.com",
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Email sent to Jane, sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Jane\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  if (count of emails of p) > 0 then return value of item 1 of emails of p\n  if (count of phones of p) > 0 then return value of item 1 of phones of p\n  return \"\"\nend tell",
+     "tell application \"Mail\"\n  set m to make new outgoing message with properties {subject:\"Hi\", content:\"Hello\", visible:false}\n  tell m to make new to recipient at end of to recipients with properties {address:\"jane@example.com\"}\n  send m\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_email/35",
+   "input": {
+    "tool": "send_email",
+    "args": {
+     "to": "Jane",
+     "subject": "Hi",
+     "body": "Hello"
+    },
+    "ek": null,
+    "outputs": [
+     "+44 7700 900000"
+    ]
+   },
+   "expected": {
+    "text": "I couldn't find an email address for Jane, sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Jane\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  if (count of emails of p) > 0 then return value of item 1 of emails of p\n  if (count of phones of p) > 0 then return value of item 1 of phones of p\n  return \"\"\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_email/36",
+   "input": {
+    "tool": "send_email",
+    "args": {
+     "to": "Jane",
+     "subject": "Hi",
+     "body": "Hello"
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "I couldn't find an email address for Jane, sir.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Jane\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  if (count of emails of p) > 0 then return value of item 1 of emails of p\n  if (count of phones of p) > 0 then return value of item 1 of phones of p\n  return \"\"\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_email/37",
+   "input": {
+    "tool": "send_email",
+    "args": {
+     "to": "Jane",
+     "subject": "Hi",
+     "body": "Hello"
+    },
+    "ek": null,
+    "outputs": [
+     "jane@example.com",
+     "execution error (-1743)"
+    ]
+   },
+   "expected": {
+    "text": "I couldn't send the email, sir — check Mail automation permission.",
+    "scripts": [
+     "tell application \"Contacts\"\n  set ppl to (every person whose name = \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name begins with \"Jane\")\n  if (count of ppl) = 0 then set ppl to (every person whose name contains \"Jane\")\n  if (count of ppl) = 0 then return \"\"\n  set p to item 1 of ppl\n  if (count of emails of p) > 0 then return value of item 1 of emails of p\n  if (count of phones of p) > 0 then return value of item 1 of phones of p\n  return \"\"\nend tell",
+     "tell application \"Mail\"\n  set m to make new outgoing message with properties {subject:\"Hi\", content:\"Hello\", visible:false}\n  tell m to make new to recipient at end of to recipients with properties {address:\"jane@example.com\"}\n  send m\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_email/38",
+   "input": {
+    "tool": "send_email",
+    "args": {
+     "to": "jane@example.com"
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Email sent to jane@example.com, sir.",
+    "scripts": [
+     "tell application \"Mail\"\n  set m to make new outgoing message with properties {subject:\"\", content:\"\", visible:false}\n  tell m to make new to recipient at end of to recipients with properties {address:\"jane@example.com\"}\n  send m\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_email/39",
+   "input": {
+    "tool": "send_email",
+    "args": {
+     "to": "jane@example.com",
+     "subject": null,
+     "body": 0
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Email sent to jane@example.com, sir.",
+    "scripts": [
+     "tell application \"Mail\"\n  set m to make new outgoing message with properties {subject:\"\", content:\"\", visible:false}\n  tell m to make new to recipient at end of to recipients with properties {address:\"jane@example.com\"}\n  send m\nend tell"
+    ],
+    "created": []
+   }
+  },
+  {
+   "name": "send_email/40",
+   "input": {
+    "tool": "send_email",
+    "args": {
+     "to": "jane@example.com",
+     "subject": 5,
+     "body": "x"
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'replace'",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "send_email/41",
+   "input": {
+    "tool": "send_email",
+    "args": {
+     "to": 7,
+     "subject": "x",
+     "body": "x"
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'strip'",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "send_email/42",
+   "input": {
+    "tool": "send_email",
+    "args": {
+     "to": "07700 900000",
+     "subject": "x",
+     "body": "x"
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "I couldn't find an email address for 07700 900000, sir.",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "create_event/43",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Dentist",
+     "when": "tomorrow at 3pm"
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Scheduled Dentist for Tuesday at 3:00 PM, sir.",
+    "scripts": [],
+    "created": [
+     [
+      "Dentist",
+      1790690400.0,
+      3600
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/44",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "  Dentist  ",
+     "when": "in 2 hours",
+     "duration_minutes": 30
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Scheduled Dentist for Monday at 11:00 AM, sir.",
+    "scripts": [],
+    "created": [
+     [
+      "Dentist",
+      1790589600.0,
+      1800
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/45",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "",
+     "when": "at 5:30pm"
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Scheduled Event for Monday at 5:30 PM, sir.",
+    "scripts": [],
+    "created": [
+     [
+      "Event",
+      1790613000.0,
+      3600
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/46",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "on friday at 2pm",
+     "duration_minutes": "45"
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Scheduled Call for Friday at 2:00 PM, sir.",
+    "scripts": [],
+    "created": [
+     [
+      "Call",
+      1790946000.0,
+      2700
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/47",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "in 90 minutes",
+     "duration_minutes": 2
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Scheduled Call for Monday at 10:30 AM, sir.",
+    "scripts": [],
+    "created": [
+     [
+      "Call",
+      1790587800.0,
+      300
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/48",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "in 90 minutes",
+     "duration_minutes": 2.9
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Scheduled Call for Monday at 10:30 AM, sir.",
+    "scripts": [],
+    "created": [
+     [
+      "Call",
+      1790587800.0,
+      300
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/49",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "in 90 minutes",
+     "duration_minutes": null
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Scheduled Call for Monday at 10:30 AM, sir.",
+    "scripts": [],
+    "created": [
+     [
+      "Call",
+      1790587800.0,
+      3600
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/50",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "in 90 minutes",
+     "duration_minutes": "abc"
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Scheduled Call for Monday at 10:30 AM, sir.",
+    "scripts": [],
+    "created": [
+     [
+      "Call",
+      1790587800.0,
+      3600
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/51",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "in 90 minutes",
+     "duration_minutes": true
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Scheduled Call for Monday at 10:30 AM, sir.",
+    "scripts": [],
+    "created": [
+     [
+      "Call",
+      1790587800.0,
+      300
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/52",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "in 3 days"
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Scheduled Call for Thursday at 9:00 AM, sir.",
+    "scripts": [],
+    "created": [
+     [
+      "Call",
+      1790841600.0,
+      3600
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/53",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "next monday at 9am"
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Scheduled Call for Monday at 9:00 AM, sir.",
+    "scripts": [],
+    "created": [
+     [
+      "Call",
+      1791187200.0,
+      3600
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/54",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "at 10am"
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Scheduled Call for Monday at 10:00 AM, sir.",
+    "scripts": [],
+    "created": [
+     [
+      "Call",
+      1790586000.0,
+      3600
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/55",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": ""
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "When should I schedule that for, sir?",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "create_event/56",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call"
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "When should I schedule that for, sir?",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "create_event/57",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "whenever suits"
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "When should I schedule that for, sir?",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "create_event/58",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": 5
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'lower'",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "create_event/59",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": 5,
+     "when": "at 10am"
+    },
+    "ek": true,
+    "outputs": []
+   },
+   "expected": {
+    "text": "Tool error: 'int' object has no attribute 'strip'",
+    "scripts": [],
+    "created": []
+   }
+  },
+  {
+   "name": "create_event/60",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "tomorrow at 3pm"
+    },
+    "ek": false,
+    "outputs": []
+   },
+   "expected": {
+    "text": "I couldn't create that event, sir — check JARVIS's calendar access in Settings.",
+    "scripts": [],
+    "created": [
+     [
+      "Call",
+      1790690400.0,
+      3600
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/61",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Say \"hi\"",
+     "when": "tomorrow at 3pm"
+    },
+    "ek": null,
+    "outputs": [
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Scheduled Say \"hi\" for Tuesday at 3:00 PM, sir.",
+    "scripts": [
+     "tell application \"Calendar\"\n  launch\n  set c to first calendar whose writable is true\n  tell c to make new event with properties {summary:\"Say \\\"hi\\\"\", start date:((current date) + 108000), end date:((current date) + 111600)}\nend tell"
+    ],
+    "created": [
+     [
+      "Say \"hi\"",
+      1790690400.0,
+      3600
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/62",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "in 2 hours",
+     "duration_minutes": 15
+    },
+    "ek": null,
+    "outputs": [
+     "execution error: Calendar got an error (-600)",
+     "",
+     ""
+    ]
+   },
+   "expected": {
+    "text": "Scheduled Call for Monday at 11:00 AM, sir.",
+    "scripts": [
+     "tell application \"Calendar\"\n  launch\n  set c to first calendar whose writable is true\n  tell c to make new event with properties {summary:\"Call\", start date:((current date) + 7200), end date:((current date) + 8100)}\nend tell",
+     "tell application \"Calendar\" to launch",
+     "tell application \"Calendar\"\n  launch\n  set c to first calendar whose writable is true\n  tell c to make new event with properties {summary:\"Call\", start date:((current date) + 7200), end date:((current date) + 8100)}\nend tell"
+    ],
+    "created": [
+     [
+      "Call",
+      1790589600.0,
+      900
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/63",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "in 2 hours"
+    },
+    "ek": null,
+    "outputs": [
+     "execution error (-600)",
+     "",
+     "execution error (-600)"
+    ]
+   },
+   "expected": {
+    "text": "I couldn't create that event, sir — check Calendar automation permission.",
+    "scripts": [
+     "tell application \"Calendar\"\n  launch\n  set c to first calendar whose writable is true\n  tell c to make new event with properties {summary:\"Call\", start date:((current date) + 7200), end date:((current date) + 10800)}\nend tell",
+     "tell application \"Calendar\" to launch",
+     "tell application \"Calendar\"\n  launch\n  set c to first calendar whose writable is true\n  tell c to make new event with properties {summary:\"Call\", start date:((current date) + 7200), end date:((current date) + 10800)}\nend tell"
+    ],
+    "created": [
+     [
+      "Call",
+      1790589600.0,
+      3600
+     ]
+    ]
+   }
+  },
+  {
+   "name": "create_event/64",
+   "input": {
+    "tool": "create_event",
+    "args": {
+     "title": "Call",
+     "when": "in 2 hours"
+    },
+    "ek": null,
+    "outputs": [
+     "Some error happened"
+    ]
+   },
+   "expected": {
+    "text": "I couldn't create that event, sir — check Calendar automation permission.",
+    "scripts": [
+     "tell application \"Calendar\"\n  launch\n  set c to first calendar whose writable is true\n  tell c to make new event with properties {summary:\"Call\", start date:((current date) + 7200), end date:((current date) + 10800)}\nend tell"
+    ],
+    "created": [
+     [
+      "Call",
+      1790589600.0,
+      3600
+     ]
+    ]
+   }
+  }
+ ]
+}

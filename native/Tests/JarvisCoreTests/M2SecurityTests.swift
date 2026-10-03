@@ -60,8 +60,9 @@ struct M2SecurityTests {
         let untrusted = try #require(cases.first(where: { $0.name == "sets/untrusted" }))
         let executor = try #require(cases.first(where: { $0.name == "sets/executor" }))
         // P6b: search_memory, a native memory tool, quotes past conversations, so it is untrusted
-        // too; Python has no memory tools, so its set is the rest.
-        let nativeUntrusted: Set<String> = ["search_memory"]
+        // too; Python has no memory tools, so its set is the rest. PB: get_calendar (invitations
+        // are written by other people) is untrusted natively; Python trusted it (DEVIATIONS).
+        let nativeUntrusted: Set<String> = ["search_memory", "get_calendar"]
         #expect(TaintPolicy.untrusted.isSuperset(of: nativeUntrusted))
         #expect(TaintPolicy.untrusted.subtracting(nativeUntrusted).sorted()
                 == (untrusted.expected.array("members") ?? []).compactMap(\.stringValue))
@@ -97,8 +98,8 @@ struct M2SecurityTests {
             #expect(TaintPolicy.blocks(tool, taintedBy: ["search_memory"]), "\(tool) stays blocked after search_memory")
         }
         let sources = TaintPolicy.untrusted.subtracting(["search_memory"]).sorted() + ["paste"]
-        #expect(sources == ["get_messages", "get_news", "read_clipboard", "read_file", "see_screen",
-                            "summarize_page", "web_search", "paste"])
+        #expect(sources == ["get_calendar", "get_messages", "get_news", "read_clipboard",
+                            "read_file", "see_screen", "summarize_page", "web_search", "paste"])
         for source in sources {
             for tool in TaintPolicy.executors {
                 #expect(TaintPolicy.blocks(tool, taintedBy: [source]), "\(tool) after \(source)")
