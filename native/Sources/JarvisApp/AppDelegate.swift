@@ -56,6 +56,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// UI1 part 3: the floating HUD's state and the menus' "Show HUD"; the panel, unless
     /// JARVIS_NO_HUD=1.
     let showHUD = ShowHUDSetting()
+    /// F1: the menus' "Morning Briefing", on by default, and the day of the last briefing.
+    let morningBriefing = MorningBriefingSetting()
     let hud = HUDModel()
     private var hudController: HUDController?
     /// M9a: push-to-talk. The mic button and ⌥Space in the chat window and ⌃⌥J anywhere drive
@@ -518,6 +520,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         })
         reminders.start()
         self.reminders = reminders
+        // F1: the first turn of each day after 05:00 is preceded by the morning briefing; what
+        // JARVIS has set for later today goes into its request.
+        chat.briefing = morningBriefing
+        chat.briefingAgenda = {
+            alarms.dueLaterToday(Date()).map { MorningBriefing.agendaLine($0, timeZone: .autoupdatingCurrent) }
+        }
         webSummaries = assembly.webSummaries
         webSummaries?.kick()   // pages left unsummarised by the last run
         // P2: the facts' sentence vectors are computed in the background, not on the first turn.

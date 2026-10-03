@@ -31,14 +31,14 @@ struct VoiceMenuTests {
         let updates = UpdateWatcher(folders: nil)
         #if DEBUG
         let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, speakEarly: speakEarly, brain: brain, chatgpt: chatgpt, learn: learn,
-                              showHUD: showHUD, hud: hud, updates: updates, voice: status, forgetVoice: forget,
+                              showHUD: showHUD, hud: hud, briefing: MorningBriefingSetting(defaults: defaults), updates: updates, voice: status, forgetVoice: forget,
                               stopSpeaking: {}, testConfirmation: {})
         #else
         let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, speakEarly: speakEarly, brain: brain, chatgpt: chatgpt, learn: learn,
-                              showHUD: showHUD, hud: hud, updates: updates, voice: status, forgetVoice: forget,
+                              showHUD: showHUD, hud: hud, briefing: MorningBriefingSetting(defaults: defaults), updates: updates, voice: status, forgetVoice: forget,
                               stopSpeaking: {})
         #endif
-        let app = AppMenuItems(stopSpeaking: {}, speakEarly: speakEarly, brain: brain, chatgpt: chatgpt, learn: learn, showHUD: showHUD, hud: hud,
+        let app = AppMenuItems(stopSpeaking: {}, speakEarly: speakEarly, brain: brain, chatgpt: chatgpt, learn: learn, showHUD: showHUD, hud: hud, briefing: MorningBriefingSetting(defaults: defaults),
                                updates: updates, voice: status, forgetVoice: forget)
         return Menus(bar: NSHostingMenu(rootView: bar), app: NSHostingMenu(rootView: app))
     }

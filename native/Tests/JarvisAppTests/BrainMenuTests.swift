@@ -66,16 +66,16 @@ struct BrainMenuTests {
         let updates = UpdateWatcher(folders: nil)
         #if DEBUG
         let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, speakEarly: speakEarly, brain: brain, chatgpt: chatgpt,
-                              learn: learn, showHUD: showHUD, hud: hud, updates: updates,
+                              learn: learn, showHUD: showHUD, hud: hud, briefing: MorningBriefingSetting(defaults: defaults), updates: updates,
                               voice: VoiceprintStatus(defaults: defaults), forgetVoice: {}, stopSpeaking: {},
                               testConfirmation: {})
         #else
         let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, speakEarly: speakEarly, brain: brain, chatgpt: chatgpt,
-                              learn: learn, showHUD: showHUD, hud: hud, updates: updates,
+                              learn: learn, showHUD: showHUD, hud: hud, briefing: MorningBriefingSetting(defaults: defaults), updates: updates,
                               voice: VoiceprintStatus(defaults: defaults), forgetVoice: {}, stopSpeaking: {})
         #endif
         let app = AppMenuItems(stopSpeaking: {}, speakEarly: speakEarly, brain: brain, chatgpt: chatgpt, learn: learn, showHUD: showHUD,
-                               hud: hud, updates: updates, voice: VoiceprintStatus(defaults: defaults), forgetVoice: {})
+                               hud: hud, briefing: MorningBriefingSetting(defaults: defaults), updates: updates, voice: VoiceprintStatus(defaults: defaults), forgetVoice: {})
         return Menus(bar: NSHostingMenu(rootView: bar), app: NSHostingMenu(rootView: app))
     }
 

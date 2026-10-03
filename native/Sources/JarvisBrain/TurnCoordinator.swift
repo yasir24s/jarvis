@@ -17,14 +17,18 @@ public struct UserInput: Sendable, Equatable {
     /// every one after it). Once this turn is taken, history is rewound to before the first of
     /// them and the archive marks them superseded; then it runs as usual.
     public let replacing: [UUID]
+    /// F1: a morning briefing. The brains are given this request in place of `text`; history,
+    /// the archive and the rest of the turn see `text`.
+    public let briefing: String?
 
     public init(text: String, channel: Channel, pasted: Bool = false, addsContext: Bool = false,
-                replacing: [UUID] = []) {
+                replacing: [UUID] = [], briefing: String? = nil) {
         self.text = text
         self.channel = channel
         self.pasted = pasted
         self.addsContext = addsContext
         self.replacing = replacing
+        self.briefing = briefing
     }
 }
 
@@ -170,7 +174,7 @@ public actor TurnCoordinator {
         let brain = self.brain
         let answer = await withTaskCancellationHandler {
             await brain.answer(text, online: isOnline, channel: input.channel, turn: turn, sink: sink,
-                               addsContext: input.addsContext)
+                               addsContext: input.addsContext, briefing: input.briefing)
         } onCancel: {
             // UI1 part 4: stopped. From now on the gateway runs no tool for this turn.
             Task { await turn.close() }

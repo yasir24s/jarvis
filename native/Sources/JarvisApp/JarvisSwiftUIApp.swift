@@ -29,7 +29,7 @@ struct JarvisSwiftUIApp: App {
             CommandGroup(after: .appInfo) {
                 AppMenuItems(stopSpeaking: { appDelegate.stopSpeaking() }, speakEarly: appDelegate.speakEarly, brain: appDelegate.brainSetting,
                              chatgpt: appDelegate.chatgptAccount, learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD,
-                             hud: appDelegate.hud, updates: appDelegate.updates, voice: appDelegate.voiceStatus,
+                             hud: appDelegate.hud, briefing: appDelegate.morningBriefing, updates: appDelegate.updates, voice: appDelegate.voiceStatus,
                              forgetVoice: { appDelegate.forgetVoice() })
             }
         }
@@ -48,6 +48,7 @@ struct JarvisSwiftUIApp: App {
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies, speakEarly: appDelegate.speakEarly,
                         brain: appDelegate.brainSetting, chatgpt: appDelegate.chatgptAccount,
                         learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
+                        briefing: appDelegate.morningBriefing,
                         updates: appDelegate.updates, voice: appDelegate.voiceStatus,
                         forgetVoice: { appDelegate.forgetVoice() },
                         stopSpeaking: { appDelegate.stopSpeaking() },
@@ -56,6 +57,7 @@ struct JarvisSwiftUIApp: App {
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies, speakEarly: appDelegate.speakEarly,
                         brain: appDelegate.brainSetting, chatgpt: appDelegate.chatgptAccount,
                         learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
+                        briefing: appDelegate.morningBriefing,
                         updates: appDelegate.updates, voice: appDelegate.voiceStatus,
                         forgetVoice: { appDelegate.forgetVoice() },
                         stopSpeaking: { appDelegate.stopSpeaking() })

@@ -116,8 +116,10 @@ public struct BrainRouter: Sendable {
 
     /// `process`, with the brain: Claude or ChatGPT for a cloud reply (whole or salvaged), the
     /// on-device model for every local ending, and for a stopped turn the brain it stopped.
+    /// With `briefing` (F1), the brains are given that request instead of `text`; history and
+    /// memory recall still see `text`.
     public func answer(_ text: String, online: Bool, channel: Channel, turn: TurnContext,
-                       sink: any ReplySink, addsContext: Bool = false) async -> Answer {
+                       sink: any ReplySink, addsContext: Bool = false, briefing: String? = nil) async -> Answer {
         // M9a part 7: read before anything waits, so a turn finishes on the brain it began with.
         let chosen = choice()
         let head: CoreState.TurnPrompt
@@ -140,7 +142,7 @@ public struct BrainRouter: Sendable {
         let system = Self.prompt(head, channel: channel, memory: memory.claude,      // step 10
                                  memoryTools: recall != nil)
         let localSystem = Self.prompt(head, channel: channel, memory: memory.local, memoryTools: false)
-        let user = addsContext ? Self.addedContext(text) : text
+        let user = briefing ?? (addsContext ? Self.addedContext(text) : text)
         let shown = ShownReply(sink)
 
         if online, let cloud = cloudBrain(chosen) {                                       // step 11

@@ -6,8 +6,8 @@ import SwiftUI
 /// The menu-bar menu (plan: M02-M04 §3.12): Open Chat, M10's "Set Up JARVIS…", "Voice: …" and
 /// "Forget My Voice…", the last backend, the "Speak replies" toggle, M9a's "Brain" and B2's
 /// ChatGPT sign-in, M8's "Stop Speaking", P6's "Learn About Me From My Files", UI1's
-/// "Show HUD", U1's "Update Ready" and "Update Now" while a build waits, M0's state-root and lock
-/// lines, and Quit. DEBUG builds add "Test confirmation".
+/// "Show HUD", F1's "Morning Briefing", U1's "Update Ready" and "Update Now" while a build waits,
+/// M0's state-root and lock lines, and Quit. DEBUG builds add "Test confirmation".
 struct MenuBarMenu: View {
     let model: AppModel
     let chat: ChatViewModel
@@ -20,6 +20,8 @@ struct MenuBarMenu: View {
     let learn: FileLearningConsent
     let showHUD: ShowHUDSetting
     let hud: HUDModel
+    /// F1: the "Morning Briefing" toggle.
+    let briefing: MorningBriefingSetting
     let updates: UpdateWatcher
     /// M10 part 5: the voiceprint's line and Forget My Voice (AppDelegate.forgetVoice).
     let voice: VoiceprintStatus
@@ -51,6 +53,7 @@ struct MenuBarMenu: View {
         FileLearningToggle(consent: learn)
         ShowHUDToggle(setting: showHUD, hud: hud)
         HandsFreeMenuItems()   // M11 part 5
+        MorningBriefingToggle(setting: briefing)   // F1
         UpdateMenuItems(updates: updates)
         Divider()
         Text("State: \(model.stateRoot)")
@@ -74,7 +77,7 @@ struct MenuBarMenu: View {
 /// The app menu's items after About Jarvis (the CommandGroup in JarvisSwiftUIApp), as a view so
 /// the tests can build the menu: M10's "Set Up JARVIS…", "Voice: …" and "Forget My Voice…",
 /// M8's "Stop Speaking", M9a's "Brain", P6's file learning, UI1's
-/// "Show HUD" and U1's update items, as in the menu-bar menu.
+/// "Show HUD", F1's "Morning Briefing" and U1's update items, as in the menu-bar menu.
 struct AppMenuItems: View {
     let stopSpeaking: () -> Void
     /// V5: "Speak First Sentence Early", after "Stop Speaking" (this menu has no "Speak replies").
@@ -84,6 +87,7 @@ struct AppMenuItems: View {
     let learn: FileLearningConsent
     let showHUD: ShowHUDSetting
     let hud: HUDModel
+    let briefing: MorningBriefingSetting
     let updates: UpdateWatcher
     let voice: VoiceprintStatus
     let forgetVoice: () -> Void
@@ -98,7 +102,18 @@ struct AppMenuItems: View {
         FileLearningToggle(consent: learn)
         ShowHUDToggle(setting: showHUD, hud: hud)
         HandsFreeMenuItems()   // M11 part 5
+        MorningBriefingToggle(setting: briefing)   // F1
         UpdateMenuItems(updates: updates)
+    }
+}
+
+/// F1: "Morning Briefing", with a checkmark while it is on (the default), in the app menu and the
+/// menu-bar menu. Off, no briefing plays unasked; "brief me" still works.
+struct MorningBriefingToggle: View {
+    @Bindable var setting: MorningBriefingSetting
+
+    var body: some View {
+        Toggle(MorningBriefingSetting.menuTitle, isOn: $setting.isOn)
     }
 }
 

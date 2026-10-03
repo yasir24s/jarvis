@@ -72,6 +72,10 @@ public final class ChatViewModel: ReplySink {
     @ObservationIgnored public var onTurnEnded: (() -> Void)?
     /// UI1 part 4: stops the app's voice (Stop, and a message sent while he speaks).
     @ObservationIgnored public var onStopSpeech: (() -> Void)?
+    /// F1: the morning briefing's setting and its day record; nil means no briefing.
+    @ObservationIgnored public var briefing: MorningBriefingSetting?
+    /// F1: what JARVIS has set for later today, for the briefing's request.
+    @ObservationIgnored public var briefingAgenda: (() -> [String])?
 
     @ObservationIgnored private var submitter: (any TurnSubmitting)?
     @ObservationIgnored private var backendName: (@Sendable () async -> String)?
@@ -83,6 +87,8 @@ public final class ChatViewModel: ReplySink {
     /// UI1 part 4: the running turn's task, and its number: a turn that ends after a newer one
     /// was started leaves the newer one's state alone.
     @ObservationIgnored private var running: Task<Void, Never>?
+    /// F1: the briefing turn the running turn waits for; Stop stops it too.
+    @ObservationIgnored private var leading: Task<Void, Never>?
     @ObservationIgnored private var generation = 0
     /// Stop came before the coordinator took the turn: it is stopped as soon as it is.
     @ObservationIgnored private var stopBeforeAccept = false
@@ -221,7 +227,7 @@ public final class ChatViewModel: ReplySink {
         onSend?(shown, .now)
         let turnInput = interrupted == nil ? input
             : UserInput(text: input.text, channel: input.channel, pasted: input.pasted, addsContext: true)
-        return start(turnInput, shown: shown, restoring: sent, via: submitter, after: interrupted)
+        return startBriefed(turnInput, shown: shown, restoring: sent, via: submitter, after: interrupted)
     }
 
     /// M9a: what push-to-talk heard, sent as a turn on the voice channel. The turn is archived
@@ -250,8 +256,34 @@ public final class ChatViewModel: ReplySink {
         let note = meetsPending(shown, now: .now) ? TextConfirmation.spokenNote : nil
         // Put back in front of whatever is in the composer, as a refused typed message is.
         let back = ComposerDraft(text: draft.text.isEmpty ? shown : shown + " ")
-        return start(UserInput(text: shown, channel: .voice), shown: shown, restoring: back,
-                     via: submitter, after: interrupted, note: note)
+        return startBriefed(UserInput(text: shown, channel: .voice), shown: shown, restoring: back,
+                            via: submitter, after: interrupted, note: note)
+    }
+
+    /// F1: `start`, with the morning briefing. A message that asks for it ("brief me") is sent
+    /// as the briefing request. Otherwise, when the day's briefing is due (`claimIfDue`), it is
+    /// sent first as a turn of its own, on the message's channel, and the message follows it as
+    /// usual. Never before a message that follows a stopped reply or meets a pending confirmation.
+    private func startBriefed(_ input: UserInput, shown: String, restoring sent: ComposerDraft?,
+                              via submitter: any TurnSubmitting, after previous: Task<Void, Never>?,
+                              note: String? = nil) -> Task<Void, Never> {
+        guard let briefing else {
+            return start(input, shown: shown, restoring: sent, via: submitter, after: previous, note: note)
+        }
+        let request = { MorningBriefing.request(agenda: self.briefingAgenda?() ?? []) }
+        if MorningBriefing.isRequest(input.text) {
+            briefing.recordToday()
+            let asked = UserInput(text: input.text, channel: input.channel, pasted: input.pasted,
+                                  addsContext: input.addsContext, replacing: input.replacing, briefing: request())
+            return start(asked, shown: shown, restoring: sent, via: submitter, after: previous, note: note)
+        }
+        guard previous == nil, pending == nil, briefing.claimIfDue() else {
+            return start(input, shown: shown, restoring: sent, via: submitter, after: previous, note: note)
+        }
+        let first = start(UserInput(text: MorningBriefing.shown, channel: input.channel, briefing: request()),
+                          shown: MorningBriefing.shown, restoring: nil, via: submitter)
+        leading = first
+        return start(input, shown: shown, restoring: sent, via: submitter, after: first, note: note)
     }
 
     /// UI1 part 4: Stop, the send button's other face, and Esc. Speech stops. A reply being
@@ -263,6 +295,8 @@ public final class ChatViewModel: ReplySink {
     public func stop() -> Task<Void, Never>? {
         stopSpeech()
         guard responding, let task = running else { return nil }
+        leading?.cancel()   // F1: a briefing still running before the message
+        leading = nil
         if live == nil {
             stopBeforeAccept = true
         } else {
