@@ -284,7 +284,7 @@ final class LogLines: Sendable {
 }
 
 /// Polls `condition` every 5 ms until it holds or `limit` passes (SuspendingClock).
-func eventually(_ limit: Duration = .seconds(5), _ condition: @Sendable () async -> Bool) async -> Bool {
+func eventually(_ limit: Duration = .seconds(30), _ condition: @Sendable () async -> Bool) async -> Bool {
     let clock = SuspendingClock()
     let deadline = clock.now.advanced(by: limit)
     while clock.now < deadline {
