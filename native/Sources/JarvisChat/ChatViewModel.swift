@@ -90,8 +90,13 @@ public final class ChatViewModel: ReplySink {
     /// F1: the briefing turn the running turn waits for; Stop stops it too.
     @ObservationIgnored private var leading: Task<Void, Never>?
     @ObservationIgnored private var generation = 0
-    /// Stop came before the coordinator took the turn: it is stopped as soon as it is.
-    @ObservationIgnored private var stopBeforeAccept = false
+    /// Stop came before the coordinator took the turn, whose number this is: it is stopped as
+    /// soon as it is.
+    @ObservationIgnored private var stopBeforeAccept: Int?
+    /// Live fix 2: a stopped turn still unwinding in the brain. The chat is free at once, and
+    /// the next turn it starts is sent once this one has ended, so the coordinator never
+    /// refuses it as busy.
+    @ObservationIgnored private var unwinding: Task<Void, Never>?
     /// UI1 part 5: every version of each edited message, by group: the rows from that message
     /// on, as they stood when another version was shown. The version on screen is the one whose
     /// first row is in `messages`; its stored rows may be older than the screen's.
@@ -303,6 +308,10 @@ public final class ChatViewModel: ReplySink {
     /// cancelled, so the brain stops (the Claude process, or the local model's generation) and
     /// its MCP turn is revoked. The row keeps what was shown, marked stopped, and is never
     /// spoken. Returns the stopped turn's task, or nil when no turn was running.
+    ///
+    /// Live fix 2: the turn ends for the chat at once (`responding` is false, so Send is back);
+    /// what the brain still returns for it is dropped, and the next turn waits for it to unwind
+    /// (`unwinding`) without holding the composer.
     @discardableResult
     public func stop() -> Task<Void, Never>? {
         stopSpeech()
@@ -310,11 +319,15 @@ public final class ChatViewModel: ReplySink {
         leading?.cancel()   // F1: a briefing still running before the message
         leading = nil
         if live == nil {
-            stopBeforeAccept = true
+            stopBeforeAccept = generation
+            pendingEdit = nil   // a stopped edit is not taken; a later edit's is not this turn's
         } else {
             markLiveStopped()
         }
         task.cancel()
+        unwinding = task
+        responding = false
+        running = nil
         return task
     }
 
@@ -502,6 +515,8 @@ public final class ChatViewModel: ReplySink {
         responding = true
         generation += 1
         let mine = generation
+        let previous = previous ?? unwinding
+        unwinding = nil
         let task = Task {
             if let previous { await previous.value }
             if Task.isCancelled {
@@ -509,7 +524,7 @@ public final class ChatViewModel: ReplySink {
                 return
             }
             let outcome = await submitter.submit(input, sink: self, accepted: { @MainActor turn in
-                self.accept(shown, turn: turn, id: await turn.turnID, note: note)
+                self.accept(shown, turn: turn, id: await turn.turnID, note: note, generation: mine)
             })
             let summary = await self.live?.turn.summary()
             self.finish(outcome, restoring: sent, summary: summary, generation: mine)
@@ -526,9 +541,9 @@ public final class ChatViewModel: ReplySink {
         if mine == generation {
             responding = false
             running = nil
-            stopBeforeAccept = false
             pendingEdit = nil
         }
+        if stopBeforeAccept == mine { stopBeforeAccept = nil }
         if let sent {
             draft = ComposerDraft(text: sent.text + draft.text, pasted: sent.pasted || draft.pasted)
         }
@@ -558,7 +573,7 @@ public final class ChatViewModel: ReplySink {
 
     /// The coordinator took the turn: the user row, then the live assistant row. UI1 part 5: both
     /// carry the turn's id, and an edit's rows take the place of the rows it replaced.
-    private func accept(_ shown: String, turn: TurnContext, id: UUID, note: String? = nil) {
+    private func accept(_ shown: String, turn: TurnContext, id: UUID, note: String? = nil, generation mine: Int) {
         var user = ChatMessage(role: .user, text: shown, phase: .finished)
         var reply = ChatMessage(role: .assistant, text: "", phase: .streaming)
         user.turnID = id
@@ -574,8 +589,8 @@ public final class ChatViewModel: ReplySink {
         messages.append(reply)
         live = LiveReply(id: reply.id, userID: user.id, turn: turn, coalescer: DeltaCoalescer(minimumGap: minimumGap))
         onTurnBegan?(shown)
-        if stopBeforeAccept {
-            stopBeforeAccept = false
+        if stopBeforeAccept == mine {
+            stopBeforeAccept = nil
             markLiveStopped()
         }
     }
@@ -663,9 +678,9 @@ public final class ChatViewModel: ReplySink {
         if mine == generation {
             responding = false
             running = nil
-            stopBeforeAccept = false
             pendingEdit = nil   // an edit refused before it was taken changes nothing
         }
+        if stopBeforeAccept == mine { stopBeforeAccept = nil }
         defer { if turn != nil { onTurnEnded?() } }
         // UI1 part 4: a stopped row already shows what came before Stop, and is not spoken.
         if turn?.stopped == true { return }

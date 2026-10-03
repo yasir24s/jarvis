@@ -213,11 +213,15 @@ public enum LocalToolset {
     }
 
     /// A count, or nil (logged) if the tokenizer failed, so the caller falls back to the estimate.
+    /// Live fix 2: a cancelled turn asks the tokenizer nothing more and logs nothing; its
+    /// selection finishes on the estimate (the first live session logged seven failures per Stop).
     private static func count(log: @Sendable (String) -> Void,
                               _ body: () async throws -> Int) async -> Int? {
+        guard !Task.isCancelled else { return nil }
         do {
             return try await body()
         } catch {
+            guard !(error is CancellationError), !Task.isCancelled else { return nil }
             log("Local model: token count failed, using the estimate (\(estimateNote)): \(error)")
             return nil
         }
