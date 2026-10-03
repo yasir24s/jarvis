@@ -78,6 +78,10 @@ public final class HUDModel {
 
     /// hud.html's idle hide: `setTimeout(jarvisHide, 2600)`.
     public static let idleHide: Duration = .milliseconds(2600)
+    /// How long a line shown instead of spoken stays up (`muted`).
+    public static let mutedHide: Duration = .seconds(8)
+    /// The status pill while a line is shown instead of spoken.
+    public static let mutedStatus = "Muted"
 
     public private(set) var state: HUDState = .idle
     /// The status pill's text: the state's label, or the text `state` was given.
@@ -100,6 +104,8 @@ public final class HUDModel {
     @ObservationIgnored private var turnMessage: String?
     /// A reply's speech was handed to the voice and its audio has not started.
     @ObservationIgnored private var awaitingSpeech = false
+    /// A line shown instead of spoken is up (`muted`).
+    @ObservationIgnored private var showingMuted = false
 
     /// - sleep: waits out the idle hide and each caption; tests pass their own.
     public init(enabled: Bool = true, sleep: @escaping Sleep = { try await Task.sleep(for: $0) }) {
@@ -159,6 +165,7 @@ public final class HUDModel {
     /// starts; otherwise he goes idle, unless the voice is still speaking.
     public func turnEnded(speechFollows: Bool) {
         turnMessage = nil
+        if showingMuted { return }   // the reply, shown instead of spoken, stays up
         if speechFollows {
             awaitingSpeech = true
         } else if state != .speaking {
@@ -199,6 +206,29 @@ public final class HUDModel {
         }
     }
 
+    /// Stop Speaking sticks: a line he would have spoken while speaking is off (a reply, the loop's
+    /// own line, an urgent alert), shown instead: the status reads "Muted", so the user sees why he
+    /// is silent, and the caption holds the line for `mutedHide` unless something else takes over.
+    /// The turn's end does not clear it.
+    public func muted(_ text: String) {
+        stopCaptions()
+        hideTimer?.cancel()
+        state = .idle
+        status = Self.mutedStatus
+        level = 0
+        shown = enabled
+        caption(text)
+        showingMuted = true
+        let sleep = self.sleep
+        hideTimer = Task { [weak self] in
+            do { try await sleep(Self.mutedHide) } catch { return }
+            guard !Task.isCancelled, let self else { return }
+            self.showingMuted = false
+            self.caption(nil)
+            self.hide()
+        }
+    }
+
     /// M9a: the microphone opened (push-to-talk): listening. The bars follow `level` from here.
     public func listening() {
         stopCaptions()
@@ -222,6 +252,7 @@ public final class HUDModel {
     private func stopCaptions() {
         captions?.cancel()
         captions = nil
+        showingMuted = false
     }
 }
 

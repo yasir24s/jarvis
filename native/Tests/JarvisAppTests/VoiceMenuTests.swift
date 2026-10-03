@@ -71,7 +71,7 @@ struct VoiceMenuTests {
             let titles = menus.bar.items.map(\.title)
             let open = try #require(titles.firstIndex(of: "Open Chat"))
             #expect(Array(titles[open + 1 ... open + 3]) == [SetUpItem.title, "Voice: not enrolled", ForgetMyVoice.menuTitle])
-            let speak = try #require(titles.firstIndex(of: "Speak replies"))
+            let speak = try #require(titles.firstIndex(of: "Speak Replies"))
             #expect(titles[speak + 1] == BrainSetting.menuTitle)
         }
     }

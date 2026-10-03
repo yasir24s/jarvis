@@ -32,7 +32,8 @@ struct JarvisSwiftUIApp: App {
                              hud: appDelegate.hud, briefing: appDelegate.morningBriefing, updates: appDelegate.updates, voice: appDelegate.voiceStatus,
                              forgetVoice: { appDelegate.forgetVoice() }, openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours,
                         openLearningSources: { appDelegate.openLearningSources() },
-                        checkAirPlay: { appDelegate.checkAirPlay() }, repairAirPlay: { appDelegate.repairAirPlay() })
+                        checkAirPlay: { appDelegate.checkAirPlay() }, repairAirPlay: { appDelegate.repairAirPlay() },
+                        speak: appDelegate.speakReplies, resumeSpeaking: { appDelegate.resumeSpeaking() })
             }
         }
 
@@ -45,7 +46,8 @@ struct JarvisSwiftUIApp: App {
         .defaultLaunchBehavior(SetupCompletion.opensAtLaunch(arguments: CommandLine.arguments) ? .presented : .suppressed)
         .restorationBehavior(.disabled)
 
-        MenuBarExtra("JARVIS", systemImage: "circle.hexagongrid.fill") {
+        // Stop Speaking sticks: the icon shows a muted speaker while speaking is off.
+        MenuBarExtra {
             #if DEBUG
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies, speakEarly: appDelegate.speakEarly,
                         brain: appDelegate.brainSetting, chatgpt: appDelegate.chatgptAccount,
@@ -70,6 +72,8 @@ struct JarvisSwiftUIApp: App {
                         openLearningSources: { appDelegate.openLearningSources() },
                         checkAirPlay: { appDelegate.checkAirPlay() }, repairAirPlay: { appDelegate.repairAirPlay() })
             #endif
+        } label: {
+            MenuBarIcon(speak: appDelegate.speakReplies)
         }
         .menuBarExtraStyle(.menu)
     }

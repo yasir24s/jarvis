@@ -14,6 +14,9 @@ import JarvisCore
 final class BackgroundLoops {
     struct Hooks {
         var announce: @MainActor (String) -> Void
+        /// Stop Speaking sticks: an urgent line (low battery, a meeting), which still reaches the user
+        /// while speaking is off (a notification and the HUD).
+        var alert: @MainActor (String) -> Void
         var enrolled: @MainActor () -> Bool
         var briefing: @MainActor () -> Void
         var log: @MainActor (String) -> Void
@@ -107,13 +110,13 @@ final class BackgroundLoops {
         observers = []
     }
 
-    /// A line, unless quiet hours hold it back.
+    /// A low-battery or meeting line, unless quiet hours hold it back; urgent (`Hooks.alert`).
     private func say(_ line: String) {
         guard !quiet.isQuiet(now, timeZone) else {
             hooks.log("background: a line fell in quiet hours; dropped")
             return
         }
-        hooks.announce(line)
+        hooks.alert(line)
     }
 
     private func loop(every interval: Double, firstAfter: Double? = nil,

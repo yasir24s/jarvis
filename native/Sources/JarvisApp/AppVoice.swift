@@ -40,6 +40,14 @@ final class AppVoice {
     /// a time: a reply's sentence, an acknowledgement, or one of the loop's own lines.
     var onAudio: ((Bool) -> Void)?
     var onReplyOver: (() -> Void)?
+    /// Stop Speaking sticks (`SpeechMute`): while this says speaking is off, nothing is handed to
+    /// the queue (replies, acknowledgements, the loop's lines); `onSilenced` gets the text instead.
+    var muted: () -> Bool = { false }
+    /// A line not spoken because speaking is off (the HUD shows it).
+    var onSilenced: ((String) -> Void)?
+    /// How many times `stop` has run. Each request to the queue carries it, so one asked for
+    /// before a stop is dropped however late it reaches the queue (`SpeechQueue.cancelAll(through:)`).
+    private var stops = 0
     /// Replies handed to `speak` whose speech is not over.
     private(set) var repliesPending = 0
     /// What the reply being spoken is heard as: the queue's own `TextClean`, less a short
@@ -109,6 +117,7 @@ final class AppVoice {
     /// default one. Without a rendered clip nothing plays, and that is logged once. V6: while Qwen
     /// speaks, the clips are Qwen's (`acknowledgements/qwen-dry/`, rendered at its rate).
     func acknowledge(_ message: String, sentAt: ContinuousClock.Instant) {
+        guard !muted() else { return }
         let line = Acknowledgement.choose(for: message, recent: recentAcknowledgements)
         let set = Acknowledgement.set(for: selector.current, f5Reference: setup.reference)
         let rendered = Acknowledgement.clipURL(line, assets: setup.assets, reference: set)
@@ -120,10 +129,11 @@ final class AppVoice {
         acknowledgedSinceReply = true
         let queue = self.queue
         let activity = self.activity
+        let stops = self.stops
         inFlight += 1
         activity?.speechBegan()
         Task {
-            await queue.acknowledge(clip, line: line.text, sentAt: sentAt)
+            await queue.acknowledge(clip, line: line.text, sentAt: sentAt, stops: stops)
             await queue.idle()
             activity?.speechEnded()
             self.inFlight -= 1
@@ -158,10 +168,16 @@ final class AppVoice {
         }
     }
 
-    /// Speaks a finished reply; a new reply cancels whatever is queued or playing.
+    /// Speaks a finished reply; a new reply cancels whatever is queued or playing. While speaking
+    /// is off it is not spoken: `onSilenced` shows it instead.
     func speak(_ text: String, turn: UUID) {
+        guard !muted() else {
+            silenced(text)
+            return
+        }
         let queue = self.queue
         let activity = self.activity
+        let stops = self.stops
         heardReply = Self.heard(text, afterAcknowledgement: acknowledgedSinceReply)
         heardParts = heardReply.map {
             // V6: Qwen streams a reply whole, never in parts.
@@ -172,7 +188,7 @@ final class AppVoice {
         repliesPending += 1
         activity?.speechBegan()
         Task {
-            await queue.say(text, turn: turn)
+            await queue.say(text, turn: turn, stops: stops)
             await queue.idle()   // this reply, or one that replaced it, is over
             activity?.speechEnded()
             self.inFlight -= 1
@@ -186,13 +202,18 @@ final class AppVoice {
     /// pleasure, sir."), spoken now; returns once it has been said, or stopped. The loop sets the
     /// HUD itself, so the line is not captioned, as Python's `speak()` leaves the caption alone.
     func say(_ text: String) async {
+        guard !muted() else {
+            silenced(text)
+            return
+        }
         let queue = self.queue
         let activity = self.activity
+        let stops = self.stops
         heardReply = nil
         heardParts = []
         inFlight += 1
         activity?.speechBegan()
-        await queue.say(text, turn: UUID())
+        await queue.say(text, turn: UUID(), stops: stops)
         await queue.idle()
         activity?.speechEnded()
         inFlight -= 1
@@ -207,11 +228,22 @@ final class AppVoice {
         }
     }
 
-    /// The menus' Stop Speaking.
+    /// Stops what is speaking or being generated now (the Qwen helper is sent `cancel`), and
+    /// anything asked for before this call that has not reached the queue yet. Stop Speaking
+    /// also turns speaking off (`SpeechMute`); the chat's Stop, a message sent while he speaks
+    /// and barge-in call only this.
     func stop() {
         let queue = self.queue
         acknowledgedSinceReply = false   // as the queue's cancelAll forgets it
-        Task { await queue.cancelAll() }
+        stops += 1
+        let stops = self.stops
+        Task { await queue.cancelAll(through: stops) }
+    }
+
+    private func silenced(_ text: String) {
+        JarvisLog.log("voice: speaking is off (Stop Speaking); \(text.unicodeScalars.count) chars shown, not spoken",
+                      category: .voice)
+        onSilenced?(text)
     }
 
     /// A reply as the queue speaks it (`SpeechQueue.say`): cleaned, and without a short opening

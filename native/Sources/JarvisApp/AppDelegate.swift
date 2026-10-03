@@ -26,6 +26,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let chat = ChatViewModel()
     /// The menu's "Speak replies" toggle, the user's input to the speak policy.
     let speakReplies = SpeakRepliesToggle()
+    /// Stop Speaking sticks: off is `speakReplies` off, until the user turns it back on.
+    private(set) lazy var speechMute = SpeechMute(toggle: speakReplies, cancel: { [weak self] in self?.voice?.stop() })
     /// V5: the menus' "Speak First Sentence Early"; SpeechQueue reads the stored value itself.
     let speakEarly = SpeakEarlySetting()
     /// M9a part 7: the menus' "Brain", Claude, ChatGPT (B2) or On-device; BrainRouter reads it each
@@ -527,6 +529,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.hud.speechStarted(CaptionTimeline(text: heard, duration: seconds))
         }
         voice.onReplyAudioEnded = { [weak self] in self?.hud.speechEnded() }
+        // Stop Speaking sticks: while speaking is off nothing is spoken; the HUD shows the line.
+        voice.muted = { [weak self] in self?.speechMute.isMuted ?? false }
+        voice.onSilenced = { [weak self] text in self?.hud.muted(text) }
         voice.onReplyOver = { [weak self] in
             self?.hud.speechEnded()
             self?.chat.speaking = voice.repliesPending > 0   // UI1 part 4: Stop while he speaks
@@ -605,7 +610,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // PA batch A: the fast path. Its timers are spoken as a due reminder is; forgetting the
         // voice and emptying the Trash wait for the same confirmation as any other.
         let timers = QuickTimers(announce: { [weak self] line in
-            await MainActor.run { self?.reminderAnnouncer?.announce(line) }
+            await MainActor.run { self?.reminderAnnouncer?.announce(line, urgent: true) }
         })
         quickTimers = timers
         let quickHooks = QuickCommands.Hooks(
@@ -634,11 +639,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             reader: WebReader(), waitForSilence: { [queue = voice.queue] in await queue.idle() },
             alarms: alarms,
             textAuthenticator: authenticator,
-            makeFastPath: { parts in
+            makeFastPath: { [weak self] parts in
                 var hooks = quickHooks
                 hooks.backendReport = parts.backendReport
-                return QuickCommands(core: core, confirmations: parts.confirmations, timers: timers, alarms: alarms,
-                                     hooks: hooks, tools: parts.tools, online: { await Net.isOnline() })
+                // Stop Speaking sticks: "resume speaking" is asked first, then the quick commands.
+                return ResumeSpeakingFastPath(
+                    next: QuickCommands(core: core, confirmations: parts.confirmations, timers: timers, alarms: alarms,
+                                        hooks: hooks, tools: parts.tools, online: { await Net.isOnline() }),
+                    resume: { await MainActor.run { self?.speechMute.resume() } })
             },
             // PR2: the fast path's quit commands read the running apps; "make X my default
             // browser" goes through NSWorkspace (macOS asks the user to confirm).
@@ -666,12 +674,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // F1: due alarms and reminders are spoken in his voice, after any reply being written.
         // The first check is now, so one that came due while JARVIS was quit (under two hours
         // ago) is spoken at launch.
+        // Stop Speaking sticks: while speaking is off, an urgent line is a notification and the
+        // HUD's caption instead.
+        let notifier = MutedAlertNotifier()
         let announcer = ReminderAnnouncer(isBusy: { [weak self] in self?.chat.responding ?? false },
                                           speak: { line in voice.speak(line, turn: UUID()) },
-                                          post: { [weak self] line in self?.chat.post(line) })
+                                          post: { [weak self] line in self?.chat.post(line) },
+                                          muted: { [weak self] in self?.speechMute.isMuted ?? false },
+                                          alert: { [weak self] line in
+                                              self?.hud.muted(line)
+                                              Task { await notifier.post(line) }
+                                          })
         reminderAnnouncer = announcer
         let reminders = ReminderSchedule(book: alarms, announce: { line in
-            await MainActor.run { announcer.announce(line) }
+            await MainActor.run { announcer.announce(line, urgent: true) }
         })
         reminders.start()
         self.reminders = reminders
@@ -679,6 +695,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // reminder, timed briefing), through the same announcer, held back in quiet hours.
         let loops = BackgroundLoops(environment: environment, quiet: quietHours.window, hooks: .init(
             announce: { line in announcer.announce(line) },
+            alert: { line in announcer.announce(line, urgent: true) },
             enrolled: { [weak self] in self?.voiceStatus.enrolled ?? true },
             briefing: { [weak self] in self?.chat.startScheduledBriefing() },
             log: { JarvisLog.log($0, category: .state) }))
@@ -761,9 +778,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// The menus' "Stop Speaking": the reply being spoken stops, and so does anything queued.
+    /// The menus' "Stop Speaking": the reply being spoken stops, and so does anything queued, and
+    /// speaking stays off until the user turns it back on (`SpeechMute`).
     func stopSpeaking() {
-        voice?.stop()
+        speechMute.stop()
+    }
+
+    /// The app menu's "Resume Speaking", shown while speaking is off.
+    func resumeSpeaking() {
+        speechMute.resume()
     }
 
     /// M10: the voiceprint store, over the state root's voiceprint.npy and the bundle's speaker

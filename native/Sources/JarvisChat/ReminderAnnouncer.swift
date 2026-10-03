@@ -4,6 +4,12 @@ import Foundation
 /// his voice. While a reply is being written (`isBusy`), it is held and spoken once the reply is
 /// done, so it follows the reply's speech in the queue instead of cutting in before it. With no
 /// voice, the line is posted in the chat instead (`post`), so it is not lost.
+///
+/// Stop Speaking sticks (`SpeechMute`): while speaking is off (`muted`), nothing is spoken. An
+/// urgent line (a timer, alarm, reminder or meeting alert) goes to `alert` instead, a notification
+/// and the HUD, so it is not lost; any other line (the unlock greeting, the voiceprint reminder)
+/// is posted in the chat. Whether speaking is off is asked as each line goes out, so a held line
+/// follows the setting as it is then.
 @MainActor
 public final class ReminderAnnouncer {
     public typealias Sleep = @Sendable (Duration) async throws -> Void
@@ -14,28 +20,39 @@ public final class ReminderAnnouncer {
     private let isBusy: @MainActor () -> Bool
     private let speak: (@MainActor (String) -> Void)?
     private let post: @MainActor (String) -> Void
+    private let muted: @MainActor () -> Bool
+    private let alert: (@MainActor (String) -> Void)?
     private let sleep: Sleep
-    private var held: [String] = []
+    private var held: [(line: String, urgent: Bool)] = []
     private var waiting: Task<Void, Never>?
 
     /// - Parameters:
     ///   - isBusy: a turn is running (the chat's `responding`).
     ///   - speak: queues the line in his voice; nil when there is no voice.
-    ///   - post: shows the line in the chat (used only without a voice).
+    ///   - post: shows the line in the chat (used without a voice, or while speaking is off).
+    ///   - muted: speaking is off (Stop Speaking).
+    ///   - alert: shows an urgent line while speaking is off (a notification and the HUD); nil
+    ///     posts it in the chat.
     public init(isBusy: @escaping @MainActor () -> Bool, speak: (@MainActor (String) -> Void)?,
                 post: @escaping @MainActor (String) -> Void,
+                muted: @escaping @MainActor () -> Bool = { false },
+                alert: (@MainActor (String) -> Void)? = nil,
                 sleep: @escaping Sleep = { try await Task.sleep(for: $0, clock: .suspending) }) {
         self.isBusy = isBusy
         self.speak = speak
         self.post = post
+        self.muted = muted
+        self.alert = alert
         self.sleep = sleep
     }
 
     /// Lines held until the running turn is done.
     public var heldCount: Int { held.count }
 
-    public func announce(_ line: String) {
-        held.append(line)
+    /// - urgent: a timer, alarm, reminder or meeting alert, which must reach the user even
+    ///   while speaking is off.
+    public func announce(_ line: String, urgent: Bool = false) {
+        held.append((line, urgent))
         if isBusy() {
             waitForIdle()
         } else {
@@ -46,8 +63,14 @@ public final class ReminderAnnouncer {
     private func flush() {
         let lines = held
         held = []
-        for line in lines {
-            if let speak { speak(line) } else { post(line) }
+        for (line, urgent) in lines {
+            if muted() {
+                if urgent, let alert { alert(line) } else { post(line) }
+            } else if let speak {
+                speak(line)
+            } else {
+                post(line)
+            }
         }
     }
 

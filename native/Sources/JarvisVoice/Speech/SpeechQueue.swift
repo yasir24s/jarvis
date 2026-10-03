@@ -50,6 +50,10 @@ public actor SpeechQueue {
     private var acknowledging: Task<Void, Never>?
     /// An acknowledgement was played for the message the next reply answers.
     private var acknowledged = false
+    /// The highest stop `cancelAll(through:)` was given. A reply or acknowledgement handed over
+    /// with an earlier stop count was asked for before that stop and is dropped, however late
+    /// it arrives (Stop Speaking sticks).
+    private var cancelledThrough = 0
 
     /// - engine: the voice (F5Engine); `fallback` speaks a reply it fails (SayEngine).
     /// - speed: `voiceSpeed`, read for each reply: when it changed since the last reply the
@@ -84,7 +88,10 @@ public actor SpeechQueue {
     /// Plays an acknowledgement clip at once, after stopping whatever is queued or playing (the
     /// last reply, or an acknowledgement before this one). Logs how long after `sentAt`, when
     /// the message was sent, its audio was handed to the player.
-    public func acknowledge(_ clip: PCMChunk, line: String, sentAt: ContinuousClock.Instant) {
+    /// - stops: how many stops the caller had made when it asked (`cancelAll(through:)`); nil
+    ///   never drops.
+    public func acknowledge(_ clip: PCMChunk, line: String, sentAt: ContinuousClock.Instant, stops: Int? = nil) {
+        if let stops, stops < cancelledThrough { return }
         let previous = current
         let previousAcknowledgement = acknowledging
         previous?.cancel()
@@ -107,8 +114,10 @@ public actor SpeechQueue {
     }
 
     /// Speaks a finished reply, after cancelling the reply before it. An acknowledgement still
-    /// playing finishes first.
-    public func say(_ text: String, turn: UUID) {
+    /// playing finishes first. `stops` as for `acknowledge`: a reply asked for before a later
+    /// stop is dropped, and what is in hand goes on.
+    public func say(_ text: String, turn: UUID, stops: Int? = nil) {
+        if let stops, stops < cancelledThrough { return }
         let started = ContinuousClock.now
         let previous = current
         previous?.cancel()
@@ -177,7 +186,10 @@ public actor SpeechQueue {
     }
 
     /// Stops everything: the acknowledgement, and the reply being generated or played.
-    public func cancelAll() async {
+    /// - through: the caller's stop count after this stop; anything handed over later with a
+    ///   lower count (asked for before this stop) is dropped. nil drops nothing later.
+    public func cancelAll(through stops: Int? = nil) async {
+        if let stops { cancelledThrough = max(cancelledThrough, stops) }
         let running = current
         let acknowledgement = acknowledging
         current = nil
