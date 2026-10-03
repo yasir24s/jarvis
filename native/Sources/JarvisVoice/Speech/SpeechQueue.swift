@@ -164,6 +164,8 @@ public actor SpeechQueue {
         if let overflow {
             log("voice: \(characters) chars do not fit the voice (\(overflow)); say speaks the reply")
         }
+        // M11b: voice processing comes on while the reply generates, and goes off after it.
+        await player.replyStarting()
         let pending = generate(text, SynthesisContext(turnID: turn), withVoice: overflow == nil)
         let reply = await withTaskCancellationHandler {
             await pending.value
@@ -178,6 +180,7 @@ public actor SpeechQueue {
             }
             if let chunk = reply.chunk, !chunk.samples.isEmpty {
                 await acknowledgement?.value   // generated while it played; heard after it
+                if !Task.isCancelled { await player.replyReady() }
                 if Task.isCancelled {
                     stopped = true
                 } else {
@@ -191,6 +194,7 @@ public actor SpeechQueue {
                 }
             }
         }
+        await player.replyEnded()
         let byFallback = reply.engine == .say
         log(Self.summary(characters: characters, firstAudio: firstAudio, generating: reply.elapsed,
                          helperMB: byFallback ? nil : helperFootprintMB(), sayParts: byFallback ? 1 : 0,

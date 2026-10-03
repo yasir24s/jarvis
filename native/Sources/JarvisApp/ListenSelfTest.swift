@@ -4,21 +4,27 @@ import Foundation
 import JarvisVoice
 import Synchronization
 
-/// `JARVIS --selftest-listen [<seconds>]` (M11 part 5, DEBUG builds only): what listening for
-/// "Hey Jarvis" costs at idle. It opens the microphone through the AudioHub, voice processing on,
-/// and scores every frame with the wake word for `seconds` (default 60), playing nothing. One JSON
-/// line: the CPU it took over that time (user and system, as a share of one core), its memory
-/// footprint before and while listening, the frames scored, the top score, and how many frames
-/// were digital silence (a closed lid or no microphone access gives only those). Nothing is kept.
+/// `JARVIS --selftest-listen [<seconds>] [switch]` (M11 part 5, DEBUG builds only): what listening
+/// for "Hey Jarvis" costs at idle. It opens the microphone through the AudioHub, voice processing
+/// as `JARVIS_AEC` has it (M11b: off at idle by default), and scores every frame with the wake
+/// word for `seconds` (default 60), playing nothing. One JSON line: the CPU it took over that time
+/// (user and system, as a share of one core), its memory footprint before and while listening,
+/// the frames scored, the top score, and how many frames were digital silence (a closed lid or no
+/// microphone access gives only those). Nothing is kept.
+///
+/// With `switch` (M11b), every 5 s it tells the hub a reply started or ended, with nothing
+/// played, so voice processing goes on and off; `switches` has the hub's lines about each switch
+/// (how long the rebuild took, and how much sound the microphone missed).
 enum ListenSelfTest {
     static let flag = "--selftest-listen"
 
     static func run(arguments: [String]) -> Int32 {
         let seconds = arguments.first.flatMap(Double.init) ?? 60
+        let switching = arguments.contains("switch")
         let result = Mutex<[String: any Sendable]>([:])
         let done = DispatchSemaphore(value: 0)
         Task.detached {
-            let report = await measure(seconds: seconds)
+            let report = await measure(seconds: seconds, switching: switching)
             result.withLock { $0 = report }
             done.signal()
         }
@@ -49,7 +55,7 @@ enum ListenSelfTest {
         return bundled
     }
 
-    static func measure(seconds: Double) async -> [String: any Sendable] {
+    static func measure(seconds: Double, switching: Bool = false) async -> [String: any Sendable] {
         var report: [String: any Sendable] = ["seconds": seconds]
         let assets = Self.assets()
         let detector: WakeWordDetector
@@ -60,7 +66,8 @@ enum ListenSelfTest {
             report["ok"] = false
             return report
         }
-        let hub = AudioHub(voiceProcessing: AudioHub.voiceProcessing(), log: { _ in })
+        let lines = Mutex<[String]>([])
+        let hub = AudioHub(aec: AudioHub.aec(), log: { line in lines.withLock { $0.append(line) } })
         let mic = MicCapture(makeInput: { HubMicInput(hub: hub) })
         let frames = await mic.frames()
         report["footprint_before_mb"] = footprintMB()
@@ -77,6 +84,17 @@ enum ListenSelfTest {
             if !Task.isCancelled { await mic.stop() }
         }
         defer { limit.cancel() }
+        let switcher = Task {
+            guard switching else { return }
+            var on = false
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(5))
+                guard !Task.isCancelled else { return }
+                if on { hub.speechEnded() } else { hub.speechWillStart() }
+                on.toggle()
+            }
+        }
+        defer { switcher.cancel() }
         // The engine's first second (voice processing settling) is not counted.
         let settle = ContinuousClock.now + .seconds(1)
         var scored = 0
@@ -97,12 +115,17 @@ enum ListenSelfTest {
         let wall = start.map { ContinuousClock.now - $0.wall } ?? .zero
         let wallSeconds = Double(wall.components.seconds) + Double(wall.components.attoseconds) / 1e18
         report["footprint_listening_mb"] = footprintMB()
+        report["voice_processing"] = hub.currentMode == .duplex(voiceProcessing: true)
+        switcher.cancel()
         await mic.stop()
+        if switching {
+            report["switches"] = lines.withLock { $0 }.filter { $0.contains("missed") || $0.contains("speak") }
+        }
         report["frames_scored"] = scored
         report["frames_silent"] = silent
         report["top_score"] = Double(top)
         report["cpu_percent_of_one_core"] = wallSeconds > 0 ? (cpu / wallSeconds * 1000).rounded() / 10 : 0
-        report["voice_processing"] = AudioHub.voiceProcessing()
+        report["aec"] = AudioHub.aec().rawValue
         report["ok"] = scored > 0
         return report
     }

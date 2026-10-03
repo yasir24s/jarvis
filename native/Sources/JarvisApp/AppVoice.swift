@@ -240,4 +240,16 @@ final class ReportingPlayer: SpeechPlayer {
     func stop() async {
         await inner.stop()
     }
+
+    func replyStarting() async {
+        await inner.replyStarting()
+    }
+
+    func replyReady() async {
+        await inner.replyReady()
+    }
+
+    func replyEnded() async {
+        await inner.replyEnded()
+    }
 }

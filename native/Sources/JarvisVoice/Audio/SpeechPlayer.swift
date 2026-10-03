@@ -7,6 +7,18 @@ import Synchronization
 public protocol SpeechPlayer: Sendable {
     func play(_ chunk: PCMChunk) async throws
     func stop() async
+    /// A reply has started generating (M11b): get ready to play it.
+    func replyStarting() async
+    /// Returns once the player is ready for the reply (`AudioHub.speechReady`).
+    func replyReady() async
+    /// The reply has played, was stopped, or failed. Once for every `replyStarting`.
+    func replyEnded() async
+}
+
+extension SpeechPlayer {
+    public func replyStarting() async {}
+    public func replyReady() async {}
+    public func replyEnded() async {}
 }
 
 /// His speech on `AudioHub`'s speech player (M11 part 1: the one engine, so voice processing
@@ -57,6 +69,19 @@ public actor EnginePlayer: SpeechPlayer {
 
     public func stop() {
         hub.stop(.speech)
+    }
+
+    /// Voice processing comes on while the reply generates (`AudioHub.speechWillStart`).
+    public func replyStarting() {
+        hub.speechWillStart()
+    }
+
+    public func replyReady() async {
+        await hub.speechReady()
+    }
+
+    public func replyEnded() {
+        hub.speechEnded()
     }
 
     static let offlineFrames = SystemHubEngine.offlineFrames

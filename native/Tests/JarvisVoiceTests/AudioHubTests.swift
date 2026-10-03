@@ -49,11 +49,12 @@ struct AudioHubTests {
 
     static let speech = HubAudio(channels: [[Float](repeating: 0.1, count: 2400)], sampleRate: 24_000)
 
-    @Test("JARVIS_AEC=0 turns voice processing off; anything else leaves it on")
+    @Test("JARVIS_AEC=0 never turns voice processing on, 1 always does, and anything else only while he speaks")
     func environment() {
-        #expect(AudioHub.voiceProcessing(environment: [:]))
-        #expect(AudioHub.voiceProcessing(environment: ["JARVIS_AEC": "1"]))
-        #expect(!AudioHub.voiceProcessing(environment: ["JARVIS_AEC": "0"]))
+        #expect(AudioHub.aec(environment: [:]) == .whileSpeaking)
+        #expect(AudioHub.aec(environment: ["JARVIS_AEC": "yes"]) == .whileSpeaking)
+        #expect(AudioHub.aec(environment: ["JARVIS_AEC": "1"]) == .always)
+        #expect(AudioHub.aec(environment: ["JARVIS_AEC": "0"]) == .never)
     }
 
     @Test("speaking needs no microphone: the engine starts output only, and nothing is rebuilt")
@@ -298,14 +299,24 @@ final class FakeHubEngine: HubEngine, @unchecked Sendable {
         var scheduled: [(player: HubPlayer, frames: Int)] = []
         var stoppedPlayers: [HubPlayer] = []
         var failDuplexStart = false
+        /// The mode the engine was in when each buffer was scheduled.
+        var scheduledModes: [HubMode] = []
+        /// Completion callbacks of buffers not played at once.
+        var unplayed: [@Sendable () -> Void] = []
+        var buildDelay: TimeInterval = 0
+        var failVoiceProcessing = false
     }
     private let state = Mutex(State())
     let deviceChanges = DeviceChangeRelay()
     private let duplexFormat: AVAudioFormat
+    private let plainFormat: AVAudioFormat?
     private let playsAtOnce: Bool
 
-    init(duplexFormat: AVAudioFormat = AudioHubTests.processedFormat, playsAtOnce: Bool = true) {
+    /// - plainFormat: the input without voice processing, when it differs from `duplexFormat`.
+    init(duplexFormat: AVAudioFormat = AudioHubTests.processedFormat, plainFormat: AVAudioFormat? = nil,
+         playsAtOnce: Bool = true) {
         self.duplexFormat = duplexFormat
+        self.plainFormat = plainFormat
         self.playsAtOnce = playsAtOnce
     }
 
@@ -318,7 +329,9 @@ final class FakeHubEngine: HubEngine, @unchecked Sendable {
     }
 
     func build(_ mode: HubMode, tap: @escaping @Sendable (AVAudioPCMBuffer, UInt64) -> Void) throws(MicError) {
-        let format = duplexFormat
+        let delay = state.withLock { $0.buildDelay }
+        if delay > 0 { Thread.sleep(forTimeInterval: delay) }
+        let format = mode == .duplex(voiceProcessing: false) ? plainFormat ?? duplexFormat : duplexFormat
         state.withLock {
             $0.running = false
             $0.builds.append(mode)
@@ -332,7 +345,9 @@ final class FakeHubEngine: HubEngine, @unchecked Sendable {
     var isRunning: Bool { state.withLock { $0.running } }
 
     func start() throws(MicError) {
-        let fail = state.withLock { $0.failDuplexStart && $0.mode.hasInput }
+        let fail = state.withLock {
+            ($0.failDuplexStart && $0.mode.hasInput) || ($0.failVoiceProcessing && $0.mode == .duplex(voiceProcessing: true))
+        }
         if fail { throw .cannotStart("fake: will not start") }
         state.withLock { $0.running = true }
     }
@@ -350,7 +365,11 @@ final class FakeHubEngine: HubEngine, @unchecked Sendable {
 
     func schedule(_ buffer: AVAudioPCMBuffer, on player: HubPlayer, played: @escaping @Sendable () -> Void) {
         let frames = Int(buffer.frameLength)
-        state.withLock { $0.scheduled.append((player, frames)) }
+        state.withLock {
+            $0.scheduled.append((player, frames))
+            $0.scheduledModes.append($0.mode)
+            if !playsAtOnce { $0.unplayed.append(played) }
+        }
         if playsAtOnce { played() }
     }
 
@@ -358,9 +377,34 @@ final class FakeHubEngine: HubEngine, @unchecked Sendable {
         state.withLock { $0.stoppedPlayers.append(player) }
     }
 
-    func push(_ buffer: AVAudioPCMBuffer) {
-        state.withLock { $0.tap }?(buffer, 0)
+    func push(_ buffer: AVAudioPCMBuffer, hostTime: UInt64 = 0) {
+        state.withLock { $0.tap }?(buffer, hostTime)
     }
+
+    var scheduledModes: [HubMode] { state.withLock { $0.scheduledModes } }
+    /// How long each build takes, as a voice-processing rebuild does on a Mac.
+    var buildDelay: TimeInterval {
+        get { state.withLock { $0.buildDelay } }
+        set { state.withLock { $0.buildDelay = newValue } }
+    }
+
+    /// Voice processing will not start (the plain microphone still does).
+    var failVoiceProcessing: Bool {
+        get { state.withLock { $0.failVoiceProcessing } }
+        set { state.withLock { $0.failVoiceProcessing = newValue } }
+    }
+
+    /// Plays out every buffer not played at once.
+    func finishPlaying() {
+        let callbacks = state.withLock { s -> [@Sendable () -> Void] in
+            defer { s.unplayed.removeAll() }
+            return s.unplayed
+        }
+        for played in callbacks { played() }
+    }
+
+    /// What the engine was last built as.
+    var mode: HubMode { state.withLock { $0.mode } }
 
     func setVoiceProcessingBypassed(_ bypassed: Bool) {}
 

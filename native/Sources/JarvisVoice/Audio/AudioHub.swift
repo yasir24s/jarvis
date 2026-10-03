@@ -10,11 +10,24 @@ public enum HubMode: Sendable, Equatable {
     case output
     /// The microphone as well, on the same engine. With voice processing the input has his own
     /// voice cancelled out of it (echo cancelling), other apps' audio is ducked as little as it
-    /// can be (`.min`) and the input's AGC is off; without it (`JARVIS_AEC=0`) the input is the
-    /// raw microphone.
+    /// can be (`.min`) and the input's AGC is off; without it (while he is silent, or always with
+    /// `JARVIS_AEC=0`) the input is the raw microphone.
     case duplex(voiceProcessing: Bool)
 
     public var hasInput: Bool { self != .output }
+}
+
+/// When the open microphone has voice processing (`JARVIS_AEC`, M11b). Echo is only possible
+/// while he makes sound, and voice processing costs about 14 points of one core and 33 MB at idle
+/// (M11 part 5), so by default it is on only while he speaks.
+public enum AECPolicy: String, Sendable, Equatable {
+    /// `JARVIS_AEC=0`: never on.
+    case never
+    /// `JARVIS_AEC=1`: on whenever the microphone is open (M11 part 1's behaviour).
+    case always
+    /// Unset or anything else: on from when a reply starts generating until about a second
+    /// after his last audio has played.
+    case whileSpeaking
 }
 
 /// The hub's players: his speech (24 kHz, both channels equal) and effects such as the chime.
@@ -265,9 +278,13 @@ final class SystemHubEngine: HubEngine {
 /// part 1), so voice processing hears what he says and cancels it from the microphone.
 ///
 /// - Output only until something opens the microphone (`HubMicInput`, which every MicCapture
-///   uses): then the engine is rebuilt with its input tapped and voice processing on (unless
-///   `JARVIS_AEC=0`), and when the last one closes it is rebuilt output only, so the microphone
-///   is open only while something listens.
+///   uses): then the engine is rebuilt with its input tapped, and when the last one closes it is
+///   rebuilt output only, so the microphone is open only while something listens.
+/// - Voice processing follows `AECPolicy` (M11b). By default the microphone opens without it;
+///   `speechWillStart()` (a reply has started generating) rebuilds the engine with it, and about
+///   `tail` after the last `speechEnded()` it is rebuilt without it again. A switch never runs
+///   while anything plays: it waits for the audio to end. `speechReady()` waits for a switch in
+///   flight, so a reply that finished generating first plays with voice processing on.
 /// - One engine in the process: once a voice-processing engine starts, another engine's input
 ///   tap gets no more buffers, even after the first stops (seen on a MacBook Pro, M11 part 1).
 ///   Push-to-talk, the setup window's takes and hands-free listening all share this one.
@@ -279,10 +296,15 @@ final class SystemHubEngine: HubEngine {
 /// The engine and the players are touched only under `lock`. The tap reads the listeners under a
 /// lock of its own, which a rebuild never holds while it waits on the engine.
 public final class AudioHub: @unchecked Sendable {
-    /// `JARVIS_AEC` (plan §3.3, a proposed variable): "0" turns voice processing off, so the
-    /// microphone is the raw input Python listened to.
-    public static func voiceProcessing(environment: [String: String] = ProcessInfo.processInfo.environment) -> Bool {
-        environment["JARVIS_AEC"] != "0"
+    /// `JARVIS_AEC` (plan §3.3, a proposed variable): "0" never turns voice processing on, so the
+    /// microphone is the raw input Python listened to; "1" keeps it on whenever the microphone is
+    /// open; anything else turns it on only while he speaks (M11b).
+    public static func aec(environment: [String: String] = ProcessInfo.processInfo.environment) -> AECPolicy {
+        switch environment["JARVIS_AEC"] {
+        case "0": .never
+        case "1": .always
+        default: .whileSpeaking
+        }
     }
 
     /// The app's hub. Everything in the process that plays or listens goes through it.
@@ -294,9 +316,13 @@ public final class AudioHub: @unchecked Sendable {
     /// How often a rebuild that failed after a device change is tried again, and how many times.
     static let retry = DispatchTimeInterval.seconds(2)
     static let retries = 5
+    /// How long voice processing stays on after his last audio ends: the room's tail (M11b).
+    static let tail = DispatchTimeInterval.seconds(1)
+    /// The longest `speechReady()` waits for a switch before letting the reply play anyway.
+    static let readyLimit = Duration.seconds(3)
 
     private let engine: any HubEngine
-    private let voiceProcessing: Bool
+    private let policy: AECPolicy
     private let log: @Sendable (String) -> Void
     private let queue = DispatchQueue(label: "jarvis.audio-hub")
     private let lock = NSLock()
@@ -306,22 +332,49 @@ public final class AudioHub: @unchecked Sendable {
     private var reconcilePending = false
     private let tapLock = NSLock()
     private var taps: [UUID: @Sendable (AVAudioPCMBuffer, UInt64) -> Void] = [:]
+    /// Replies generating or playing (`speechWillStart` minus `speechEnded`).
+    private var speaking = 0
+    /// Voice processing is held on for the room's tail after the last reply; `tailToken` tells a
+    /// tail timer whether it is still the latest.
+    private var inTail = false
+    private var tailToken = 0
+    /// The mode a switch last failed to build: not tried again until the next reply starts.
+    private var failedSwitch: HubMode?
+    /// A switch is queued on `queue` or running, and the `speechReady()` calls waiting for it,
+    /// under `switchLock` (taken after `lock`, never before it), so a reply can wait for a switch
+    /// without blocking on the lock the rebuild holds.
+    private let switchLock = NSLock()
+    private var switchInFlight = false
+    private var readyWaits: [PlaybackWait] = []
+    /// The last input buffer delivered (host time of its first sample, frames, rate), and the
+    /// switch whose gap the first buffer captured after `at` measures (under `tapLock`).
+    private var lastBuffer: (hostTime: UInt64, frames: AVAudioFrameCount, rate: Double)?
+    private var measureGap: (reason: String, at: UInt64)?
 
-    init(engine: any HubEngine, voiceProcessing: Bool, log: @escaping @Sendable (String) -> Void) {
+    init(engine: any HubEngine, aec: AECPolicy, log: @escaping @Sendable (String) -> Void) {
         self.engine = engine
-        self.voiceProcessing = voiceProcessing
+        self.policy = aec
         self.log = log
         engine.deviceChanges.set { [weak self] force in self?.devicesChanged(force: force) }
     }
 
-    public convenience init(voiceProcessing: Bool = AudioHub.voiceProcessing(),
-                            log: @escaping @Sendable (String) -> Void = { _ in }) {
-        self.init(engine: SystemHubEngine(), voiceProcessing: voiceProcessing, log: log)
+    /// `voiceProcessing` true is `AECPolicy.always`, false `.never`.
+    convenience init(engine: any HubEngine, voiceProcessing: Bool, log: @escaping @Sendable (String) -> Void) {
+        self.init(engine: engine, aec: voiceProcessing ? .always : .never, log: log)
+    }
+
+    public convenience init(aec: AECPolicy = AudioHub.aec(), log: @escaping @Sendable (String) -> Void = { _ in }) {
+        self.init(engine: SystemHubEngine(), aec: aec, log: log)
+    }
+
+    /// `voiceProcessing` true is `AECPolicy.always`, false `.never`.
+    public convenience init(voiceProcessing: Bool, log: @escaping @Sendable (String) -> Void = { _ in }) {
+        self.init(engine: SystemHubEngine(), aec: voiceProcessing ? .always : .never, log: log)
     }
 
     /// For tests: the real graph rendering offline to `output`; output only.
     convenience init(offline output: AVAudioFormat) throws {
-        self.init(engine: try SystemHubEngine(offline: output), voiceProcessing: false, log: { _ in })
+        self.init(engine: try SystemHubEngine(offline: output), aec: .never, log: { _ in })
     }
 
     /// What the engine runs now.
@@ -371,6 +424,7 @@ public final class AudioHub: @unchecked Sendable {
         for wait in waits[player] ?? [] { wait.resume() }
         waits[player] = nil
         engine.stop(player)
+        considerSwitch()
     }
 
     private func schedule(_ audio: HubAudio, on player: HubPlayer, wait: PlaybackWait) throws {
@@ -403,6 +457,154 @@ public final class AudioHub: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         waits[player]?.removeAll { $0 === wait }
+        considerSwitch()
+    }
+
+    // MARK: voice processing while he speaks (M11b)
+
+    /// A reply has started generating: voice processing comes on now (`.whileSpeaking`), while
+    /// the reply generates, so it is on before the reply plays.
+    public func speechWillStart() {
+        lock.lock()
+        defer { lock.unlock() }
+        speaking += 1
+        if speaking == 1 { failedSwitch = nil }
+        considerSwitch()
+    }
+
+    /// The reply has finished playing, was stopped, or failed. After the last one voice
+    /// processing stays on for `tail`, then goes off unless another reply has started.
+    public func speechEnded() {
+        lock.lock()
+        defer { lock.unlock() }
+        guard speaking > 0 else { return }
+        speaking -= 1
+        guard speaking == 0 else { return }
+        tailToken += 1
+        let token = tailToken
+        inTail = policy == .whileSpeaking
+        queue.asyncAfter(deadline: .now() + Self.tail) { [weak self] in self?.tailEnded(token) }
+    }
+
+    /// Returns once no switch is pending, queued or running (at most `readyLimit`), logging how
+    /// long the reply waited. A switch deferred while something plays is queued when it ends.
+    public func speechReady() async {
+        let wait = PlaybackWait()
+        guard enqueueReady(wait) else { return }
+        let began = ContinuousClock.now
+        let watchdog = Task {
+            try? await Task.sleep(for: Self.readyLimit)
+            wait.resume()
+        }
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in wait.set(continuation) }
+        watchdog.cancel()
+        let still = dequeueReady(wait)
+        log("audio: the reply waited \(Self.milliseconds(ContinuousClock.now - began)) ms for the voice "
+            + (still ? "processing switch, and plays before it is done" : "processing switch"))
+    }
+
+    /// Adds `wait` to the ready waits while a switch is in flight, or pending until the audio
+    /// playing now (a chime) ends; false when there is none.
+    private func enqueueReady(_ wait: PlaybackWait) -> Bool {
+        // In flight first, without `lock`: a running switch holds it for the whole rebuild.
+        switchLock.lock()
+        if switchInFlight {
+            readyWaits.append(wait)
+            switchLock.unlock()
+            return true
+        }
+        switchLock.unlock()
+        lock.lock()
+        defer { lock.unlock() }
+        let pending = switchPending
+        switchLock.lock()
+        defer { switchLock.unlock() }
+        guard switchInFlight || pending else { return false }
+        readyWaits.append(wait)
+        return true
+    }
+
+    /// Removes `wait`; whether the switch is still in flight.
+    private func dequeueReady(_ wait: PlaybackWait) -> Bool {
+        switchLock.lock()
+        defer { switchLock.unlock() }
+        readyWaits.removeAll { $0 === wait }
+        return switchInFlight
+    }
+
+    /// Whether voice processing is wanted now.
+    private var wantsVoiceProcessing: Bool {
+        switch policy {
+        case .never: false
+        case .always: true
+        case .whileSpeaking: speaking > 0 || inTail
+        }
+    }
+
+    /// The mode the open microphone should run in now.
+    private var wantedDuplex: HubMode { .duplex(voiceProcessing: wantsVoiceProcessing) }
+
+    /// The microphone is open in a mode other than the one wanted, and a switch will be tried.
+    private var switchPending: Bool {
+        mode.hasInput && mode != wantedDuplex && failedSwitch != wantedDuplex
+    }
+
+    private var isPlaying: Bool { waits.values.contains { !$0.isEmpty } }
+
+    private func tailEnded(_ token: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard token == tailToken, speaking == 0 else { return }
+        inTail = false
+        considerSwitch()
+    }
+
+    /// Under the lock: queues a switch when one is pending and nothing plays.
+    private func considerSwitch() {
+        guard switchPending, !isPlaying else { return }
+        switchLock.lock()
+        defer { switchLock.unlock() }
+        guard !switchInFlight else { return }
+        switchInFlight = true
+        queue.async { [weak self] in self?.performSwitch() }
+    }
+
+    private func performSwitch() {
+        lock.lock()
+        defer {
+            switchLock.lock()
+            switchInFlight = false
+            let ready = readyWaits
+            readyWaits.removeAll()
+            switchLock.unlock()
+            for wait in ready { wait.resume() }
+            // A reply that started or ended while this ran.
+            considerSwitch()
+            lock.unlock()
+        }
+        guard switchPending, !isPlaying else { return }
+        let old = mode
+        let new = wantedDuplex
+        let reason = wantsVoiceProcessing ? "he is about to speak" : "he has finished speaking"
+        tapLock.lock()
+        measureGap = (reason, mach_absolute_time())
+        tapLock.unlock()
+        do throws(MicError) {
+            try rebuild(new, because: reason)
+        } catch {
+            failedSwitch = new
+            log("audio: cannot switch voice processing \(wantsVoiceProcessing ? "on" : "off") (\(error)); "
+                + "the microphone stays as it was")
+            do throws(MicError) {
+                try rebuild(old, because: "the switch failed")
+            } catch {
+                log("audio: cannot reopen the microphone after the failed switch (\(error))")
+            }
+        }
+    }
+
+    static func milliseconds(_ d: Duration) -> Int {
+        Int(Double(d.components.attoseconds) / 1e15 + Double(d.components.seconds) * 1000)
     }
 
     // MARK: input
@@ -415,7 +617,7 @@ public final class AudioHub: @unchecked Sendable {
         inputs.insert(id)
         if !mode.hasInput {
             do throws(MicError) {
-                try rebuild(.duplex(voiceProcessing: voiceProcessing), because: "the microphone opened")
+                try rebuild(wantedDuplex, because: "the microphone opened")
             } catch {
                 inputs.remove(id)
                 log("audio: the microphone would not open (\(error))")
@@ -473,7 +675,20 @@ public final class AudioHub: @unchecked Sendable {
     private func deliver(_ buffer: AVAudioPCMBuffer, _ hostTime: UInt64) {
         tapLock.lock()
         let targets = Array(taps.values)
+        // Buffers the old engine captured before the switch began still count as before it.
+        var gap: (String, (hostTime: UInt64, frames: AVAudioFrameCount, rate: Double))?
+        if let pending = measureGap, hostTime >= pending.at {
+            gap = lastBuffer.map { (pending.reason, $0) }
+            measureGap = nil
+        }
+        lastBuffer = (hostTime, buffer.frameLength, buffer.format.sampleRate)
         tapLock.unlock()
+        if let (reason, last) = gap {
+            // From the end of the last buffer before the switch to the start of the first after.
+            let end = AVAudioTime.seconds(forHostTime: last.hostTime) + Double(last.frames) / last.rate
+            let ms = Int(((AVAudioTime.seconds(forHostTime: hostTime) - end) * 1000).rounded())
+            log("audio: the microphone missed \(ms) ms of sound across the switch (\(reason))")
+        }
         for tap in targets { tap(buffer, hostTime) }
     }
 
@@ -493,14 +708,13 @@ public final class AudioHub: @unchecked Sendable {
         mode = new
         try engine.build(new, tap: { [weak self] buffer, hostTime in self?.deliver(buffer, hostTime) })
         if new.hasInput { try engine.start() }
-        let took = ContinuousClock.now - began
-        let ms = Int(Double(took.components.attoseconds) / 1e15 + Double(took.components.seconds) * 1000)
+        let ms = Self.milliseconds(ContinuousClock.now - began)
         switch new {
         case .output:
             log("audio: output only (\(reason)), \(ms) ms")
         case .duplex(let voiceProcessing):
             let format = engine.inputFormat.map { "\($0.channelCount) ch \(Int($0.sampleRate)) Hz" } ?? "no input"
-            log("audio: microphone open, voice processing \(voiceProcessing ? "on" : "off (JARVIS_AEC=0)"), "
+            log("audio: microphone open, voice processing \(voiceProcessing ? "on" : "off"), "
                 + "\(format) (\(reason)), \(ms) ms")
         }
         if cut > 0 { log("audio: rebuilding the engine cut \(cut) part\(cut == 1 ? "" : "s") of speech short") }
