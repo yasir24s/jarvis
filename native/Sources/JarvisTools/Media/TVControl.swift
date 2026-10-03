@@ -33,7 +33,7 @@ public final class TVControl: Sendable {
 
     /// `pause` runs between looks at the TV app while it loads (half a second live);
     /// `attempts` bounds the looks.
-    public init(library: MediaLibrary, ax: any TVAccessibility = LiveTVAccessibility(), web: any WebFetching = LiveWebFetch(),
+    public init(library: MediaLibrary, ax: any TVAccessibility, web: any WebFetching = LiveWebFetch(),
                 storefront: String = Locale.current.region?.identifier.lowercased() ?? "us",
                 tvSwitch: @escaping @Sendable () -> Bool,
                 pause: @escaping @Sendable () async -> Void = { try? await Task.sleep(for: .milliseconds(500)) },

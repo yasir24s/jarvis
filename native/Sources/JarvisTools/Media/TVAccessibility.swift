@@ -1,4 +1,3 @@
-import AppKit
 import ApplicationServices
 import Foundation
 import JarvisCore
@@ -305,6 +304,15 @@ public enum TVUIReader {
 
 // MARK: - Live
 
+/// The TV app's process: finding it and opening it. AppKit work, so the live one lives in
+/// JarvisApp (`LiveTVAppProcess`) and is passed in.
+public protocol TVAppProcess: Sendable {
+    /// The running TV app's process id, or nil when it is not running.
+    func pid() -> pid_t?
+    /// Opens the TV app, or brings it forward.
+    func activate() async -> Bool
+}
+
 /// AXUIElement on the TV app (bundle com.apple.TV) only. It walks the TV app's focused window,
 /// never another app, and never reads a secure field's value.
 public struct LiveTVAccessibility: TVAccessibility {
@@ -314,7 +322,11 @@ public struct LiveTVAccessibility: TVAccessibility {
     public static let maxDepth = 25
     public static let maxNodes = 4000
 
-    public init() {}
+    let app: any TVAppProcess
+
+    public init(app: any TVAppProcess) {
+        self.app = app
+    }
 
     public func isTrusted() -> Bool { AXIsProcessTrusted() }
 
@@ -323,21 +335,10 @@ public struct LiveTVAccessibility: TVAccessibility {
         _ = AXIsProcessTrustedWithOptions([key: true] as CFDictionary)
     }
 
-    static func pid() -> pid_t? {
-        NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first?.processIdentifier
-    }
+    public func activateTV() async -> Bool { await app.activate() }
 
-    public func activateTV() async -> Bool {
-        if let app = NSRunningApplication.runningApplications(withBundleIdentifier: Self.bundleID).first {
-            return app.activate()
-        }
-        let config = NSWorkspace.OpenConfiguration()
-        config.activates = true
-        return (try? await NSWorkspace.shared.openApplication(at: URL(filePath: Self.appPath), configuration: config)) != nil
-    }
-
-    static func window() -> AXUIElement? {
-        guard let pid = pid() else { return nil }
+    func window() -> AXUIElement? {
+        guard let pid = app.pid() else { return nil }
         let app = AXUIElementCreateApplication(pid)
         var value: CFTypeRef?
         if AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString, &value) == .success, let value {
@@ -363,7 +364,7 @@ public struct LiveTVAccessibility: TVAccessibility {
     }
 
     public func snapshot() async -> TVAXNode? {
-        guard let window = Self.window() else { return nil }
+        guard let window = window() else { return nil }
         var budget = Self.maxNodes
         func walk(_ e: AXUIElement, _ path: [Int]) -> TVAXNode {
             budget -= 1
@@ -384,10 +385,10 @@ public struct LiveTVAccessibility: TVAccessibility {
         return walk(window, [])
     }
 
-    static func element(at path: [Int]) -> AXUIElement? {
+    func element(at path: [Int]) -> AXUIElement? {
         guard var e = window() else { return nil }
         for i in path {
-            let kids = children(e)
+            let kids = Self.children(e)
             guard i < kids.count else { return nil }
             e = kids[i]
         }
@@ -395,7 +396,7 @@ public struct LiveTVAccessibility: TVAccessibility {
     }
 
     public func setText(_ text: String, at path: [Int]) async -> Bool {
-        guard let e = Self.element(at: path) else { return false }
+        guard let e = element(at: path) else { return false }
         let role = Self.string(e, kAXRoleAttribute) ?? "", subrole = Self.string(e, kAXSubroleAttribute)
         guard !TVAXNode.isSecure(role: role, subrole: subrole) else { return false }
         _ = AXUIElementSetAttributeValue(e, kAXFocusedAttribute as CFString, kCFBooleanTrue)
@@ -403,12 +404,12 @@ public struct LiveTVAccessibility: TVAccessibility {
     }
 
     public func press(_ path: [Int]) async -> Bool {
-        guard let e = Self.element(at: path) else { return false }
+        guard let e = element(at: path) else { return false }
         return AXUIElementPerformAction(e, kAXPressAction as CFString) == .success
     }
 
     public func confirm(_ path: [Int]) async -> Bool {
-        guard let e = Self.element(at: path) else { return false }
+        guard let e = element(at: path) else { return false }
         return AXUIElementPerformAction(e, kAXConfirmAction as CFString) == .success
     }
 }

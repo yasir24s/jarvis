@@ -662,7 +662,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Batch C: identify_song (ShazamKit, behind its feature check).
             // TV tools: the TV switch in Learning Sources gates what's on; tv_play works when asked.
             extraTools: AppTools.all(media: media, display: display,
-                                     tv: TVControl(library: media, tvSwitch: { [suite = FileLearningConsent.defaultsSuite] in
+                                     tv: TVControl(library: media, ax: LiveTVAccessibility(app: LiveTVAppProcess()), tvSwitch: { [suite = FileLearningConsent.defaultsSuite] in
                                          LearningSources.storedOn(.tv, defaults: UserDefaults(suiteName: suite) ?? .standard) })))
         brain = assembly
         voice.activity = assembly.turnActivity   // V1 part 5: speech holds the file scan back

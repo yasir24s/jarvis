@@ -82,7 +82,7 @@ enum TVProbeMain {
         } else if !running {
             print("tv-app accessibility: the TV app is not running; not asked")
         } else {
-            TVProbe.accessibilityReport(await LiveTVAccessibility().snapshot()).forEach { print($0) }
+            TVProbe.accessibilityReport(await LiveTVAccessibility(app: LiveTVAppProcess()).snapshot()).forEach { print($0) }
         }
         print("playback: not probed (it would play sound); see the at-screen steps")
     }
