@@ -17,8 +17,10 @@ struct VoiceHelperProcessTests {
         }
         #expect(lines == [#"{"cmd":"ping"}"#, "second\u{2028}line"], "split on \\n only")
         let start = SuspendingClock.now
-        await cat.close(grace: .seconds(2))   // EOF: cat exits by itself
-        #expect(SuspendingClock.now - start < .seconds(2))
+        // EOF: cat exits by itself. A long grace makes the bound load-proof: a close that
+        // relied on the kill would take the full 30 s, far past the 15 s bound.
+        await cat.close(grace: .seconds(30))
+        #expect(SuspendingClock.now - start < .seconds(15))
         #expect(throws: (any Error).self) { try cat.send("after close") }
     }
 
