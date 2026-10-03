@@ -57,6 +57,10 @@ enum Entry {
             }
             PythonImportMain.start()
         }
+        // Batch C part 5: the read-only TV feasibility probe.
+        if arguments.first == TVProbeMain.flag {
+            exit(TVProbeMain.run(arguments: Array(arguments.dropFirst())))
+        }
         // Batch C part 1: the boot log check (read-only, counts only) and its import.
         if arguments.first == PythonImportMain.checkBootLogFlag {
             guard arguments.count == 2, let root = arguments.last else {
