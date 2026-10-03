@@ -251,17 +251,23 @@ struct BackgroundReaderTests {
     @Test func theFirstPassWaitsUntilOneIsDue() async throws {
         let rig = try Rig(feeds: [:])
         defer { rig.sandbox.remove() }
-        let first = Mutex<Duration?>(nil)
+        // PA batch A: the first sleep is awaited, not polled for a fixed second, so a loaded
+        // machine that starts the loop late only makes the test wait longer (the suite's time
+        // limit still bounds it).
         func firstWait() async -> Duration? {
-            first.withLock { $0 = nil }
+            let (waits, sink) = AsyncStream<Duration>.makeStream()
             let reading = rig.background(online: false, sleep: { d in
-                first.withLock { if $0 == nil { $0 = d } }
+                sink.yield(d)
                 throw CancellationError()
             })
             reading.start()
-            for _ in 0..<200 where first.withLock({ $0 }) == nil { try? await Task.sleep(for: .milliseconds(5)) }
+            var first: Duration?
+            for await d in waits {
+                first = d
+                break
+            }
             reading.stop()
-            return first.withLock { $0 }
+            return first
         }
         #expect(await firstWait() == BackgroundReader.startDelay)
         rig.web.recordPass(started: Self.epoch - 3_600, ended: Self.epoch - 3_500, opened: 1, stored: 1, stopped: "done")

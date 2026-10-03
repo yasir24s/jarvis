@@ -73,7 +73,11 @@ struct FileScannerWiringTests {
         let clock = SuspendingClock()
         let t0 = clock.now
         await scanner.stop()
-        #expect(t0.duration(to: clock.now) < .seconds(2))
+        // PA batch A: the only wait before the first pass is the start delay, so a stop that did
+        // not cancel it takes all of it however idle the Mac is. A loaded Mac only slows a
+        // cancelling stop by scheduling, nowhere near the delay; a fixed 2 s bound failed once
+        // under load.
+        #expect(t0.duration(to: clock.now) < FileScanner.startDelay)
         #expect(!FileManager.default.fileExists(atPath: harness.store.path(.filesIndex)))
     }
 }
