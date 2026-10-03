@@ -37,6 +37,7 @@ public enum MemoryFile: String, CaseIterable, Sendable {
     case pythonImport = "memory/python-import.json" // the one-time Python-era import's progress (P6)
     case pythonArchive = "memory/archive-python.jsonl" // the Python-era exchanges, word for word (P6b)
     case journal = "memory/journal.jsonl"      // append-only, one line per tool call (P6b)
+    case mediaCatalogue = "memory/media-catalogue.json" // batch C: the music, TV and folder catalogue, on-device
 }
 
 public enum StateStoreError: Error, Sendable, Equatable {

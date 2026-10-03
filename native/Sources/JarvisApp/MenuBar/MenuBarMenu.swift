@@ -36,6 +36,10 @@ struct MenuBarMenu: View {
     var openMemory: () -> Void = {}
     /// Batch C part 1: "Quiet Hours (22:00–07:00)".
     var quietHours: QuietHoursSetting?
+    /// Batch C part 2: "Learn From My Music" and "Forget My Music…".
+    var media: MediaConsent?
+    var mediaChanged: () -> Void = {}
+    var forgetMusic: () -> Void = {}
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
@@ -55,6 +59,7 @@ struct MenuBarMenu: View {
             stopSpeaking()
         }
         FileLearningToggle(consent: learn)
+        if let media { MusicLearningItems(consent: media, changed: mediaChanged, forget: forgetMusic) }   // batch C part 2
         MemoryItem(open: openMemory)   // batch C part 3
         ShowHUDToggle(setting: showHUD, hud: hud)
         HandsFreeMenuItems()   // M11 part 5
@@ -101,6 +106,10 @@ struct AppMenuItems: View {
     var openMemory: () -> Void = {}
     /// Batch C part 1: "Quiet Hours (22:00–07:00)".
     var quietHours: QuietHoursSetting?
+    /// Batch C part 2: "Learn From My Music" and "Forget My Music…".
+    var media: MediaConsent?
+    var mediaChanged: () -> Void = {}
+    var forgetMusic: () -> Void = {}
 
     var body: some View {
         SetUpItem()
@@ -110,6 +119,7 @@ struct AppMenuItems: View {
         BrainPicker(setting: brain)
         ChatGPTSignInItem(account: chatgpt)
         FileLearningToggle(consent: learn)
+        if let media { MusicLearningItems(consent: media, changed: mediaChanged, forget: forgetMusic) }   // batch C part 2
         MemoryItem(open: openMemory)   // batch C part 3
         ShowHUDToggle(setting: showHUD, hud: hud)
         HandsFreeMenuItems()   // M11 part 5
@@ -230,5 +240,21 @@ struct QuietHoursToggle: View {
 
     var body: some View {
         Toggle(setting.menuTitle, isOn: $setting.isOn)
+    }
+}
+
+/// Batch C part 2: "Learn From My Music", off by default, and "Forget My Music…", in the app
+/// menu and the menu-bar menu.
+struct MusicLearningItems: View {
+    @Bindable var consent: MediaConsent
+    let changed: () -> Void
+    let forget: () -> Void
+
+    var body: some View {
+        Toggle(MediaConsent.musicTitle, isOn: Binding(get: { consent.music }, set: { on in
+            consent.music = on
+            changed()
+        }))
+        Button(MediaConsent.forgetMusicTitle) { forget() }
     }
 }

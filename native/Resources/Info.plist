@@ -53,6 +53,8 @@
 	<string>JARVIS reads and adds your calendar events when you ask.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>JARVIS adds reminders when you ask.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>JARVIS reads your Music and TV library (titles, play counts, loved songs) when you switch on Learn From My Music or Media Library, to answer questions about it and play from it. It stays on this Mac.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>JARVIS looks up a contact's number or email when you ask.</string>
 	<key>NSDesktopFolderUsageDescription</key>

@@ -30,7 +30,9 @@ struct JarvisSwiftUIApp: App {
                 AppMenuItems(stopSpeaking: { appDelegate.stopSpeaking() }, speakEarly: appDelegate.speakEarly, brain: appDelegate.brainSetting,
                              chatgpt: appDelegate.chatgptAccount, learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD,
                              hud: appDelegate.hud, briefing: appDelegate.morningBriefing, updates: appDelegate.updates, voice: appDelegate.voiceStatus,
-                             forgetVoice: { appDelegate.forgetVoice() }, openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours)
+                             forgetVoice: { appDelegate.forgetVoice() }, openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours,
+                        media: appDelegate.mediaConsent, mediaChanged: { appDelegate.mediaSwitchChanged() },
+                        forgetMusic: { appDelegate.forgetMusic() })
             }
         }
 
@@ -53,7 +55,9 @@ struct JarvisSwiftUIApp: App {
                         forgetVoice: { appDelegate.forgetVoice() },
                         stopSpeaking: { appDelegate.stopSpeaking() },
                         testConfirmation: { appDelegate.stashTestConfirmation() },
-                        openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours)
+                        openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours,
+                        media: appDelegate.mediaConsent, mediaChanged: { appDelegate.mediaSwitchChanged() },
+                        forgetMusic: { appDelegate.forgetMusic() })
             #else
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies, speakEarly: appDelegate.speakEarly,
                         brain: appDelegate.brainSetting, chatgpt: appDelegate.chatgptAccount,
@@ -62,7 +66,9 @@ struct JarvisSwiftUIApp: App {
                         updates: appDelegate.updates, voice: appDelegate.voiceStatus,
                         forgetVoice: { appDelegate.forgetVoice() },
                         stopSpeaking: { appDelegate.stopSpeaking() },
-                        openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours)
+                        openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours,
+                        media: appDelegate.mediaConsent, mediaChanged: { appDelegate.mediaSwitchChanged() },
+                        forgetMusic: { appDelegate.forgetMusic() })
             #endif
         }
         .menuBarExtraStyle(.menu)

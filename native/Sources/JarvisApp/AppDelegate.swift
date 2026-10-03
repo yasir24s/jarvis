@@ -92,6 +92,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var background: BackgroundLoops?
     /// Batch C part 1: the menus' "Quiet Hours".
     let quietHours = QuietHoursSetting()
+    /// Batch C parts 2 and 5b: "Learn From My Music" and "Media Library", both off by default.
+    let mediaConsent = MediaConsent()
+    private var media: MediaLibrary?
+    private var mediaRefresh: Task<Void, Never>?
     /// PA batch A: the fast path's timers (in memory, as Python's).
     private var quickTimers: QuickTimers?
     private var reminderAnnouncer: ReminderAnnouncer?
@@ -218,6 +222,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Batch C part 2: a media switch was turned on: read now rather than within six hours.
+    func mediaSwitchChanged() {
+        guard let media, mediaConsent.music || mediaConsent.library else { return }
+        Task.detached(priority: .utility) { await media.refresh(force: true) }
+    }
+
+    /// Batch C part 2: "Forget My Music…", after the user confirms.
+    func forgetMusic() {
+        let alert = NSAlert()
+        alert.messageText = "Forget your music?"
+        alert.informativeText = "JARVIS moves what he learned from your Music library to the forgotten bin (kept 30 days) and "
+            + "removes your music and its play history from his media catalogue. Learn From My Music is switched off."
+        alert.addButton(withTitle: "Forget")
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        mediaConsent.music = false
+        let done = media?.forgetMusic() ?? false
+        JarvisLog.log("media: forget my music \(done ? "done" : "incomplete")", category: .state)
+    }
+
     /// Batch C part 3: the menus' "Memory…" and `jarvis://memory`.
     func openMemory() {
         memoryWindow.show()
@@ -268,6 +292,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         personality = nil
         reminders?.stop()   // nor a reminder check (F1)
         background?.stop()   // batch C part 1: nor a background line
+        mediaRefresh?.cancel()   // batch C part 2: nor a catalogue refresh
         reminders = nil
         quickTimers?.stop()   // nor a timer (PA batch A)
         quickTimers = nil
@@ -337,6 +362,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         personality?.stop()
         reminders?.stop()
         background?.stop()   // batch C part 1: nor a background line
+        mediaRefresh?.cancel()   // batch C part 2: nor a catalogue refresh
         quickTimers?.stop()
         idleCompile?.stop()
         files?.cancel()
@@ -505,6 +531,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         memory.checkAtLaunch()
         // Batch C part 3: the Memory window edits through this same store.
         memoryEditor.attach(memory)
+        // Batch C parts 2 and 5b: the media catalogue, read only while one of its switches is on.
+        let mediaSwitches = MediaLibrary.Switches(music: { [flag = mediaConsent.sharedMusic] in flag.isOn },
+                                                  library: { [flag = mediaConsent.sharedLibrary] in flag.isOn })
+        let media = MediaLibrary(store: store, memory: memory, switches: mediaSwitches)
+        self.media = media
         // P3: the home folder is read in the background into the same facts; JARVIS's own state
         // root is never read. PDFKit and AppKit read pdf, docx and rtf here (D-13).
         let consent = fileLearning.shared
@@ -559,7 +590,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // M9a part 7: the menus' Brain item, read from UserDefaults as each turn begins.
             brainChoice: { BrainSetting.stored(in: .standard) },
             // Batch C: identify_song (ShazamKit, behind its feature check).
-            extraTools: [IdentifySong()])
+            extraTools: [IdentifySong(), MediaSearch(library: media), MediaPlay(library: media)])
         brain = assembly
         voice.activity = assembly.turnActivity   // V1 part 5: speech holds the file scan back
         // P1: the hourly consolidation check starts now (first pass in 120 s); the chat's
@@ -591,6 +622,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             log: { JarvisLog.log($0, category: .state) }))
         loops.start()
         background = loops
+        // Batch C part 2: the catalogue refreshes at most daily; checked now and every six hours.
+        mediaRefresh = Task.detached(priority: .utility) {
+            while !Task.isCancelled {
+                await media.refresh()
+                try? await Task.sleep(for: .seconds(6 * 3600), clock: .suspending)
+            }
+        }
         // F1: the first turn of each day after 05:00 is preceded by the morning briefing; what
         // JARVIS has set for later today goes into its request.
         chat.briefing = morningBriefing
@@ -867,6 +905,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.personality?.stop()   // no personality pass outlives the lease
                 self.reminders?.stop()   // nor a reminder check (F1)
                 self.background?.stop()   // batch C part 1: nor a background line
+                self.mediaRefresh?.cancel()   // batch C part 2: nor a catalogue refresh
                 self.quickTimers?.stop()   // nor a timer (PA batch A)
                 self.idleCompile?.stop()   // nor an idle compile
                 self.webSummaries?.stop()   // nor a page summary (W1)
