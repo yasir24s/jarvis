@@ -37,8 +37,9 @@ import MLXAudioTTS
 // first audio after 0.25 to 0.38 s warm in the scratch test.
 //
 // The model loads on the first request or load and stays loaded; the reference is encoded once,
-// at load. After each reply MLX's buffer cache is cleared, and stderr logs the footprint. The
-// helper exits on stdin EOF, or after --idle-exit seconds with no request.
+// at load, and one short line is generated and thrown away, so the first reply does not pay for
+// MLX compiling its kernels. After each reply MLX's buffer cache is cleared, and stderr logs the
+// footprint. The helper exits on stdin EOF, or after --idle-exit seconds with no request.
 //
 // --render <list>: each line of <list> is "<name>\t<text>"; the text is generated (streamed, as
 // the app hears it, at --rate) and written to <out-dir>/<name>.wav (32-bit float, 24 kHz mono),
@@ -331,8 +332,15 @@ func loadedVoice() async throws -> Voice {
     if let voice { return voice }
     let start = ContinuousClock.now
     let loaded = try await Voice(model: modelFolder, reference: referenceFolder)
+    // The first generation after a load compiles MLX's kernels: 2.4 s to the first audio of the
+    // self-test cold, against 0.2 to 0.4 s warm. One short line, thrown away, does that now, so the
+    // first reply streams as fast as the rest.
+    let w0 = ContinuousClock.now
+    try await loaded.stream("Very good.", interval: options.interval, stop: { false }, chunk: { _ in })
+    Memory.clearCache()
     voice = loaded
-    log("model loaded in \(String(format: "%.2f", seconds(ContinuousClock.now - start))) s, footprint \(Int(footprintMB().now)) MB")
+    log(String(format: "model loaded in %.2f s and warmed up in %.2f s, footprint %d MB",
+               seconds(w0 - start), seconds(ContinuousClock.now - w0), Int(footprintMB().now)))
     return loaded
 }
 

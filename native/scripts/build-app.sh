@@ -57,6 +57,12 @@ done
 VOICE="$NATIVE/VoiceHelper"
 swift build -c release --package-path "$VOICE" --product jarvis-voice -j "${VOICE_JOBS:-3}"
 VOICE_BIN="$(swift build -c release --package-path "$VOICE" --show-bin-path)"
+# V6's Qwen3-TTS helper, a package of its own again (MLX 0.31.4 against F5's 0.29.1). It runs from
+# Contents/Helpers/qwen/, a folder of its own, beside its resource bundles: its
+# mlx-swift_Cmlx.bundle is a different MLX's from F5's, under the same name.
+VOICE_QWEN="$NATIVE/VoiceHelperQwen"
+swift build -c release --package-path "$VOICE_QWEN" --product jarvis-voice-qwen -j "${VOICE_JOBS:-3}"
+VOICE_QWEN_BIN="$(swift build -c release --package-path "$VOICE_QWEN" --show-bin-path)"
 
 STAGE="$NATIVE/dist/.JARVIS.app.staging"; APP="$NATIVE/dist/JARVIS.app"
 rm -rf "$STAGE"; mkdir -p "$STAGE/Contents/MacOS" "$STAGE/Contents/Resources" "$STAGE/Contents/Frameworks" \
@@ -69,6 +75,12 @@ chmod 755 "$STAGE/Contents/Helpers/jarvis-update"
 for b in mlx-swift_Cmlx.bundle VoiceHelper_F5TTS.bundle; do
     [[ -d "$VOICE_BIN/$b" ]] || { echo "error: $b is missing from the voice helper build" >&2; exit 1; }
     cp -R "$VOICE_BIN/$b" "$STAGE/Contents/Helpers/$b"
+done
+mkdir -p "$STAGE/Contents/Helpers/qwen"
+cp "$VOICE_QWEN_BIN/jarvis-voice-qwen" "$STAGE/Contents/Helpers/qwen/jarvis-voice-qwen"
+for b in mlx-swift_Cmlx.bundle swift-transformers_Hub.bundle swift-crypto_Crypto.bundle; do
+    [[ -d "$VOICE_QWEN_BIN/$b" ]] || { echo "error: $b is missing from the Qwen helper build" >&2; exit 1; }
+    cp -R "$VOICE_QWEN_BIN/$b" "$STAGE/Contents/Helpers/qwen/$b"
 done
 cp "$NATIVE/Resources/Info.plist" "$STAGE/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(git -C "$REPO" rev-list --count HEAD)" "$STAGE/Contents/Info.plist"
@@ -106,6 +118,11 @@ for h in "$STAGE"/Contents/Helpers/*.bundle "$STAGE/Contents/Helpers/jarvis-voic
     codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$h" 2>/dev/null; done
 codesign --verify --strict "$STAGE/Contents/Helpers/jarvis-voice" 2>/dev/null \
     || { echo "error: codesign --verify --strict failed on the voice helper" >&2; exit 1; }
+# V6: the Qwen helper the same way, inner first.
+for h in "$STAGE"/Contents/Helpers/qwen/*.bundle "$STAGE/Contents/Helpers/qwen/jarvis-voice-qwen"; do
+    codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$h" 2>/dev/null; done
+codesign --verify --strict "$STAGE/Contents/Helpers/qwen/jarvis-voice-qwen" 2>/dev/null \
+    || { echo "error: codesign --verify --strict failed on the Qwen voice helper" >&2; exit 1; }
 # The update helper is a script: signed on its own before the app, its signature kept in its
 # extended attributes. Unsigned, it would fail the app's signature as unsigned nested code.
 codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$STAGE/Contents/Helpers/jarvis-update" 2>/dev/null

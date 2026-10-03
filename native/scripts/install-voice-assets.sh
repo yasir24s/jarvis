@@ -29,6 +29,12 @@
 # helper this step is skipped; run the script again once the app is built. Lines already
 # rendered with the same settings, reference and list are left alone.
 #
+# V6: Qwen3-TTS (12 Hz 0.6B Base, 4-bit), the voice since 2026-10-03, goes into qwen3/ from the
+# copy downloaded for the Qwen scratch test ($JARVIS_QWEN_MODEL, by default
+# ~/jarvis-wt/.orchestrator/qwen3tts/model), checked the same way. Its acknowledgements are
+# rendered by the jarvis-voice-qwen helper into acknowledgements/qwen-dry/, with the dry reference
+# at the rate Qwen speaks at (1.5).
+#
 # $JARVIS_VOICE_DEST installs somewhere else (a test folder).
 set -euo pipefail
 
@@ -53,6 +59,24 @@ FILES=(
     "references/dry-wpe/reference.txt|voice-swift/clips/jarvis_dry_wpe_24k.txt|84|026aaa9c59e6920e25c053d4b867323e72dddd5b8efa66b78527b0c09d1f333d"
 )
 
+# V6: the Qwen3-TTS model. destination | source under $QWEN_SRC | bytes | sha256
+QWEN_SRC="${JARVIS_QWEN_MODEL:-$HOME/jarvis-wt/.orchestrator/qwen3tts/model}"
+QWEN_FILES=(
+    "qwen3/config.json|config.json|5522|ba59b8d2d47746e844f6a96e2232a969d8d89dcc34450fbad94d912bb9ee2e27"
+    "qwen3/generation_config.json|generation_config.json|245|f1b90b4513f3b34c62851049e2492d7b4c5940daf1276f89c82b8ef04127f3aa"
+    "qwen3/model.safetensors|model.safetensors|1024490700|07dcb37b323614af64624af687876edd5c9a8b442da2a7b549d62f9ba2770ec1"
+    "qwen3/model.safetensors.index.json|model.safetensors.index.json|77731|86f65f69204f3fb9dc5ec22ed94da4865594c901b45d2508c60a5931d12787d4"
+    "qwen3/preprocessor_config.json|preprocessor_config.json|127|efdde1022ea9d76928bf7a9cd53139138f5ba2e466e837f08f6105ab1af1c119"
+    "qwen3/tokenizer.json|tokenizer.json|4762740|39ad34a58bb651c6afdb2f15259a9a64e479a5785e27b6c5f112b6782109431e"
+    "qwen3/tokenizer_config.json|tokenizer_config.json|7344|dc3c31c3bdaedd5016382bb3cbe07323026775ad51f5a4fb564505992ae4a670"
+    "qwen3/vocab.json|vocab.json|2776833|ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+    "qwen3/merges.txt|merges.txt|1671839|599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3"
+    "qwen3/speech_tokenizer/config.json|speech_tokenizer/config.json|2336|ee65bb901c876664ab8707c487157aa1a6ee57c65969b28fb5ec9dc211e68167"
+    "qwen3/speech_tokenizer/configuration.json|speech_tokenizer/configuration.json|76|6bc26d64eb5024b4d1dab5a52371958b429256d6c9d59787f1f5294a54e0cebd"
+    "qwen3/speech_tokenizer/preprocessor_config.json|speech_tokenizer/preprocessor_config.json|234|fcb3805e597e786d4067706e602f6688524640f8d3396790e2e09b5942fcbdfb"
+    "qwen3/speech_tokenizer/model.safetensors|speech_tokenizer/model.safetensors|682293092|836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"
+)
+
 # A path under $HOME, as ~/... for messages.
 tilde() {
     case "$1" in
@@ -68,36 +92,44 @@ matches() {
     [[ "$(shasum -a 256 "$1" | cut -d' ' -f1)" == "$3" ]]
 }
 
-for entry in "${FILES[@]}"; do
-    IFS='|' read -r rel src bytes sha <<< "$entry"
-    target="$DEST/$rel"
-    if matches "$target" "$bytes" "$sha"; then
-        echo "ok        $rel (already installed)"
-        continue
-    fi
-    from="$SPIKES/$src"
-    if ! matches "$from" "$bytes" "$sha"; then
-        echo "error: $(tilde "$from") is missing or is not the checked file ($bytes bytes, sha256 $sha)" >&2
-        exit 1
-    fi
-    mkdir -p "$(dirname "$target")"
-    tmp="$target.partial"
-    cp "$from" "$tmp"
-    if ! matches "$tmp" "$bytes" "$sha"; then
-        rm -f "$tmp"
-        echo "error: the copy of $rel does not match; nothing installed for it" >&2
-        exit 1
-    fi
-    mv -f "$tmp" "$target"
-    echo "installed $rel ($bytes bytes)"
-done
+# install_entries <source root> <entry>...: each entry's source, checked, into $DEST.
+install_entries() {
+    local root="$1" entry rel src bytes sha target from tmp
+    shift
+    for entry in "$@"; do
+        IFS='|' read -r rel src bytes sha <<< "$entry"
+        target="$DEST/$rel"
+        if matches "$target" "$bytes" "$sha"; then
+            echo "ok        $rel (already installed)"
+            continue
+        fi
+        from="$root/$src"
+        if ! matches "$from" "$bytes" "$sha"; then
+            echo "error: $(tilde "$from") is missing or is not the checked file ($bytes bytes, sha256 $sha)" >&2
+            exit 1
+        fi
+        mkdir -p "$(dirname "$target")"
+        tmp="$target.partial"
+        cp "$from" "$tmp"
+        if ! matches "$tmp" "$bytes" "$sha"; then
+            rm -f "$tmp"
+            echo "error: the copy of $rel does not match; nothing installed for it" >&2
+            exit 1
+        fi
+        mv -f "$tmp" "$target"
+        echo "installed $rel ($bytes bytes)"
+    done
+}
 
-# Everything the helper loads, checked once more where it will be read.
-for entry in "${FILES[@]}"; do
+install_entries "$SPIKES" "${FILES[@]}"
+install_entries "$QWEN_SRC" "${QWEN_FILES[@]}"
+
+# Everything the helpers load, checked once more where it will be read.
+for entry in "${FILES[@]}" "${QWEN_FILES[@]}"; do
     IFS='|' read -r rel _ bytes sha <<< "$entry"
     matches "$DEST/$rel" "$bytes" "$sha" || { echo "error: $rel failed its final check" >&2; exit 1; }
 done
-echo "Voice assets ready in $(tilde "$DEST") (${#FILES[@]} files checked)"
+echo "Voice assets ready in $(tilde "$DEST") ($(( ${#FILES[@]} + ${#QWEN_FILES[@]} )) files checked)"
 
 # The acknowledgements: name | line. Native JARVIS lists the same (Acknowledgement.lines) and
 # renders nothing itself. The speed is the app's default (VoiceHelperSetup). The steps are 8, not
@@ -175,3 +207,61 @@ render_acknowledgements default "$DEST/reference"
 render_acknowledgements dry-short "$DEST/references/dry-short"
 render_acknowledgements dry "$DEST/references/dry"
 render_acknowledgements dry-wpe "$DEST/references/dry-wpe"
+
+# V6: Qwen's acknowledgements, rendered by jarvis-voice-qwen (of the built app, or
+# VoiceHelperQwen's release build, or $JARVIS_VOICE_QWEN_HELPER) with the dry reference at the
+# rate Qwen speaks at, into acknowledgements/qwen-dry/. The stamp covers the model, the
+# reference, the rate and the lines.
+QWEN_ACK_RATE=1.5
+qwen_helper=""
+for candidate in "${JARVIS_VOICE_QWEN_HELPER:-}" "$NATIVE/dist/JARVIS.app/Contents/Helpers/qwen/jarvis-voice-qwen" \
+                 "$NATIVE/VoiceHelperQwen/.build/release/jarvis-voice-qwen"; do
+    if [[ -n "$candidate" && -x "$candidate" ]]; then
+        qwen_helper="$candidate"
+        break
+    fi
+done
+
+render_qwen_acknowledgements() {
+    local name="qwen-dry" reference="$DEST/references/dry"
+    local out="$DEST/acknowledgements/$name"
+    local stamp
+    stamp="qwen rate $QWEN_ACK_RATE"
+    stamp+=" model $(printf '%s\n' "${QWEN_FILES[@]}" | shasum -a 256 | cut -d' ' -f1)"
+    stamp+=" reference $(cat "$reference/reference.wav" "$reference/reference.txt" | shasum -a 256 | cut -d' ' -f1)"
+    stamp+=" lines $(printf '%s\n' "${ACKNOWLEDGEMENTS[@]}" | shasum -a 256 | cut -d' ' -f1)"
+    local complete=1 entry n t
+    for entry in "${ACKNOWLEDGEMENTS[@]}"; do
+        n="${entry%%|*}"
+        [[ -f "$out/$n.wav" ]] || complete=0
+    done
+    if [[ "$complete" == 1 && -f "$out/stamp" && "$(cat "$out/stamp")" == "$stamp" ]]; then
+        echo "ok        acknowledgements/$name (already rendered)"
+        return
+    fi
+    if [[ -z "$qwen_helper" ]]; then
+        echo "skipped   acknowledgements/$name: no jarvis-voice-qwen helper yet (build the app, then run this again)"
+        return
+    fi
+    local tmp="$out.partial"
+    rm -rf "$tmp"
+    mkdir -p "$tmp"
+    local list="$tmp/lines.tsv"
+    for entry in "${ACKNOWLEDGEMENTS[@]}"; do
+        IFS='|' read -r n t <<< "$entry"
+        printf '%s\t%s\n' "$n" "$t"
+    done > "$list"
+    if ! "$qwen_helper" --model "$DEST/qwen3" --reference "$reference" --out-dir "$tmp" \
+            --rate "$QWEN_ACK_RATE" --render "$list" 2>/dev/null; then
+        rm -rf "$tmp"
+        echo "error: the Qwen helper could not render acknowledgements/$name" >&2
+        exit 1
+    fi
+    rm -f "$list"
+    printf '%s\n' "$stamp" > "$tmp/stamp"
+    rm -rf "$out"
+    mv "$tmp" "$out"
+    echo "rendered  acknowledgements/$name (${#ACKNOWLEDGEMENTS[@]} lines)"
+}
+
+render_qwen_acknowledgements
