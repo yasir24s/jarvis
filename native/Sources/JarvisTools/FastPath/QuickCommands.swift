@@ -83,6 +83,11 @@ public struct QuickCommands: Sendable {
     /// The reply for `text`, or nil for the brain. Actions that Python ran beside the spoken
     /// announcement are started here and not awaited.
     public func route(_ text: String, turn: TurnContext) async -> String? {
+        // TV tools (native only): "what's on TV", before Python's branches; none of them takes it.
+        if TVIntent.isNowPlaying(FastPathRouter.normalise(text)), let reply = await tool(TVNowPlaying.name, turn: turn) {
+            log("fast path: tv.now_playing")
+            return reply
+        }
         let match = router.route(text)
         guard FastPathRouter.carried.contains(match.branch), let command = match.command,
               let reply = await perform(command, turn: turn) else { return nil }
@@ -156,7 +161,19 @@ public struct QuickCommands: Sendable {
             return await tool(QuickOpenPath.name, ["path": .string(path), "reveal": .bool(true)], turn: turn)
         case .resolveOpen(let name): return await tool(QuickOpenApp.name, ["name": .string(name)], turn: turn)
         case .nowPlaying: return await tool("music_now_playing", turn: turn)
-        case .playQuery(let q): return await tool("music_play", ["query": .string(q)], turn: turn)
+        case .playQuery(let q):
+            // TV tools: an episode request goes to tv_play (music_play when it is not registered);
+            // "the latest X" could be either, so the brain picks.
+            switch TVIntent.play(q) {
+            case .episode(let show, let episode)?:
+                if let reply = await tool(TVPlay.name, ["show": .string(show), "episode": .string(episode)], turn: turn) {
+                    return reply
+                }
+            case .ambiguous?:
+                if await tools?.isRegistered(TVPlay.name) == true { return nil }
+            case nil: break
+            }
+            return await tool("music_play", ["query": .string(q)], turn: turn)
         case .location: return await tool("get_location", turn: turn)
         case .weather(let city): return await tool("get_weather", ["location": .string(city)], turn: turn)
         case .reminder(let task, let when):

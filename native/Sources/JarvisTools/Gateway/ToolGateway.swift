@@ -41,6 +41,10 @@ public actor ToolGateway {
         }
     }
 
+    /// Whether a tool has a body here (TV tools: the fast path sends "the latest X" to the brain
+    /// only when tv_play can answer it).
+    func isRegistered(_ name: String) -> Bool { handlers[name] != nil }
+
     public func toolList() -> [ToolSchema] {
         DataSourceMap.toolNames.map { name in
             handlers[name]?.schema ?? ToolSchema(name: name)
