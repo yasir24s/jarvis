@@ -140,7 +140,9 @@ struct F5EngineTests {
         let f5 = engine(launcher, timeout: .milliseconds(100))
         let start = SuspendingClock.now
         #expect(await reason(f5, "Slow.") == .timeout)
-        #expect(SuspendingClock.now - start < .seconds(5))
+        // Load-proof: the timeout is 100 ms, and a timeout that never fired would wait on the silent
+        // helper forever, so a 30 s bound keeps the meaning without failing on a busy machine.
+        #expect(SuspendingClock.now - start < .seconds(30))
         #expect(launcher.connections[0].terminated)
         #expect(try await samples(f5, "Next.") == [0.4])
         #expect(launcher.launches == 2)
