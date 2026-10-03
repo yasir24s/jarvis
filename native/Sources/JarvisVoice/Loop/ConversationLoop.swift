@@ -27,11 +27,18 @@ public protocol ConversationHost: Sendable {
     func setTone(_ descriptor: String) async
     /// `personality_distill_async()`: a conversation is over.
     func conversationEnded() async
+    /// M11b: a wake word was accepted (true), or the loop is back in standby (false). Voice
+    /// processing that a reply turned on stays on while the window is open.
+    func conversationWindow(open: Bool) async
     /// `research_bump(key)`.
     func bump(_ key: String) async
 }
 
 /// The wake word, as the loop waits for it: `WakeWatcher` in the app, a script in tests.
+extension ConversationHost {
+    public func conversationWindow(open: Bool) async {}
+}
+
 public protocol WakeWaiting: Sendable {
     func warm() async throws
     func waitForWake(_ source: FrameSource, confirm: WakeWatcher.Confirm?) async throws -> WakeResult
@@ -127,7 +134,9 @@ public actor ConversationLoop {
         guard await boot(source, greet: greet) else { return }
         ready()
         while !Task.isCancelled {
-            guard await standby(source) else { return }
+            let more = await standby(source)
+            await host.conversationWindow(open: false)
+            guard more else { return }
         }
     }
 
@@ -201,6 +210,7 @@ public actor ConversationLoop {
             return true
         case .hard(let clip):
             guard await wakeIsTheUser(clip) else { return true }
+            await host.conversationWindow(open: true)
             await host.chime(.tink)
             await host.show(.listening)
             do {
@@ -213,6 +223,7 @@ public actor ConversationLoop {
             }
         case .soft(let heard, let clip):
             guard await wakeIsTheUser(clip) else { return true }
+            await host.conversationWindow(open: true)
             await host.chime(.tink)
             await host.show(.listening)
             // The transcript around the wake word is in hand: "jarvis close safari" needs no

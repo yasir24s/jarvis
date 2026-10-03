@@ -281,6 +281,12 @@ final class AppHandsFree {
 
     fileprivate func conversationEnded() { conversationOver() }
 
+    /// M11b: voice processing stays on from a reply until the loop is back in standby, so the
+    /// switch off never clips the start of a follow-up.
+    fileprivate func conversationWindow(open: Bool) {
+        if open { hub.conversationOpened() } else { hub.conversationClosed() }
+    }
+
     fileprivate func bump(_ key: String) { research.bump(key, by: 1) }
 
     /// The loop's view of the app.
@@ -296,6 +302,7 @@ final class AppHandsFree {
         func identifyMusic() async -> String? { nil }
         func setTone(_ descriptor: String) async { await app.setTone(descriptor) }
         func conversationEnded() async { await app.conversationEnded() }
+        func conversationWindow(open: Bool) async { await app.conversationWindow(open: open) }
         func bump(_ key: String) async { await app.bump(key) }
     }
 }

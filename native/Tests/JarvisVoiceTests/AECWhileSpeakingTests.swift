@@ -229,6 +229,121 @@ struct AECWhileSpeakingTests {
         input.stop()
     }
 
+    // MARK: the hands-free conversation window
+
+    /// What `clip` gives through a hub's MicCapture, pushed in real time as 96 kHz voice-processed
+    /// buffers starting `after` past the end of his reply, in a conversation (`window`) or not.
+    /// Also returns the engine's builds once the clip is in.
+    static func followUp(_ clip: [Int16], after: Duration, window: Bool) async throws
+        -> (frames: [[Int16]], builds: [HubMode], engine: FakeHubEngine, hub: AudioHub) {
+        let engine = FakeHubEngine(plainFormat: plain)
+        let hub = Self.hub(engine)
+        let mic = MicCapture(makeInput: { HubMicInput(hub: hub) })
+        let frames = await mic.frames()
+        let collect = Task { await frames.reduce(into: [[Int16]]()) { $0.append($1.samples) } }
+        try await mic.start()
+        if window { hub.conversationOpened() }
+        hub.speechWillStart()
+        _ = await until { engine.mode == on }
+        try await hub.play(AudioHubTests.speech, on: .speech, limit: .seconds(5))
+        hub.speechEnded()
+        try await Task.sleep(for: after)
+        for b in buffers(clip[...], processed) {
+            engine.push(b)
+            try await Task.sleep(for: .milliseconds(21))   // 2048 frames at 96 kHz
+        }
+        let builds = engine.builds
+        await mic.stop()
+        return (await collect.value, builds, engine, hub)
+    }
+
+    @Test("in a conversation, a follow-up 0.2 s after his reply is captured whole, with no switch in between")
+    func followUpInConversation() async throws {
+        // Two seconds of speech: longer than the tail, so a switch off would land inside it.
+        let speech = try WakeCorpus.clip("wake_time_daniel_200")
+        let clip = Array(speech[(48_000)..<(48_000 + 32_000)])
+        let got = try await Self.followUp(clip, after: .milliseconds(200), window: true)
+        #expect(got.builds == [Self.off, Self.on], "no switch between his reply and the follow-up")
+        // Every sample, exactly as the same buffers give a microphone that never switched.
+        let engine = FakeHubEngine()
+        let reference = MicCapture(makeInput: { HubMicInput(hub: Self.hub(engine, .always)) })
+        let stream = await reference.frames()
+        let read = Task { await stream.reduce(into: [[Int16]]()) { $0.append($1.samples) } }
+        try await reference.start()
+        for b in Self.buffers(clip[...], Self.processed) { engine.push(b) }
+        await reference.stop()
+        let want = await read.value
+        #expect(got.frames.count == want.count && want.count >= clip.count / MicFrame.sampleCount - 1,
+                "\(got.frames.count) frames, \(want.count) without a switch")
+        #expect(got.frames == want)
+    }
+
+    @Test("outside a conversation the same follow-up meets the switch off (typed chat, push-to-talk)")
+    func followUpOutsideConversation() async throws {
+        let speech = try WakeCorpus.clip("wake_time_daniel_200")
+        let clip = Array(speech[(48_000)..<(48_000 + 32_000)])
+        let got = try await Self.followUp(clip, after: .milliseconds(200), window: false)
+        #expect(got.builds == [Self.off, Self.on, Self.off])
+    }
+
+    @Test("closing the conversation turns voice processing off after the tail; closing the microphone forgets it")
+    func closingTheWindow() async throws {
+        let engine = FakeHubEngine(plainFormat: Self.plain)
+        let hub = Self.hub(engine)
+        let input = HubMicInput(hub: hub)
+        _ = try input.inputFormat()
+        hub.conversationOpened()
+        #expect(engine.builds == [Self.off], "opening the window turns nothing on")
+        hub.speechWillStart()
+        #expect(await Self.until { engine.mode == Self.on })
+        hub.speechEnded()
+        try await Task.sleep(for: .milliseconds(1500))
+        #expect(engine.builds == [Self.off, Self.on])
+        hub.conversationClosed()
+        try await Task.sleep(for: .milliseconds(500))
+        #expect(engine.builds == [Self.off, Self.on], "the tail")
+        #expect(await Self.until { engine.builds == [Self.off, Self.on, Self.off] })
+        // Listening switched off mid-conversation: the next microphone opens plain.
+        hub.conversationOpened()
+        hub.speechWillStart()
+        #expect(await Self.until { engine.mode == Self.on })
+        hub.speechEnded()
+        input.stop()
+        let again = HubMicInput(hub: hub)
+        _ = try again.inputFormat()
+        #expect(engine.mode == Self.off)
+        again.stop()
+    }
+
+    /// Records only the window calls.
+    final class WindowHost: ConversationHost {
+        private let events = Mutex<[String]>([])
+        var all: [String] { events.withLock { $0 } }
+        func show(_ state: LoopState) async {}
+        func caption(_ text: String) async {}
+        func say(_ text: String) async { events.withLock { $0.append("say") } }
+        func chime(_ sound: ChimeSound) async {}
+        func handle(_ command: String) async { events.withLock { $0.append("handle") } }
+        func identifyMusic() async -> String? { nil }
+        func setTone(_ descriptor: String) async {}
+        func conversationEnded() async {}
+        func bump(_ key: String) async {}
+        func conversationWindow(open: Bool) async { events.withLock { $0.append(open ? "open" : "closed") } }
+    }
+
+    @Test("the loop opens the window on an accepted wake word and closes it back in standby")
+    func loopWindow() async {
+        typealias L = ConversationLoopTests
+        let host = WindowHost()
+        let loop = ConversationLoop(host: host, watcher: L.Wake([.hard(clip: L.user), .hard(clip: L.other)]),
+                                    listener: L.Listener([L.heard("what time is it"), L.heard("and tomorrow"), nil]),
+                                    speaker: L.Speaker(), enrolment: nil, confirm: nil, hour: { 9 })
+        await loop.run(L.source(), greet: false)
+        // The user's wake: open, two turns, CONV_TIMEOUT, closed. Another voice's: closed only.
+        // The frames ending: closed.
+        #expect(host.all == ["open", "handle", "handle", "closed", "closed", "closed"])
+    }
+
     // MARK: the wake word near a switch
 
     /// The microphone's missed sound across a switch, measured on a MacBook Pro with

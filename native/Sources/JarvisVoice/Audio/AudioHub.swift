@@ -282,7 +282,9 @@ final class SystemHubEngine: HubEngine {
 ///   rebuilt output only, so the microphone is open only while something listens.
 /// - Voice processing follows `AECPolicy` (M11b). By default the microphone opens without it;
 ///   `speechWillStart()` (a reply has started generating) rebuilds the engine with it, and about
-///   `tail` after the last `speechEnded()` it is rebuilt without it again. A switch never runs
+///   `tail` after the last `speechEnded()` it is rebuilt without it again; inside a hands-free
+///   conversation (`conversationOpened()`) it stays on until `conversationClosed()`, then the
+///   tail. A switch never runs
 ///   while anything plays: it waits for the audio to end. `speechReady()` waits for a switch in
 ///   flight, so a reply that finished generating first plays with voice processing on.
 /// - One engine in the process: once a voice-processing engine starts, another engine's input
@@ -338,6 +340,10 @@ public final class AudioHub: @unchecked Sendable {
     /// tail timer whether it is still the latest.
     private var inTail = false
     private var tailToken = 0
+    /// A hands-free conversation is open; voice processing a reply turned on is kept on
+    /// (`lingering`) until it closes.
+    private var conversation = false
+    private var lingering = false
     /// The mode a switch last failed to build: not tried again until the next reply starts.
     private var failedSwitch: HubMode?
     /// A switch is queued on `queue` or running, and the `speechReady()` calls waiting for it,
@@ -480,6 +486,36 @@ public final class AudioHub: @unchecked Sendable {
         guard speaking > 0 else { return }
         speaking -= 1
         guard speaking == 0 else { return }
+        if conversation, policy == .whileSpeaking {
+            lingering = true
+            return
+        }
+        startTail()
+    }
+
+    /// The hands-free loop accepted a wake word: until `conversationClosed()`, voice processing
+    /// that a reply turns on stays on after it (a follow-up needs no wake word, and a switch
+    /// would make the microphone miss its start). Opening it turns nothing on.
+    public func conversationOpened() {
+        lock.lock()
+        defer { lock.unlock() }
+        conversation = true
+    }
+
+    /// The loop is back in standby (CONV_TIMEOUT, a dismissal, or it stopped): voice processing
+    /// goes off after the tail, unless a reply is still generating or playing.
+    public func conversationClosed() {
+        lock.lock()
+        defer { lock.unlock() }
+        guard conversation else { return }
+        conversation = false
+        guard lingering else { return }
+        lingering = false
+        if speaking == 0 { startTail() }
+    }
+
+    /// Under the lock: voice processing stays on for `tail`, then goes off unless a reply started.
+    private func startTail() {
         tailToken += 1
         let token = tailToken
         inTail = policy == .whileSpeaking
@@ -537,7 +573,7 @@ public final class AudioHub: @unchecked Sendable {
         switch policy {
         case .never: false
         case .always: true
-        case .whileSpeaking: speaking > 0 || inTail
+        case .whileSpeaking: speaking > 0 || inTail || lingering
         }
     }
 
@@ -644,6 +680,9 @@ public final class AudioHub: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         guard inputs.remove(id) != nil, inputs.isEmpty, mode.hasInput else { return }
+        // Listening is off: no conversation outlives the microphone.
+        conversation = false
+        lingering = false
         do throws(MicError) {
             try rebuild(.output, because: "the microphone closed")
         } catch {
