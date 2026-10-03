@@ -26,6 +26,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let chat = ChatViewModel()
     /// The menu's "Speak replies" toggle, the user's input to the speak policy.
     let speakReplies = SpeakRepliesToggle()
+    /// V5: the menus' "Speak First Sentence Early"; SpeechQueue reads the stored value itself.
+    let speakEarly = SpeakEarlySetting()
     /// M9a part 7: the menus' "Brain", Claude, ChatGPT (B2) or On-device; BrainRouter reads it each
     /// turn.
     let brainSetting = BrainSetting(claudeEnabled: ClaudeConfig(environment: ProcessInfo.processInfo.environment).enabled,

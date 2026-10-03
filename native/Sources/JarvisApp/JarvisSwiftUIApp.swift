@@ -27,7 +27,7 @@ struct JarvisSwiftUIApp: App {
             // The app menu's "Stop Speaking" (M8), M9a's "Brain", P6's file learning, UI1's
             // "Show HUD" and U1's update items, as in the menu-bar menu.
             CommandGroup(after: .appInfo) {
-                AppMenuItems(stopSpeaking: { appDelegate.stopSpeaking() }, brain: appDelegate.brainSetting,
+                AppMenuItems(stopSpeaking: { appDelegate.stopSpeaking() }, speakEarly: appDelegate.speakEarly, brain: appDelegate.brainSetting,
                              chatgpt: appDelegate.chatgptAccount, learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD,
                              hud: appDelegate.hud, updates: appDelegate.updates, voice: appDelegate.voiceStatus,
                              forgetVoice: { appDelegate.forgetVoice() })
@@ -45,7 +45,7 @@ struct JarvisSwiftUIApp: App {
 
         MenuBarExtra("JARVIS", systemImage: "circle.hexagongrid.fill") {
             #if DEBUG
-            MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
+            MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies, speakEarly: appDelegate.speakEarly,
                         brain: appDelegate.brainSetting, chatgpt: appDelegate.chatgptAccount,
                         learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
                         updates: appDelegate.updates, voice: appDelegate.voiceStatus,
@@ -53,7 +53,7 @@ struct JarvisSwiftUIApp: App {
                         stopSpeaking: { appDelegate.stopSpeaking() },
                         testConfirmation: { appDelegate.stashTestConfirmation() })
             #else
-            MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies,
+            MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies, speakEarly: appDelegate.speakEarly,
                         brain: appDelegate.brainSetting, chatgpt: appDelegate.chatgptAccount,
                         learn: appDelegate.fileLearning, showHUD: appDelegate.showHUD, hud: appDelegate.hud,
                         updates: appDelegate.updates, voice: appDelegate.voiceStatus,

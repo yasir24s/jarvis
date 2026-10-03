@@ -39,6 +39,9 @@ final class AppVoice {
     /// What the reply being spoken is heard as: the queue's own `TextClean`, less a short
     /// opening acknowledgement when one has played since the last reply (as `SpeechQueue.say`).
     private var heardReply: String?
+    /// V5: the parts of `heardReply` still to be heard, as the queue splits it
+    /// (`SpeechQueue.parts`); each part's audio is captioned with its own text.
+    private var heardParts: [String] = []
     private var acknowledgedSinceReply = false
     /// The last acknowledgement clip handed to the queue, to tell its audio from a reply's.
     private var acknowledgementClip: PCMChunk?
@@ -55,6 +58,8 @@ final class AppVoice {
         queue = SpeechQueue(engine: f5, fallback: SayEngine(), player: ReportingPlayer(EnginePlayer(), events: playback),
                             speed: VoiceHelperSetup.speedFromDefaults, reference: { setup.reference },
                             tooLong: { f5.tooLong($0) },
+                            speakEarly: SpeechQueue.speakEarlyFromDefaults,
+                            sentences: Self.sentences,
                             helperFootprintMB: { f5.lastFootprintMB },
                             log: { JarvisLog.log($0, category: .voice) })
         playback.started = { [weak self] chunk in self?.audioStarted(chunk) }
@@ -131,6 +136,9 @@ final class AppVoice {
         let queue = self.queue
         let activity = self.activity
         heardReply = Self.heard(text, afterAcknowledgement: acknowledgedSinceReply)
+        heardParts = heardReply.map {
+            SpeechQueue.parts($0, early: SpeechQueue.speakEarlyFromDefaults(), sentences: Self.sentences)
+        } ?? []
         acknowledgedSinceReply = false
         inFlight += 1
         repliesPending += 1
@@ -153,6 +161,7 @@ final class AppVoice {
         let queue = self.queue
         let activity = self.activity
         heardReply = nil
+        heardParts = []
         inFlight += 1
         activity?.speechBegan()
         await queue.say(text, turn: UUID())
@@ -183,13 +192,17 @@ final class AppVoice {
         TextClean.clean(text).map { afterAcknowledgement ? Acknowledgement.spokenText($0) : $0 }
     }
 
-    /// The player started `chunk`: an acknowledgement, or the reply.
+    /// A reply's sentences, as the HUD's captions split them (V5: the queue's early first part).
+    static let sentences: @Sendable (String) -> [String] = { SentenceSplitter.pop($0, force: true).sentences }
+
+    /// The player started `chunk`: an acknowledgement, or the reply (or V5: one part of it).
     private func audioStarted(_ chunk: PCMChunk) {
         onAudio?(true)
         if let acknowledgementClip, acknowledgementClip.samples == chunk.samples { return }
         guard let heardReply, chunk.sampleRate > 0 else { return }
         replyAudioPlaying = true
-        onReplyAudioStarted?(heardReply, Double(chunk.samples.count) / chunk.sampleRate)
+        let part = heardParts.count > 1 ? heardParts.removeFirst() : (heardParts.first ?? heardReply)
+        onReplyAudioStarted?(part, Double(chunk.samples.count) / chunk.sampleRate)
     }
 
     private func audioEnded() {

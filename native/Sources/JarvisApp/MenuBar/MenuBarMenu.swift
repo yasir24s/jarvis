@@ -12,6 +12,8 @@ struct MenuBarMenu: View {
     let model: AppModel
     let chat: ChatViewModel
     @Bindable var speak: SpeakRepliesToggle
+    /// V5: "Speak First Sentence Early", after "Speak replies".
+    let speakEarly: SpeakEarlySetting
     let brain: BrainSetting
     /// B2 part 6: JARVIS's own ChatGPT sign-in, the item after Brain.
     let chatgpt: ChatGPTAccount
@@ -40,6 +42,7 @@ struct MenuBarMenu: View {
         Text(chat.backendLine)
         // The input to the user's speak policy (SpeakPolicy.swift); it persists across launches.
         Toggle("Speak replies", isOn: $speak.isOn)
+        SpeakEarlyToggle(setting: speakEarly)
         BrainPicker(setting: brain)
         ChatGPTSignInItem(account: chatgpt)
         Button("Stop Speaking") {
@@ -74,6 +77,8 @@ struct MenuBarMenu: View {
 /// "Show HUD" and U1's update items, as in the menu-bar menu.
 struct AppMenuItems: View {
     let stopSpeaking: () -> Void
+    /// V5: "Speak First Sentence Early", after "Stop Speaking" (this menu has no "Speak replies").
+    let speakEarly: SpeakEarlySetting
     let brain: BrainSetting
     let chatgpt: ChatGPTAccount
     let learn: FileLearningConsent
@@ -87,6 +92,7 @@ struct AppMenuItems: View {
         SetUpItem()
         VoiceMenuItems(status: voice, forget: forgetVoice)
         Button("Stop Speaking") { stopSpeaking() }
+        SpeakEarlyToggle(setting: speakEarly)
         BrainPicker(setting: brain)
         ChatGPTSignInItem(account: chatgpt)
         FileLearningToggle(consent: learn)

@@ -13,9 +13,18 @@ import JarvisCore
 /// V1 part 1: `acknowledge` plays a rendered acknowledgement the moment a message is sent. The
 /// reply after it generates while it plays and starts once it has finished, and does not say a
 /// short acknowledgement of its own first (`Acknowledgement.spokenText`).
+///
+/// V5: with Speak First Sentence Early on (`speakEarly`, read for each reply), a reply of two or
+/// more sentences whose first has at least `earlyMinimum` characters is generated in exactly two
+/// parts: the first sentence, then the whole rest. The rest generates while the first plays.
+/// The player's reply calls, Stop and the acknowledgement wrap both parts as one reply.
 public actor SpeechQueue {
     /// The app's defaults suite, where the voice settings are read from.
     public static let defaultsSuite = "com.jarvis.assistant"
+    /// The UserDefaults key of Speak First Sentence Early (V5); on when unset.
+    public static let speakEarlyKey = "speakEarly"
+    /// The shortest first sentence spoken on its own (V5), in Unicode scalars.
+    public static let earlyMinimum = 20
 
     private let engine: any SpeechEngine
     private let fallback: any SpeechEngine
@@ -29,6 +38,10 @@ public actor SpeechQueue {
     private var lastReference: String?
     /// Why the voice cannot take a reply whole, or nil when it can.
     private let tooLong: @Sendable (String) -> String?
+    /// Speak First Sentence Early, read for each reply (V5); nil never splits.
+    private let speakEarly: (@Sendable () -> Bool)?
+    /// The reply's sentences (the app's `SentenceSplitter`); nil never splits.
+    private let sentences: (@Sendable (String) -> [String])?
     private let helperFootprintMB: @Sendable () -> Int?
     private let log: @Sendable (String) -> Void
     private var current: Task<Void, Never>?
@@ -44,11 +57,15 @@ public actor SpeechQueue {
     ///   in the same way.
     /// - tooLong: given the cleaned reply, why the voice cannot generate it in one go (F5Engine's
     ///   `tooLong`), or nil. Such a reply goes to `fallback` without asking the voice.
+    /// - speakEarly: Speak First Sentence Early (`speakEarlyFromDefaults`), read for each reply.
+    /// - sentences: splits a reply into its sentences, for `parts`. Both are needed to split.
     /// - helperFootprintMB: the helper's footprint in its last reply, for the log line.
     public init(engine: any SpeechEngine, fallback: any SpeechEngine, player: any SpeechPlayer,
                 speed: (@Sendable () -> Double)? = nil,
                 reference: (@Sendable () -> String)? = nil,
                 tooLong: @escaping @Sendable (String) -> String? = { _ in nil },
+                speakEarly: (@Sendable () -> Bool)? = nil,
+                sentences: (@Sendable (String) -> [String])? = nil,
                 helperFootprintMB: @escaping @Sendable () -> Int? = { nil },
                 log: @escaping @Sendable (String) -> Void) {
         self.engine = engine
@@ -57,6 +74,8 @@ public actor SpeechQueue {
         self.speed = speed
         self.reference = reference
         self.tooLong = tooLong
+        self.speakEarly = speakEarly
+        self.sentences = sentences
         self.helperFootprintMB = helperFootprintMB
         self.log = log
     }
@@ -106,13 +125,38 @@ public actor SpeechQueue {
             || (reference != nil && lastReference != nil && reference != lastReference)
         if let speed { lastSpeed = speed }
         if let reference { lastReference = reference }
-        let overflow = tooLong(clean)
+        let early = speakEarly?() ?? false
+        let parts = sentences.map { Self.parts(clean, early: early, sentences: $0) } ?? [clean]
+        let overflows = parts.map { tooLong($0) }
         current = Task {
             await previous?.value   // the reply before has stopped its audio
             guard !Task.isCancelled else { return }
             if restart { await self.engine.release() }   // the next request starts it with the new setting
-            await self.speak(clean, turn: turn, started: started, overflow: overflow, after: acknowledgement)
+            await self.speak(clean, parts: parts, turn: turn, started: started, overflows: overflows,
+                             after: acknowledgement)
         }
+    }
+
+    /// V5: what a reply is generated as. With `early` on, a reply of two or more sentences whose
+    /// first has at least `earlyMinimum` characters is two parts, the first sentence and the
+    /// whole rest; otherwise it is the reply whole.
+    public static func parts(_ text: String, early: Bool, sentences: (String) -> [String]) -> [String] {
+        guard early else { return [text] }
+        let split = sentences(text)
+        guard split.count >= 2, let first = split.first, first.unicodeScalars.count >= earlyMinimum,
+              let range = text.range(of: first) else { return [text] }
+        let rest = text[range.upperBound...].trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !rest.isEmpty else { return [text] }
+        return [first, rest]
+    }
+
+    /// Speak First Sentence Early as stored in the app's defaults suite: on unless switched off.
+    public static func speakEarlyFromDefaults() -> Bool {
+        speakEarly(in: UserDefaults(suiteName: defaultsSuite))
+    }
+
+    public static func speakEarly(in defaults: UserDefaults?) -> Bool {
+        defaults?.object(forKey: speakEarlyKey) as? Bool ?? true
     }
 
     /// V1 part 5: has the voice get ready for a reply that is coming (the user is typing). When
@@ -158,46 +202,75 @@ public actor SpeechQueue {
         var fallbackReason: String?
     }
 
-    private func speak(_ text: String, turn: UUID, started: ContinuousClock.Instant, overflow: String?,
-                       after acknowledgement: Task<Void, Never>?) async {
+    private func speak(_ text: String, parts: [String], turn: UUID, started: ContinuousClock.Instant,
+                       overflows: [String?], after acknowledgement: Task<Void, Never>?) async {
         let characters = text.unicodeScalars.count
-        if let overflow {
-            log("voice: \(characters) chars do not fit the voice (\(overflow)); say speaks the reply")
+        for (part, overflow) in zip(parts, overflows) {
+            guard let overflow else { continue }
+            let what = parts.count == 1 ? "the reply" : "that part"
+            log("voice: \(part.unicodeScalars.count) chars do not fit the voice (\(overflow)); say speaks \(what)")
         }
-        // M11b: voice processing comes on while the reply generates, and goes off after it.
+        let context = SynthesisContext(turnID: turn)
+        // M11b: voice processing comes on while the reply generates, and goes off after it, once
+        // for the whole reply however many parts it has.
         await player.replyStarting()
-        let pending = generate(text, SynthesisContext(turnID: turn), withVoice: overflow == nil)
-        let reply = await withTaskCancellationHandler {
-            await pending.value
-        } onCancel: {
-            pending.cancel()
-        }
+        var next: Task<Generated, Never>? = generate(parts[0], context, withVoice: overflows[0] == nil)
+        var index = 0
         var firstAudio: Duration?
-        var stopped = Task.isCancelled
-        if !stopped {
+        var ready = false
+        var stopped = false
+        var generating = Duration.zero
+        var sayParts = 0
+        var byVoice = false
+        while let pending = next {
+            next = nil
+            let reply = await withTaskCancellationHandler {
+                await pending.value
+            } onCancel: {
+                pending.cancel()
+            }
+            generating += reply.elapsed
+            if reply.engine == .say { sayParts += 1 } else if reply.engine != nil { byVoice = true }
+            if Task.isCancelled {
+                stopped = true
+                break
+            }
+            // V5: the rest generates while this part plays.
+            if index + 1 < parts.count {
+                next = generate(parts[index + 1], context, withVoice: overflows[index + 1] == nil)
+            }
+            index += 1
             if let reason = reply.fallbackReason {
                 log("voice: F5 failed (\(reason)); say speaks instead")
             }
-            if let chunk = reply.chunk, !chunk.samples.isEmpty {
+            guard let chunk = reply.chunk, !chunk.samples.isEmpty else { continue }
+            if !ready {
                 await acknowledgement?.value   // generated while it played; heard after it
                 if !Task.isCancelled { await player.replyReady() }
-                if Task.isCancelled {
-                    stopped = true
-                } else {
-                    firstAudio = ContinuousClock.now - started
-                    do {
-                        try await player.play(chunk)
-                    } catch {
-                        log("voice: cannot play (\(error))")
-                    }
-                    stopped = Task.isCancelled
-                }
+                ready = true
+            }
+            if Task.isCancelled {
+                stopped = true
+                break
+            }
+            if firstAudio == nil { firstAudio = ContinuousClock.now - started }
+            do {
+                try await player.play(chunk)
+            } catch {
+                log("voice: cannot play (\(error))")
+            }
+            if Task.isCancelled {
+                stopped = true
+                break
             }
         }
+        if let next {   // stopped while a part played: the part after it is not wanted
+            next.cancel()
+            _ = await next.value
+        }
         await player.replyEnded()
-        let byFallback = reply.engine == .say
-        log(Self.summary(characters: characters, firstAudio: firstAudio, generating: reply.elapsed,
-                         helperMB: byFallback ? nil : helperFootprintMB(), sayParts: byFallback ? 1 : 0,
+        log(Self.summary(characters: characters, parts: parts.count, firstAudio: firstAudio, generating: generating,
+                         helperMB: sayParts > 0 && !byVoice ? nil : helperFootprintMB(), sayParts: sayParts,
                          stopped: stopped))
     }
 
@@ -246,10 +319,11 @@ public actor SpeechQueue {
     }
 
     /// `voice: <n> chars in 1 part(s); first audio after <s> s; generated in <g> s; helper <MB> MB`
-    /// The "1 part(s)" stays from when replies were split, so the line reads as it always has.
-    static func summary(characters: Int, firstAudio: Duration?, generating: Duration,
+    /// A reply spoken whole is "1 part(s)", as the line has always read; V5's early first
+    /// sentence makes it 2. `generated in` is the parts' generation times added up.
+    static func summary(characters: Int, parts: Int = 1, firstAudio: Duration?, generating: Duration,
                         helperMB: Int?, sayParts: Int, stopped: Bool) -> String {
-        var line = "voice: \(characters) chars in 1 part(s); "
+        var line = "voice: \(characters) chars in \(parts) part(s); "
         line += firstAudio.map { "first audio after \(seconds($0)) s" } ?? "no audio"
         line += "; generated in \(seconds(generating)) s; helper "
         line += helperMB.map { "\($0) MB" } ?? "n/a"

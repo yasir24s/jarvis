@@ -59,21 +59,22 @@ struct BrainMenuTests {
                       chatgpt: ChatGPTAccount = ChatGPTAccount(runner: StatusOnly(answer: .signedOut))) -> Menus {
         _ = NSApplication.shared
         let speak = SpeakRepliesToggle(defaults: defaults)
+        let speakEarly = SpeakEarlySetting(defaults: defaults)
         let learn = FileLearningConsent(defaults: defaults)
         let showHUD = ShowHUDSetting(defaults: defaults)
         let hud = HUDModel()
         let updates = UpdateWatcher(folders: nil)
         #if DEBUG
-        let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, brain: brain, chatgpt: chatgpt,
+        let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, speakEarly: speakEarly, brain: brain, chatgpt: chatgpt,
                               learn: learn, showHUD: showHUD, hud: hud, updates: updates,
                               voice: VoiceprintStatus(defaults: defaults), forgetVoice: {}, stopSpeaking: {},
                               testConfirmation: {})
         #else
-        let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, brain: brain, chatgpt: chatgpt,
+        let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, speakEarly: speakEarly, brain: brain, chatgpt: chatgpt,
                               learn: learn, showHUD: showHUD, hud: hud, updates: updates,
                               voice: VoiceprintStatus(defaults: defaults), forgetVoice: {}, stopSpeaking: {})
         #endif
-        let app = AppMenuItems(stopSpeaking: {}, brain: brain, chatgpt: chatgpt, learn: learn, showHUD: showHUD,
+        let app = AppMenuItems(stopSpeaking: {}, speakEarly: speakEarly, brain: brain, chatgpt: chatgpt, learn: learn, showHUD: showHUD,
                                hud: hud, updates: updates, voice: VoiceprintStatus(defaults: defaults), forgetVoice: {})
         return Menus(bar: NSHostingMenu(rootView: bar), app: NSHostingMenu(rootView: app))
     }
@@ -107,10 +108,11 @@ struct BrainMenuTests {
                 #expect(brainItem.isEnabled, "\(name)")
                 try Self.write(Self.tree(menu), name: "m9-part7-\(name)-\(choice.rawValue)")
             }
-            // In the menu-bar menu it sits right after Speak replies.
+            // In the menu-bar menu it sits right after Speak replies and V5's Speak First Sentence Early.
             let titles = menus.bar.items.map(\.title)
             let speak = try #require(titles.firstIndex(of: "Speak replies"))
-            #expect(titles.indices.contains(speak + 1) && titles[speak + 1] == BrainSetting.menuTitle)
+            #expect(titles.indices.contains(speak + 2) && titles[speak + 1] == SpeakEarlySetting.menuTitle
+                    && titles[speak + 2] == BrainSetting.menuTitle)
         }
     }
 
