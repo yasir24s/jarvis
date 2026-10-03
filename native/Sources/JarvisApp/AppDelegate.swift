@@ -81,6 +81,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// before the lock is released: its passes write, and writes need the lease.
     private var personality: PersonalitySchedule?
     private var idleCompile: IdleCompile?
+    /// F1: speaks the alarms and reminders JARVIS set as they come due; stopped at quit.
+    private var reminders: ReminderSchedule?
+    private var reminderAnnouncer: ReminderAnnouncer?
     /// W1: the web memory's background summaries, stopped at quit before the lock is released.
     private var webSummaries: WebSummaryQueue?
     /// W1 part 5: the background reading, stopped at quit before the lock is released.
@@ -236,6 +239,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         research = nil
         personality?.stop()   // no personality pass outlives the lease
         personality = nil
+        reminders?.stop()   // nor a reminder check (F1)
+        reminders = nil
         idleCompile?.stop()   // nor an idle compile
         idleCompile = nil
         webSummaries?.stop()   // nor a page summary (W1)
@@ -300,6 +305,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // As the SIGTERM path does: nothing that writes outlives the lease.
         research?.stop()   // flushes enqueued bumps while the lease is still held
         personality?.stop()
+        reminders?.stop()
         idleCompile?.stop()
         files?.cancel()
         lock = nil   // closes the fd: releases the flock before the helper starts
@@ -470,6 +476,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                       store: store,
                                       extractors: TextExtractors([PlainTextExtractor(), DocumentTextExtractor()]),
                                       enabled: { consent.isOn })
+        // F1: alarms.json, which set_reminder and set_alarm write and ReminderSchedule reads.
+        let alarms = AlarmBook(store: store, timeZone: .autoupdatingCurrent)
         let assembly = BrainAssembly(
             core: core, research: research, config: config, environment: environment,
             runDirectory: folders.run, claudeWorkingDirectory: folders.claudeWorkingDirectory,
@@ -478,6 +486,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // W1: JARVIS reads the web with WebKit on a private profile (never the Safari app),
             // and reads in the background only while he is not speaking.
             reader: WebReader(), waitForSilence: { [queue = voice.queue] in await queue.idle() },
+            alarms: alarms,
             textAuthenticator: authenticator,
             // Python's is_online(): asked only when a turn reaches the brain.
             online: { await Net.isOnline() },
@@ -497,6 +506,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // P6: chats are compiled into memory after 30 idle minutes too, not only on a dismissal.
         assembly.idleCompile?.start()
         idleCompile = assembly.idleCompile
+        // F1: due alarms and reminders are spoken in his voice, after any reply being written.
+        // The first check is now, so one that came due while JARVIS was quit (under two hours
+        // ago) is spoken at launch.
+        let announcer = ReminderAnnouncer(isBusy: { [weak self] in self?.chat.responding ?? false },
+                                          speak: { line in voice.speak(line, turn: UUID()) },
+                                          post: { [weak self] line in self?.chat.post(line) })
+        reminderAnnouncer = announcer
+        let reminders = ReminderSchedule(book: alarms, announce: { line in
+            await MainActor.run { announcer.announce(line) }
+        })
+        reminders.start()
+        self.reminders = reminders
         webSummaries = assembly.webSummaries
         webSummaries?.kick()   // pages left unsummarised by the last run
         // P2: the facts' sentence vectors are computed in the background, not on the first turn.
@@ -765,6 +786,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.updates.stop()
                 self.research?.stop()   // flushes enqueued bumps while the lease is still held
                 self.personality?.stop()   // no personality pass outlives the lease
+                self.reminders?.stop()   // nor a reminder check (F1)
                 self.idleCompile?.stop()   // nor an idle compile
                 self.webSummaries?.stop()   // nor a page summary (W1)
                 self.reading?.stop()   // nor a background reading pass (W1)

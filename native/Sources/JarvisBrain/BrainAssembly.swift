@@ -91,6 +91,9 @@ public final class BrainAssembly: Sendable {
     /// The memory tools' store and search (P4), registered by `start()`. nil without a
     /// `memory` store.
     private let memoryTools: BuiltInTools.Memory?
+    /// F1: alarms.json, which set_reminder and set_alarm write, registered by `start()`. nil
+    /// means neither tool has a body.
+    private let alarms: AlarmBook?
     /// The background reading of the user's files (P3), into the same facts. nil without a
     /// `memory` store or `files`. Not started here: the app starts it once the brain has
     /// started and stops it at quit, before the lock is released.
@@ -137,6 +140,8 @@ public final class BrainAssembly: Sendable {
     ///   - waitForSilence: W1 part 5: returns once no reply is being spoken (the app's voice),
     ///     so the background reading waits while JARVIS talks.
     ///   - embedding: the sentence vectors for recall and duplicate merging.
+    ///   - alarms: F1: the alarms and reminders set_reminder and set_alarm write; nil means
+    ///     neither tool has a body.
     ///   - log: every log line of the parts, with its category. Tests pass their own.
     public init(core: CoreState, research: any ResearchCounting,
                 config: ClaudeConfig, environment: [String: String],
@@ -149,6 +154,7 @@ public final class BrainAssembly: Sendable {
                 files: FileScanSetup? = nil, reader: (any PageReading)? = nil,
                 waitForSilence: @escaping @Sendable () async -> Void = {},
                 embedding: any SentenceEmbedding = SystemSentenceEmbedding(),
+                alarms: AlarmBook? = nil,
                 textAuthenticator: any ConfirmAuthenticator, fastPath: any FastPathRouting = NoFastPath(),
                 online: @escaping @Sendable () async -> Bool,
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
@@ -157,6 +163,7 @@ public final class BrainAssembly: Sendable {
                 log: @escaping @Sendable (String, LogCategory) -> Void = { JarvisLog.log($0, category: $1) }) {
         let brainLog: @Sendable (String) -> Void = { log($0, .brain) }
         self.core = core
+        self.alarms = alarms
         confirmations = ConfirmationGate()
         gateway = ToolGateway(confirmationGate: confirmations, log: { log($0, .tools) }, research: research,
                               journal: memory.map { ToolJournal(memory: $0) })
@@ -291,7 +298,7 @@ public final class BrainAssembly: Sendable {
     /// creates the run directory (0700) and starts the MCP server on it.
     public func start() async throws {
         await BuiltInTools.register(on: gateway, core: core, clock: SystemClock(), timeZone: .autoupdatingCurrent,
-                                    memory: memoryTools, web: webTools)
+                                    memory: memoryTools, web: webTools, alarms: alarms)
         try await server.start()
     }
 

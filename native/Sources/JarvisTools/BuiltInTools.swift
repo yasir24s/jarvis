@@ -5,7 +5,7 @@ import JarvisCore
 /// `personality_rewrite`; M5 T5.5: `get_battery`, `get_cpu_usage`, `get_wifi_status`,
 /// `run_diagnostics`; T5.6: `read_clipboard`; T5.7: `see_screen`, `take_screenshot`; T5.8:
 /// `find_apps`; T5.10: `search_files`, `find_files`; T5.11: `read_file`; W1: `web_search`,
-/// `get_weather`, `get_location`, `get_news`), registered on a gateway in one call, so JarvisBrain and JarvisApp
+/// `get_weather`, `get_location`, `get_news`; F1: `set_reminder`, `set_alarm`), registered on a gateway in one call, so JarvisBrain and JarvisApp
 /// never name a tool type. Every other catalog tool stays listed with no body, and the gateway
 /// answers it with its unknown-tool text until M5 or M6 adds one.
 public enum BuiltInTools {
@@ -38,17 +38,20 @@ public enum BuiltInTools {
     /// Python's `datetime.now()` reads; the app passes the system's, tests pin both. `core` owns
     /// the personality file the two personality tools write (through its StateStore). With
     /// `memory`, the four memory tools are registered too (NativeToolCatalog). With `web`,
-    /// web_search has its deep mode (W1 part 4).
+    /// web_search has its deep mode (W1 part 4). With `alarms`, set_reminder and set_alarm write
+    /// to JARVIS's alarms.json (F1).
     public static func register(on gateway: ToolGateway, core: CoreState, clock: any JarvisClock,
-                                timeZone: TimeZone, memory: Memory? = nil, web: Web? = nil) async {
+                                timeZone: TimeZone, memory: Memory? = nil, web: Web? = nil,
+                                alarms: AlarmBook? = nil) async {
         await register(on: gateway, core: core, clock: clock, timeZone: timeZone, platform: .live, memory: memory,
-                       web: web)
+                       web: web, alarms: alarms)
     }
 
     /// The same registration over `platform`, the machine-facing readers, so tests register
     /// every body over fakes.
     static func register(on gateway: ToolGateway, core: CoreState, clock: any JarvisClock,
-                         timeZone: TimeZone, platform: ToolPlatform, memory: Memory? = nil, web: Web? = nil) async {
+                         timeZone: TimeZone, platform: ToolPlatform, memory: Memory? = nil, web: Web? = nil,
+                         alarms: AlarmBook? = nil) async {
         await gateway.register(GetTime(clock: clock, timeZone: timeZone))
         await gateway.register(PersonalityNote(core: core))
         await gateway.register(PersonalityRewrite(core: core))
@@ -93,6 +96,10 @@ public enum BuiltInTools {
             await gateway.register(Capped(ForgetMemory(memory: memory.store)))
             await gateway.register(Capped(CorrectMemory(memory: memory.store, clock: clock)))
             await gateway.register(Capped(RestoreMemory(memory: memory.store)))
+        }
+        if let alarms {
+            await gateway.register(Capped(SetReminder(book: alarms, clock: clock, timeZone: timeZone)))
+            await gateway.register(Capped(SetAlarm(book: alarms, clock: clock, timeZone: timeZone)))
         }
     }
 
