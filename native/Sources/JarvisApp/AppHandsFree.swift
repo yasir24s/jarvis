@@ -52,6 +52,9 @@ final class AppHandsFree {
     private let pushToTalkOn: @MainActor () -> Bool
     /// `JARVIS_KEEP_AWAKE` (J:5462): while listening, idle system sleep is held off.
     private var awake: (any NSObjectProtocol)?
+    /// PR2: Ctrl-C while listening says "Going offline, sir." and then ends JARVIS (`goOffline`).
+    private var interrupt: (any DispatchSourceSignal)?
+    private let goOffline: @MainActor () -> Void
     private var greeted = false
     /// Hands-free listening is running.
     private(set) var isOn = false
@@ -62,6 +65,7 @@ final class AppHandsFree {
     ///   models and the audio engine in the app; tests pass fakes.
     /// - exitForRelaunch: the watchdog's exit when launchd will start the app again; nil
     ///   otherwise.
+    /// - goOffline: how JARVIS ends after "Going offline, sir." (the app's clean exit).
     init(core: CoreState, research: any ResearchCounting, voiceprint: Voiceprint?, voice: AppVoice,
          chat: ChatViewModel, hud: HUDModel, conversationOver: @escaping @Sendable () -> Void,
          makeInput: @escaping @Sendable () -> any MicInput = { HubMicInput() },
@@ -70,6 +74,7 @@ final class AppHandsFree {
          exitForRelaunch: @escaping @Sendable () -> Never? = AppHandsFree.launchdExit,
          prompt: @escaping @MainActor () -> String? = { nil },
          pushToTalkOn: @escaping @MainActor () -> Bool = { false },
+         goOffline: @escaping @MainActor () -> Void = { exit(0) },
          log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .voice) }) {
         self.core = core
         self.research = research
@@ -83,6 +88,7 @@ final class AppHandsFree {
         self.exitForRelaunch = exitForRelaunch
         self.prompt = prompt
         self.pushToTalkOn = pushToTalkOn
+        self.goOffline = goOffline
         self.log = log
         mic = MicCapture(makeInput: makeInput, log: log)
         chimes = Chimes(hub: hub, log: log)
@@ -119,10 +125,12 @@ final class AppHandsFree {
         guard !isOn else { return }
         let frames = await mic.frames()
         let levels = await mic.frames()
-        do {
+        do throws(MicError) {
             try await mic.start()
         } catch {
             log("hands-free: the microphone would not open (\(error))")
+            // PR2: Python says so when there is no microphone to listen with.
+            if let line = VoiceLoopLines.line(for: error) { await voice.say(line) }
             return
         }
         isOn = true
@@ -156,6 +164,7 @@ final class AppHandsFree {
             log("hands-free: not run by launchd, so not exiting; listening stops")
             await self?.stop()
         }
+        watchInterrupt()
         log("hands-free: listening for \"Hey Jarvis\"")
     }
 
@@ -164,6 +173,9 @@ final class AppHandsFree {
         guard isOn else { return }
         isOn = false
         voice.onAudio = nil
+        interrupt?.cancel()
+        interrupt = nil
+        signal(SIGINT, SIG_DFL)
         if let awake { ProcessInfo.processInfo.endActivity(awake) }
         awake = nil
         watching?.cancel()
@@ -312,4 +324,68 @@ private final class Flag: Sendable {
     private let value = Mutex(false)
     func set() { value.withLock { $0 = true } }
     var isSet: Bool { value.withLock { $0 } }
+}
+
+/// PR2: the voice loop's three lines Python had and the port did not, with Python's triggers.
+enum VoiceLoopLines {
+    /// `request_microphone_access`: said once while the microphone prompt is still waiting for
+    /// the user's answer (Python checks every 0.25 s and says it on the first check).
+    static let allowMicrophone = "Please allow microphone access, sir."
+    /// `main`: no input device to listen with (`pick_microphone_index()` found none); the loop
+    /// does not start.
+    static let noMicrophone = "I cannot find a microphone, sir."
+    /// `main`'s `except KeyboardInterrupt`: Ctrl-C (SIGINT) while the loop runs; said, then the
+    /// process ends.
+    static let offline = "Going offline, sir."
+    static let promptWait: Duration = .milliseconds(250)
+
+    /// `ListeningPermissions.ask`, saying `allowMicrophone` while an undecided microphone prompt
+    /// waits longer than `wait`. A microphone already granted or denied says nothing, as Python.
+    static func askPermissions(_ system: any PermissionAsking, wait: Duration = promptWait,
+                               say: @escaping @Sendable (String) async -> Void) async -> ListeningPermission {
+        if system.microphone() == .notDetermined {
+            let nudge = Task {
+                try await Task.sleep(for: wait)
+                await say(allowMicrophone)
+            }
+            let granted = await system.requestMicrophone()
+            nudge.cancel()
+            guard granted else { return .microphoneDenied }
+        }
+        return await ListeningPermissions.ask(system)
+    }
+
+    /// The line for a microphone that would not open: only "no input device" is Python's
+    /// "cannot find a microphone"; a converter or engine failure is logged as before.
+    static func line(for error: MicError) -> String? {
+        if case .noInputDevice = error { return noMicrophone }
+        return nil
+    }
+}
+
+extension AppHandsFree {
+    /// Python's `except KeyboardInterrupt` in the loop: while listening, SIGINT is caught here
+    /// (ignored by default, so the dispatch source sees it) instead of killing the process.
+    fileprivate func watchInterrupt() {
+        signal(SIGINT, SIG_IGN)
+        let source = DispatchSource.makeSignalSource(signal: SIGINT, queue: .main)
+        source.setEventHandler { [weak self] in
+            MainActor.assumeIsolated { self?.interrupted(signal: SIGINT) }
+        }
+        source.resume()
+        interrupt = source
+    }
+
+    private func interrupted(signal: Int32) {
+        log("hands-free: interrupted (signal \(signal)); going offline")
+        Task { await wentOffline() }
+    }
+
+    /// "Going offline, sir.", then the app's exit, as Python speaks and breaks out of `main`.
+    func wentOffline() async {
+        interrupt?.cancel()
+        interrupt = nil
+        await voice.say(VoiceLoopLines.offline)
+        goOffline()
+    }
 }

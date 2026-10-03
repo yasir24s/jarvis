@@ -737,7 +737,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                               chat: self.chat, hud: self.hud,
                                               conversationOver: { assembly.personality.conversationEnded() },
                                               prompt: { [weak self] in self?.confirmationPrompt() },
-                                              pushToTalkOn: { [weak self] in self?.talk.isOn ?? false })
+                                              pushToTalkOn: { [weak self] in self?.talk.isOn ?? false },
+                                              // PR2: after "Going offline, sir.", the same clean exit as SIGTERM.
+                                              goOffline: { [weak self] in _ = self?.exitCleanly("received SIGINT — exiting.") })
                 self.applyHandsFree()
             }
             // U1: a resumed build tells the update helper once it has run 30 s with its brain up.
@@ -894,7 +896,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 await handsFree.stop()
                 return
             }
-            switch await ListeningPermissions.ask(SystemPermissions()) {
+            // PR2: "Please allow microphone access, sir." while the microphone prompt waits.
+            let voice = self.voice
+            switch await VoiceLoopLines.askPermissions(SystemPermissions(), say: { line in await voice?.say(line) }) {
             case .granted:
                 await handsFree.start()
             case .microphoneDenied:
@@ -965,26 +969,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         signal(SIGTERM, SIG_IGN)
         let source = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
         source.setEventHandler {
-            MainActor.assumeIsolated {
-                JarvisLog.log("received SIGTERM — exiting.")
-                self.updates.stop()
-                self.research?.stop()   // flushes enqueued bumps while the lease is still held
-                self.personality?.stop()   // no personality pass outlives the lease
-                self.reminders?.stop()   // nor a reminder check (F1)
-                self.background?.stop()   // batch C part 1: nor a background line
-                self.mediaRefresh?.cancel()   // batch C part 2: nor a catalogue refresh
-                self.appUsage?.stop()   // batch C part 4: the added apps' minutes are saved while the lease is held
-                self.quickTimers?.stop()   // nor a timer (PA batch A)
-                self.idleCompile?.stop()   // nor an idle compile
-                self.webSummaries?.stop()   // nor a page summary (W1)
-                self.reading?.stop()   // nor a background reading pass (W1)
-                self.files?.cancel()   // no file read outlives the lease
-                self.lock = nil
-                exit(0)
-            }
+            MainActor.assumeIsolated { self.exitCleanly("received SIGTERM — exiting.") }
         }
         source.resume()
         sigterm = source
+    }
+
+    /// What SIGTERM does (and, PR2, Ctrl-C after "Going offline, sir."): log, stop every
+    /// background part while the lease is held, release the lock, exit 0.
+    private func exitCleanly(_ reason: String) -> Never {
+        JarvisLog.log(reason)
+        self.updates.stop()
+        self.research?.stop()   // flushes enqueued bumps while the lease is still held
+        self.personality?.stop()   // no personality pass outlives the lease
+        self.reminders?.stop()   // nor a reminder check (F1)
+        self.background?.stop()   // batch C part 1: nor a background line
+        self.mediaRefresh?.cancel()   // batch C part 2: nor a catalogue refresh
+        self.appUsage?.stop()   // batch C part 4: the added apps' minutes are saved while the lease is held
+        self.quickTimers?.stop()   // nor a timer (PA batch A)
+        self.idleCompile?.stop()   // nor an idle compile
+        self.webSummaries?.stop()   // nor a page summary (W1)
+        self.reading?.stop()   // nor a background reading pass (W1)
+        self.files?.cancel()   // no file read outlives the lease
+        self.lock = nil
+        exit(0)
     }
 
     /// The root `StatePaths.live` picks without JARVIS_HOME (the repo around the app bundle), or
