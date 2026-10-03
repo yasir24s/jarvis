@@ -1,6 +1,6 @@
 import Foundation
 @testable import JarvisBrain
-import JarvisTools
+@testable import JarvisTools
 import Testing
 
 /// Batch C: the app's own tools are served after the memory tools, and allowed by the same list.
