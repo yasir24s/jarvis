@@ -205,6 +205,69 @@ public final class PythonImport: Sendable {
         return summary
     }
 
+    // MARK: - Batch C part 1: the boot log
+
+    /// The boot log against jarvis.log, read-only: nil when either file is missing.
+    public func checkBootLog() -> PythonEraMemory.BootLogCheck? {
+        let root = store.root.isEmpty || store.root.hasSuffix("/") ? store.root : store.root + "/"
+        guard let boot = AtomicFile.read(root + PythonEraMemory.bootLogFile),
+              let main = AtomicFile.read(root + Self.logFile) else { return nil }
+        return PythonEraMemory.checkBootLog(boot: String(decoding: boot, as: UTF8.self),
+                                            log: String(decoding: main, as: UTF8.self), timeZone: timeZone)
+    }
+
+    /// The boot log's exchanges that jarvis.log lacks, compiled through the same batches, routes
+    /// and records as `run()` (a finished batch is skipped on a rerun; python-import.json gains
+    /// "boot_log" once every one is done). Counts only in the log.
+    public func importBootLog() async -> (check: PythonEraMemory.BootLogCheck?, summary: Summary) {
+        var summary = Summary()
+        guard let check = checkBootLog() else {
+            log("memory: no boot log, or no jarvis.log, to compare")
+            return (nil, summary)
+        }
+        log("memory: " + check.summary)
+        var progress = ImportProgress(data: store.read(.pythonImport)) ?? ImportProgress(started: clock.now())
+        let batches = PythonEraMemory.batches(check.groups)
+        summary.batches = batches.count
+        for (k, batch) in batches.enumerated() {
+            let (transcript, _) = FactExtraction.transcript(batch.entries)
+            let id = Self.hash(batch, transcript: transcript)
+            let tag = "boot-log batch \(k + 1) of \(batches.count) (\(batch.date)"
+            if progress.done.contains(id) { summary.resumed += 1; continue }
+            if Task.isCancelled { summary.failed += 1; continue }
+            let route: Route = await fits(transcript) ? .onDevice : .claude
+            let outcome = await compiler.compile(entries: batch.entries, source: batch.factSource,
+                                                 writer: route == .claude ? claudeAlone : nil)
+            switch outcome {
+            case .compiled(let added, let updated, let dropped):
+                summary.compiled += 1
+                summary.added += added
+                summary.updated += updated
+                summary.dropped += dropped
+                progress.record(id, added: added, updated: updated, dropped: dropped)
+                save(progress)
+                log("memory: Python \(tag), \(route.rawValue)): \(added) new fact(s), \(updated) updated")
+            case .nothingNew:
+                summary.compiled += 1
+                progress.record(id, added: 0, updated: 0, dropped: 0)
+                save(progress)
+                log("memory: Python \(tag)): nothing from the user")
+            default:
+                summary.failed += 1
+                log("memory: Python \(tag), \(route.rawValue)) not compiled (\(Self.describe(outcome)))")
+            }
+        }
+        if summary.failed == 0 {
+            progress.bootLog = clock.now()
+            progress.bootLogExchanges = check.newExchanges
+            save(progress)
+        }
+        log("memory: boot-log import \(summary.failed == 0 ? "complete" : "incomplete"): \(summary.batches) batch(es) "
+            + "(\(summary.compiled) now, \(summary.resumed) earlier, \(summary.failed) not compiled), "
+            + "\(summary.added) fact(s) added, \(summary.updated) updated")
+        return (check, summary)
+    }
+
     // MARK: - Helpers
 
     /// P6b: archive-python.jsonl, written whole, then recorded. Nothing to keep records nothing.
@@ -302,6 +365,10 @@ struct ImportProgress: Equatable {
     var skipped: [PythonEraMemory.Skip: Int] = [:]
     var archived: Double?
     var archivedMessages = 0
+    /// Batch C part 1: when the boot log's new exchanges were all compiled, and how many there were.
+    /// Written only once set, so an older file reads and writes as before.
+    var bootLog: Double?
+    var bootLogExchanges = 0
 
     init(started: Double) {
         self.started = started
@@ -328,7 +395,8 @@ struct ImportProgress: Equatable {
             .init(key: "skipped", value: .object(JSONObject(skips))),
             .init(key: "archived", value: archived.map { .double($0) } ?? .null),
             .init(key: "archived_messages", value: .int(Int64(archivedMessages))),
-        ])
+        ] + (bootLog.map { [JSONObject.Member(key: "boot_log", value: .double($0)),
+                            JSONObject.Member(key: "boot_log_exchanges", value: .int(Int64(bootLogExchanges)))] } ?? []))
         return Data(PyJSON.dumps(.object(object), indent: 1).utf8)
     }
 
@@ -348,6 +416,8 @@ struct ImportProgress: Equatable {
         }
         archived = o["archived"]?.doubleValue
         archivedMessages = o["archived_messages"]?.intValue ?? 0
+        bootLog = o["boot_log"]?.doubleValue
+        bootLogExchanges = o["boot_log_exchanges"]?.intValue ?? 0
     }
 }
 

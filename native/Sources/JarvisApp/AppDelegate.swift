@@ -88,6 +88,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var idleCompile: IdleCompile?
     /// F1: speaks the alarms and reminders JARVIS set as they come due; stopped at quit.
     private var reminders: ReminderSchedule?
+    /// Batch C part 1: the background lines; stopped at quit.
+    private var background: BackgroundLoops?
+    /// Batch C part 1: the menus' "Quiet Hours".
+    let quietHours = QuietHoursSetting()
     /// PA batch A: the fast path's timers (in memory, as Python's).
     private var quickTimers: QuickTimers?
     private var reminderAnnouncer: ReminderAnnouncer?
@@ -263,6 +267,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         personality?.stop()   // no personality pass outlives the lease
         personality = nil
         reminders?.stop()   // nor a reminder check (F1)
+        background?.stop()   // batch C part 1: nor a background line
         reminders = nil
         quickTimers?.stop()   // nor a timer (PA batch A)
         quickTimers = nil
@@ -331,6 +336,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         research?.stop()   // flushes enqueued bumps while the lease is still held
         personality?.stop()
         reminders?.stop()
+        background?.stop()   // batch C part 1: nor a background line
         quickTimers?.stop()
         idleCompile?.stop()
         files?.cancel()
@@ -574,6 +580,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         })
         reminders.start()
         self.reminders = reminders
+        // Batch C part 1: Python's background lines (unlock greeting, battery, meetings, voiceprint
+        // reminder, timed briefing), through the same announcer, held back in quiet hours.
+        let loops = BackgroundLoops(environment: environment, quiet: quietHours.window, hooks: .init(
+            announce: { line in announcer.announce(line) },
+            enrolled: { [weak self] in self?.voiceStatus.enrolled ?? true },
+            briefing: { [weak self] in self?.chat.startScheduledBriefing() },
+            log: { JarvisLog.log($0, category: .state) }))
+        loops.start()
+        background = loops
         // F1: the first turn of each day after 05:00 is preceded by the morning briefing; what
         // JARVIS has set for later today goes into its request.
         chat.briefing = morningBriefing
@@ -849,6 +864,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.research?.stop()   // flushes enqueued bumps while the lease is still held
                 self.personality?.stop()   // no personality pass outlives the lease
                 self.reminders?.stop()   // nor a reminder check (F1)
+                self.background?.stop()   // batch C part 1: nor a background line
                 self.quickTimers?.stop()   // nor a timer (PA batch A)
                 self.idleCompile?.stop()   // nor an idle compile
                 self.webSummaries?.stop()   // nor a page summary (W1)

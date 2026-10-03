@@ -57,6 +57,21 @@ enum Entry {
             }
             PythonImportMain.start()
         }
+        // Batch C part 1: the boot log check (read-only, counts only) and its import.
+        if arguments.first == PythonImportMain.checkBootLogFlag {
+            guard arguments.count == 2, let root = arguments.last else {
+                FileHandle.standardError.write(Data("usage: JARVIS \(PythonImportMain.checkBootLogFlag) <state root>\n".utf8))
+                exit(64)   // EX_USAGE
+            }
+            exit(PythonImportMain.checkBootLog(root: root))
+        }
+        if arguments.first == PythonImportMain.bootLogFlag {
+            guard arguments.count == 1 else {
+                FileHandle.standardError.write(Data("usage: JARVIS \(PythonImportMain.bootLogFlag)\n".utf8))
+                exit(64)   // EX_USAGE
+            }
+            PythonImportMain.start(bootLog: true)
+        }
         if arguments.contains("--permissions") {
             // T0.11 is deferred to M15. Refuse rather than fall through to the GUI: exec'ing the
             // GUI from a terminal makes the terminal the TCC responsible process (§3.4 rule 3).

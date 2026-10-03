@@ -14,10 +14,27 @@ import JarvisCore
 /// lock, 78 when the state root cannot be resolved or opened.
 enum PythonImportMain {
     static let flag = "--import-python-memory"
+    /// Batch C part 1: the boot log's new exchanges through the same import (holds the lock).
+    static let bootLogFlag = "--import-python-boot-log"
+    /// Batch C part 1: the boot log against jarvis.log, read-only, counts only: `--check-python-boot-log <root>`.
+    /// It opens no state store, takes no lock, writes no log and touches nothing under <root>.
+    static let checkBootLogFlag = "--check-python-boot-log"
+
+    static func checkBootLog(root: String) -> Int32 {
+        let base = root.hasSuffix("/") ? root : root + "/"
+        guard let boot = FileManager.default.contents(atPath: base + PythonEraMemory.bootLogFile),
+              let main = FileManager.default.contents(atPath: base + PythonImport.logFile) else {
+            return fail("no \(PythonEraMemory.bootLogFile) or \(PythonImport.logFile) under that folder", 66)   // EX_NOINPUT
+        }
+        let check = PythonEraMemory.checkBootLog(boot: String(decoding: boot, as: UTF8.self),
+                                                 log: String(decoding: main, as: UTF8.self), timeZone: .current)
+        print(check.summary)
+        return 0
+    }
 
     /// Runs the import off the main thread and parks the main thread; exits with its status.
-    static func start() -> Never {
-        Task.detached { exit(await run()) }
+    static func start(bootLog: Bool = false) -> Never {
+        Task.detached { exit(await run(bootLog: bootLog)) }
         dispatchMain()
     }
 
@@ -26,7 +43,7 @@ enum PythonImportMain {
         return status
     }
 
-    static func run() async -> Int32 {
+    static func run(bootLog: Bool = false) async -> Int32 {
         let environment = ProcessInfo.processInfo.environment
         let paths: StatePaths
         do {
@@ -63,6 +80,11 @@ enum PythonImportMain {
         let importer = PythonImport.live(store: store, memory: memory, environment: environment,
                                          claudeWorkingDirectory: scratch.appending(path: "claude-cwd",
                                                                                    directoryHint: .isDirectory))
+        if bootLog {
+            let (check, summary) = await importer.importBootLog()
+            withExtendedLifetime(lock) {}
+            return check == nil ? 66 : (summary.failed == 0 ? 0 : 1)
+        }
         let summary = await importer.run()
         withExtendedLifetime(lock) {}
         return summary.complete ? 0 : 1

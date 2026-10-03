@@ -286,6 +286,18 @@ public final class ChatViewModel: ReplySink {
         return start(input, shown: shown, restoring: sent, via: submitter, after: first, note: note)
     }
 
+    /// Batch C part 1: the briefing at `JARVIS_BRIEFING_TIME`, as a voice turn of its own. Only
+    /// when the brain has started, nothing is being written and no confirmation waits; it counts
+    /// as the day's briefing, so none plays before the next message. Nil when it did not start.
+    @discardableResult
+    public func startScheduledBriefing() -> Task<Void, Never>? {
+        guard let submitter, let briefing, !responding, pending == nil else { return nil }
+        briefing.recordToday()
+        let request = MorningBriefing.request(agenda: briefingAgenda?() ?? [])
+        return start(UserInput(text: MorningBriefing.shown, channel: .voice, briefing: request),
+                     shown: MorningBriefing.shown, restoring: nil, via: submitter)
+    }
+
     /// UI1 part 4: Stop, the send button's other face, and Esc. Speech stops. A reply being
     /// written stops where it is: its turn is closed, so the gateway runs no tool for it, and
     /// cancelled, so the brain stops (the Claude process, or the local model's generation) and

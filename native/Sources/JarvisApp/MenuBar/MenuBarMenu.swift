@@ -34,6 +34,8 @@ struct MenuBarMenu: View {
     #endif
     /// Batch C part 3: "Memory…", the JARVIS Memory window (AppDelegate.openMemory).
     var openMemory: () -> Void = {}
+    /// Batch C part 1: "Quiet Hours (22:00–07:00)".
+    var quietHours: QuietHoursSetting?
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
@@ -57,6 +59,7 @@ struct MenuBarMenu: View {
         ShowHUDToggle(setting: showHUD, hud: hud)
         HandsFreeMenuItems()   // M11 part 5
         MorningBriefingToggle(setting: briefing)   // F1
+        if let quietHours { QuietHoursToggle(setting: quietHours) }   // batch C part 1
         UpdateMenuItems(updates: updates)
         Divider()
         Text("State: \(model.stateRoot)")
@@ -96,6 +99,8 @@ struct AppMenuItems: View {
     let forgetVoice: () -> Void
     /// Batch C part 3: "Memory…".
     var openMemory: () -> Void = {}
+    /// Batch C part 1: "Quiet Hours (22:00–07:00)".
+    var quietHours: QuietHoursSetting?
 
     var body: some View {
         SetUpItem()
@@ -109,6 +114,7 @@ struct AppMenuItems: View {
         ShowHUDToggle(setting: showHUD, hud: hud)
         HandsFreeMenuItems()   // M11 part 5
         MorningBriefingToggle(setting: briefing)   // F1
+        if let quietHours { QuietHoursToggle(setting: quietHours) }   // batch C part 1
         UpdateMenuItems(updates: updates)
     }
 }
@@ -214,5 +220,15 @@ struct ShowHUDToggle: View {
             setting.isOn = on
             hud.enabled = on
         }))
+    }
+}
+
+/// Batch C part 1: "Quiet Hours (22:00–07:00)", off by default, in the app menu and the menu-bar
+/// menu. While on, JARVIS raises nothing on his own in that window.
+struct QuietHoursToggle: View {
+    @Bindable var setting: QuietHoursSetting
+
+    var body: some View {
+        Toggle(setting.menuTitle, isOn: $setting.isOn)
     }
 }
