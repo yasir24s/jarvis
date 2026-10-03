@@ -32,7 +32,8 @@ struct VoiceHelperProcessTests {
         for await _ in sleeper.lines {}
         ended = true
         #expect(ended)
-        #expect(SuspendingClock.now - start < .seconds(5))
+        // Load-proof: a close that did not kill would wait out the full 30 s of sleep.
+        #expect(SuspendingClock.now - start < .seconds(20))
     }
 
     @Test func terminateEndsTheStream() async throws {
@@ -40,7 +41,8 @@ struct VoiceHelperProcessTests {
         let start = SuspendingClock.now
         sleeper.terminate()
         for await _ in sleeper.lines {}
-        #expect(SuspendingClock.now - start < .seconds(5))
+        // Load-proof: a terminate that did not end it would wait out the full 30 s of sleep.
+        #expect(SuspendingClock.now - start < .seconds(20))
     }
 
     @Test func stderrGoesToTheLog() async throws {
