@@ -4,7 +4,7 @@ import Foundation
 /// The jarvis-voice helper JARVIS.app carries in `Contents/Helpers/` (build-app.sh) and the voice
 /// assets `native/scripts/install-voice-assets.sh` puts in `~/Library/Application Support/JARVIS/voice/`.
 /// The arguments are D-54's: MLX's cache capped at 512 MB, F5 at 8 steps for the dry references
-/// and 4 for the installed default (V2, below), and an exit after
+/// (`dry-short`, `dry`, `dry-wpe`) and 4 for the installed default (V2, below), and an exit after
 /// 10 idle minutes (V1 part 5; D-54 had 5), which hands the helper's memory back to the system.
 /// The helper also clears MLX's cache after each reply. D-54 had 8 steps; the
 /// user chose 4 on 2026-10-01, when one 5.8 s sentence took 7.7 s at 4 against 18.0 s at 8
@@ -15,7 +15,11 @@ import Foundation
 /// at 4 echoey. The steps are the `voiceSteps` setting (whole numbers 2 to 32), read at each
 /// launch like the speed; unset or invalid they are 8 for `dry` and `dry-wpe` and 4 for the
 /// installed default, so no dry reference runs at 4 by default. Without `references/dry/`
-/// installed the voice speaks with the installed default, at 4. SpeechQueue releases the helper
+/// installed the voice speaks with the installed default, at 4. V3: the default is `dry-short`,
+/// the first 1.62 s of `dry` ("I loved creating that, and I had a"), the user's choice by ear,
+/// 2026-10-03: about 6 s faster per reply, because F5 processes the reference on every reply, with
+/// every word exact in transcription. Without `references/dry-short/` the voice falls back to
+/// `dry` (8 steps), then to the installed default (4). SpeechQueue releases the helper
 /// for a new speed or reference, not for new steps: those apply at the next launch.
 /// The speed is the `voiceSpeed` setting (P5): at F5's own speed of 1 the clone spoke about 140
 /// words a minute, under conversation's 155 to 165. V1 part 4 asked for 1.25 and measured two
@@ -38,9 +42,9 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
     /// own default (`defaultSteps(for:)`), not a clamp.
     public static let stepsKey = "voiceSteps"
     public static let stepsRange = 2...32
-    /// The steps when `voiceSteps` gives none: 8 for the dry references, 4 for the installed
+    /// The steps when `voiceSteps` gives none: 8 for the dry references (a dry cut never runs at 4), 4 for the installed
     /// default `reference/` (and for any other name, which install-voice-assets.sh does not install).
-    public static let dryReferences: Set<String> = ["dry", "dry-wpe"]
+    public static let dryReferences: Set<String> = ["dry-short", "dry", "dry-wpe"]
     public static let dryReferenceSteps = 8
     public static let defaultReferenceSteps = 4
     /// Where `voiceSpeed` is read from: SpeechQueue's suite.
@@ -49,16 +53,18 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
     public static let speedRange = 0.8...1.4
     /// V1 part 3: which reference the clone speaks with, from SpeechQueue's suite. "default" is
     /// the installed `reference/`; another name is `references/<name>/`, which
-    /// install-voice-assets.sh installs ("dry", "dry-wpe"). A name that is not installed speaks
+    /// install-voice-assets.sh installs ("dry-short", "dry", "dry-wpe"). A name that is not installed speaks
     /// with the default. V2: unset (or empty) is `preferredReference`, so an explicit "default"
     /// still speaks with the installed `reference/`.
     public static let referenceKey = "voiceReference"
     public static let defaultReference = "default"
-    /// V2: the reference when `voiceReference` is unset: `dry`, the user's choice by ear,
-    /// 2026-10-02, over V1's transcription-based default. Where `references/dry/` is not installed
-    /// the voice speaks with `defaultReference` instead, and the steps and the acknowledgements
+    /// V3: the reference when `voiceReference` is unset: `dry-short`, the user's choice by ear,
+    /// 2026-10-03 (V2 had `dry`, 2026-10-02, over V1's transcription-based default). Where
+    /// `references/dry-short/` is not installed the voice speaks with `fallbackReference` (`dry`),
+    /// and where that is missing too with `defaultReference`; the steps and the acknowledgements
     /// (`acknowledgements/<reference>/`) follow the reference it speaks with.
-    public static let preferredReference = "dry"
+    public static let preferredReference = "dry-short"
+    public static let fallbackReference = "dry"
 
     public let executable: URL
     public let assets: URL
@@ -72,7 +78,7 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
     /// The reference the helper speaks with: the setting as it is now, if that reference is
     /// installed, else `defaultReference`. Read at each launch, like the speed. The steps and the
     /// acknowledgement clips follow this one, so after the fallback they follow the default.
-    public var reference: String { Self.installed(referenceSource(), assets: assets) }
+    public var reference: String { Self.resolved(referenceSource(), assets: assets) }
     private let referenceSource: @Sendable () -> String
     /// F5's steps: the `voiceSteps` setting as it is now, else the default of the reference in
     /// use (`defaultSteps(for:)`). Read at each launch, like the speed.
@@ -120,6 +126,16 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
             : assets.appending(path: "references/\(name)", directoryHint: .isDirectory)
     }
 
+    /// `installed(name)`, except that `preferredReference` not installed falls back to
+    /// `fallbackReference` before `defaultReference`.
+    static func resolved(_ name: String, assets: URL) -> String {
+        let chosen = installed(name, assets: assets)
+        if chosen == defaultReference, name == preferredReference {
+            return installed(fallbackReference, assets: assets)
+        }
+        return chosen
+    }
+
     /// `name` when it is a plain name (a-z, 0-9, -) whose folder holds reference.wav and
     /// reference.txt, else `defaultReference`.
     static func installed(_ name: String, assets: URL) -> String {
@@ -155,7 +171,7 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
         return whole
     }
 
-    /// F5's steps when `voiceSteps` gives none: `dryReferenceSteps` for `dry` and `dry-wpe`, else
+    /// F5's steps when `voiceSteps` gives none: `dryReferenceSteps` for `dry-short`, `dry` and `dry-wpe`, else
     /// `defaultReferenceSteps`. `reference` is the one in use, after the installed check.
     public static func defaultSteps(for reference: String) -> Int {
         dryReferences.contains(reference) ? dryReferenceSteps : defaultReferenceSteps

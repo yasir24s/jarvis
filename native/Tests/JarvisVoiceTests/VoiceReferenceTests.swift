@@ -7,8 +7,9 @@ import Testing
 @Suite("V1 voice reference setting")
 struct VoiceReferenceTests {
     /// An assets folder with the default reference (102,720 samples, 65 bytes of text, as
-    /// installed) and, when `dry`, references/dry (111,840 samples, 83 bytes, as the dry cut).
-    static func assets(dry: Bool) throws -> TempFolder {
+    /// installed), when `dry`, references/dry (111,840 samples, 83 bytes, as the dry cut) and, when
+    /// `dryShort`, references/dry-short (38,880 samples, 34 bytes, as its 1.62 s cut).
+    static func assets(dry: Bool, dryShort: Bool = false) throws -> TempFolder {
         let folder = try TempFolder()
         func reference(_ path: String, samples: Int, text: String) throws {
             let dir = folder.url.appending(path: path, directoryHint: .isDirectory)
@@ -23,25 +24,29 @@ struct VoiceReferenceTests {
             try reference("references/dry", samples: 111_840,
                           text: "I loved creating that, and I had a brilliant makeup artist called Veronica McAleer.")
         }
+        if dryShort {
+            try reference("references/dry-short", samples: 38_880, text: "I loved creating that, and I had a")
+        }
         return folder
     }
 
-    /// V2: unset (or empty) is `dry`, the user's choice by ear; an explicit "default" is still the
+    /// V3: unset (or empty) is `dry-short`, the user's choice by ear; an explicit "default" is still the
     /// installed `reference/`.
-    @Test func theSettingIsReadFromTheDefaultsWithDryWhenUnset() throws {
+    @Test func theSettingIsReadFromTheDefaultsWithDryShortWhenUnset() throws {
         let name = "jarvis-voice-tests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: name))
         defer { defaults.removePersistentDomain(forName: name) }
-        #expect(VoiceHelperSetup.reference(in: defaults) == "dry")
+        #expect(VoiceHelperSetup.reference(in: defaults) == "dry-short")
         defaults.set("dry-wpe", forKey: VoiceHelperSetup.referenceKey)
         #expect(VoiceHelperSetup.reference(in: defaults) == "dry-wpe")
         defaults.set("default", forKey: VoiceHelperSetup.referenceKey)
         #expect(VoiceHelperSetup.reference(in: defaults) == "default")
         defaults.set("  ", forKey: VoiceHelperSetup.referenceKey)
-        #expect(VoiceHelperSetup.reference(in: defaults) == "dry")
-        #expect(VoiceHelperSetup.reference(in: nil) == "dry")
+        #expect(VoiceHelperSetup.reference(in: defaults) == "dry-short")
+        #expect(VoiceHelperSetup.reference(in: nil) == "dry-short")
         #expect(VoiceHelperSetup.referenceKey == "voiceReference")
-        #expect(VoiceHelperSetup.preferredReference == "dry")
+        #expect(VoiceHelperSetup.preferredReference == "dry-short")
+        #expect(VoiceHelperSetup.fallbackReference == "dry")
         #expect(VoiceHelperSetup.defaultReference == "default")
     }
 
@@ -104,9 +109,9 @@ struct VoiceReferenceTests {
         #expect(await f5.releases == 1)
     }
 
-    @Test func theInstallScriptInstallsBothReferencesAndRendersForEach() throws {
+    @Test func theInstallScriptInstallsEveryReferenceAndRendersForEach() throws {
         let text = try String(contentsOf: AcknowledgementTests.script, encoding: .utf8)
-        for reference in ["dry", "dry-wpe"] {
+        for reference in ["dry-short", "dry", "dry-wpe"] {
             #expect(text.contains("\"references/\(reference)/reference.wav|"))
             #expect(text.contains("\"references/\(reference)/reference.txt|"))
             #expect(text.contains("render_acknowledgements \(reference) \"$DEST/references/\(reference)\""))

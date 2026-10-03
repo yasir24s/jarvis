@@ -2,13 +2,14 @@ import Foundation
 import Testing
 @testable import JarvisVoice
 
-/// V2: the voice is the `dry` reference at 8 steps, the user's choice by ear, 2026-10-02, over
+/// V3: the voice is the `dry-short` reference at 8 steps, the user's choice by ear, 2026-10-03
+/// (V2: `dry`, 2026-10-02), over
 /// V1's transcription-based default (the installed `reference/` at 4). `voiceSteps` is read at
-/// each launch; unset or invalid, the steps are those of the reference in use (8 for `dry` and
-/// `dry-wpe`, 4 for the installed default), and the acknowledgement clips are that reference's.
+/// each launch; unset or invalid, the steps are those of the reference in use (8 for `dry-short`,
+/// `dry` and `dry-wpe`, 4 for the installed default), and the acknowledgement clips are that reference's.
 /// The assets are temporary folders and the settings a defaults suite of the test's own: nothing
 /// reads the installed assets or the app's defaults.
-@Suite("V2 the voice is dry at 8 steps")
+@Suite("V3 the voice is dry-short at 8 steps")
 struct VoiceStepsTests {
     /// A defaults suite of one test's own.
     struct OwnDefaults {
@@ -45,23 +46,47 @@ struct VoiceStepsTests {
         VoiceHelperSetup.inApp(bundle: .main, log: nil, defaults: own.defaults, assets: assets.url)
     }
 
-    /// Nothing set and `dry` installed: the voice is dry at 8 steps, at the speed it had.
-    @Test func theDefaultIsDryAt8Steps() throws {
-        let folder = try VoiceReferenceTests.assets(dry: true)
+    /// Nothing set and `dry-short` installed: the voice is dry-short at 8 steps, at the speed it had.
+    @Test func theDefaultIsDryShortAt8Steps() throws {
+        let folder = try VoiceReferenceTests.assets(dry: true, dryShort: true)
         let own = try OwnDefaults()
         defer {
             folder.remove()
             own.remove()
         }
         let setup = Self.app(folder, own)
-        #expect(setup.reference == "dry")
+        #expect(setup.reference == "dry-short")
         #expect(setup.steps == 8)
         let arguments = setup.arguments
         #expect(Self.value(of: "--steps", in: arguments) == "8")
         #expect(Self.value(of: "--speed", in: arguments) == "1.2")
         let reference = try #require(Self.value(of: "--reference", in: arguments))
-        #expect(reference.hasPrefix(folder.url.path(percentEncoded: false)) && reference.hasSuffix("/references/dry/"),
-                "\(reference)")
+        #expect(reference.hasPrefix(folder.url.path(percentEncoded: false))
+                && reference.hasSuffix("/references/dry-short/"), "\(reference)")
+    }
+
+    /// `dry-short` not installed: `dry` speaks, at 8 steps; with `dry` missing too, the installed
+    /// default, at 4 and without `--reference`.
+    @Test func theFallbackIsDryAt8StepsThenTheInstalledDefaultAt4() throws {
+        let withDry = try VoiceReferenceTests.assets(dry: true)
+        let bare = try VoiceReferenceTests.assets(dry: false)
+        let own = try OwnDefaults()
+        defer {
+            withDry.remove()
+            bare.remove()
+            own.remove()
+        }
+        let dry = Self.app(withDry, own)
+        #expect(dry.reference == "dry")
+        #expect(dry.steps == 8)
+        #expect(Self.value(of: "--steps", in: dry.arguments) == "8")
+        let reference = try #require(Self.value(of: "--reference", in: dry.arguments))
+        #expect(reference.hasSuffix("/references/dry/"), "\(reference)")
+        let installedDefault = Self.app(bare, own)
+        #expect(installedDefault.reference == "default")
+        #expect(installedDefault.steps == 4)
+        #expect(Self.value(of: "--steps", in: installedDefault.arguments) == "4")
+        #expect(!installedDefault.arguments.contains("--reference"))
     }
 
     /// `dry` not installed: the installed default reference speaks, at 4 steps, without
@@ -159,6 +184,7 @@ struct VoiceStepsTests {
     }
 
     @Test func theStepsDefaultByReference() {
+        #expect(VoiceHelperSetup.defaultSteps(for: "dry-short") == 8)
         #expect(VoiceHelperSetup.defaultSteps(for: "dry") == 8)
         #expect(VoiceHelperSetup.defaultSteps(for: "dry-wpe") == 8)
         #expect(VoiceHelperSetup.defaultSteps(for: VoiceHelperSetup.defaultReference) == 4)
@@ -198,6 +224,8 @@ struct VoiceStepsTests {
             withoutDry.remove()
             own.remove()
         }
+        let withShort = try VoiceReferenceTests.assets(dry: true, dryShort: true)
+        defer { withShort.remove() }
         let line = try #require(Acknowledgement.lines.first)
         func clip(_ setup: VoiceHelperSetup) -> [String] {
             let url = Acknowledgement.clipURL(line, assets: setup.assets, reference: setup.reference)
@@ -205,7 +233,9 @@ struct VoiceStepsTests {
         }
         let installed = Self.app(withDry, own)
         let bare = Self.app(withoutDry, own)
-        #expect(clip(installed) == ["acknowledgements", "dry", "\(line.name).wav"], "unset, dry installed")
+        #expect(clip(Self.app(withShort, own)) == ["acknowledgements", "dry-short", "\(line.name).wav"],
+                "unset, dry-short installed")
+        #expect(clip(installed) == ["acknowledgements", "dry", "\(line.name).wav"], "unset, only dry installed")
         #expect(clip(bare) == ["acknowledgements", "default", "\(line.name).wav"], "unset, dry not installed")
         own.defaults.set("dry-wpe", forKey: VoiceHelperSetup.referenceKey)
         #expect(clip(installed) == ["acknowledgements", "dry-wpe", "\(line.name).wav"], "dry-wpe installed")

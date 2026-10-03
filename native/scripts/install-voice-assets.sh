@@ -6,11 +6,16 @@
 #   vocos/model.safetensors, vocos/config.json from ~/jarvis-spikes/models/vocos/
 #   reference/reference.wav, reference.txt     from the spike's clips/jarvis_shortref_24k.{wav,txt}
 #   references/dry/, references/dry-wpe/       from clips/jarvis_dry_24k.* and jarvis_dry_wpe_24k.*
+#   references/dry-short/                      from clips/jarvis_dryshort_24k.*
 #
 # The two references/ (V1 part 3) are the driest stretch of ~/jarvis/voices/jarvis_en.wav (23.57
 # to 28.23 s, the fastest energy decay after word endings of the 3 to 6 s windows between
 # pauses), as cut and as dereverberated by WPE. JARVIS speaks with one only when the
 # voiceReference setting names it.
+#
+# references/dry-short/ is the first 1.62 s of the dry reference ("I loved creating that, and I
+# had a"). The user picked it by ear on 2026-10-03 and it is the default voice reference: about
+# 6 s faster per reply, because F5 processes the reference on every reply.
 #
 # Every file is checked against the size and SHA-256 below, before the copy and after it (the
 # voice spike checked the two weight files against Hugging Face). Nothing is downloaded. A file
@@ -19,7 +24,7 @@
 #
 # Then (V1 part 1) the clone renders JARVIS's acknowledgements, the short lines he says the
 # moment a typed message is sent, into acknowledgements/<reference>/<name>.wav for each of the
-# three references (default, dry, dry-wpe), with the jarvis-voice
+# four references (default, dry-short, dry, dry-wpe), with the jarvis-voice
 # helper of the built app (or VoiceHelper's release build, or $JARVIS_VOICE_HELPER). Without a
 # helper this step is skipped; run the script again once the app is built. Lines already
 # rendered with the same settings, reference and list are left alone.
@@ -42,6 +47,8 @@ FILES=(
     "reference/reference.txt|voice-swift/clips/jarvis_shortref_24k.txt|66|bf1f092c7f4ee44df954f1efe4a2a7507bf493cbb8552715756e028a3c263ecf"
     "references/dry/reference.wav|voice-swift/clips/jarvis_dry_24k.wav|223724|80b1e363130de60dfc82fb842b643cf742b5d04700a32948042ce9eacdbf109e"
     "references/dry/reference.txt|voice-swift/clips/jarvis_dry_24k.txt|84|026aaa9c59e6920e25c053d4b867323e72dddd5b8efa66b78527b0c09d1f333d"
+    "references/dry-short/reference.wav|voice-swift/clips/jarvis_dryshort_24k.wav|77804|1b863621a8a958e4d914f09ba85626ec5a99630ca348030fa69d29182bc245e1"
+    "references/dry-short/reference.txt|voice-swift/clips/jarvis_dryshort_24k.txt|34|2aca59c8a354c00951fea17c56e3e5c47ed598384ff1ce41c2bd22d651b7a18f"
     "references/dry-wpe/reference.wav|voice-swift/clips/jarvis_dry_wpe_24k.wav|223724|93abed4065488e9364ec54b9e1dde68f7dfd6d80b3db22b579ffe22695ecc92f"
     "references/dry-wpe/reference.txt|voice-swift/clips/jarvis_dry_wpe_24k.txt|84|026aaa9c59e6920e25c053d4b867323e72dddd5b8efa66b78527b0c09d1f333d"
 )
@@ -165,5 +172,6 @@ render_acknowledgements() {
 }
 
 render_acknowledgements default "$DEST/reference"
+render_acknowledgements dry-short "$DEST/references/dry-short"
 render_acknowledgements dry "$DEST/references/dry"
 render_acknowledgements dry-wpe "$DEST/references/dry-wpe"
