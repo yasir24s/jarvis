@@ -25,6 +25,8 @@ struct ScreenToolsTests {
 
     /// G17: the native recogniser gives `_ocr_image`'s exact text for each fixture image.
     @Test func ocrMatchesPythonOnTheFixtureImages() async throws {
+        let broken = await OCRProbe.accurateBroken.value
+        try await withKnownIssue(OCRProbe.reason, isIntermittent: true) {
         for c in try Self.cases("ocr") {
             let relative = try #require(c.input.string("image"))
             let url = M5Fixture.url("x").deletingLastPathComponent().appending(path: relative)
@@ -34,12 +36,15 @@ struct ScreenToolsTests {
             let text = await VisionTextRecognizer().recognizeText(in: try FixtureScreen.decode(relative))
             #expect(text == want, "\(c)")
         }
+        } when: { broken }
     }
 
     /// The whole tool through the gateway over a fixture screen, then the turn is tainted.
     @Test func seeScreenThroughTheGatewayTaintsTheTurn() async throws {
+        let broken = await OCRProbe.accurateBroken.value
         let sandbox = try ToolCoreSandbox()
         defer { sandbox.remove() }
+        try await withKnownIssue(OCRProbe.reason, isIntermittent: true) {
         for c in try Self.cases("see_screen") {
             let screen = try FixtureScreen(fixture: c.input.string("image"))
             let gateway = await M5Fixture.gateway(.fake(screen: screen, recognizer: VisionTextRecognizer()),
@@ -52,6 +57,7 @@ struct ScreenToolsTests {
             #expect(screen.captures == 1, "\(c)")
             #expect(await turn.tainted, "\(c): see_screen must taint the turn")
         }
+        } when: { broken }
     }
 
     /// `[:3500] or "Screen not accessible."`, which the fixture images cannot reach.
