@@ -581,31 +581,37 @@ struct QwenVoiceTests {
     /// measure well (this signal's words also start quiet and grow louder), and within half a dB of
     /// the whole-part chain with the prior the reply before it ended on (0.38 dB on this signal; 0.2
     /// to 0.4 dB on four real Qwen replies). Its peaks stay under the ceiling.
-    @Test func aStreamComesOutAtTheTargetLoudnessUnderTheCeiling() {
-        let input = Self.speechLike(seconds: 3, seed: 7)
-        let (cold, gain) = Self.streamed(input, prior: nil)
-        #expect(cold.count == input.count)
-        let coldLUFS = Loudness.integrated([cold], sampleRate: 24_000) ?? -100
-        #expect(abs(coldLUFS - Loudness.targetLUFS) < 1, "measured \(coldLUFS) LUFS")
-        // The next reply in the same voice starts from the gain this one ended on.
-        let second = Self.speechLike(seconds: 3, seed: 8)
-        let (out, _) = Self.streamed(second, prior: gain)
-        let lufs = Loudness.integrated([out], sampleRate: 24_000) ?? -100
-        let ceiling = Float(pow(10, Loudness.peakCeilingDBFS / 20))
-        #expect(Loudness.samplePeak(cold) <= ceiling)
-        #expect(Loudness.samplePeak(out) <= ceiling)
-        let whole = Loudness.normalized(second, sampleRate: 24_000)
-        let wholeLUFS = Loudness.integrated([whole], sampleRate: 24_000) ?? -100
-        #expect(abs(lufs - wholeLUFS) < 0.5, "stream \(lufs), whole \(wholeLUFS)")
+    @Test func aStreamComesOutAtTheTargetLoudnessUnderTheCeiling() async {
+        let r = await offPool {
+            let input = Self.speechLike(seconds: 3, seed: 7)
+            let (cold, gain) = Self.streamed(input, prior: nil)
+            // The next reply in the same voice starts from the gain this one ended on.
+            let second = Self.speechLike(seconds: 3, seed: 8)
+            let (out, _) = Self.streamed(second, prior: gain)
+            let whole = Loudness.normalized(second, sampleRate: 24_000)
+            return (lengthKept: cold.count == input.count,
+                    coldLUFS: Loudness.integrated([cold], sampleRate: 24_000) ?? -100,
+                    lufs: Loudness.integrated([out], sampleRate: 24_000) ?? -100,
+                    wholeLUFS: Loudness.integrated([whole], sampleRate: 24_000) ?? -100,
+                    peak: max(Loudness.samplePeak(cold), Loudness.samplePeak(out)))
+        }
+        #expect(r.lengthKept)
+        #expect(abs(r.coldLUFS - Loudness.targetLUFS) < 1, "measured \(r.coldLUFS) LUFS")
+        #expect(r.peak <= Float(pow(10, Loudness.peakCeilingDBFS / 20)))
+        #expect(abs(r.lufs - r.wholeLUFS) < 0.5, "stream \(r.lufs), whole \(r.wholeLUFS)")
     }
 
-    @Test func aStreamOfOnePieceIsTheWholePartChain() {
-        let input = Self.speechLike(seconds: 1, seed: 3)
+    @Test func aStreamOfOnePieceIsTheWholePartChain() async {
         // One piece (F5's reply, when F5 stands in for Qwen) comes out exactly as the whole-part
         // chain plays it: the first piece waits for a second that never comes.
-        let level = LoudnessStream(sampleRate: 24_000, lift: 3)
-        #expect(level.push(input).isEmpty)
-        #expect(level.finish() == Loudness.normalized(input, sampleRate: 24_000, lift: 3))
+        let r = await offPool {
+            let input = Self.speechLike(seconds: 1, seed: 3)
+            let level = LoudnessStream(sampleRate: 24_000, lift: 3)
+            let held = level.push(input).isEmpty
+            return (held: held, exact: level.finish() == Loudness.normalized(input, sampleRate: 24_000, lift: 3))
+        }
+        #expect(r.held)
+        #expect(r.exact)
         #expect(LoudnessStream(sampleRate: 24_000).finish().isEmpty)
     }
 }
@@ -658,5 +664,14 @@ struct GrowingMeterTests {
         let level = try #require(Loudness.speechLevel(signal, sampleRate: 24_000))
         #expect(abs(try #require(weighted.gated(offset: -0.691)) - lufs) < 1e-9)
         #expect(abs(try #require(plain.gated(offset: 0)) - level) < 1e-9)
+    }
+}
+
+/// Runs CPU-heavy work on a thread of its own and waits for it. In a full parallel run the
+/// loudness tests would otherwise hold cooperative threads for seconds, and the queue's timing
+/// tests beside them (5 s `eventually` limits) would starve.
+func offPool<T: Sendable>(_ work: @escaping @Sendable () -> T) async -> T {
+    await withCheckedContinuation { continuation in
+        Thread { continuation.resume(returning: work()) }.start()
     }
 }
