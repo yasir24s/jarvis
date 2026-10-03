@@ -1,10 +1,12 @@
 import AppKit
+import ApplicationServices
 import Foundation
 import JarvisTools
 
 /// Batch C part 5: `JARVIS --probe-tv "<show>" [storefront]`, the read-only TV feasibility probe
 /// (`TVProbe`). Headless; it plays nothing, launches nothing and asks the TV app only when it is
-/// already running. Prints one line per finding.
+/// already running. Prints one line per finding. TV tools: it also reports what the TV app's
+/// window exposes to Accessibility, read-only and only when already trusted.
 enum TVProbeMain {
     static let flag = "--probe-tv"
 
@@ -71,6 +73,16 @@ enum TVProbeMain {
             print("tv-app now playing: " + (await LiveScripts().run(TVProbe.nowPlayingScript)))
         } else {
             print("tv-app now playing: the TV app is not running; not asked")
+        }
+        // 4. TV tools: what the TV app's window exposes to Accessibility. Only when JARVIS is
+        // already trusted (no prompt is shown) and the TV app is already running; it reads the
+        // tree and never types, presses or opens anything.
+        if !AXIsProcessTrusted() {
+            print("tv-app accessibility: this process is not trusted; not asked (no prompt shown)")
+        } else if !running {
+            print("tv-app accessibility: the TV app is not running; not asked")
+        } else {
+            TVProbe.accessibilityReport(await LiveTVAccessibility().snapshot()).forEach { print($0) }
         }
         print("playback: not probed (it would play sound); see the at-screen steps")
     }

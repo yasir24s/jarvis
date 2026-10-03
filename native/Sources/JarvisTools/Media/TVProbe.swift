@@ -78,6 +78,40 @@ public enum TVProbe {
         end tell
         """
 
+    // MARK: - Accessibility (TV tools)
+
+    /// What the TV app's window, as Accessibility shows it, offers the search route: the search
+    /// field (and how it was matched), a control that opens search, the episode rows and their
+    /// watch marks, and a Play button. Read-only: the caller only takes a snapshot.
+    public static func accessibilityReport(_ root: TVAXNode?, titles: TVUITitles = .table) -> [String] {
+        guard let root else { return ["tv-app window: none (no window to read)"] }
+        var out: [String] = []
+        let nodes = root.all
+        out.append("tv-app window: \(nodes.count) elements")
+        if let field = TVUIReader.searchField(in: root, titles: titles) {
+            let how = field.subrole == "AXSearchField" ? "subrole AXSearchField"
+                : (field.identifier.map { "identifier \($0)" } ?? "title")
+            out.append("tv-app search field: exposed (\(how)) at \(field.path)")
+        } else if let tab = TVUIReader.searchTab(in: root, titles: titles) {
+            out.append("tv-app search field: not on this screen; a search control is (\(tab.role)) at \(tab.path)")
+        } else {
+            out.append("tv-app search field: not exposed on this screen")
+        }
+        let rows = TVUIReader.episodes(in: root, titles: titles)
+        if rows.isEmpty {
+            out.append("tv-app episode list: none on this screen (open a show page in the TV app and run again)")
+        } else {
+            let marks = rows.filter { $0.watch != .unknown }.count
+            let ownPlay = rows.filter { $0.playPath != nil }.count
+            out.append("tv-app episode list: \(rows.count) rows (\(rows.map(\.code).prefix(6).joined(separator: ", "))), "
+                       + "\(marks) with watch marks, \(ownPlay) with their own Play button")
+        }
+        out.append("tv-app play button: " + (TVUIReader.playButton(in: root, titles: titles).map { "exposed at \($0.path)" } ?? "none on this screen"))
+        let ids = unique(nodes.compactMap(\.identifier).filter { !$0.isEmpty })
+        out.append("tv-app identifiers: " + (ids.isEmpty ? "none" : ids.prefix(30).joined(separator: ", ")))
+        return out
+    }
+
     // MARK: - Helpers
 
     static func matches(_ pattern: String, in text: String) -> [String] {

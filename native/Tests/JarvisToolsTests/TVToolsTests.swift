@@ -367,6 +367,19 @@ struct TVToolsTests {
         #expect(rig.scripts == [TVProbe.nowPlayingScript])
     }
 
+    // MARK: Probe
+
+    @Test func probeReportsTheSearchFieldAndTheEpisodeList() throws {
+        let screens = Self.englishScreens()
+        let home = TVProbe.accessibilityReport(screens.screens["home"])
+        #expect(home.contains("tv-app search field: exposed (subrole AXSearchField) at [0, 0]"))
+        #expect(home.contains { $0.hasPrefix("tv-app episode list: none on this screen") })
+        let show = TVProbe.accessibilityReport(screens.screens["show"])
+        #expect(show.contains("tv-app episode list: 3 rows (S02E01, S02E02, S02E03), 2 with watch marks, 3 with their own Play button"))
+        #expect(show.contains("tv-app play button: exposed at [1, 1, 2]"))
+        #expect(TVProbe.accessibilityReport(nil) == ["tv-app window: none (no window to read)"])
+    }
+
     // MARK: A-5
 
     /// Nothing under Sources/JarvisTools/Tools is public (`grep -rnE '^\s*public '` finds 0).
