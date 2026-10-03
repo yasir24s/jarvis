@@ -17,10 +17,10 @@ Line numbers refer to jarvis.py @ 68cd112.
 | ☐ | `get_cpu_usage` | M5 |  | Get the exact current CPU load percentage. ALWAYS call this for any CPU/performance question — never guess. | |
 | ☐ | `get_wifi_status` | M5 |  | Get the exact current Wi-Fi network name. ALWAYS call this for any Wi-Fi/network question — never guess. — _native: CoreWLAN + Location grant (D-15)_ | |
 | ☐ | `set_volume` | M5 |  | Set system output volume from 0 to 100. | |
-| ☐ | `music_now_playing` | M6 |  | Get the currently playing track in Music (or Spotify): name, artist, and album. Use for 'what's playing', 'what album is this', etc. | |
-| ☐ | `music_search` | M6 |  | Search the user's Music library and list matching tracks (does NOT play them). Optional 'by' narrows to song, artist, or album. | |
-| ☐ | `music_play` | M6 |  | Play a song, artist, or album — from the Music library if present, otherwise the top result online. 'query' e.g. 'Redbone by Childish Gambino' or 'som… | |
-| ☐ | `music_control` | M6 |  | Control playback and the Music player's own volume. 'action' is one of play, pause, next, previous. Optional 'volume' 0-100 sets Music's volume (syste… | |
+| ☑ | `music_now_playing` | M6 |  | Get the currently playing track in Music (or Spotify): name, artist, and album. Use for 'what's playing', 'what album is this', etc. | `pb_music.golden.json` (music_now_playing/*), `MusicToolsGoldenTests` (d7959c1); live Music not verified |
+| ☑ | `music_search` | M6 |  | Search the user's Music library and list matching tracks (does NOT play them). Optional 'by' narrows to song, artist, or album. | `pb_music.golden.json` (music_search/*), `MusicToolsGoldenTests` (d7959c1); live Music not verified |
+| ☑ | `music_play` | M6 |  | Play a song, artist, or album — from the Music library if present, otherwise the top result online. 'query' e.g. 'Redbone by Childish Gambino' or 'som… | `pb_music.golden.json` (music_play/*: library, YouTube, search fallback), `MusicToolsGoldenTests` (d7959c1); live Music not verified |
+| ☑ | `music_control` | M6 |  | Control playback and the Music player's own volume. 'action' is one of play, pause, next, previous. Optional 'volume' 0-100 sets Music's volume (syste… | `pb_music.golden.json` (music_control/*), `MusicToolsGoldenTests` (d7959c1); live Music not verified (R9) |
 | ☐ | `web_search` | M6 | U | Search the web for current information (requires internet). | |
 | ☐ | `search_files` | M5 |  | Find files on this Mac by name or content using Spotlight. | |
 | ☐ | `read_file` | M5 | U | Read the contents of a file on this Mac (full disk access). | |
@@ -30,26 +30,26 @@ Line numbers refer to jarvis.py @ 68cd112.
 | ☐ | `get_weather` | M6 |  | Get the current weather. Optional location, else uses current location. | |
 | ☐ | `get_location` | M6 |  | Get the user's approximate current location (city/region) via IP. | |
 | ☐ | `set_reminder` | M6 |  | Create a reminder. 'when' is natural language like 'at 5pm' or 'in 10 minutes'. | |
-| ☐ | `get_messages` | M6 | U | Read the user's most recent received iMessages/texts. | |
-| ☐ | `get_calendar` | M6 |  | Get today's calendar events. | |
+| ☑ | `get_messages` | M6 | U | Read the user's most recent received iMessages/texts. | `pb_messages.golden.json` over a real SQLite file, `PersonalToolsGoldenTests`, taint in `PBToolsTests` (b41d8c1); live chat.db not verified (needs FDA) |
+| ☑ | `get_calendar` | M6 |  | Get today's calendar events. | `pb_calendar.golden.json` (EventKit fake + AS fallback), `PersonalToolsGoldenTests` (b41d8c1); now U natively (DEV-PB-03); live EventKit not verified |
 | ☐ | `see_screen` | M5 | U | Read the text currently visible on the user's screen (OCR). Use this to help with what they're doing, explain errors, or summarize what's shown. | |
 | ☐ | `read_clipboard` | M5 | U | Read the user's current clipboard contents. | |
-| ☐ | `make_note` | M6 |  | Save a note to Apple Notes. | |
+| ☑ | `make_note` | M6 |  | Save a note to Apple Notes. | `pb_notes.golden.json`, `AppToolsGoldenTests` (d781822); live Notes not verified |
 | ☐ | `set_alarm` | M6 |  | Set an alarm. 'when' is natural language like 'at 7 a.m.' or 'in 30 minutes'. | |
-| ☐ | `find_song_by_lyrics` | M6 |  | Identify a song from a snippet of its lyrics; returns the title and artist. | |
+| ☑ | `find_song_by_lyrics` | M6 |  | Identify a song from a snippet of its lyrics; returns the title and artist. | `pb_browser.golden.json` (model path), `PBToolsTests.lyricsAreLookedUpOnTheWebFirstWhenOnline` (d781822); web-first and U natively (DEV-PB-05/06) |
 | ☐ | `notify` | M5 |  | Show a macOS notification banner. | |
-| ☐ | `send_message` | M6 | X | Send an iMessage/text. recipient is a contact name, phone number, or email address. ONLY use when the user explicitly asked to message someone. | |
-| ☐ | `send_email` | M6 | X | Send an email via Mail. 'to' is a contact name or email address. ONLY use when the user explicitly asked to email someone. | |
-| ☐ | `find_contact` | M6 |  | Look up a person's phone number and email address in Contacts by name. | |
-| ☐ | `create_event` | M6 |  | Create a calendar event. 'when' is natural language like 'tomorrow at 3pm' or 'in 2 hours'. Optional duration_minutes, default 60. | |
+| ☑ | `send_message` | M6 | X | Send an iMessage/text. recipient is a contact name, phone number, or email address. ONLY use when the user explicitly asked to message someone. | `pb_contacts.golden.json` (send_message/*), `PersonalToolsGoldenTests`, `PBToolsTests` gate + taint (b41d8c1); gated natively (DEV-PB-01); live send not verified |
+| ☑ | `send_email` | M6 | X | Send an email via Mail. 'to' is a contact name or email address. ONLY use when the user explicitly asked to email someone. | `pb_contacts.golden.json` (send_email/*), `PersonalToolsGoldenTests`, `PBToolsTests` gate + taint (b41d8c1); gated natively (DEV-PB-01); live send not verified |
+| ☑ | `find_contact` | M6 |  | Look up a person's phone number and email address in Contacts by name. | `pb_contacts.golden.json` (AS path), `PBToolsTests` Contacts-framework path (b41d8c1); CN vs AS order on the real book not verified (R15) |
+| ☑ | `create_event` | M6 |  | Create a calendar event. 'when' is natural language like 'tomorrow at 3pm' or 'in 2 hours'. Optional duration_minutes, default 60. | `pb_contacts.golden.json` (create_event/*), `PBToolsTests.eventsWaitForConfirmation` (b41d8c1); gated natively (DEV-PB-01); live EventKit not verified |
 | ☐ | `get_news` | M6 | U | Get the current top news headlines. ALWAYS call this for any news question — never invent headlines. | |
 | ☐ | `run_diagnostics` | M5 |  | Run a full system diagnostic sweep: CPU, memory, disk space, battery health, uptime, network, heaviest process. Call this for 'run diagnostics' or any… | |
 | ☐ | `set_brightness` | M5 |  | Set display brightness from 0 to 100. | |
 | ☐ | `type_text` | M5 | X | Type text directly into whatever app the user is focused on (dictation). Use when the user says 'type ...' or 'take this down'. | |
 | ☐ | `take_screenshot` | M5 |  | Capture the screen to an image file on the Desktop. | |
-| ☐ | `run_shortcut` | M6 | X | Run one of the user's Apple Shortcuts by name — this is how you control smart-home devices (lights, plugs, scenes) and any custom automation they've b… | |
-| ☐ | `list_shortcuts` | M6 |  | List the names of the user's Apple Shortcuts (automations). | |
-| ☐ | `summarize_page` | M6 | U | Read the web page currently open in the user's browser and answer about it or summarize it. Use for 'summarize this page/article'. | |
+| ☑ | `run_shortcut` | M6 | X | Run one of the user's Apple Shortcuts by name — this is how you control smart-home devices (lights, plugs, scenes) and any custom automation they've b… | `pb_shortcuts.golden.json` (run_shortcut/*), `AppToolsGoldenTests` (d781822); live shortcut not run |
+| ☑ | `list_shortcuts` | M6 |  | List the names of the user's Apple Shortcuts (automations). | `pb_shortcuts.golden.json` (list_shortcuts/*), `AppToolsGoldenTests` (d781822) |
+| ☑ | `summarize_page` | M6 | U | Read the web page currently open in the user's browser and answer about it or summarize it. Use for 'summarize this page/article'. | `pb_browser.golden.json` (Python fetch path), `PBToolsTests.summarizePageReadsThroughTheWebKitReader` (d781822); live browser + on-device model not verified |
 | ☐ | `find_apps` | M5 |  | List installed apps by TYPE (browser, email, music, video, chat, editor, terminal, game, office, ai, ...) or by name. Knows what each app IS — e.g. th… | |
 | ☐ | `find_files` | M5 |  | Search all files on this Mac via Spotlight — by name AND by content. Optional kind (pdf, image, video, audio, document, spreadsheet, presentation, fol… | |
 | ☐ | `open_settings` | M5 |  | Open a specific macOS System Settings pane by name (wifi, bluetooth, displays, sound, privacy, keyboard, battery, etc.) or a privacy sub-pane (microph… | |
