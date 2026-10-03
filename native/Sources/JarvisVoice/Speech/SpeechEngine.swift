@@ -2,11 +2,12 @@ import Foundation
 
 // M8 voice out (plan: M08-M13 §3.2, as D-54 changed it). The voice is the F5-TTS clone, run by
 // the jarvis-voice helper process (F5Engine); macOS `say` is the fallback (SayEngine). The plan's
-// ElevenLabs and Piper engines are not built: D-54 chose the clone instead.
+// ElevenLabs and Piper engines are not built: D-54 chose the clone instead. V6: Qwen3-TTS, streamed
+// by the jarvis-voice-qwen helper (QwenEngine), is the voice, with F5 as its fallback (VoiceSelector).
 
 /// The engines this milestone has.
 public enum EngineID: String, Sendable {
-    case f5, say
+    case qwen, f5, say
 }
 
 /// Why an engine gave up on a sentence, so the queue used `say` (§3.2's reasons that apply).
@@ -63,8 +64,16 @@ public protocol SpeechEngine: Actor {
     /// V1 part 5: gets ready for a request that is coming (the user is typing): starts a process
     /// and loads a model, without waiting for either. Engines with nothing to start do nothing.
     func warm() async
+    /// V6: whether the next reply comes as pieces to play as they arrive (Qwen), rather than as
+    /// one piece per part. SpeechQueue then plays it as one stream, never split (V5 is moot).
+    func streaming() async -> Bool
+    /// V6: about how long `text` will sound, in seconds, for a streamed reply's captions (the HUD
+    /// needs a length before the audio has all come); nil when the engine cannot tell.
+    func expectedSeconds(for text: String) async -> Double?
 }
 
 extension SpeechEngine {
     public func warm() async {}
+    public func streaming() async -> Bool { false }
+    public func expectedSeconds(for text: String) async -> Double? { nil }
 }

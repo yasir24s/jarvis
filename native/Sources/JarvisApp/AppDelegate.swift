@@ -428,6 +428,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // are local, so the policy's cloud rule does not hold back personal sources.
         let voice = AppVoice()
         self.voice = voice
+        speakEarly.applies = voice.speakEarlyApplies   // V6: hidden while Qwen speaks
         // UI1 part 3: the HUD speaks while the reply's audio plays, a sentence at a time.
         voice.onReplyAudioStarted = { [weak self] heard, seconds in
             self?.hud.speechStarted(CaptionTimeline(text: heard, duration: seconds))
@@ -436,6 +437,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         voice.onReplyOver = { [weak self] in
             self?.hud.speechEnded()
             self?.chat.speaking = voice.repliesPending > 0   // UI1 part 4: Stop while he speaks
+            self?.speakEarly.applies = voice.speakEarlyApplies
         }
         chat.onStopSpeech = { voice.stop() }
         chat.onReplyFinished = { [weak self] message, turn in

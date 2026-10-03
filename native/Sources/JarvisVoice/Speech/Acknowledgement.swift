@@ -120,6 +120,13 @@ public enum Acknowledgement {
         assets.appending(path: "acknowledgements/\(reference)", directoryHint: .isDirectory)
     }
 
+    /// V6: the set of clips (`acknowledgements/<set>/`) that matches the voice in use: Qwen's
+    /// (`qwen-dry`, Qwen with the dry reference at its rate) while Qwen speaks, else the one of
+    /// the reference F5 speaks with.
+    public static func set(for engine: EngineID, f5Reference: String) -> String {
+        engine == .qwen ? QwenHelperSetup.acknowledgementSet : f5Reference
+    }
+
     public static func clipURL(_ line: Line, assets: URL, reference: String) -> URL {
         folder(assets: assets, reference: reference).appending(path: "\(line.name).wav", directoryHint: .notDirectory)
     }

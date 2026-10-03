@@ -13,12 +13,25 @@ public protocol SpeechPlayer: Sendable {
     func replyReady() async
     /// The reply has played, was stopped, or failed. Once for every `replyStarting`.
     func replyEnded() async
+    /// V6: plays a reply that comes in pieces (Qwen streams it): each piece as it arrives, straight
+    /// after the one before, and returns once the last has played, or at once when its task is
+    /// cancelled or `stop()` is called. An error in `pieces` ends it once what came before has
+    /// played, and is thrown. `expectedSeconds` is about how long it will be, for the captions.
+    func playStream(_ pieces: AsyncThrowingStream<PCMChunk, any Error>, expectedSeconds: Double) async throws
 }
 
 extension SpeechPlayer {
     public func replyStarting() async {}
     public func replyReady() async {}
     public func replyEnded() async {}
+
+    /// Each piece played whole, one after the other (a player without a stream of its own).
+    public func playStream(_ pieces: AsyncThrowingStream<PCMChunk, any Error>, expectedSeconds: Double) async throws {
+        for try await piece in pieces {
+            try await play(piece)
+            if Task.isCancelled { return }
+        }
+    }
 }
 
 /// His speech on `AudioHub`'s speech player (M11 part 1: the one engine, so voice processing
@@ -44,6 +57,8 @@ public actor EnginePlayer: SpeechPlayer {
     static let completionSlack = Duration.seconds(2)
 
     private let hub: AudioHub
+    /// V6: the gain the last streamed reply ended on, the next one's starting point.
+    private var streamGain: Float?
 
     public init(hub: AudioHub = .shared) {
         self.hub = hub
@@ -65,6 +80,54 @@ public actor EnginePlayer: SpeechPlayer {
         let part = Loudness.normalized(chunk.samples, sampleRate: Self.sampleRate, lift: Self.outputLiftDB)
         let limit = Duration.seconds(Double(chunk.samples.count) / Self.sampleRate) + Self.completionSlack
         try await hub.play(HubAudio(channels: [part, part], sampleRate: Self.sampleRate), on: .speech, limit: limit)
+    }
+
+    /// V6: the pieces go through one `LoudnessStream` (the same expander, gain and limiter as a
+    /// whole part, worked out as the reply arrives) and are queued on the speech player as they
+    /// come, so they play back to back while the next is generated. Its gain starts from the one the
+    /// last streamed reply ended on (`LoudnessStream.prior`), and nothing plays until `PreRoll` has
+    /// 0.2 s in hand, so the reply does not open with a blip and a gap. A piece that arrives after
+    /// the one before has finished playing leaves a pause, never a click: generation fell behind.
+    public func playStream(_ pieces: AsyncThrowingStream<PCMChunk, any Error>, expectedSeconds: Double) async throws {
+        let level = LoudnessStream(sampleRate: Self.sampleRate, lift: Self.outputLiftDB, prior: streamGain)
+        defer { if let gain = level.gain { streamGain = gain } }
+        var preroll = PreRoll(sampleRate: Self.sampleRate)
+        var queued: [(wait: PlaybackWait, seconds: Double)] = []
+        var failure: (any Error)?
+        func enqueue(_ samples: [Float]) throws {
+            guard !samples.isEmpty, !Task.isCancelled else { return }
+            let wait = try hub.enqueue(HubAudio(channels: [samples, samples], sampleRate: Self.sampleRate), on: .speech)
+            queued.append((wait, Double(samples.count) / Self.sampleRate))
+        }
+        do {
+            for try await piece in pieces {
+                guard !Task.isCancelled else { break }
+                guard piece.sampleRate == Self.sampleRate else {
+                    throw SpeechEngineError(.error, "the player takes 24 kHz audio, not \(piece.sampleRate) Hz")
+                }
+                try enqueue(preroll.take(level.push(piece.samples)))
+            }
+        } catch {
+            failure = error
+        }
+        if Task.isCancelled {
+            hub.stop(.speech)
+            return
+        }
+        do {
+            let rest = level.finish()
+            try enqueue(preroll.flush() + rest)
+        } catch {
+            failure = failure ?? error
+        }
+        // Each wait gets the time of everything queued up to it, and the slack.
+        var ahead = 0.0
+        for item in queued {
+            ahead += item.seconds
+            await hub.played(item.wait, on: .speech, limit: .seconds(ahead) + Self.completionSlack)
+            if Task.isCancelled { return }
+        }
+        if let failure { throw failure }
     }
 
     public func stop() {

@@ -108,11 +108,11 @@ struct BrainMenuTests {
                 #expect(brainItem.isEnabled, "\(name)")
                 try Self.write(Self.tree(menu), name: "m9-part7-\(name)-\(choice.rawValue)")
             }
-            // In the menu-bar menu it sits right after Speak replies and V5's Speak First Sentence Early.
+            // In the menu-bar menu it sits right after Speak replies (V5's Speak First Sentence Early,
+            // between them, is hidden while Qwen is the voice: V6).
             let titles = menus.bar.items.map(\.title)
             let speak = try #require(titles.firstIndex(of: "Speak replies"))
-            #expect(titles.indices.contains(speak + 2) && titles[speak + 1] == SpeakEarlySetting.menuTitle
-                    && titles[speak + 2] == BrainSetting.menuTitle)
+            #expect(titles.indices.contains(speak + 1) && titles[speak + 1] == BrainSetting.menuTitle)
         }
     }
 

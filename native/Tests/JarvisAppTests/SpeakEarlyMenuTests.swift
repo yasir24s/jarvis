@@ -8,7 +8,8 @@ import SwiftUI
 import Testing
 
 /// V5: "Speak First Sentence Early" in both menus, off until switched on, kept as `speakEarly`;
-/// and the queue's two parts as the app's own sentence splitter makes them.
+/// and the queue's two parts as the app's own sentence splitter makes them. V6: the item shows only
+/// while F5 is the voice (`voiceEngine` set to `f5`); with Qwen it is hidden.
 @MainActor
 @Suite("V5 Speak First Sentence Early menu item", .serialized)
 struct SpeakEarlyMenuTests {
@@ -51,8 +52,10 @@ struct SpeakEarlyMenuTests {
         let name = folder.appending(path: "defaults").path(percentEncoded: false)
         let defaults = try #require(UserDefaults(suiteName: name))
         defer { defaults.removePersistentDomain(forName: name) }
+        defaults.set("f5", forKey: VoiceEngineChoice.key)   // V6: the item is F5's
 
         let setting = SpeakEarlySetting(defaults: defaults)
+        #expect(setting.applies)
         #expect(!setting.isOn)
         #expect(!SpeechQueue.speakEarly(in: defaults), "nothing stored: the queue reads it as off")
         let menus = Self.menus(defaults, setting: setting)
@@ -78,6 +81,30 @@ struct SpeakEarlyMenuTests {
             #expect(try await Self.shows(menu, .on) != nil, "both menus follow")
         }
         #expect(SpeakEarlySetting(defaults: defaults).isOn, "kept across launches")
+    }
+
+    /// V6: with Qwen, the voice by default, the item is in neither menu: Qwen streams, so speaking
+    /// the first sentence early is moot.
+    @Test func hiddenWhileQwenIsTheVoice() async throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "jarvis-tests-early-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let name = folder.appending(path: "defaults").path(percentEncoded: false)
+        let defaults = try #require(UserDefaults(suiteName: name))
+        defer { defaults.removePersistentDomain(forName: name) }
+
+        let setting = SpeakEarlySetting(defaults: defaults)
+        #expect(!setting.applies)
+        let menus = Self.menus(defaults, setting: setting)
+        menus.bar.update()
+        menus.app.update()
+        #expect(VoiceMenuTests.item(menus.bar, SpeakEarlySetting.menuTitle) == nil)
+        #expect(VoiceMenuTests.item(menus.app, SpeakEarlySetting.menuTitle) == nil)
+        // F5 in use again (Qwen missing, or chosen): the item comes back.
+        setting.applies = true
+        for menu in [menus.bar, menus.app] {
+            #expect(try await Self.shows(menu, .off) != nil)
+        }
     }
 
     /// The parts as the app makes them, with the app's own `SentenceSplitter` (`AppVoice.sentences`).

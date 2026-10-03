@@ -1,5 +1,6 @@
 import Foundation
 import JarvisCore
+import Synchronization
 
 /// The only way anything speaks (M8). `say(_:turn:)` takes a finished reply: TextClean, then the
 /// clone, with `say` when the clone fails, then the player.
@@ -132,8 +133,12 @@ public actor SpeechQueue {
             await previous?.value   // the reply before has stopped its audio
             guard !Task.isCancelled else { return }
             if restart { await self.engine.release() }   // the next request starts it with the new setting
-            await self.speak(clean, parts: parts, turn: turn, started: started, overflows: overflows,
-                             after: acknowledgement)
+            if await self.engine.streaming() {
+                await self.speakStreamed(clean, turn: turn, started: started, after: acknowledgement)
+            } else {
+                await self.speak(clean, parts: parts, turn: turn, started: started, overflows: overflows,
+                                 after: acknowledgement)
+            }
         }
     }
 
@@ -274,6 +279,93 @@ public actor SpeechQueue {
                          stopped: stopped))
     }
 
+    // MARK: - One streamed reply (V6)
+
+    /// V6: a reply from a streaming voice (Qwen): generated whole, never split (Speak First
+    /// Sentence Early is moot, since the first audio comes within a second anyway), with no
+    /// `tooLong` check (a stream has no frame limit), and played piece by piece as it arrives. The
+    /// player's reply calls, the acknowledgement and Stop wrap it as they wrap a reply generated in
+    /// one go: `replyStarting` before the request, `replyReady` once the first piece is in hand and
+    /// the acknowledgement has finished, `replyEnded` once. A voice that fails before its first
+    /// piece hands the reply, whole, to the fallback (`say`); one that fails after it ends the reply
+    /// there, after what came has played.
+    private func speakStreamed(_ text: String, turn: UUID, started: ContinuousClock.Instant,
+                               after acknowledgement: Task<Void, Never>?) async {
+        let characters = text.unicodeScalars.count
+        let context = SynthesisContext(turnID: turn)
+        await player.replyStarting()
+        let expected = await engine.expectedSeconds(for: text) ?? 0
+        let relay = StreamRelay(await engine.synthesize(text, context: context))
+        let first = await withTaskCancellationHandler {
+            await relay.first()
+        } onCancel: {
+            relay.cancel()
+        }
+        var firstAudio: Duration?
+        var stopped = false
+        var sayParts = 0
+        var byVoice = false
+        var generating = Duration.zero
+        if Task.isCancelled {
+            stopped = true
+        } else if case .success(true) = first {
+            byVoice = true
+            await acknowledgement?.value   // generated while it played; heard after it
+            if !Task.isCancelled { await player.replyReady() }
+            if Task.isCancelled {
+                stopped = true
+            } else {
+                firstAudio = ContinuousClock.now - started
+                do {
+                    try await player.playStream(relay.pieces, expectedSeconds: expected)
+                } catch {
+                    if !(Task.isCancelled || error is CancellationError) {
+                        log("voice: the voice stopped mid-reply (\(error)); the rest is not spoken")
+                    }
+                }
+                if Task.isCancelled { stopped = true }
+            }
+            generating = relay.generating
+        } else {
+            let voice = await engine.id
+            let reason: String
+            switch first {
+            case .failure(let error): reason = "\(error)"
+            default: reason = "no audio"
+            }
+            log("voice: \(Self.name(voice)) failed (\(reason)); say speaks instead")
+            let reply = await generate(text, context, withVoice: false).value
+            generating = reply.elapsed
+            if reply.engine == .say { sayParts = 1 }
+            if let chunk = reply.chunk, !chunk.samples.isEmpty, !Task.isCancelled {
+                await acknowledgement?.value
+                if !Task.isCancelled { await player.replyReady() }
+                if !Task.isCancelled {
+                    firstAudio = ContinuousClock.now - started
+                    do {
+                        try await player.play(chunk)
+                    } catch {
+                        log("voice: cannot play (\(error))")
+                    }
+                }
+            }
+            if Task.isCancelled { stopped = true }
+        }
+        relay.cancel()   // a stopped reply's generation stops with it
+        await player.replyEnded()
+        log(Self.summary(characters: characters, parts: 1, firstAudio: firstAudio, generating: generating,
+                         helperMB: sayParts > 0 && !byVoice ? nil : helperFootprintMB(), sayParts: sayParts,
+                         stopped: stopped))
+    }
+
+    private static func name(_ engine: EngineID) -> String {
+        switch engine {
+        case .qwen: "Qwen"
+        case .f5: "F5"
+        case .say: "say"
+        }
+    }
+
     /// Generates the reply with the voice, or with the fallback when the voice throws or is not
     /// to be asked.
     private func generate(_ text: String, _ context: SynthesisContext, withVoice: Bool) -> Task<Generated, Never> {
@@ -335,5 +427,96 @@ public actor SpeechQueue {
     private static func seconds(_ d: Duration, digits: Int = 1) -> String {
         let s = Double(d.components.seconds) + Double(d.components.attoseconds) / 1e18
         return String(format: "%.\(digits)f", s)
+    }
+}
+
+/// V6: a voice's stream with its first piece waited for. `first()` says whether a piece came
+/// (true), the stream ended without one (false), or what it threw before one; `pieces` then gives
+/// every piece, the first included. `cancel()` ends the voice's stream, which stops its
+/// generation; dropping `pieces` does the same.
+final class StreamRelay: Sendable {
+    let pieces: AsyncThrowingStream<PCMChunk, any Error>
+    private let task: Task<Void, Never>
+    private let state: StreamRelayState
+
+    init(_ source: AsyncThrowingStream<PCMChunk, any Error>) {
+        let (pieces, out) = AsyncThrowingStream.makeStream(of: PCMChunk.self)
+        let state = StreamRelayState()
+        let task = Task {
+            var any = false
+            do {
+                for try await piece in source {
+                    if !any {
+                        any = true
+                        state.resolve(.success(true))
+                    }
+                    out.yield(piece)
+                }
+                state.ended()
+                if !any { state.resolve(.success(false)) }
+                out.finish()
+            } catch {
+                state.ended()
+                if !any { state.resolve(.failure(error)) }
+                out.finish(throwing: error)
+            }
+        }
+        out.onTermination = { _ in task.cancel() }
+        self.pieces = pieces
+        self.task = task
+        self.state = state
+    }
+
+    func first() async -> Result<Bool, any Error> {
+        await state.wait()
+    }
+
+    func cancel() {
+        task.cancel()
+    }
+
+    /// From the relay's start to the end of the voice's stream (or to now, while it runs).
+    var generating: Duration {
+        state.generating
+    }
+}
+
+final class StreamRelayState: Sendable {
+    private struct State {
+        var result: Result<Bool, any Error>?
+        var waiter: CheckedContinuation<Result<Bool, any Error>, Never>?
+        var ended: ContinuousClock.Instant?
+    }
+
+    private let state = Mutex(State())
+    private let start = ContinuousClock.now
+
+    func resolve(_ result: Result<Bool, any Error>) {
+        let waiter = state.withLock { state -> CheckedContinuation<Result<Bool, any Error>, Never>? in
+            guard state.result == nil else { return nil }
+            state.result = result
+            defer { state.waiter = nil }
+            return state.waiter
+        }
+        waiter?.resume(returning: result)
+    }
+
+    func wait() async -> Result<Bool, any Error> {
+        await withCheckedContinuation { continuation in
+            let ready = state.withLock { state -> Result<Bool, any Error>? in
+                if let result = state.result { return result }
+                state.waiter = continuation
+                return nil
+            }
+            if let ready { continuation.resume(returning: ready) }
+        }
+    }
+
+    func ended() {
+        state.withLock { $0.ended = ContinuousClock.now }
+    }
+
+    var generating: Duration {
+        (state.withLock { $0.ended } ?? ContinuousClock.now) - start
     }
 }

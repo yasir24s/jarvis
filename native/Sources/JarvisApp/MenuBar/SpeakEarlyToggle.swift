@@ -5,7 +5,9 @@ import SwiftUI
 
 /// V5: "Speak First Sentence Early", kept as `speakEarly` in the voice's defaults suite
 /// (`SpeechQueue.defaultsSuite`) and off until the user switches it on. SpeechQueue reads the
-/// stored value for each reply, so a switch holds from the next reply.
+/// stored value for each reply, so a switch holds from the next reply. V6: the item shows only
+/// while F5 is the voice in use (`applies`); Qwen streams, so its first audio comes within a second
+/// and the setting is moot.
 @MainActor
 @Observable
 final class SpeakEarlySetting {
@@ -15,11 +17,16 @@ final class SpeakEarlySetting {
         didSet { defaults?.set(isOn, forKey: SpeechQueue.speakEarlyKey) }
     }
 
+    /// V6: whether the voice in use is F5, the one engine the setting acts on. AppDelegate sets it
+    /// from the voice once it is built, and again after every reply.
+    var applies: Bool
+
     @ObservationIgnored private let defaults: UserDefaults?
 
     init(defaults: UserDefaults? = UserDefaults(suiteName: SpeechQueue.defaultsSuite)) {
         self.defaults = defaults
         isOn = defaults?.object(forKey: SpeechQueue.speakEarlyKey) as? Bool ?? false
+        applies = VoiceEngineChoice.choice(in: defaults) == .f5
     }
 }
 
@@ -29,6 +36,8 @@ struct SpeakEarlyToggle: View {
     @Bindable var setting: SpeakEarlySetting
 
     var body: some View {
-        Toggle(SpeakEarlySetting.menuTitle, isOn: $setting.isOn)
+        if setting.applies {
+            Toggle(SpeakEarlySetting.menuTitle, isOn: $setting.isOn)
+        }
     }
 }

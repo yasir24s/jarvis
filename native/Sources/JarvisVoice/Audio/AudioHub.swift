@@ -423,6 +423,38 @@ public final class AudioHub: @unchecked Sendable {
         if Task.isCancelled { stop(player) }
     }
 
+    /// V6: schedules `audio` on `player` straight after whatever is scheduled there, and returns
+    /// at once with the wait to hand to `played`. A streamed reply's pieces are queued so, one
+    /// after the other with no gap, while the next piece is still being generated.
+    func enqueue(_ audio: HubAudio, on player: HubPlayer) throws -> PlaybackWait {
+        let wait = PlaybackWait()
+        guard audio.frames > 0 else {
+            wait.resume()
+            return wait
+        }
+        try schedule(audio, on: player, wait: wait)
+        return wait
+    }
+
+    /// V6: returns once `wait` (from `enqueue`) has been heard, or at once when `stop(player)` is
+    /// called, the task is cancelled, or `limit` passes. A cancelled wait silences `player`.
+    func played(_ wait: PlaybackWait, on player: HubPlayer, limit: Duration) async {
+        let watchdog = Task {
+            try? await Task.sleep(for: limit)
+            wait.resume()
+        }
+        defer { watchdog.cancel() }
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                wait.set(continuation)
+            }
+        } onCancel: {
+            wait.resume()
+        }
+        finished(wait, on: player)
+        if Task.isCancelled { stop(player) }
+    }
+
     /// Stops `player` and ends every `play` waiting on it.
     public func stop(_ player: HubPlayer) {
         lock.lock()

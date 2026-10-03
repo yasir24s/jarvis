@@ -168,9 +168,10 @@ enum Loudness {
     /// `expanderLookAheadSeconds` ahead, and the gain moves toward it with
     /// `expanderAttackSeconds` when opening and `expanderReleaseSeconds` when closing. Speech,
     /// within `expanderThresholdDB` of the part's speech level, is never turned down. Silence, or
-    /// a part with no speech level, is left as it is.
-    static func expanded(_ samples: [Float], sampleRate: Double) -> [Float] {
-        guard let speech = speechLevel(samples, sampleRate: sampleRate) else { return samples }
+    /// a part with no speech level, is left as it is. V6: `level` is the speech level to use in place
+    /// of the part's own, for a window of a stream measured over the whole stream so far.
+    static func expanded(_ samples: [Float], sampleRate: Double, level: Double? = nil) -> [Float] {
+        guard let speech = level ?? speechLevel(samples, sampleRate: sampleRate) else { return samples }
         let threshold = speech - expanderThresholdDB
         let n = samples.count
         let window = max(1, Int((expanderWindowSeconds * sampleRate).rounded()))
