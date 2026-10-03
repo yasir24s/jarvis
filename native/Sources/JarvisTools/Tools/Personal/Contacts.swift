@@ -7,12 +7,28 @@ struct ContactCard: Sendable, Equatable {
     let name: String
     let phones: [String]
     let emails: [String]
+    /// Live fix 3: the card's nickname, "" when none.
+    var nickname: String = ""
+}
+
+/// Live fix 3: one relation on the user's own card ("mother: Jane Doe"): its label as Contacts
+/// keeps it (`_$!<Mother>!$_`, or text the user typed) and the person's name.
+struct ContactRelation: Sendable, Equatable {
+    let label: String
+    let name: String
 }
 
 /// The address book. `cards()` is nil when JARVIS has no Contacts access (denied, restricted or
 /// unavailable), so the tools fall back to Python's Contacts AppleScript.
 protocol ContactsReading: Sendable {
     func cards() async -> [ContactCard]?
+    /// Live fix 3: the relations on the user's own ("me") card; nil when there is no access or
+    /// no such card.
+    func myRelations() async -> [ContactRelation]?
+}
+
+extension ContactsReading {
+    func myRelations() async -> [ContactRelation]? { nil }
 }
 
 /// What a platform has before the app gives it the real address book: no access.
@@ -23,24 +39,37 @@ struct NoContacts: ContactsReading {
 /// `CNContactStore`, which reads the address book without launching Contacts.app or needing
 /// Automation. The first use asks for access (NSContactsUsageDescription).
 struct LiveContacts: ContactsReading {
-    func cards() async -> [ContactCard]? {
+    private static func store() async -> CNContactStore? {
         let store = CNContactStore()
         switch CNContactStore.authorizationStatus(for: .contacts) {
-        case .authorized, .limited: break
+        case .authorized, .limited: return store
         case .notDetermined:
-            guard (try? await store.requestAccess(for: .contacts)) == true else { return nil }
+            return (try? await store.requestAccess(for: .contacts)) == true ? store : nil
         default: return nil
         }
+    }
+
+    func myRelations() async -> [ContactRelation]? {
+        guard let store = await Self.store(),
+              let me = try? store.unifiedMeContactWithKeys(toFetch: [CNContactRelationsKey as CNKeyDescriptor])
+        else { return nil }
+        return me.contactRelations.map { ContactRelation(label: $0.label ?? "", name: $0.value.name) }
+    }
+
+    func cards() async -> [ContactCard]? {
+        guard let store = await Self.store() else { return nil }
         let keys: [any CNKeyDescriptor] = [CNContactFormatter.descriptorForRequiredKeys(for: .fullName),
                                            CNContactPhoneNumbersKey as CNKeyDescriptor,
-                                           CNContactEmailAddressesKey as CNKeyDescriptor]
+                                           CNContactEmailAddressesKey as CNKeyDescriptor,
+                                           CNContactNicknameKey as CNKeyDescriptor]
         let request = CNContactFetchRequest(keysToFetch: keys)
         var cards: [ContactCard] = []
         do {
             try store.enumerateContacts(with: request) { contact, _ in
                 cards.append(ContactCard(name: CNContactFormatter.string(from: contact, style: .fullName) ?? "",
                                          phones: contact.phoneNumbers.map { $0.value.stringValue },
-                                         emails: contact.emailAddresses.map { $0.value as String }))
+                                         emails: contact.emailAddresses.map { $0.value as String },
+                                         nickname: contact.nickname))
             }
         } catch {
             return nil
@@ -69,6 +98,29 @@ struct ContactLookup: Sendable {
         return cards.first { $0.name.compare(name, options: options) == .orderedSame }
             ?? cards.first { $0.name.range(of: name, options: options.union(.anchored)) != nil }
             ?? cards.first { $0.name.range(of: name, options: options) != nil }
+    }
+
+    /// Live fix 3: `find_contact`'s person. A card named exactly `name` first, as Python; then
+    /// one whose nickname is it; then, for a relationship word ("mum", "my brother"), the person
+    /// the user's own card names for that relation; then Python's begins-with and contains.
+    /// A relation whose person has no card of their own is that name alone.
+    static func resolve(_ name: String, in cards: [ContactCard], relations: [ContactRelation]) -> ContactCard? {
+        guard !name.isEmpty else { return nil }
+        let options: String.CompareOptions = [.caseInsensitive]
+        if let card = cards.first(where: { $0.name.compare(name, options: options) == .orderedSame }) { return card }
+        var bare = Py.strip(name)
+        if bare.lowercased().hasPrefix("my ") { bare = Py.strip(String(bare.dropFirst(3))) }
+        if let card = cards.first(where: { !$0.nickname.isEmpty && $0.nickname.compare(bare, options: options) == .orderedSame }) {
+            return card
+        }
+        if let relation = PersonWords.relation(name),
+           let person = relations.first(where: { PersonWords.relation(label: $0.label) == relation }),
+           !person.name.isEmpty {
+            return cards.first { $0.name.compare(person.name, options: options) == .orderedSame }
+                ?? match(person.name, in: cards)
+                ?? ContactCard(name: person.name, phones: [], emails: [])
+        }
+        return match(name, in: cards)
     }
 
     private static func people(_ n: String) -> String {
@@ -135,7 +187,8 @@ struct ContactLookup: Sendable {
     /// `_find_contact`'s answer for a stripped, non-empty `s`: "Name, phone …, email …", or nil.
     func describe(_ s: String) async -> String? {
         if let cards = await contacts.cards() {
-            guard let card = Self.match(s, in: cards) else { return nil }
+            let relations = await contacts.myRelations() ?? []
+            guard let card = Self.resolve(s, in: cards, relations: relations) else { return nil }
             return ([card.name] + card.phones.map { "phone \($0)" } + card.emails.map { "email \($0)" })
                 .joined(separator: ", ")
         }

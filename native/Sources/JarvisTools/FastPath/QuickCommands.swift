@@ -89,7 +89,8 @@ public struct QuickCommands: Sendable {
             return reply
         }
         let match = router.route(text)
-        guard FastPathRouter.carried.contains(match.branch), let command = match.command,
+        guard FastPathRouter.carried.contains(match.branch) || FastPathRouter.native.contains(match.branch),
+              let command = match.command,
               let reply = await perform(command, turn: turn) else { return nil }
         log("fast path: \(match.branch)")      // the branch only: never the user's words
         return reply
@@ -194,6 +195,7 @@ public struct QuickCommands: Sendable {
         case .summarizePage: return await tool("summarize_page", turn: turn)
         case .listShortcuts: return await tool("list_shortcuts", turn: turn)
         case .findApps(let kind): return await tool("find_apps", ["query": .string(kind)], turn: turn)
+        case .findContact(let name): return await tool(FindContact.name, ["name": .string(name)], turn: turn)
         case .recentFiles: return await tool("find_files", ["query": .string(""), "recent": .bool(true)], turn: turn)
         case .quitApp(let name):
             // "" is Python's None: nothing by that name is running, so the brain gets the phrase.

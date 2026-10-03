@@ -88,6 +88,9 @@ public enum FastPathCommand: Sendable, Equatable {
     case recentFiles
     /// `(announcement, lambda: _open_url(url))`: the Google and YouTube searches.
     case openURL(announcement: String, url: String)
+    /// Live fix 3 (native only, DEV-LIVE-03): `_find_contact(name)` for "find mum", "call Sarah",
+    /// "what's Dad's number". Python sent these to the model.
+    case findContact(String)
 
     /// Python's own spelling of the call, `{fn, args}` in the quick_router golden fixture.
     public var goldenCall: (fn: String, args: [String]) {
@@ -142,6 +145,7 @@ public enum FastPathCommand: Sendable, Equatable {
         case .defaultBrowser: ("_default_browser_name", [])
         case .setDefaultBrowser(let name): ("_set_default_browser", [name])
         case .findApps(let kind): ("_find_apps", [kind])
+        case .findContact(let name): ("_find_contact", [name])
         case .toggleSystem(_, let feature, let on): ("_toggle_system", [feature, on ? "True" : "False"])
         case .macosTweak(let thing, let on): ("_macos_tweak", [thing, on ? "True" : "False"])
         case .recentFiles: ("_spotlight", [""])
@@ -201,6 +205,10 @@ public struct FastPathRouter: Sendable {
         "web.youtube", "volume.up", "volume.down", "brightness.up", "brightness.down", "clipboard.copy_last",
         "browser.default.set",
     ]
+
+    /// Branches Python's `fast_path` does not have, matched only where all of its branches
+    /// deferred. Live fix 3: "contact.find" (DEV-LIVE-03).
+    public static let native: Set<String> = ["contact.find"]
 
     /// `text.lower().strip().rstrip("?.")`.
     public static func normalise(_ text: String) -> String {
@@ -369,7 +377,34 @@ public struct FastPathRouter: Sendable {
             return hit("web.youtube", .openURL(announcement: "Searching YouTube for \(q), sir.",
                                                url: "https://www.youtube.com/results?search_query=" + PyURL.quote(q)))
         }
+        if let name = Self.contactName(text, normalised: t) { return hit("contact.find", .findContact(name)) }
         return hit("defer")
+    }
+
+    /// Live fix 3: the person in "what's mum's number", "the number for my brother", or in "find
+    /// mum" / "call Sarah Jones". After find, call, ring, phone or look up, the person must be a
+    /// relationship word or one to three capitalised words as typed or transcribed, so "find
+    /// flights to rome" and "call it a day" still go to the brain.
+    static func contactName(_ text: String, normalised t: String) -> String? {
+        let p = Patterns.self
+        if let m = p.contactNumberOf.match(t) ?? p.contactNumberFor.match(t) {
+            let name = Py.strip(m.groups[1] ?? "")
+            let words = name.split(separator: " ")
+            guard !words.isEmpty, words.count <= 4, !p.contactNotPeople.contains(name) else { return nil }
+            return name
+        }
+        let typed = Py.rstrip(Py.strip(text), "?.!")
+        guard let m = p.contactVerb.match(typed) else { return nil }
+        let name = Py.strip(m.groups[1] ?? "")
+        if PersonWords.relation(name) != nil {
+            let lower = name.lowercased()
+            return lower.hasPrefix("my ") ? Py.strip(String(lower.dropFirst(3))) : lower
+        }
+        let words = name.split(separator: " ").map(String.init)
+        guard (1...3).contains(words.count),
+              words.allSatisfy({ $0.first?.isUppercase == true && !$0.contains(where: \.isNumber) }),
+              !words.contains(where: { p.contactNotPeople.contains($0.lowercased()) }) else { return nil }
+        return name
     }
 
     /// `m.group(2) or m.group(3) or ""`.
@@ -551,5 +586,16 @@ public struct FastPathRouter: Sendable {
         static let google = re(#"google\s+(.+)"#)
         static let youtube1 = re(#"(?:search |look up |find )?youtube (?:for )?(.+)"#)
         static let youtube2 = re(#"(?:search for |look up |find )(.+?) on youtube$"#)
+        // Live fix 3 (native only): find_contact's phrasings.
+        static let contactNumberOf = re(#"(?:what(?:'s| is) |give me |get me |send me |find |look up )?(?:my )?(.+?)'s "#
+            + #"(?:phone number|mobile number|number|mobile|email address|email|contact details|contact)$"#)
+        static let contactNumberFor = re(#"(?:what(?:'s| is) )?(?:the )?(?:phone number|mobile number|number|"#
+            + #"contact details|email address) (?:for|of) (?:my )?(.+)$"#)
+        static let contactVerb = try! PyRegex(#"(?:find|look up|call|ring|phone) (?:up )?(.+?)(?: for me)?(?: please)?$"#,
+                                              ignoreCase: true)
+        static let contactNotPeople: Set<String> = [
+            "my", "your", "his", "her", "their", "it", "this", "that", "me", "you", "the", "a", "an",
+            "phone", "iphone", "ipad", "mac", "macbook", "airpods", "keys", "car", "watch", "wallet",
+            "file", "files", "app", "apps", "music", "song", "songs", "today", "tomorrow"]
     }
 }

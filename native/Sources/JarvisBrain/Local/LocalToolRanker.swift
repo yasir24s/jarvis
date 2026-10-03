@@ -53,7 +53,8 @@ public final class LocalToolRanker: Sendable {
         return String(joined.trimmingCharacters(in: .whitespacesAndNewlines).suffix(maxTextCharacters))
     }
 
-    /// `all` in the order to offer it: `LocalToolset.pinned` first, then the tools in
+    /// `all` in the order to offer it: `LocalToolset.pinned` first, then find_contact when the
+    /// message is about a person (`PersonWords.mentionsPerson`), then the tools in
     /// `request.previousTools` (those in `all`, once each), then every other tool by the cosine
     /// between its text and the request's, highest first, catalog order among equals. nil when
     /// the request has no vector, or no tool does, and the caller then offers the fixed list.
@@ -64,6 +65,12 @@ public final class LocalToolRanker: Sendable {
         let pinned = LocalToolset.pinned.compactMap { name in all.first { $0.name == name } }
         var offered = Set(pinned.map(\.name))
         var carried: [DynamicTool] = []
+        // Live fix 3: a message about a person ("find mum", "call Sarah") is always offered
+        // find_contact, next after the pinned tools.
+        if PersonWords.mentionsPerson(request.text), let contact = all.first(where: { $0.name == "find_contact" }),
+           offered.insert(contact.name).inserted {
+            carried.append(contact)
+        }
         for name in request.previousTools {
             if let tool = all.first(where: { $0.name == name }), offered.insert(name).inserted {
                 carried.append(tool)
