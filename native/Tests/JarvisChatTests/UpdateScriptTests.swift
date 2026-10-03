@@ -107,10 +107,12 @@ struct UpdateScriptTests {
         #expect(!text.contains(#"rm -rf "$APP""#), "the app that may be running is never deleted in place")
         // The bundle's own version.json is sealed by the signature: written before the app is signed.
         let sealed = try #require(text.range(of: #"> "$STAGE/Contents/Resources/version.json""#))
-        let signed = try #require(text.range(of: #"--entitlements "$NATIVE/Resources/JARVIS.entitlements" "$STAGE""#))
+        let signed = try #require(text.range(of: #""$NATIVE/scripts/sign-app.sh" "#))
         #expect(sealed.lowerBound < signed.lowerBound)
-        // Staged only after the verified signature; the version.json beside it goes last.
-        let verified = try #require(text.range(of: #"codesign --verify --strict "$STAGE" 2>/dev/null"#))
+        // Staged only after the verified signature (sign-app.sh verifies, and `set -e` stops the
+        // build if it fails); the version.json beside it goes last.
+        #expect(text.contains("set -euo pipefail"))
+        let verified = signed
         let moved = try #require(text.range(of: #"mv "$STAGE" "$STAGED/JARVIS.app""#))
         let marker = try #require(text.range(of: #"mv "$STAGED/.version.json.tmp" "$STAGED/version.json""#))
         #expect(verified.lowerBound < moved.lowerBound && moved.lowerBound < marker.lowerBound)
@@ -127,10 +129,13 @@ struct UpdateScriptTests {
     func buildScriptEmbedsHelper() throws {
         let text = try String(contentsOf: Self.native.appending(path: "scripts/build-app.sh"), encoding: .utf8)
         let copied = try #require(text.range(of: #"cp "$NATIVE/scripts/jarvis-update" "$STAGE/Contents/Helpers/jarvis-update""#))
-        let signed = try #require(text.range(of: #"codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$STAGE/Contents/Helpers/jarvis-update""#))
-        let verified = try #require(text.range(of: #"codesign --verify --strict "$STAGE/Contents/Helpers/jarvis-update""#))
-        let app = try #require(text.range(of: #"--entitlements "$NATIVE/Resources/JARVIS.entitlements" "$STAGE""#))
-        #expect(copied.lowerBound < signed.lowerBound && signed.lowerBound < verified.lowerBound)
+        let signing = try #require(text.range(of: #""$NATIVE/scripts/sign-app.sh" "#))
+        #expect(copied.lowerBound < signing.lowerBound)
+        let signer = try String(contentsOf: Self.native.appending(path: "scripts/sign-app.sh"), encoding: .utf8)
+        let signed = try #require(signer.range(of: #"sign "$STAGE/Contents/Helpers/jarvis-update""#))
+        let verified = try #require(signer.range(of: #"verify "$STAGE/Contents/Helpers/jarvis-update""#))
+        let app = try #require(signer.range(of: #"sign --entitlements "$ENTITLEMENTS" "$STAGE""#))
+        #expect(signed.lowerBound < verified.lowerBound)
         #expect(verified.lowerBound < app.lowerBound, "nested code is signed before the app")
         #expect(text.contains(#"chmod 755 "$STAGE/Contents/Helpers/jarvis-update""#))
         #expect(UpdateFolders.helperPath == "Contents/Helpers/jarvis-update")

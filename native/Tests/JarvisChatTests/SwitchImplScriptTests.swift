@@ -98,7 +98,8 @@ struct SwitchImplScriptTests {
 
     /// Runs the script with `environment` laid over a copy of this process's, in which the two
     /// JARVIS path variables are removed so the temp HOME decides every path.
-    static func run(_ arguments: [String], environment: [String: String], in folder: URL) throws -> (status: Int32, output: String) {
+    static func run(_ arguments: [String], environment: [String: String], in folder: URL,
+                    script: URL = SwitchImplScriptTests.script) throws -> (status: Int32, output: String) {
         let log = folder.appending(path: "run-\(UUID().uuidString).log")
         FileManager.default.createFile(atPath: log.path(percentEncoded: false), contents: nil)
         let handle = try FileHandle(forWritingTo: log)

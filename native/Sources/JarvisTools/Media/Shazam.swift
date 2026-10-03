@@ -5,7 +5,7 @@ import ShazamKit
 
 /// Whether ShazamKit can work in this build: the framework's classes are there, and build-app.sh
 /// marked the bundle as signed with the ShazamKit profile (`JARVISShazamKit` in Info.plist, which
-/// it sets only when `JARVIS_SHAZAMKIT_PROFILE` names a provisioning profile).
+/// scripts/sign-app.sh sets only when it embeds the Developer ID provisioning profile).
 public struct ShazamFeature: Sendable {
     public static let infoKey = "JARVISShazamKit"
     public let isAvailable: Bool

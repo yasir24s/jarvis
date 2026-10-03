@@ -55,10 +55,13 @@ struct AppShellTests {
         #expect(script.contains(#"cp "$VOICE_BIN/jarvis-voice" "$STAGE/Contents/Helpers/jarvis-voice""#))
         #expect(script.contains("for b in mlx-swift_Cmlx.bundle VoiceHelper_F5TTS.bundle; do"))
         #expect(script.contains(#"cp -R "$VOICE_BIN/$b" "$STAGE/Contents/Helpers/$b""#))
-        let helpers = try #require(script.range(of: #"for h in "$STAGE"/Contents/Helpers/*.bundle "$STAGE/Contents/Helpers/jarvis-voice"; do"#))
-        let app = try #require(script.range(of: #"--entitlements "$NATIVE/Resources/JARVIS.entitlements" "$STAGE""#))
+        // The signing is scripts/sign-app.sh's (the Developer ID move), called once the bundle is built.
+        #expect(script.contains(#""$NATIVE/scripts/sign-app.sh" ${SIGN_FLAGS[@]+"${SIGN_FLAGS[@]}"} "$STAGE" "$SIGNING""#))
+        let signing = try String(contentsOf: Self.native.appending(path: "scripts/sign-app.sh"), encoding: .utf8)
+        let helpers = try #require(signing.range(of: #"for h in "$STAGE"/Contents/Helpers/*.bundle "$STAGE/Contents/Helpers/jarvis-voice"; do"#))
+        let app = try #require(signing.range(of: #"sign --entitlements "$ENTITLEMENTS" "$STAGE""#))
         #expect(helpers.lowerBound < app.lowerBound, "the nested code is signed before the app")
-        #expect(script.contains(#"codesign --verify --strict "$STAGE/Contents/Helpers/jarvis-voice""#))
+        #expect(signing.contains(#"verify "$STAGE/Contents/Helpers/jarvis-voice""#))
         // The package the script builds makes the helper, and the main package never sees MLX (D-54).
         let helperManifest = try String(contentsOf: Self.native.appending(path: "VoiceHelper/Package.swift"), encoding: .utf8)
         #expect(helperManifest.contains(#".executable(name: "jarvis-voice", targets: ["jarvis-voice"])"#))

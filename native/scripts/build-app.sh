@@ -6,24 +6,30 @@
 # JARVIS.app moves to previous/, staged/ moves in, renames only). If one is running, the build
 # stays staged and the running app swaps itself over when it is idle.
 #
-# Signed with the PYTHON app's stable identity (~/jarvis/.signing/config) so both bundles share
-# one designated requirement, i.e. one TCC client. Never ad-hoc (`codesign -s -`: new DR every
-# build, TCC grants reset), never --deep, never --options runtime (library validation would
-# reject the self-signed ORT dylib from M10). Never print KEYCHAIN_PASSWORD, IDENTITY or the
-# DR (its certificate hash IS $IDENTITY), and never enable `set -x` in this script.
+# Signed by scripts/sign-app.sh: the Developer ID identity from the login keychain, with the
+# "JARVIS Developer ID" provisioning profile embedded (bundle ID com.jarv1s.assistant), so
+# ShazamKit works. `--legacy-identity` signs with the old self-signed identity instead, for
+# rollback. Never ad-hoc, never --deep, no hardened runtime yet (see sign-app.sh). Never print
+# the identity or the DR, and never enable `set -x` in this script.
 set -euo pipefail
 set +x
 
 NATIVE="$(cd "$(dirname "$0")/.." && pwd)"; REPO="$(cd "$NATIVE/.." && pwd)"
-CONFIG="$REPO/.signing/config"                      # the PYTHON app's identity, never ~/jarvis-swift/.signing
-[[ -f "$CONFIG" ]] || { echo "error: $CONFIG missing — run $REPO/setup-signing.sh once" >&2; exit 1; }
-# shellcheck disable=SC1090
-source "$CONFIG"                                    # defines KEYCHAIN, KEYCHAIN_PASSWORD, IDENTITY — never echo them
+SIGNING="$REPO/.signing"                            # config and profile, git-ignored; read by sign-app.sh
+[[ -f "$SIGNING/config" ]] || { echo "error: $SIGNING/config missing" >&2; exit 1; }
 JOBS="${JOBS:-2}"                                   # 8 GB machine: cap compiler parallelism
 # Opt-in dev build: `build-app.sh --debug` builds the debug configuration, which adds the
 # DEBUG-only modes (M3's --brain-smoke). With no argument the build is release, as before.
+# `--legacy-identity` (rollback) signs with the old self-signed identity; either order.
 CONFIGURATION=release
-if [[ "${1:-}" == "--debug" ]]; then CONFIGURATION=debug; fi
+SIGN_FLAGS=()
+for arg in "$@"; do
+    case "$arg" in
+        --debug) CONFIGURATION=debug ;;
+        --legacy-identity) SIGN_FLAGS=(--legacy-identity) ;;
+        *) echo "usage: build-app.sh [--debug] [--legacy-identity]" >&2; exit 64 ;;
+    esac
+done
 # The dataset's build channel (M01b §3.6, T10), written to Info.plist as JARVISBuildChannel: dev
 # unless JARVIS_BUILD_CHANNEL=release, so a mislabel can only hide release data. Separate from
 # the Swift configuration above, but a --debug build is never labelled release.
@@ -110,49 +116,7 @@ cp "$VENDOR/_webrtcvad.cpython-314-darwin.so" "$STAGE/Contents/Frameworks/"
 mkdir -p "$STAGE/Contents/Resources/vendor"
 cp "$VENDOR"/*.onnx "$STAGE/Contents/Resources/vendor/"
 
-security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-for d in "$STAGE"/Contents/Frameworks/*.dylib "$STAGE"/Contents/Frameworks/*.so; do [[ -e "$d" ]] || continue
-    codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$d" 2>/dev/null; done   # inner first, no --deep
-# The voice helper's nested code, also inner first: its resource bundles, then the helper.
-for h in "$STAGE"/Contents/Helpers/*.bundle "$STAGE/Contents/Helpers/jarvis-voice"; do
-    codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$h" 2>/dev/null; done
-codesign --verify --strict "$STAGE/Contents/Helpers/jarvis-voice" 2>/dev/null \
-    || { echo "error: codesign --verify --strict failed on the voice helper" >&2; exit 1; }
-# V6: the Qwen helper the same way, inner first.
-for h in "$STAGE"/Contents/Helpers/qwen/*.bundle "$STAGE/Contents/Helpers/qwen/jarvis-voice-qwen"; do
-    codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$h" 2>/dev/null; done
-codesign --verify --strict "$STAGE/Contents/Helpers/qwen/jarvis-voice-qwen" 2>/dev/null \
-    || { echo "error: codesign --verify --strict failed on the Qwen voice helper" >&2; exit 1; }
-# The update helper is a script: signed on its own before the app, its signature kept in its
-# extended attributes. Unsigned, it would fail the app's signature as unsigned nested code.
-codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" "$STAGE/Contents/Helpers/jarvis-update" 2>/dev/null
-codesign --verify --strict "$STAGE/Contents/Helpers/jarvis-update" 2>/dev/null \
-    || { echo "error: codesign --verify --strict failed on the update helper" >&2; exit 1; }
-# codesign's stderr names the signing identity; keep it off the terminal unless signing fails.
-if ! out="$(codesign --force --sign "$IDENTITY" --keychain "$KEYCHAIN" \
-        --entitlements "$NATIVE/Resources/JARVIS.entitlements" "$STAGE" 2>&1)"; then
-    echo "error: codesign failed (output withheld: it may name the identity)" >&2; exit 1
-fi
-codesign --verify --strict "$STAGE" 2>/dev/null \
-    || { echo "error: codesign --verify --strict failed on the staged bundle" >&2; exit 1; }
-
-# TCC continuity check WITHOUT printing the DR: compare hashes of the two `designated` lines.
-dr() {
-    local line
-    line="$(codesign -d -r- "$1" 2>&1 | grep '^designated')" || return 1
-    printf '%s' "$line" | shasum -a 256 | cut -c1-64
-}
-PY_APP="$REPO/dist/JARVIS.app"
-if [[ -d "$PY_APP" ]]; then
-    new_dr="$(dr "$STAGE")" || { echo "error: no designated requirement on the staged bundle" >&2; exit 1; }
-    py_dr="$(dr "$PY_APP")" || { echo "error: no designated requirement on $PY_APP" >&2; exit 1; }
-    if [[ "$new_dr" == "$py_dr" ]]; then
-        echo "DR matches Python bundle: yes"
-    else
-        echo "DR matches Python bundle: no"
-        echo "error: DR differs from the Python bundle — TCC grants would split" >&2; exit 1
-    fi
-fi
+"$NATIVE/scripts/sign-app.sh" ${SIGN_FLAGS[@]+"${SIGN_FLAGS[@]}"} "$STAGE" "$SIGNING"
 
 # Stage only after a verified signature, and never overwrite the app that may be running. The
 # staged version.json goes last: the app and the update helper treat a stage without it as
