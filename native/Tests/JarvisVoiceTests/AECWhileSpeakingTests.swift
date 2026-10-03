@@ -41,11 +41,13 @@ struct AECWhileSpeakingTests {
         hub.speechWillStart()
         #expect(await Self.until { engine.builds == [Self.off, Self.on] })
         #expect(engine.isRunning)
+        let ended = ContinuousClock.now
         hub.speechEnded()
-        // The room's tail: still on just after the reply.
-        try await Task.sleep(for: .milliseconds(500))
-        #expect(engine.builds == [Self.off, Self.on])
+        // The room's tail: it stays on for about a second after the reply. Measured as the time
+        // until it goes off, so a slow scheduler can only lengthen it, never fail the check (a
+        // fixed 500 ms sleep overran the tail under load and saw it already off).
         #expect(await Self.until { engine.builds == [Self.off, Self.on, Self.off] })
+        #expect(ContinuousClock.now - ended >= .milliseconds(900))
         #expect(lines.all.contains { $0.contains("voice processing on, 7 ch 96000 Hz (he is about to speak)") })
         #expect(lines.all.contains { $0.contains("voice processing off, 1 ch 48000 Hz (he has finished speaking)") })
         input.stop()
