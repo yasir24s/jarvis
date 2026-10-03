@@ -24,15 +24,15 @@ struct SpeakEarlyMenuTests {
         let status = VoiceprintStatus(defaults: defaults)
         #if DEBUG
         let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, speakEarly: setting, brain: brain,
-                              chatgpt: chatgpt, learn: learn, showHUD: showHUD, hud: hud, updates: updates,
+                              chatgpt: chatgpt, learn: learn, showHUD: showHUD, hud: hud, briefing: MorningBriefingSetting(defaults: defaults), updates: updates,
                               voice: status, forgetVoice: {}, stopSpeaking: {}, testConfirmation: {})
         #else
         let bar = MenuBarMenu(model: AppModel(), chat: ChatViewModel(), speak: speak, speakEarly: setting, brain: brain,
-                              chatgpt: chatgpt, learn: learn, showHUD: showHUD, hud: hud, updates: updates,
+                              chatgpt: chatgpt, learn: learn, showHUD: showHUD, hud: hud, briefing: MorningBriefingSetting(defaults: defaults), updates: updates,
                               voice: status, forgetVoice: {}, stopSpeaking: {})
         #endif
         let app = AppMenuItems(stopSpeaking: {}, speakEarly: setting, brain: brain, chatgpt: chatgpt, learn: learn,
-                               showHUD: showHUD, hud: hud, updates: updates, voice: status, forgetVoice: {})
+                               showHUD: showHUD, hud: hud, briefing: MorningBriefingSetting(defaults: defaults), updates: updates, voice: status, forgetVoice: {})
         return VoiceMenuTests.Menus(bar: NSHostingMenu(rootView: bar), app: NSHostingMenu(rootView: app))
     }
 
