@@ -55,6 +55,13 @@
 	<string>JARVIS adds reminders when you ask.</string>
 	<key>NSAppleMusicUsageDescription</key>
 	<string>JARVIS reads your Music and TV library (titles, play counts, loved songs) when you switch on Learn From My Music or Media Library, to answer questions about it and play from it. It stays on this Mac.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>JARVIS looks for your AirPlay devices (Apple TV, speakers) on the network when you ask him to send something to one.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_airplay._tcp</string>
+		<string>_raop._tcp</string>
+	</array>
 	<key>NSContactsUsageDescription</key>
 	<string>JARVIS looks up a contact's number or email when you ask.</string>
 	<key>NSDesktopFolderUsageDescription</key>

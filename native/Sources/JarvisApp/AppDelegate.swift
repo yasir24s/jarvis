@@ -96,6 +96,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let mediaConsent = MediaConsent()
     private var media: MediaLibrary?
     private var mediaRefresh: Task<Void, Never>?
+    /// Batch C part 6: the AirPlay and Sidecar routes and their self-test.
+    private var display: DisplayRoutes?
+    /// The state root (the JARVIS repo), for the repair session's Terminal window.
+    private var stateRootURL: URL?
     /// PA batch A: the fast path's timers (in memory, as Python's).
     private var quickTimers: QuickTimers?
     private var reminderAnnouncer: ReminderAnnouncer?
@@ -166,6 +170,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         model.stateRoot = Self.abbreviate(paths.root)
+        stateRootURL = paths.root
         if ProcessInfo.processInfo.environment["XPC_SERVICE_NAME"] == "com.jarvis.assistant" {
             // launchd mode: wait for the other JARVIS instead of exiting (no KeepAlive thrash).
             model.lockHolder = "waiting"
@@ -220,6 +225,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             case nil: JarvisLog.log("url: ignored a link that is not one of JARVIS's", category: .state)
             }
         }
+    }
+
+    /// Batch C part 6: "Check AirPlay": the self-test now, its summary in the chat.
+    func checkAirPlay() {
+        guard let display else { return }
+        Task.detached(priority: .utility) { [weak self] in
+            let r = display.selfTest(force: true)
+            let summary = r.map { r in r.state.probes.map { "\($0.kind.rawValue): " + ($0.covers.isEmpty ? "nothing" : $0.covers.map(\.rawValue).joined(separator: ", ")) }
+                .joined(separator: "; ") } ?? "not run"
+            await MainActor.run { self?.chat.post("AirPlay check, " + summary + ".") }
+        }
+    }
+
+    /// Batch C part 6: "Repair AirPlay…": the repair brief to the clipboard and a Terminal window in
+    /// the JARVIS repo, where the user starts Claude Code and pastes it. Nothing runs by itself.
+    func repairAirPlay() {
+        guard let brief = display?.repairBrief, let root = stateRootURL else {
+            chat.post("There is no AirPlay repair brief, sir: nothing has broken.")
+            return
+        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(brief, forType: .string)
+        NSWorkspace.shared.open([root], withApplicationAt: URL(filePath: "/System/Applications/Utilities/Terminal.app"),
+                                configuration: NSWorkspace.OpenConfiguration())
+        chat.post("The AirPlay repair brief is on the clipboard, sir. In the Terminal window, run claude and paste it.")
     }
 
     /// Batch C part 2: a media switch was turned on: read now rather than within six hours.
@@ -536,6 +566,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                                   library: { [flag = mediaConsent.sharedLibrary] in flag.isOn })
         let media = MediaLibrary(store: store, memory: memory, switches: mediaSwitches)
         self.media = media
+        // Batch C part 6: AirPlay and Sidecar through the fallback ladder.
+        let display = DisplayRoutes(store: store)
+        self.display = display
         // P3: the home folder is read in the background into the same facts; JARVIS's own state
         // root is never read. PDFKit and AppKit read pdf, docx and rtf here (D-13).
         let consent = fileLearning.shared
@@ -590,7 +623,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // M9a part 7: the menus' Brain item, read from UserDefaults as each turn begins.
             brainChoice: { BrainSetting.stored(in: .standard) },
             // Batch C: identify_song (ShazamKit, behind its feature check).
-            extraTools: [IdentifySong(), MediaSearch(library: media), MediaPlay(library: media)])
+            extraTools: [IdentifySong(), MediaSearch(library: media), MediaPlay(library: media),
+                         AirPlayDevices(routes: display), AirPlayTo(routes: display), AirPlayStop(routes: display)])
         brain = assembly
         voice.activity = assembly.turnActivity   // V1 part 5: speech holds the file scan back
         // P1: the hourly consolidation check starts now (first pass in 120 s); the chat's
@@ -622,6 +656,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             log: { JarvisLog.log($0, category: .state) }))
         loops.start()
         background = loops
+        // Batch C part 6: the self-test on a new macOS build (load and look up only); said once.
+        Task.detached(priority: .utility) {
+            guard let result = display.selfTest(), let line = result.announcement else { return }
+            await MainActor.run { announcer.announce(line + " " + DisplaySelfTest.ask) }
+        }
         // Batch C part 2: the catalogue refreshes at most daily; checked now and every six hours.
         mediaRefresh = Task.detached(priority: .utility) {
             while !Task.isCancelled {

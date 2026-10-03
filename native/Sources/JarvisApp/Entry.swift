@@ -57,6 +57,10 @@ enum Entry {
             }
             PythonImportMain.start()
         }
+        // Batch C part 6: the AirPlay and Sidecar probe (load and look up only).
+        if arguments.first == AirPlayProbeMain.flag {
+            exit(AirPlayProbeMain.run())
+        }
         // Batch C part 5: the read-only TV feasibility probe.
         if arguments.first == TVProbeMain.flag {
             exit(TVProbeMain.run(arguments: Array(arguments.dropFirst())))

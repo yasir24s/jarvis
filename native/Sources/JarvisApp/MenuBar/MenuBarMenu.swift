@@ -40,6 +40,9 @@ struct MenuBarMenu: View {
     var media: MediaConsent?
     var mediaChanged: () -> Void = {}
     var forgetMusic: () -> Void = {}
+    /// Batch C part 6: "Check AirPlay" and "Repair AirPlay…".
+    var checkAirPlay: (() -> Void)?
+    var repairAirPlay: () -> Void = {}
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
@@ -62,6 +65,7 @@ struct MenuBarMenu: View {
         if let media { MusicLearningItems(consent: media, changed: mediaChanged, forget: forgetMusic) }   // batch C part 2
         MemoryItem(open: openMemory)   // batch C part 3
         ShowHUDToggle(setting: showHUD, hud: hud)
+        if let checkAirPlay { AirPlayMenuItems(check: checkAirPlay, repair: repairAirPlay) }   // batch C part 6
         HandsFreeMenuItems()   // M11 part 5
         MorningBriefingToggle(setting: briefing)   // F1
         if let quietHours { QuietHoursToggle(setting: quietHours) }   // batch C part 1
@@ -110,6 +114,9 @@ struct AppMenuItems: View {
     var media: MediaConsent?
     var mediaChanged: () -> Void = {}
     var forgetMusic: () -> Void = {}
+    /// Batch C part 6: "Check AirPlay" and "Repair AirPlay…".
+    var checkAirPlay: (() -> Void)?
+    var repairAirPlay: () -> Void = {}
 
     var body: some View {
         SetUpItem()
@@ -122,6 +129,7 @@ struct AppMenuItems: View {
         if let media { MusicLearningItems(consent: media, changed: mediaChanged, forget: forgetMusic) }   // batch C part 2
         MemoryItem(open: openMemory)   // batch C part 3
         ShowHUDToggle(setting: showHUD, hud: hud)
+        if let checkAirPlay { AirPlayMenuItems(check: checkAirPlay, repair: repairAirPlay) }   // batch C part 6
         HandsFreeMenuItems()   // M11 part 5
         MorningBriefingToggle(setting: briefing)   // F1
         if let quietHours { QuietHoursToggle(setting: quietHours) }   // batch C part 1
@@ -256,5 +264,19 @@ struct MusicLearningItems: View {
             changed()
         }))
         Button(MediaConsent.forgetMusicTitle) { forget() }
+    }
+}
+
+/// Batch C part 6: "Check AirPlay" (the self-test now) and "Repair AirPlay…" (the repair brief to
+/// the clipboard and a Terminal window in the repo), in the app menu and the menu-bar menu.
+struct AirPlayMenuItems: View {
+    static let checkTitle = "Check AirPlay"
+    static let repairTitle = "Repair AirPlay…"
+    let check: () -> Void
+    let repair: () -> Void
+
+    var body: some View {
+        Button(Self.checkTitle) { check() }
+        Button(Self.repairTitle) { repair() }
     }
 }

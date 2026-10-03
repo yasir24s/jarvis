@@ -32,7 +32,8 @@ struct JarvisSwiftUIApp: App {
                              hud: appDelegate.hud, briefing: appDelegate.morningBriefing, updates: appDelegate.updates, voice: appDelegate.voiceStatus,
                              forgetVoice: { appDelegate.forgetVoice() }, openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours,
                         media: appDelegate.mediaConsent, mediaChanged: { appDelegate.mediaSwitchChanged() },
-                        forgetMusic: { appDelegate.forgetMusic() })
+                        forgetMusic: { appDelegate.forgetMusic() },
+                        checkAirPlay: { appDelegate.checkAirPlay() }, repairAirPlay: { appDelegate.repairAirPlay() })
             }
         }
 
@@ -57,7 +58,8 @@ struct JarvisSwiftUIApp: App {
                         testConfirmation: { appDelegate.stashTestConfirmation() },
                         openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours,
                         media: appDelegate.mediaConsent, mediaChanged: { appDelegate.mediaSwitchChanged() },
-                        forgetMusic: { appDelegate.forgetMusic() })
+                        forgetMusic: { appDelegate.forgetMusic() },
+                        checkAirPlay: { appDelegate.checkAirPlay() }, repairAirPlay: { appDelegate.repairAirPlay() })
             #else
             MenuBarMenu(model: appDelegate.model, chat: appDelegate.chat, speak: appDelegate.speakReplies, speakEarly: appDelegate.speakEarly,
                         brain: appDelegate.brainSetting, chatgpt: appDelegate.chatgptAccount,
@@ -68,7 +70,8 @@ struct JarvisSwiftUIApp: App {
                         stopSpeaking: { appDelegate.stopSpeaking() },
                         openMemory: { appDelegate.openMemory() }, quietHours: appDelegate.quietHours,
                         media: appDelegate.mediaConsent, mediaChanged: { appDelegate.mediaSwitchChanged() },
-                        forgetMusic: { appDelegate.forgetMusic() })
+                        forgetMusic: { appDelegate.forgetMusic() },
+                        checkAirPlay: { appDelegate.checkAirPlay() }, repairAirPlay: { appDelegate.repairAirPlay() })
             #endif
         }
         .menuBarExtraStyle(.menu)
