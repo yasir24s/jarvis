@@ -107,7 +107,7 @@ struct QuickCommandsTests {
         }
         let branch = try #require(e.string("branch"))
         #expect(match.branch == branch)
-        guard FastPathRouter.carried.contains(branch) else {
+        guard branch != "defer", !Self.leftToTheBrain.contains(branch) else {
             #expect(match.command == nil)
             return
         }
@@ -115,20 +115,19 @@ struct QuickCommandsTests {
         let call = command.goldenCall
         switch e.string("kind") ?? "" {
         case "say":
-            #expect(command == .presence)
-            #expect(e.string("reply") == QuickReplies.presence)
+            if command == .defaultBrowser {
+                // The suite cans the default browser as Safari (QuickCommands' test answers it).
+                #expect(e.string("reply") == "Your default browser is Safari, sir.")
+            } else {
+                #expect(command == .presence)
+                #expect(e.string("reply") == QuickReplies.presence)
+            }
         case "act":
             let action = try #require(e.object("action"))
             #expect(action.string("fn") == call.fn)
             #expect((action["args"]?.arrayValue ?? []).map(Self.text) == call.args)
-            let spoken: String? = switch command {
-            case .media(let announcement, _): announcement
-            case .lockScreen: QuickReplies.locking
-            case .sleepMac: QuickReplies.goodnight
-            case .emptyTrash: "Taking out the trash, sir."      // native asks first (DEV row)
-            default: nil
-            }
-            #expect(e.string("reply") == spoken)
+            // The empty-trash line is Python's; native asks first (DEV row).
+            #expect(e.string("reply") == command.announcement)
         case "helper":
             let helper = try #require(e.object("helper"))
             #expect(helper.string("fn") == call.fn)
@@ -141,12 +140,27 @@ struct QuickCommandsTests {
     static func text(_ v: JSONValue) -> String {
         if let s = v.stringValue { return s }
         if case .int(let i) = v { return String(i) }
+        if case .bool(let b) = v { return b ? "True" : "False" }
         return "\(v)"
     }
+
+    /// PR2: the branches whose Python helper is a model call (OCR or the clipboard, then
+    /// `_ask_model`); the router names them and the brain answers.
+    static let leftToTheBrain: Set<String> = ["screen.exact", "screen.fuzzy", "clipboard.help"]
+    /// The five helpers with no tool yet (PR2 item 2).
+    static let toolless: Set<String> = ["clipboard.copy_last", "browser.default.set", "volume.up", "volume.down",
+                                        "brightness.up", "brightness.down"]
 
     @Test func everyCarriedBranchIsInTheCorpus() throws {
         let hit = Set(try M5Fixture.cases("quick_router").compactMap { $0.expected.string("branch") })
         #expect(FastPathRouter.carried.subtracting(hit).isEmpty)
+    }
+
+    /// PR2: every one of Python's branches is carried except the three left to the brain.
+    @Test func everyBranchButTheModelHelpersIsCarried() throws {
+        let tables = try #require(try M5Fixture.cases("quick_router").first { $0.name == "tables" }).expected
+        let branches = Set((tables["BRANCHES"]?.arrayValue ?? []).compactMap(\.stringValue))
+        #expect(branches.subtracting(FastPathRouter.carried).subtracting(["defer"]) == Self.leftToTheBrain.union(Self.toolless))
     }
 
     // MARK: quick_timers

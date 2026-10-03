@@ -1,0 +1,703 @@
+{
+ "schema": 1,
+ "suite": "quick_helpers",
+ "generator": "native/tools/golden.py",
+ "generated_from": {
+  "jarvis_py_sha256": "1cb8c0ed06009dac73a22ef4bb042a900a7da31756b27aca6cf0f8e20704579c",
+  "git_head": "720d2bc",
+  "jarvis_py_dirty": false,
+  "python": "3.14.2"
+ },
+ "clock": {
+  "epoch": 1790582400.0,
+  "tz": "Europe/London",
+  "local": "2026-09-28 09:00:00"
+ },
+ "cases": [
+  {
+   "name": "open/website",
+   "input": {
+    "fn": "open",
+    "name": "youtube"
+   },
+   "expected": {
+    "text": "Opening youtube, sir.",
+    "calls": [
+     [
+      "open",
+      "https://youtube.com"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "open/website_punct",
+   "input": {
+    "fn": "open",
+    "name": "Gmail!"
+   },
+   "expected": {
+    "text": "Opening Gmail!, sir.",
+    "calls": [
+     [
+      "open",
+      "https://mail.google.com"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "open/exact",
+   "input": {
+    "fn": "open",
+    "name": "safari"
+   },
+   "expected": {
+    "text": "Opening Safari, sir.",
+    "calls": [
+     [
+      "open",
+      "-a",
+      "Safari"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "open/alias",
+   "input": {
+    "fn": "open",
+    "name": "vs code"
+   },
+   "expected": {
+    "text": "Opening Visual Studio Code, sir.",
+    "calls": [
+     [
+      "open",
+      "-a",
+      "Visual Studio Code"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "open/alias_settings",
+   "input": {
+    "fn": "open",
+    "name": "preferences"
+   },
+   "expected": {
+    "text": "Opening System Settings, sir.",
+    "calls": [
+     [
+      "open",
+      "-a",
+      "System Settings"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "open/fuzzy_contains",
+   "input": {
+    "fn": "open",
+    "name": "chrome browser"
+   },
+   "expected": {
+    "text": "I couldn't find an app called chrome browser, sir.",
+    "calls": []
+   }
+  },
+  {
+   "name": "open/fuzzy_part",
+   "input": {
+    "fn": "open",
+    "name": "calc"
+   },
+   "expected": {
+    "text": "Opening Calculator, sir.",
+    "calls": [
+     [
+      "open",
+      "-a",
+      "Calculator"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "open/browser_default",
+   "input": {
+    "fn": "open",
+    "name": "my browser",
+    "default_browser": "Google Chrome"
+   },
+   "expected": {
+    "text": "Opening Google Chrome, sir.",
+    "calls": [
+     [
+      "open",
+      "-a",
+      "Google Chrome"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "open/browser_no_default",
+   "input": {
+    "fn": "open",
+    "name": "the browser",
+    "default_browser": ""
+   },
+   "expected": {
+    "text": "Opening Google Chrome, sir.",
+    "calls": [
+     [
+      "open",
+      "-a",
+      "Google Chrome"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "open/music_kind",
+   "input": {
+    "fn": "open",
+    "name": "my music app"
+   },
+   "expected": {
+    "text": "Opening Music, sir.",
+    "calls": [
+     [
+      "open",
+      "-a",
+      "Music"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "open/kind_none",
+   "input": {
+    "fn": "open",
+    "name": "my game app",
+    "meta": {}
+   },
+   "expected": {
+    "text": "I couldn't find an app called my game app, sir.",
+    "calls": []
+   }
+  },
+  {
+   "name": "open/exists_by_name",
+   "input": {
+    "fn": "open",
+    "name": "Notes",
+    "exists": [
+     "Notes"
+    ]
+   },
+   "expected": {
+    "text": "Opening Notes, sir.",
+    "calls": [
+     [
+      "open",
+      "-a",
+      "Notes"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "open/domain",
+   "input": {
+    "fn": "open",
+    "name": "github.com"
+   },
+   "expected": {
+    "text": "Opening github.com, sir.",
+    "calls": [
+     [
+      "open",
+      "https://github.com"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "open/domain_spaces",
+   "input": {
+    "fn": "open",
+    "name": "my site.org"
+   },
+   "expected": {
+    "text": "Opening my site.org, sir.",
+    "calls": [
+     [
+      "open",
+      "https://mysite.org"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "open/http",
+   "input": {
+    "fn": "open",
+    "name": "http://example.com"
+   },
+   "expected": {
+    "text": "Opening http://example.com, sir.",
+    "calls": [
+     [
+      "open",
+      "http://example.com"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "open/unknown",
+   "input": {
+    "fn": "open",
+    "name": "flurbo"
+   },
+   "expected": {
+    "text": "I couldn't find an app called flurbo, sir.",
+    "calls": []
+   }
+  },
+  {
+   "name": "open/empty_index",
+   "input": {
+    "fn": "open",
+    "name": "safari",
+    "index": [],
+    "meta": {}
+   },
+   "expected": {
+    "text": "I couldn't find an app called safari, sir.",
+    "calls": []
+   }
+  },
+  {
+   "name": "path/exists",
+   "input": {
+    "fn": "path",
+    "path": "/tmp/report.pdf",
+    "exists": [
+     "/tmp/report.pdf"
+    ]
+   },
+   "expected": {
+    "text": "Opening report.pdf, sir.",
+    "calls": [
+     [
+      "open",
+      "/tmp/report.pdf"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "path/spotlight",
+   "input": {
+    "fn": "path",
+    "path": "budget.xlsx",
+    "mdfind": "/Volumes/Data/budget.xlsx\n/x/budget.xlsx\n"
+   },
+   "expected": {
+    "text": "Opening budget.xlsx, sir.",
+    "calls": [
+     [
+      "mdfind",
+      "kMDItemDisplayName == '*budget.xlsx*'cd"
+     ],
+     [
+      "open",
+      "/Volumes/Data/budget.xlsx"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "path/spotlight_blank_first",
+   "input": {
+    "fn": "path",
+    "path": "notes",
+    "mdfind": "  \n/Volumes/Data/notes.txt\n"
+   },
+   "expected": {
+    "text": "Opening notes.txt, sir.",
+    "calls": [
+     [
+      "mdfind",
+      "kMDItemDisplayName == '*notes*'cd"
+     ],
+     [
+      "open",
+      "/Volumes/Data/notes.txt"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "path/nothing",
+   "input": {
+    "fn": "path",
+    "path": "nowhere.doc",
+    "mdfind": ""
+   },
+   "expected": {
+    "text": "I couldn't find nowhere.doc, sir.",
+    "calls": [
+     [
+      "mdfind",
+      "kMDItemDisplayName == '*nowhere.doc*'cd"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "path/mdfind_fails",
+   "input": {
+    "fn": "path",
+    "path": "nowhere.doc",
+    "mdfind": null
+   },
+   "expected": {
+    "text": null,
+    "calls": [
+     [
+      "mdfind",
+      "kMDItemDisplayName == '*nowhere.doc*'cd"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "path/blank",
+   "input": {
+    "fn": "path",
+    "path": "  "
+   },
+   "expected": {
+    "text": "Which file, sir?",
+    "calls": []
+   }
+  },
+  {
+   "name": "reveal/exists",
+   "input": {
+    "fn": "reveal",
+    "path": "/tmp/report.pdf",
+    "exists": [
+     "/tmp/report.pdf"
+    ]
+   },
+   "expected": {
+    "text": "Showing report.pdf in Finder, sir.",
+    "calls": [
+     [
+      "open",
+      "-R",
+      "/tmp/report.pdf"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "reveal/spotlight",
+   "input": {
+    "fn": "reveal",
+    "path": "budget.pdf",
+    "mdfind": "/Volumes/Data/budget.pdf\n"
+   },
+   "expected": {
+    "text": "Showing budget.pdf in Finder, sir.",
+    "calls": [
+     [
+      "mdfind",
+      "kMDItemDisplayName == '*budget.pdf*'cd"
+     ],
+     [
+      "open",
+      "-R",
+      "/Volumes/Data/budget.pdf"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "reveal/nothing",
+   "input": {
+    "fn": "reveal",
+    "path": "budget.pdf",
+    "mdfind": ""
+   },
+   "expected": {
+    "text": "I couldn't find budget.pdf, sir.",
+    "calls": [
+     [
+      "mdfind",
+      "kMDItemDisplayName == '*budget.pdf*'cd"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "quit/exact",
+   "input": {
+    "fn": "quit",
+    "name": "safari"
+   },
+   "expected": {
+    "text": "Closed Safari, sir.",
+    "calls": [
+     [
+      "terminate",
+      "Safari"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "quit/the",
+   "input": {
+    "fn": "quit",
+    "name": "the music"
+   },
+   "expected": {
+    "text": "Closed Music, sir.",
+    "calls": [
+     [
+      "terminate",
+      "Music"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "quit/alias",
+   "input": {
+    "fn": "quit",
+    "name": "chrome"
+   },
+   "expected": {
+    "text": "Closed Google Chrome, sir.",
+    "calls": [
+     [
+      "terminate",
+      "Google Chrome"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "quit/substring",
+   "input": {
+    "fn": "quit",
+    "name": "fari"
+   },
+   "expected": {
+    "text": "Closed Safari, sir.",
+    "calls": [
+     [
+      "terminate",
+      "Safari"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "quit/not_running",
+   "input": {
+    "fn": "quit",
+    "name": "the deal"
+   },
+   "expected": {
+    "text": null,
+    "calls": []
+   }
+  },
+  {
+   "name": "quit/background_only",
+   "input": {
+    "fn": "quit",
+    "name": "dock"
+   },
+   "expected": {
+    "text": null,
+    "calls": []
+   }
+  },
+  {
+   "name": "quit/blank_after_the",
+   "input": {
+    "fn": "quit",
+    "name": "my  "
+   },
+   "expected": {
+    "text": null,
+    "calls": []
+   }
+  },
+  {
+   "name": "briefing/online",
+   "input": {
+    "fn": "briefing",
+    "online": true,
+    "calendar": "You have 2 events today: standup at 9."
+   },
+   "expected": {
+    "text": "It's 9:00 AM, sir. It's 14 degrees and cloudy in London, sir. You have 2 events today: standup at 9. Top headlines. One ... Two ... Three.",
+    "calls": [
+     [
+      "get_time",
+      "time"
+     ],
+     [
+      "get_weather",
+      ""
+     ],
+     [
+      "get_calendar"
+     ],
+     [
+      "get_news",
+      3
+     ]
+    ]
+   }
+  },
+  {
+   "name": "briefing/offline",
+   "input": {
+    "fn": "briefing",
+    "online": false,
+    "calendar": "Nothing on your calendar today, sir."
+   },
+   "expected": {
+    "text": "It's 9:00 AM, sir. Nothing on your calendar today, sir.",
+    "calls": [
+     [
+      "get_time",
+      "time"
+     ],
+     [
+      "get_calendar"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "briefing/calendar_denied",
+   "input": {
+    "fn": "briefing",
+    "online": true,
+    "calendar": "I can't read your calendar, sir — grant Calendar access."
+   },
+   "expected": {
+    "text": "It's 9:00 AM, sir. It's 14 degrees and cloudy in London, sir. Top headlines. One ... Two ... Three.",
+    "calls": [
+     [
+      "get_time",
+      "time"
+     ],
+     [
+      "get_weather",
+      ""
+     ],
+     [
+      "get_calendar"
+     ],
+     [
+      "get_news",
+      3
+     ]
+    ]
+   }
+  },
+  {
+   "name": "briefing/calendar_empty",
+   "input": {
+    "fn": "briefing",
+    "online": true,
+    "calendar": ""
+   },
+   "expected": {
+    "text": "It's 9:00 AM, sir. It's 14 degrees and cloudy in London, sir. Top headlines. One ... Two ... Three.",
+    "calls": [
+     [
+      "get_time",
+      "time"
+     ],
+     [
+      "get_weather",
+      ""
+     ],
+     [
+      "get_calendar"
+     ],
+     [
+      "get_news",
+      3
+     ]
+    ]
+   }
+  },
+  {
+   "name": "briefing/news_failed",
+   "input": {
+    "fn": "briefing",
+    "online": true,
+    "calendar": "Nothing today.",
+    "news": "I couldn't fetch the headlines, sir."
+   },
+   "expected": {
+    "text": "It's 9:00 AM, sir. It's 14 degrees and cloudy in London, sir. Nothing today.",
+    "calls": [
+     [
+      "get_time",
+      "time"
+     ],
+     [
+      "get_weather",
+      ""
+     ],
+     [
+      "get_calendar"
+     ],
+     [
+      "get_news",
+      3
+     ]
+    ]
+   }
+  },
+  {
+   "name": "browser/name",
+   "input": {
+    "fn": "browser",
+    "default_browser": "Safari"
+   },
+   "expected": {
+    "text": "Your default browser is Safari, sir.",
+    "calls": []
+   }
+  },
+  {
+   "name": "browser/none",
+   "input": {
+    "fn": "browser",
+    "default_browser": ""
+   },
+   "expected": {
+    "text": "I couldn't determine your default browser, sir.",
+    "calls": []
+   }
+  }
+ ]
+}

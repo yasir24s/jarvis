@@ -96,6 +96,10 @@ public final class BrainAssembly: Sendable {
     /// F1: alarms.json, which set_reminder and set_alarm write, registered by `start()`. nil
     /// means neither tool has a body.
     private let alarms: AlarmBook?
+    /// PR2: what the fast path's own tools read from the app (the running apps), and the last
+    /// reply the coordinator records for "copy that".
+    private let quick: QuickPlatform
+    public var lastReply: LastReply { quick.lastReply }
     /// The background reading of the user's files (P3), into the same facts. nil without a
     /// `memory` store or `files`. Not started here: the app starts it once the brain has
     /// started and stops it at quit, before the lock is released.
@@ -145,7 +149,8 @@ public final class BrainAssembly: Sendable {
     ///   - alarms: F1: the alarms and reminders set_reminder and set_alarm write; nil means
     ///     neither tool has a body.
     ///   - makeFastPath: PA batch A: builds the fast path on this assembly's confirmation gate;
-    ///     when given, it replaces `fastPath`.
+    ///     when given, it replaces `fastPath`. PR2: with its gateway and backend report too.
+    ///   - runningApps: PR2: the running apps, which the fast path's quit commands read.
     ///   - log: every log line of the parts, with its category. Tests pass their own.
     public init(core: CoreState, research: any ResearchCounting,
                 config: ClaudeConfig, environment: [String: String],
@@ -160,7 +165,8 @@ public final class BrainAssembly: Sendable {
                 embedding: any SentenceEmbedding = SystemSentenceEmbedding(),
                 alarms: AlarmBook? = nil,
                 textAuthenticator: any ConfirmAuthenticator, fastPath: any FastPathRouting = NoFastPath(),
-                makeFastPath: ((ConfirmationGate) -> any FastPathRouting)? = nil,
+                makeFastPath: ((FastPathParts) -> any FastPathRouting)? = nil,
+                runningApps: any RunningAppsControlling = NoRunningApps(),
                 online: @escaping @Sendable () async -> Bool,
                 onTurnStart: (@Sendable (TurnContext) -> Void)? = nil,
                 voiceConfirmation: VoiceConfirmation? = nil,
@@ -171,6 +177,8 @@ public final class BrainAssembly: Sendable {
         self.core = core
         self.extraTools = extraTools
         self.alarms = alarms
+        let quick = QuickPlatform(runningApps: runningApps)
+        self.quick = quick
         confirmations = ConfirmationGate()
         gateway = ToolGateway(confirmationGate: confirmations, log: { log($0, .tools) }, research: research,
                               journal: memory.map { ToolJournal(memory: $0) })
@@ -179,7 +187,8 @@ public final class BrainAssembly: Sendable {
                                            extra: extraTools.map { type(of: $0).schema })
         server = MCPServer(runDirectory: runDirectory, registry: registry, gateway: gateway,
                            tools: claudeTools.tools, log: brainLog)
-        backend = BackendReporter(research: research, log: brainLog)
+        let backend = BackendReporter(research: research, log: brainLog)
+        self.backend = backend
 
         let located = claudeExecutable ?? Self.locateClaude(environment: environment, config: config)
         self.claudeExecutable = located
@@ -293,7 +302,9 @@ public final class BrainAssembly: Sendable {
             })
         self.personality = personality
         // PA batch A: a fast path made here stashes into the gate this coordinator consumes.
-        let fastPath = makeFastPath?(confirmations) ?? fastPath
+        let fastPath = makeFastPath?(FastPathParts(
+            confirmations: confirmations, tools: gateway,
+            backendReport: { await backend.report(localModelName: BackendReporter.localDisplayName) })) ?? fastPath
         coordinator = TurnCoordinator(brain: router, fastPath: fastPath, confirmations: confirmations,
                                       textAuthenticator: textAuthenticator, online: online,
                                       onTurnStart: onTurnStart,
@@ -308,7 +319,7 @@ public final class BrainAssembly: Sendable {
     /// creates the run directory (0700) and starts the MCP server on it.
     public func start() async throws {
         await BuiltInTools.register(on: gateway, core: core, clock: SystemClock(), timeZone: .autoupdatingCurrent,
-                                    memory: memoryTools, web: webTools, alarms: alarms)
+                                    memory: memoryTools, web: webTools, alarms: alarms, quick: quick)
         // Batch C: the app's own tools (identify_song, the media catalogue, TV and AirPlay).
         for tool in extraTools { await gateway.register(tool) }
         try await server.start()
@@ -365,4 +376,12 @@ public final class BrainAssembly: Sendable {
         registry.register(value)
         return value
     }
+}
+
+/// PR2: what BrainAssembly gives the fast path it builds: the confirmation gate its coordinator
+/// consumes, the gateway its helpers run through, and `_backend_report()`.
+public struct FastPathParts: Sendable {
+    public let confirmations: ConfirmationGate
+    public let tools: ToolGateway
+    public let backendReport: @Sendable () async -> String
 }

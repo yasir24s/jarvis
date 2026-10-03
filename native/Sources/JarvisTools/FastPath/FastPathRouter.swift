@@ -24,6 +24,70 @@ public enum FastPathCommand: Sendable, Equatable {
     case sleepMac
     case ipReport
     case btBattery
+    // PR2: the branches PA batch A left to the brain, each Python's own helper call.
+    /// `_system_report()`.
+    case diagnostics
+    /// `_run_shortcut(name)` (the run and lights branches).
+    case runShortcut(String)
+    /// `(announcement, lambda: _open_settings(pane))`; nil pane is `_open_settings()`.
+    case openSettings(announcement: String, pane: String?)
+    /// `_open_path(path)`, `_resolve_open(name)`, `_reveal_in_finder(path)`.
+    case openPath(String)
+    case resolveOpen(String)
+    case reveal(String)
+    case nowPlaying
+    /// `_play_query(q)`.
+    case playQuery(String)
+    case location
+    /// `_weather(city)`.
+    case weather(String)
+    /// `_create_reminder(task, when_text)`.
+    case reminder(task: String, when: String)
+    /// `set_alarm(when)`.
+    case setAlarm(String)
+    /// `_find_song_by_lyrics(lyrics)`.
+    case songByLyrics(String)
+    case messages
+    case calendar
+    case briefing
+    /// `_make_note(text)`.
+    case makeNote(String)
+    /// `_get_system_info(kind)`: "time" or "battery".
+    case systemInfo(String)
+    case backendReport
+    /// `(f"Setting volume to {lvl}, sir.", lambda: _set_volume(lvl))` and mute.
+    case setVolume(announcement: String, level: Int)
+    /// `(…, lambda: _nudge_volume(±15))`.
+    case nudgeVolume(announcement: String, delta: Int)
+    case news
+    case screenshot
+    /// `(f"Brightness to {lvl}, sir.", lambda: _set_brightness(lvl))`.
+    case setBrightness(announcement: String, level: Int)
+    /// `(…, lambda: _nudge_brightness(±4))`.
+    case nudgeBrightness(announcement: String, steps: Int)
+    /// `_send_message(recipient, text)`.
+    case sendMessage(recipient: String, text: String)
+    /// `_type_text(text)`.
+    case typeText(String)
+    case summarizePage
+    case listShortcuts
+    /// `_quit_app(name)`.
+    case quitApp(String)
+    case copyLastReply
+    /// The f-string over `_default_browser_name()`.
+    case defaultBrowser
+    /// `_set_default_browser(name)`.
+    case setDefaultBrowser(String)
+    /// `_find_apps(kind)`.
+    case findApps(String)
+    /// `(…, lambda: _toggle_system(thing_key, on))`.
+    case toggleSystem(announcement: String, feature: String, on: Bool)
+    /// `("Done, sir.", lambda: _macos_tweak(thing, on))`.
+    case macosTweak(thing: String, on: Bool)
+    /// `_spotlight("", recent=True)`.
+    case recentFiles
+    /// `(announcement, lambda: _open_url(url))`: the Google and YouTube searches.
+    case openURL(announcement: String, url: String)
 
     /// Python's own spelling of the call, `{fn, args}` in the quick_router golden fixture.
     public var goldenCall: (fn: String, args: [String]) {
@@ -44,6 +108,58 @@ public enum FastPathCommand: Sendable, Equatable {
         case .sleepMac: ("_sleep_mac", [])
         case .ipReport: ("_ip_report", [])
         case .btBattery: ("_bt_battery", [])
+        case .diagnostics: ("_system_report", [])
+        case .runShortcut(let name): ("_run_shortcut", [name])
+        case .openSettings(_, let pane): ("_open_settings", pane.map { [$0] } ?? [])
+        case .openPath(let path): ("_open_path", [path])
+        case .resolveOpen(let name): ("_resolve_open", [name])
+        case .reveal(let path): ("_reveal_in_finder", [path])
+        case .nowPlaying: ("_now_playing", [])
+        case .playQuery(let q): ("_play_query", [q])
+        case .location: ("_location", [])
+        case .weather(let city): ("_weather", [city])
+        case .reminder(let task, let when): ("_create_reminder", [task, when])
+        case .setAlarm(let when): ("set_alarm", [when])
+        case .songByLyrics(let lyrics): ("_find_song_by_lyrics", [lyrics])
+        case .messages: ("_recent_messages", [])
+        case .calendar: ("_calendar_today", [])
+        case .briefing: ("_briefing", [])
+        case .makeNote(let text): ("_make_note", [text])
+        case .systemInfo(let kind): ("_get_system_info", [kind])
+        case .backendReport: ("_backend_report", [])
+        case .setVolume(_, let level): ("_set_volume", [String(level)])
+        case .nudgeVolume(_, let delta): ("_nudge_volume", [String(delta)])
+        case .news: ("_get_news", [])
+        case .screenshot: ("_take_screenshot", [])
+        case .setBrightness(_, let level): ("_set_brightness", [String(level)])
+        case .nudgeBrightness(_, let steps): ("_nudge_brightness", [String(steps)])
+        case .sendMessage(let recipient, let text): ("_send_message", [recipient, text])
+        case .typeText(let text): ("_type_text", [text])
+        case .summarizePage: ("_summarize_page", [])
+        case .listShortcuts: ("_list_shortcuts", [])
+        case .quitApp(let name): ("_quit_app", [name])
+        case .copyLastReply: ("_copy_last_reply", [])
+        case .defaultBrowser: ("_default_browser_name", [])
+        case .setDefaultBrowser(let name): ("_set_default_browser", [name])
+        case .findApps(let kind): ("_find_apps", [kind])
+        case .toggleSystem(_, let feature, let on): ("_toggle_system", [feature, on ? "True" : "False"])
+        case .macosTweak(let thing, let on): ("_macos_tweak", [thing, on ? "True" : "False"])
+        case .recentFiles: ("_spotlight", [""])
+        case .openURL(_, let url): ("_open_url", [url])
+        }
+    }
+
+    /// What Python speaks at once for a tuple (`kind: act` in the golden), else nil.
+    public var announcement: String? {
+        switch self {
+        case .media(let a, _), .openSettings(let a, _), .setVolume(let a, _), .nudgeVolume(let a, _),
+             .setBrightness(let a, _), .nudgeBrightness(let a, _), .toggleSystem(let a, _, _), .openURL(let a, _):
+            a
+        case .macosTweak: "Done, sir."
+        case .lockScreen: QuickReplies.locking
+        case .sleepMac: QuickReplies.goodnight
+        case .emptyTrash: "Taking out the trash, sir."
+        default: nil
         }
     }
 }
@@ -58,9 +174,10 @@ public struct FastPathMatch: Sendable, Equatable {
 /// jarvis.py `fast_path(text)`'s matching, in Python's order, with no side effects. Proven
 /// branch by branch against Python by the quick_router golden suite.
 public struct FastPathRouter: Sendable {
-    /// Mirrors `_quit_app(name) is not None` (a running app by that name). The quit branch is
-    /// not carried, so the app passes "always": the brain gets "quit X", and nothing after that
-    /// branch that this port carries can match a "quit/close/exit …" phrase anyway.
+    /// Mirrors `_quit_app(name) is not None` (a running app by that name). The app passes
+    /// "always": QuickCommands asks the quit tool, and when nothing by that name is running the
+    /// phrase goes to the brain, as Python's fall-through does (no later branch can match a
+    /// "quit/close/exit …" phrase).
     let quitWouldHandle: @Sendable (String) -> Bool
 
     public init(quitWouldHandle: @escaping @Sendable (String) -> Bool = { _ in true }) {
@@ -68,10 +185,20 @@ public struct FastPathRouter: Sendable {
     }
 
     /// The branches carried by this port; the rest are matched and sent to the brain.
+    /// PR2: every branch but the screen and clipboard help, whose Python helpers are a model
+    /// call over OCR or the pasteboard text, which the brain makes with see_screen and
+    /// read_clipboard.
     public static let carried: Set<String> = [
         "corr.forget", "corr.teach", "media.play", "media.pause", "media.next", "media.previous",
         "timer.set", "presence", "voice.forget", "lock", "trash", "timer.cancel", "timer.status",
         "alarm.cancel", "alarm.list", "quit.all", "sleep", "ip", "bt.battery",
+        "diagnostics", "shortcut.run", "lights", "settings.root", "settings.privacy", "settings.pane",
+        "open.file", "open.app", "media.now_playing", "media.play_query", "media.song_by", "location",
+        "weather", "reminder", "alarm.set", "lyrics.find", "messages.read", "calendar.today", "briefing",
+        "note.make", "time", "battery", "backend", "volume.set", "volume.mute", "news", "screenshot",
+        "brightness.set", "message.send", "type", "page.summarize", "shortcut.list", "quit.app",
+        "browser.default.get", "apps.find", "toggle", "files.recent", "files.reveal", "web.google",
+        "web.youtube",
     ]
 
     /// `text.lower().strip().rstrip("?.")`.
@@ -91,17 +218,28 @@ public struct FastPathRouter: Sendable {
         // transcription corrections, checked first (jarvis.py 4378-4381)
         if p.corrForget.search(t) != nil { return hit("corr.forget", .forgetCorrection(t)) }
         if CorrectionsLogic.parseTeach(t) != nil { return hit("corr.teach", .learnCorrection(t)) }
-        if isIn(p.diagnostics) { return hit("diagnostics") }
-        if p.shortcutRun.match(t) != nil { return hit("shortcut.run") }
+        if isIn(p.diagnostics) { return hit("diagnostics", .diagnostics) }
+        if let m = p.shortcutRun.match(t) {
+            return hit("shortcut.run", .runShortcut(Py.strip(Self.orNonEmpty(m.groups[1], m.groups[2]))))
+        }
         if let m = p.lights.match(t) {
             let thing = Self.orNonEmpty(m.groups[2], m.groups[3])
-            if p.lightWords.contains(where: { Py.eq($0, Py.strip(thing)) }) { return hit("lights") }
+            if p.lightWords.contains(where: { Py.eq($0, Py.strip(thing)) }) {
+                return hit("lights", .runShortcut("turn \(Self.orNonEmpty(m.groups[1], m.groups[4])) lights"))
+            }
         }
-        if isIn(p.settingsRoot) { return hit("settings.root") }
-        if p.settingsPrivacy.match(t) != nil { return hit("settings.privacy") }
-        if p.settingsPane.match(t) != nil { return hit("settings.pane") }
-        if p.openFile.match(t) != nil { return hit("open.file") }
-        if p.openApp.match(t) != nil {
+        if isIn(p.settingsRoot) {
+            return hit("settings.root", .openSettings(announcement: "Opening System Settings, sir.", pane: nil))
+        }
+        if let m = p.settingsPrivacy.match(t) {
+            return hit("settings.privacy", .openSettings(announcement: "Opening privacy settings, sir.",
+                                                         pane: Py.strip(m.groups[1] ?? "")))
+        }
+        if let m = p.settingsPane.match(t) {
+            return hit("settings.pane", .openSettings(announcement: "Opening settings, sir.", pane: Py.strip(m.groups[1] ?? "")))
+        }
+        if let m = p.openFile.match(t) { return hit("open.file", .openPath(Py.strip(m.groups[1] ?? ""))) }
+        if let open = p.openApp.match(t) {
             // DEV-M7-01 and DEV-M7-02 (approved): Python's launcher swallows "start a timer for
             // 5 minutes" and "start music"; natively they reach the timer and media branches.
             if let m = p.timerSet.match(t) {
@@ -110,7 +248,7 @@ public struct FastPathRouter: Sendable {
             if isIn(["start music", "start the music"]) {
                 return hit("media.play", .media(announcement: "Playing, sir.", command: "play"))
             }
-            return hit("open.app")
+            return hit("open.app", .resolveOpen(Py.strip(open.groups[1] ?? "")))
         }
         if isIn(p.mediaPlay) { return hit("media.play", .media(announcement: "Playing, sir.", command: "play")) }
         if isIn(p.mediaPause) { return hit("media.pause", .media(announcement: "Paused, sir.", command: "pause")) }
@@ -120,65 +258,85 @@ public struct FastPathRouter: Sendable {
         if isIn(p.mediaPrevious) {
             return hit("media.previous", .media(announcement: "Going back, sir.", command: "previous track"))
         }
-        if isIn(p.nowPlaying) { return hit("media.now_playing") }
-        if p.playQuery.match(t) != nil { return hit("media.play_query") }
+        if isIn(p.nowPlaying) { return hit("media.now_playing", .nowPlaying) }
+        if let m = p.playQuery.match(t) {
+            let q = Py.strip(m.groups[1] ?? "")
+            if p.playGeneric.contains(where: { Py.eq($0, q) }) {
+                return hit("media.play_query", .media(announcement: "Playing, sir.", command: "play"))
+            }
+            return hit("media.play_query", .playQuery(q))
+        }
         if p.songBy.match(t) != nil, let first = Py.split(t).first,
            !p.songByExcluded.contains(where: { Py.eq($0, first) }) {
-            return hit("media.song_by")
+            return hit("media.song_by", .playQuery(t))
         }
-        if isIn(p.location) { return hit("location") }
+        if isIn(p.location) { return hit("location", .location) }
         if has("weather") || has("temperature") || has("forecast") || isIn(p.weatherPhrases) {
-            return hit("weather")
+            return hit("weather", .weather(p.weatherCity.search(t)?.groups[1] ?? ""))
         }
         if let m = p.timerSet.match(t) {
             return hit("timer.set", Self.timerSeconds(m.groups[1] ?? "", unit: m.groups[2] ?? "").map { FastPathCommand.setTimer($0) })
         }
-        if p.reminder.match(t) != nil { return hit("reminder") }
-        if p.alarmSet.match(t) != nil { return hit("alarm.set") }
-        if p.lyrics.match(t) != nil { return hit("lyrics.find") }
-        if isIn(p.messages) { return hit("messages.read") }
-        if isIn(p.calendar) { return hit("calendar.today") }
-        if isIn(p.briefing) { return hit("briefing") }
+        if let m = p.reminder.match(t) { return hit("reminder", Self.reminder(Py.strip(m.groups[1] ?? ""))) }
+        if let m = p.alarmSet.match(t) { return hit("alarm.set", .setAlarm(Py.strip(m.groups[1] ?? ""))) }
+        if let m = p.lyrics.match(t) { return hit("lyrics.find", .songByLyrics(m.groups[1] ?? "")) }
+        if isIn(p.messages) { return hit("messages.read", .messages) }
+        if isIn(p.calendar) { return hit("calendar.today", .calendar) }
+        if isIn(p.briefing) { return hit("briefing", .briefing) }
         if isIn(p.screenExact) { return hit("screen.exact") }
         if has("screen"), p.screenWords.contains(where: { has($0) }) { return hit("screen.fuzzy") }
         if isIn(p.clipboard) { return hit("clipboard.help") }
-        if p.note.match(t) != nil { return hit("note.make") }
-        if isIn(p.time) { return hit("time") }
+        if let m = p.note.match(t) { return hit("note.make", .makeNote(Py.strip(m.groups[1] ?? ""))) }
+        if isIn(p.time) { return hit("time", .systemInfo("time")) }
         if has("battery"), has("level") || has("how much") || has("status") || Py.eq(t, "battery") {
-            return hit("battery")
+            return hit("battery", .systemInfo("battery"))
         }
-        if isIn(p.backend) { return hit("backend") }
+        if isIn(p.backend) { return hit("backend", .backendReport) }
         if isIn(p.presence) { return hit("presence", .presence) }
         if isIn(p.forgetVoice) { return hit("voice.forget", .forgetVoice) }
-        if p.volumeSet.match(t) != nil { return hit("volume.set") }
-        if isIn(["mute", "volume off"]) { return hit("volume.mute") }
-        if isIn(["volume up", "louder"]) { return hit("volume.up") }
-        if isIn(["volume down", "quieter"]) { return hit("volume.down") }
-        if isIn(p.news) { return hit("news") }
-        if isIn(p.screenshot) { return hit("screenshot") }
+        if let m = p.volumeSet.match(t), let lvl = Self.level(m.groups[1] ?? "") {
+            return hit("volume.set", .setVolume(announcement: "Setting volume to \(lvl), sir.", level: lvl))
+        }
+        if isIn(["mute", "volume off"]) { return hit("volume.mute", .setVolume(announcement: "Muting, sir.", level: 0)) }
+        if isIn(["volume up", "louder"]) {
+            return hit("volume.up", .nudgeVolume(announcement: "Turning it up, sir.", delta: 15))
+        }
+        if isIn(["volume down", "quieter"]) {
+            return hit("volume.down", .nudgeVolume(announcement: "Turning it down, sir.", delta: -15))
+        }
+        if isIn(p.news) { return hit("news", .news) }
+        if isIn(p.screenshot) { return hit("screenshot", .screenshot) }
         if isIn(p.lock) { return hit("lock", .lockScreen) }
         if isIn(p.trash) { return hit("trash", .emptyTrash) }
-        if p.brightnessSet.match(t) != nil { return hit("brightness.set") }
-        if isIn(p.brightnessUp) { return hit("brightness.up") }
-        if isIn(p.brightnessDown) { return hit("brightness.down") }
-        if p.messageSend.match(t) != nil { return hit("message.send") }
-        if p.typeText.match(t) != nil { return hit("type") }
-        if isIn(p.summarize) { return hit("page.summarize") }
-        if isIn(p.shortcutList) { return hit("shortcut.list") }
+        if let m = p.brightnessSet.match(t), let lvl = Self.level(m.groups[1] ?? "") {
+            return hit("brightness.set", .setBrightness(announcement: "Brightness to \(lvl), sir.", level: lvl))
+        }
+        if isIn(p.brightnessUp) { return hit("brightness.up", .nudgeBrightness(announcement: "Brighter, sir.", steps: 4)) }
+        if isIn(p.brightnessDown) { return hit("brightness.down", .nudgeBrightness(announcement: "Dimming, sir.", steps: -4)) }
+        if let m = p.messageSend.match(t) {
+            return hit("message.send", .sendMessage(recipient: Py.strip(m.groups[1] ?? ""), text: Py.strip(m.groups[2] ?? "")))
+        }
+        if let m = p.typeText.match(t) { return hit("type", .typeText(Py.strip(m.groups[1] ?? ""))) }
+        if isIn(p.summarize) { return hit("page.summarize", .summarizePage) }
+        if isIn(p.shortcutList) { return hit("shortcut.list", .listShortcuts) }
         if p.timerCancel.match(t) != nil { return hit("timer.cancel", .cancelTimers) }
         if p.timerHowLong.search(t) != nil || isIn(p.timerStatus) { return hit("timer.status", .timerStatus) }
         if p.alarmCancel.match(t) != nil { return hit("alarm.cancel", .cancelAlarms) }
         if isIn(p.alarmList) { return hit("alarm.list", .listAlarms) }
         if isIn(p.quitAll) { return hit("quit.all", .quitAllApps) }
-        if let m = p.quitApp.match(t), quitWouldHandle(Py.strip(m.groups[1] ?? "")) { return hit("quit.app") }
+        if let m = p.quitApp.match(t), quitWouldHandle(Py.strip(m.groups[1] ?? "")) {
+            return hit("quit.app", .quitApp(Py.strip(m.groups[1] ?? "")))
+        }
         if isIn(p.sleep) { return hit("sleep", .sleepMac) }
-        if isIn(p.copyLast) { return hit("clipboard.copy_last") }
-        if isIn(p.defaultBrowser) { return hit("browser.default.get") }
-        if p.setBrowser1.match(t) != nil || p.setBrowser2.match(t) != nil { return hit("browser.default.set") }
+        if isIn(p.copyLast) { return hit("clipboard.copy_last", .copyLastReply) }
+        if isIn(p.defaultBrowser) { return hit("browser.default.get", .defaultBrowser) }
+        if let m = p.setBrowser1.match(t) ?? p.setBrowser2.match(t) {
+            return hit("browser.default.set", .setDefaultBrowser(Py.strip(m.groups[1] ?? "")))
+        }
         if let m = p.appsFind.match(t) {
             let kind = Py.strip(m.groups[1] ?? "")
             if !(AppKinds.kindWord(kind) ?? "").isEmpty || AppKinds.allKinds.contains(where: { Py.eq($0, kind) }) {
-                return hit("apps.find")
+                return hit("apps.find", .findApps(kind))
             }
         }
         if let m = p.toggle.match(t) {
@@ -186,14 +344,30 @@ public struct FastPathRouter: Sendable {
             let key = p.leadingThe.sub(thing, literal: "")
             let knownSys = p.toggleSystem.contains { Py.eq($0, key) }
             let knownTweak = Self.tweakNames.contains { Py.contains($0, key) || Py.contains(key, $0) }
-            if knownSys || knownTweak { return hit("toggle") }
+            let verb = m.groups[1] ?? ""
+            let on = ["on", "enable", "show"].contains { Py.eq($0, verb) }
+            if knownSys {
+                let spoken = Py.eq(verb, "on") || Py.eq(verb, "off") ? "Turning \(verb) \(thing), sir." : "Done, sir."
+                return hit("toggle", .toggleSystem(announcement: spoken, feature: key, on: on))
+            }
+            if knownTweak { return hit("toggle", .macosTweak(thing: thing, on: on)) }
         }
-        if isIn(p.recentFiles) { return hit("files.recent") }
-        if p.reveal.match(t) != nil, has("file") || has("in finder") { return hit("files.reveal") }
+        if isIn(p.recentFiles) { return hit("files.recent", .recentFiles) }
+        if let m = p.reveal.match(t), has("file") || has("in finder") {
+            return hit("files.reveal", .reveal(Py.strip(m.groups[1] ?? "")))
+        }
         if isIn(p.ip) { return hit("ip", .ipReport) }
         if isIn(p.bluetooth) { return hit("bt.battery", .btBattery) }
-        if p.google.match(t) != nil { return hit("web.google") }
-        if p.youtube1.match(t) != nil || p.youtube2.match(t) != nil { return hit("web.youtube") }
+        if let m = p.google.match(t) {
+            let q = Py.strip(m.groups[1] ?? "")
+            return hit("web.google", .openURL(announcement: "Googling \(q), sir.",
+                                              url: "https://www.google.com/search?q=" + PyURL.quote(q)))
+        }
+        if let m = p.youtube1.match(t) ?? p.youtube2.match(t) {
+            let q = Py.strip(m.groups[1] ?? "")
+            return hit("web.youtube", .openURL(announcement: "Searching YouTube for \(q), sir.",
+                                               url: "https://www.youtube.com/results?search_query=" + PyURL.quote(q)))
+        }
         return hit("defer")
     }
 
@@ -202,6 +376,20 @@ public struct FastPathRouter: Sendable {
         if let a, !a.isEmpty { return a }
         if let b, !b.isEmpty { return b }
         return ""
+    }
+
+    /// The reminder branch's split of `rest` into the task and `when_text`.
+    static func reminder(_ rest: String) -> FastPathCommand {
+        let wm = Patterns.reminderWhen.search(rest)
+        let when = wm?.groups[1] ?? ""
+        let task = Py.strip(wm.map { Py.strip(Py.prefix(rest, $0.span.lowerBound)) } ?? rest, " ,")
+        return .reminder(task: task.isEmpty ? rest : task, when: when)
+    }
+
+    /// `max(0, min(100, int(m.group(1))))` for the volume and brightness levels (`\d{1,3}`, so
+    /// never more than three digits); nil only if the digits are not decimal digits.
+    static func level(_ digits: String) -> Int? {
+        timerSeconds(digits, unit: "sec").map { max(0, min(100, $0)) }
     }
 
     /// `n, u = int(m.group(1)), m.group(2)` and the seconds. Python's `\d` and `int()` take
@@ -256,6 +444,7 @@ public struct FastPathRouter: Sendable {
         static let playQuery = re(#"(?:play|put on|throw on|listen to|i want to listen to|i wanna listen to|"#
             + #"i want to hear|can you play)\s+(?:some |the song |the track |me )?(.+?)"#
             + #"(?: please)?$"#)
+        static let playGeneric = ["music", "it", "that", "something", "a song", "some music", "tunes", "songs"]
         static let songBy = re(#"^[\w'&., ]+ by [\w'&., ]+$"#)
         static let songByExcluded = ["what", "who", "stand", "made", "written", "directed", "designed", "built"]
         static let location = ["where am i", "where am i right now", "what's my location", "what is my location",
@@ -263,9 +452,11 @@ public struct FastPathRouter: Sendable {
         static let weatherPhrases = ["is it raining", "is it cold", "is it hot", "do i need a jacket",
                                      "is it going to rain", "will it rain", "will it rain today",
                                      "is it nice out", "what's it like outside"]
+        static let weatherCity = re(#"(?:weather|temperature|forecast)\s*(?:like\s*)?in (.+)"#)
         static let timerSet = re(#"(?:set |start )?(?:a |an )?timer (?:for |of )?(\d+)\s*"#
             + #"(second|sec|minute|min|hour|hr)s?"#)
         static let reminder = re(#"(?:remind me to|set a reminder to|reminder to|remind me)\s+(.+)"#)
+        static let reminderWhen = re(#"\b(in \d+\s*\w+.*|at \d.*|tomorrow.*)$"#)
         static let alarmSet = re(#"(?:set (?:an? )?alarm|wake me up|set alarm)\s*(?:for|at|in)?\s*(.+)"#)
         static let lyrics = re(#"(?:what(?:'s| is)? the song (?:that goes|with the lyrics|that says|called)|"#
             + #"find (?:the |a )?song(?: that goes| with the lyrics)?|name the song that goes|"#

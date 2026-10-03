@@ -634,10 +634,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             reader: WebReader(), waitForSilence: { [queue = voice.queue] in await queue.idle() },
             alarms: alarms,
             textAuthenticator: authenticator,
-            makeFastPath: { gate in
-                QuickCommands(core: core, confirmations: gate, timers: timers, alarms: alarms, hooks: quickHooks,
-                              online: { await Net.isOnline() })
+            makeFastPath: { parts in
+                var hooks = quickHooks
+                hooks.backendReport = parts.backendReport
+                return QuickCommands(core: core, confirmations: parts.confirmations, timers: timers, alarms: alarms,
+                                     hooks: hooks, tools: parts.tools, online: { await Net.isOnline() })
             },
+            // PR2: the fast path's quit commands read the running apps.
+            runningApps: LiveRunningApps(),
             // Python's is_online(): asked only when a turn reaches the brain.
             online: { await Net.isOnline() },
             // M9a part 6 (D-41): a spoken confirmation passes the same owner check, a fresh

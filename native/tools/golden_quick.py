@@ -23,6 +23,9 @@ quick_alarms   input {file: <json text or null>} -> expected {list, cancel, afte
 quick_system   input {fn, ...} -> expected {text, calls?}: `_ip_report`, `_bt_battery`,
   `_quit_all_apps`, `_empty_trash`, `_lock_screen`, `_sleep_mac`, `_media`, `forget_voice` over
   canned command output; `calls` is what they ran.
+quick_helpers  input {fn, ...} -> expected {text, calls}: PR2's fast-path helpers with no catalog tool
+  (`_resolve_open` and its action, `_open_path`, `_reveal_in_finder`, `_quit_app`, `_briefing`, the
+  default-browser line) over a canned app index, running apps, mdfind output and helper replies.
 """
 import ast
 import contextlib
@@ -290,7 +293,8 @@ def _router_cases(ctx):
         raise RuntimeError(f"deviation phrases missing from the corpus: {sorted(set(DEVIATIONS) - seen)}")
     cases.append({"name": "tables", "input": {},
                   "expected": {"ALL_KINDS": sorted(J._ALL_KINDS), "TWEAKS": list(J._TWEAKS),
-                               "QUIT_RUNNING": QUIT_RUNNING, "BRANCHES": BRANCHES + ["defer"]}})
+                               "QUIT_RUNNING": QUIT_RUNNING, "BRANCHES": BRANCHES + ["defer"],
+                               "APP_ALIASES": J.APP_ALIASES, "WEBSITES": J.WEBSITES}})
     return cases
 
 
@@ -606,5 +610,148 @@ def quick_system(ctx):
                     f.write(b"\x93NUMPY")
             exp["text"] = J.forget_voice()
             exp["calls"] = [["voiceprint_exists_after", os.path.exists(J.VOICEPRINT_FILE)]]
+        cases.append({"name": name, "input": inp, "expected": exp})
+    return cases
+
+
+# ─── quick_helpers (PR2) ────────────────────────────────────────────────────────
+
+_INDEX = [["safari", "Safari", "/Applications/Safari.app"],
+          ["google chrome", "Google Chrome", "/Applications/Google Chrome.app"],
+          ["music", "Music", "/System/Applications/Music.app"],
+          ["xcode", "Xcode", "/Applications/Xcode.app"],
+          ["calculator", "Calculator", "/System/Applications/Calculator.app"],
+          ["visual studio code", "Visual Studio Code", "/Applications/Visual Studio Code.app"]]
+_META = {"safari": ["browser"], "google chrome": ["browser"], "music": ["music"], "xcode": ["code"],
+         "calculator": ["utility"], "visual studio code": ["code", "editor"]}
+_RUNNING = [{"name": "Finder", "policy": 0}, {"name": "Safari", "policy": 0},
+            {"name": "Google Chrome", "policy": 0}, {"name": "Music", "policy": 0},
+            {"name": "Dock", "policy": 1}, {"name": "JARVIS", "policy": 0}]
+
+HELPER_CASES = [
+    ("open/website", {"fn": "open", "name": "youtube"}),
+    ("open/website_punct", {"fn": "open", "name": "Gmail!"}),
+    ("open/exact", {"fn": "open", "name": "safari"}),
+    ("open/alias", {"fn": "open", "name": "vs code"}),
+    ("open/alias_settings", {"fn": "open", "name": "preferences"}),
+    ("open/fuzzy_contains", {"fn": "open", "name": "chrome browser"}),
+    ("open/fuzzy_part", {"fn": "open", "name": "calc"}),
+    ("open/browser_default", {"fn": "open", "name": "my browser", "default_browser": "Google Chrome"}),
+    ("open/browser_no_default", {"fn": "open", "name": "the browser", "default_browser": ""}),
+    ("open/music_kind", {"fn": "open", "name": "my music app"}),
+    ("open/kind_none", {"fn": "open", "name": "my game app", "meta": {}}),
+    ("open/exists_by_name", {"fn": "open", "name": "Notes", "exists": ["Notes"]}),
+    ("open/domain", {"fn": "open", "name": "github.com"}),
+    ("open/domain_spaces", {"fn": "open", "name": "my site.org"}),
+    ("open/http", {"fn": "open", "name": "http://example.com"}),
+    ("open/unknown", {"fn": "open", "name": "flurbo"}),
+    ("open/empty_index", {"fn": "open", "name": "safari", "index": [], "meta": {}}),
+    ("path/exists", {"fn": "path", "path": "/tmp/report.pdf", "exists": ["/tmp/report.pdf"]}),
+    ("path/spotlight", {"fn": "path", "path": "budget.xlsx", "mdfind": "/Volumes/Data/budget.xlsx\n/x/budget.xlsx\n"}),
+    ("path/spotlight_blank_first", {"fn": "path", "path": "notes", "mdfind": "  \n/Volumes/Data/notes.txt\n"}),
+    ("path/nothing", {"fn": "path", "path": "nowhere.doc", "mdfind": ""}),
+    ("path/mdfind_fails", {"fn": "path", "path": "nowhere.doc", "mdfind": None}),
+    ("path/blank", {"fn": "path", "path": "  "}),
+    ("reveal/exists", {"fn": "reveal", "path": "/tmp/report.pdf", "exists": ["/tmp/report.pdf"]}),
+    ("reveal/spotlight", {"fn": "reveal", "path": "budget.pdf", "mdfind": "/Volumes/Data/budget.pdf\n"}),
+    ("reveal/nothing", {"fn": "reveal", "path": "budget.pdf", "mdfind": ""}),
+    ("quit/exact", {"fn": "quit", "name": "safari"}),
+    ("quit/the", {"fn": "quit", "name": "the music"}),
+    ("quit/alias", {"fn": "quit", "name": "chrome"}),
+    ("quit/substring", {"fn": "quit", "name": "fari"}),
+    ("quit/not_running", {"fn": "quit", "name": "the deal"}),
+    ("quit/background_only", {"fn": "quit", "name": "dock"}),
+    ("quit/blank_after_the", {"fn": "quit", "name": "my  "}),
+    ("briefing/online", {"fn": "briefing", "online": True, "calendar": "You have 2 events today: standup at 9."}),
+    ("briefing/offline", {"fn": "briefing", "online": False, "calendar": "Nothing on your calendar today, sir."}),
+    ("briefing/calendar_denied", {"fn": "briefing", "online": True,
+                                  "calendar": "I can't read your calendar, sir — grant Calendar access."}),
+    ("briefing/calendar_empty", {"fn": "briefing", "online": True, "calendar": ""}),
+    ("briefing/news_failed", {"fn": "briefing", "online": True, "calendar": "Nothing today.",
+                              "news": "I couldn't fetch the headlines, sir."}),
+    ("browser/name", {"fn": "browser", "default_browser": "Safari"}),
+    ("browser/none", {"fn": "browser", "default_browser": ""}),
+]
+
+
+class _Popen:
+    def __init__(self, calls):
+        self.calls = calls
+
+    def __call__(self, argv, *a, **kw):
+        self.calls.append(list(argv))
+        return types.SimpleNamespace(pid=0)
+
+
+@suite("quick_helpers")
+def quick_helpers(ctx):
+    J = ctx.J
+    cases = []
+    for name, inp in HELPER_CASES:
+        ctx.reset()
+        fn = inp["fn"]
+        calls = []
+        exp = {}
+        index = inp.get("index", _INDEX)
+        app_index = {low: nm for low, nm, _ in index}
+        app_paths = {low: p for low, _, p in index}
+        meta = inp.get("meta", _META)
+        app_meta = {low: {"name": app_index[low], "kinds": set(k)} for low, k in meta.items() if low in app_index}
+        if fn == "open":
+            with _patched(J, APP_INDEX=app_index, APP_PATHS=app_paths, APP_META=app_meta,
+                          _default_browser_name=lambda _d=inp.get("default_browser", ""): _d,
+                          _app_exists=lambda a, _e=inp.get("exists", []): a in _e,
+                          _launch_app=lambda t: calls.append(["open", "-a", t]),
+                          _open_url=lambda u: calls.append(["open", u])):
+                ann, act = J._resolve_open(inp["name"])
+                if act:
+                    act()
+            exp["text"] = ann
+        elif fn in ("path", "reveal"):
+            outs = {}
+            if inp.get("mdfind") is not None:
+                p = os.path.expanduser(inp["path"].strip())
+                outs[("mdfind", f"kMDItemDisplayName == '*{p}*'cd")] = inp["mdfind"]
+            runner = _Runner(outs)
+            runner.Popen = _Popen(runner.calls)
+            existing = inp.get("exists", [])
+            with _patched(J, subprocess=runner), _patched(J.os.path, exists=lambda q: q in existing):
+                try:
+                    exp["text"] = J._open_path(inp["path"]) if fn == "path" else J._reveal_in_finder(inp["path"])
+                except FileNotFoundError:
+                    exp["text"] = None          # Python raises; the fast path never answers
+            calls = runner.calls
+        elif fn == "quit":
+            terminated = []
+            saved = sys.modules.get("AppKit")
+            sys.modules["AppKit"] = _appkit(inp.get("apps", _RUNNING), terminated)
+            try:
+                with _patched(J, APP_INDEX=app_index, APP_META=app_meta):
+                    exp["text"] = J._quit_app(inp["name"])
+            finally:
+                if saved is None:
+                    del sys.modules["AppKit"]
+                else:
+                    sys.modules["AppKit"] = saved
+            calls = [["terminate", n] for n in terminated]
+        elif fn == "briefing":
+            def news(n=4, _r=inp.get("news", "Top headlines. One ... Two ... Three.")):
+                calls.append(["get_news", n])
+                return _r
+
+            def weather(city="", _o=inp["online"]):
+                calls.append(["get_weather", city])
+                return "It's 14 degrees and cloudy in London, sir."
+
+            with _patched(J, is_online=lambda timeout=1.2, _o=inp["online"]: _o,
+                          _get_system_info=lambda k: (calls.append(["get_time", k]), "It's 9:00 AM, sir.")[1],
+                          _weather=weather,
+                          _calendar_today=lambda _c=inp["calendar"]: (calls.append(["get_calendar"]), _c)[1],
+                          _get_news=news):
+                exp["text"] = J._briefing()
+        elif fn == "browser":
+            with _patched(J, _default_browser_name=lambda _d=inp["default_browser"]: _d):
+                exp["text"] = J.fast_path("what's my default browser")
+        exp["calls"] = calls
         cases.append({"name": name, "input": inp, "expected": exp})
     return cases

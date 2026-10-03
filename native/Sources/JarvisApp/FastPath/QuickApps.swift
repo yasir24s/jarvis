@@ -11,3 +11,20 @@ enum QuickApps {
                                     terminate: { apps[$0].terminate() })
     }
 }
+
+/// PR2: the running apps for the fast path's quit commands (`_quit_app`, `_quit_kind`), read on
+/// the main actor as QuickApps reads them.
+struct LiveRunningApps: RunningAppsControlling {
+    func runningApps() async -> [RunningApp] {
+        await MainActor.run {
+            NSWorkspace.shared.runningApplications.map {
+                RunningApp(name: $0.localizedName ?? "", regular: $0.activationPolicy == .regular,
+                           pid: $0.processIdentifier)
+            }
+        }
+    }
+
+    func terminate(_ app: RunningApp) async -> Bool {
+        await MainActor.run { NSRunningApplication(processIdentifier: app.pid)?.terminate() ?? false }
+    }
+}

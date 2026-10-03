@@ -33,7 +33,10 @@ struct GetNews: ToolImpl {
         guard await online() else { return .text(Self.offline) }
         do {
             let body = try await web.get(feed, headers: [("User-Agent", Self.userAgent)], timeout: Self.timeout)
-            return .text(try Self.reply(String(decoding: body, as: UTF8.self), count: Self.count))
+            // PR2: the briefing asks for three (`_get_news(3)`); only the fast path may pass a count.
+            var count = Self.count
+            if ctx.origin == .fastPath, case .int(let n)? = args["count"] { count = Int(n) }
+            return .text(try Self.reply(String(decoding: body, as: UTF8.self), count: count))
         } catch {
             log("news failed: \(WebSearch.describe(error))")
             return .text(Self.failed)

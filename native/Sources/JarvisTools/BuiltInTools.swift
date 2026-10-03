@@ -44,11 +44,14 @@ public enum BuiltInTools {
     /// the personality file the two personality tools write (through its StateStore). With
     /// `memory`, the four memory tools are registered too (NativeToolCatalog). With `web`,
     /// web_search has its deep mode (W1 part 4). With `alarms`, set_reminder and set_alarm write
-    /// to JARVIS's alarms.json (F1).
+    /// to JARVIS's alarms.json (F1). `quick` (PR2) is what the fast path's own tools read from the
+    /// app: the running apps and the last reply.
     public static func register(on gateway: ToolGateway, core: CoreState, clock: any JarvisClock,
                                 timeZone: TimeZone, memory: Memory? = nil, web: Web? = nil,
-                                alarms: AlarmBook? = nil) async {
-        await register(on: gateway, core: core, clock: clock, timeZone: timeZone, platform: .live, memory: memory,
+                                alarms: AlarmBook? = nil, quick: QuickPlatform = QuickPlatform()) async {
+        var platform = ToolPlatform.live
+        platform.quick = quick
+        await register(on: gateway, core: core, clock: clock, timeZone: timeZone, platform: platform, memory: memory,
                        web: web, alarms: alarms)
     }
 
@@ -135,6 +138,14 @@ public enum BuiltInTools {
             await gateway.register(Capped(SetReminder(book: alarms, clock: clock, timeZone: timeZone)))
             await gateway.register(Capped(SetAlarm(book: alarms, clock: clock, timeZone: timeZone)))
         }
+        // PR2: the fast path's own helpers, never offered to a model (FastPathOnly).
+        await gateway.register(FastPathOnly(QuickOpenApp(index: platform.apps, browser: platform.browser,
+                                                         runner: platform.opener, appExists: platform.appExists)))
+        await gateway.register(FastPathOnly(QuickOpenPath(spotlight: platform.spotlightRunner, runner: platform.opener,
+                                                          home: platform.home, userHome: platform.userHome,
+                                                          exists: platform.pathExists)))
+        await gateway.register(FastPathOnly(QuickOpenURL(runner: platform.opener)))
+        await gateway.register(FastPathOnly(QuickQuitApp(apps: platform.quick.runningApps, catalog: { [apps = platform.apps] in await apps.catalog() })))
     }
 
     /// The generated `ToolCatalog` entry for `name`, so no body carries a hand-written schema.
@@ -198,6 +209,13 @@ struct ToolPlatform: Sendable {
     var calendar: any CalendarStoring = NoCalendar()
     /// PB: `_front_app()`, for summarize_page's browser order.
     var frontApp: @Sendable () async -> String = { "" }
+    /// PR2: the fast path's own tools. `open` (apps, files, URLs) runs on `opener`, which
+    /// runs nothing until the app's live platform; the running apps and the last reply come
+    /// from the app (QuickPlatform).
+    var opener: any StdinCommandRunning = NoCommands()
+    var appExists: @Sendable (String) -> Bool = { _ in false }
+    var pathExists: @Sendable (String) -> Bool = { _ in false }
+    var quick: QuickPlatform = QuickPlatform()
 
     static var live: ToolPlatform {
         var platform = ToolPlatform(system: LiveSystemProbe(), clipboard: LivePasteboard(), screen: LiveScreenCapture(),
@@ -215,6 +233,9 @@ struct ToolPlatform: Sendable {
         platform.contacts = LiveContacts()
         platform.calendar = LiveCalendar.shared
         platform.frontApp = { SummarizePage.liveFrontApp() }
+        platform.opener = BoundedRunner(environment: BoundedRunner.agentEnvironment())
+        platform.appExists = { QuickTables.liveAppExists($0) }
+        platform.pathExists = QuickOpenPath.liveExists
         return platform
     }
 }

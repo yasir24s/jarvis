@@ -6411,7 +6411,37 @@
      "web.google",
      "web.youtube",
      "defer"
-    ]
+    ],
+    "APP_ALIASES": {
+     "chrome": "Google Chrome",
+     "google chrome": "Google Chrome",
+     "vscode": "Visual Studio Code",
+     "vs code": "Visual Studio Code",
+     "code": "Visual Studio Code",
+     "settings": "System Settings",
+     "system settings": "System Settings",
+     "system preferences": "System Settings",
+     "preferences": "System Settings",
+     "zoom": "zoom.us",
+     "app store": "App Store",
+     "calc": "Calculator",
+     "vlc": "VLC",
+     "word": "Microsoft Word",
+     "excel": "Microsoft Excel"
+    },
+    "WEBSITES": {
+     "youtube": "https://youtube.com",
+     "google": "https://google.com",
+     "gmail": "https://mail.google.com",
+     "github": "https://github.com",
+     "twitter": "https://twitter.com",
+     "x": "https://x.com",
+     "reddit": "https://reddit.com",
+     "netflix": "https://netflix.com",
+     "chatgpt": "https://chat.openai.com",
+     "maps": "https://maps.google.com",
+     "amazon": "https://amazon.com"
+    }
    }
   }
  ]

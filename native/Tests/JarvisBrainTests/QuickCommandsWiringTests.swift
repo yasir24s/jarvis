@@ -34,8 +34,8 @@ struct QuickCommandsWiringTests {
                              personaWriter: ScriptedWriter(),
                              embedding: MemoryWiringTests.TableEmbedding(table: [:]),
                              textAuthenticator: FakeAuthenticator(answer: owner),
-                             makeFastPath: { gate in
-                                 QuickCommands(core: harness.core, confirmations: gate, timers: timers, alarms: nil,
+                             makeFastPath: { parts in
+                                 QuickCommands(core: harness.core, confirmations: parts.confirmations, timers: timers, alarms: nil,
                                                hooks: hooks, online: { false }, log: { _ in })
                              },
                              online: { false }, log: { _, _ in })
