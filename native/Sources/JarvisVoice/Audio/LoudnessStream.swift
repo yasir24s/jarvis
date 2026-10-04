@@ -135,6 +135,15 @@ struct PreRoll {
         samples = Int((seconds * sampleRate).rounded())
     }
 
+    /// The hold for a reply about `expected` seconds long whose voice delivers `deliveryRate`
+    /// seconds of audio a second (the last reply's, measured by EnginePlayer). Delivered slower
+    /// than it plays (a hot, loaded Mac), a reply held for `expected × (1 − rate)` more plays to the
+    /// end without running dry; at or above real time, or unknown, it is the usual 0.2 s.
+    static func hold(expected: Double, deliveryRate: Double?) -> Double {
+        guard let rate = deliveryRate, rate > 0, rate < 1, expected > 0 else { return seconds }
+        return seconds + expected * (1 - rate)
+    }
+
     /// What may play now of `audio`, with whatever was held before it.
     mutating func take(_ audio: [Float]) -> [Float] {
         if started { return audio }

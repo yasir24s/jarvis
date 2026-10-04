@@ -73,5 +73,11 @@ let package = Package(
             // MLXArray and the model are not Sendable; the helper is single-threaded.
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
+        // V7: the stretcher fed as a slow, uneven stream keeps its rate (no model is loaded).
+        .testTarget(
+            name: "jarvis-voice-qwen-tests",
+            dependencies: ["jarvis-voice-qwen"],
+            path: "Tests/jarvis-voice-qwen-tests"
+        ),
     ]
 )

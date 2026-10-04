@@ -353,4 +353,8 @@ final class ReportingPlayer: SpeechPlayer {
     func replyEnded() async {
         await inner.replyEnded()
     }
+
+    func lastStream() async -> StreamReport? {
+        await inner.lastStream()
+    }
 }

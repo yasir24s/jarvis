@@ -335,6 +335,9 @@ public actor SpeechQueue {
                         log("voice: the voice stopped mid-reply (\(error)); the rest is not spoken")
                     }
                 }
+                if let report = await player.lastStream(), report.dry > 0 || report.preroll > PreRoll.seconds {
+                    log(Self.dryLine(report))
+                }
                 if Task.isCancelled { stopped = true }
             }
             generating = relay.generating
@@ -433,6 +436,15 @@ public actor SpeechQueue {
         line += helperMB.map { "\($0) MB" } ?? "n/a"
         if sayParts > 0 { line += "; say spoke \(sayParts) part(s)" }
         if stopped { line += "; stopped" }
+        return line
+    }
+
+    /// `voice: stream ran dry <n> times, <ms> ms; pre-roll <s> s; delivered at <r>x real time`,
+    /// the pre-roll only when it was raised, the rate only when it is known.
+    static func dryLine(_ report: StreamReport) -> String {
+        var line = "voice: stream ran dry \(report.dry) times, \(report.dryMilliseconds) ms"
+        if report.preroll > PreRoll.seconds { line += String(format: "; pre-roll %.1f s", report.preroll) }
+        if let rate = report.deliveryRate { line += String(format: "; delivered at %.2fx real time", rate) }
         return line
     }
 
