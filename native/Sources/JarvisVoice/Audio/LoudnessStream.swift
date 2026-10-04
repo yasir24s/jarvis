@@ -126,12 +126,32 @@ final class LoudnessStream {
 /// 10 ms, and up to 0.05 s at 0.4 s); after that the stream kept ahead of the play head.
 struct PreRoll {
     static let seconds = 0.2
+    /// V9: the reply's own pieces are measured until this much audio has come after the first.
+    static let measureSeconds = 1.0
+    /// V9: the most the reply's own measure holds it back.
+    static let inReplyLimit = 4.0
 
-    private let samples: Int
+    private let sampleRate: Double
+    private var samples: Int
     private var held: [Float] = []
     private(set) var started = false
 
     init(sampleRate: Double, seconds: Double = PreRoll.seconds) {
+        self.sampleRate = sampleRate
+        samples = Int((seconds * sampleRate).rounded())
+    }
+
+    /// V9: the hold once the reply's own first pieces have come at `inReplyRate` (`DeliveryMeter`),
+    /// from the hold the last reply's rate gave (`prior`). Slower than real time, it is
+    /// `hold(expected:deliveryRate:)` with that rate, up to `inReplyLimit`; it never goes below
+    /// `prior`, so a reply that keeps up starts as soon as it did before.
+    static func hold(expected: Double, prior: Double, inReplyRate: Double?) -> Double {
+        guard let rate = inReplyRate, rate < 1 else { return prior }
+        return max(prior, min(inReplyLimit, hold(expected: expected, deliveryRate: rate)))
+    }
+
+    /// V9: a new hold, before anything has played; the next `take` goes by it.
+    mutating func setHold(_ seconds: Double) {
         samples = Int((seconds * sampleRate).rounded())
     }
 

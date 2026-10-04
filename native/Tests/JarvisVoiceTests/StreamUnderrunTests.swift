@@ -128,12 +128,13 @@ struct StreamUnderrunTests {
         try await Self.playSlowStream(on: player)
         let first = try #require(await player.lastStream())
         let measured = try #require(first.deliveryRate)
-        #expect(first.preroll == PreRoll.seconds, "nothing measured before the first reply")
-        #expect(first.holdRate == nil)
+        #expect(first.holdRate == nil, "nothing measured before the first reply")
         #expect(measured < 0.8, "measured \(measured)")
-        // Played from when each piece was queued: 0.12 s of audio every 0.2 s or more runs dry
-        // each time after the pre-roll.
-        #expect(first.dry >= 4, "ran dry \(first.dry) times")
+        // V9: the first reply's own slow pieces raised its hold past everything it had, so it
+        // played whole at the end and never ran dry (before V9, 0.2 s and four or more pauses).
+        #expect(first.preroll > PreRoll.seconds)
+        #expect((first.inReplyRate ?? 1) < 0.8)
+        #expect(first.dry == 0, "ran dry \(first.dry) times")
 
         let (next, nextFeed) = AsyncThrowingStream<PCMChunk, any Error>.makeStream()
         let again = Task { try await player.playStream(next, expectedSeconds: 10) }

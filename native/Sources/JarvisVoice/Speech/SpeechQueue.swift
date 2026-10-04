@@ -657,9 +657,13 @@ public actor SpeechQueue {
     }
 
     /// `voice: pre-roll 0.2 s (stream keeping up)`, or `voice: pre-roll 1.4 s (stream slow: x0.80)`
-    /// with the last reply's delivery rate it was worked out from.
+    /// with the last reply's delivery rate it was worked out from; V9: `voice: pre-roll 0.9 s
+    /// (in-reply rate x0.85)` when the reply's own first pieces raised it.
     static func prerollLine(_ report: StreamReport) -> String {
         let seconds = String(format: "%.1f", report.preroll)
+        if let rate = report.inReplyRate {
+            return "voice: pre-roll \(seconds) s (in-reply rate x\(String(format: "%.2f", rate)))"
+        }
         guard let rate = report.holdRate else { return "voice: pre-roll \(seconds) s (stream keeping up)" }
         return "voice: pre-roll \(seconds) s (stream slow: x\(String(format: "%.2f", rate)))"
     }

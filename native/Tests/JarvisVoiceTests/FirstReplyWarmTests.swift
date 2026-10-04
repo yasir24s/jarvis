@@ -1,3 +1,4 @@
+import AVFAudio
 import Foundation
 import Synchronization
 import Testing
@@ -83,5 +84,104 @@ struct QwenWarmUpTests {
         #expect(launcher.launched.first?.cancelled.count == 1)
         await engine.cancelWarmUp()   // nothing left to cancel
         #expect(launcher.launched.first?.cancelled.count == 1)
+    }
+}
+
+/// V9 part 2: a reply measures its own first pieces before it plays. Offline renders; nothing plays.
+@Suite("V9 first reply warm: the in-reply pre-roll")
+struct InReplyPreRollTests {
+    static let rate = EnginePlayer.sampleRate
+    static func piece(_ k: Int) -> PCMChunk {
+        PCMChunk(samples: StreamUnderrunTests.piece(k, count: 2_880), sampleRate: rate)   // 0.12 s
+    }
+
+    @Test(arguments: [
+        (4.0, 0.2, nil, 0.2),          // nothing measured yet
+        (4.0, 0.2, 1.2, 0.2),          // keeping up: as before
+        (4.0, 0.2, 0.6, 1.8),          // 0.2 + 4 x 0.4
+        (20.0, 0.2, 0.5, 4.0),         // capped
+        (4.0, 2.6, 0.8, 2.6),          // never below the last reply's hold
+    ] as [(Double, Double, Double?, Double)])
+    func theHoldFollowsTheReplysOwnRate(_ expected: Double, _ prior: Double, _ rate: Double?, _ hold: Double) {
+        #expect(abs(PreRoll.hold(expected: expected, prior: prior, inReplyRate: rate) - hold) < 1e-9)
+    }
+
+    @Test func theLogNamesTheInReplyRate() {
+        #expect(SpeechQueue.prerollLine(StreamReport(dry: 0, dryMilliseconds: 0, preroll: 0.92, deliveryRate: nil,
+                                                     inReplyRate: 0.85))
+            == "voice: pre-roll 0.9 s (in-reply rate x0.85)")
+    }
+
+    /// A cold start: the first five pieces come about 0.6x real time, then the voice catches up.
+    /// The reply waits for its own shortfall and never runs dry.
+    @Test func aColdStartGetsALongerPreRollAndNoUnderruns() async throws {
+        let output = try #require(AVAudioFormat(standardFormatWithSampleRate: Self.rate, channels: 2))
+        let player = try EnginePlayer(offline: output)
+        let (stream, feed) = AsyncThrowingStream<PCMChunk, any Error>.makeStream()
+        let playing = Task { try await player.playStream(stream, expectedSeconds: 1.44) }
+        var played: [Float] = []
+        let render = Task {
+            var out: [Float] = []
+            while !Task.isCancelled {
+                out += (try await player.renderOffline(frames: EnginePlayer.offlineFrames)).first ?? []
+                try? await Task.sleep(for: .milliseconds(2))
+            }
+            return out
+        }
+        for k in 0..<5 {
+            feed.yield(Self.piece(k))
+            try await Task.sleep(for: .milliseconds(200))
+        }
+        for k in 5..<12 { feed.yield(Self.piece(k)) }
+        feed.finish()
+        try await Task.sleep(for: .milliseconds(50))
+        await player.stop()
+        try await playing.value
+        render.cancel()
+        played = try await render.value
+        let report = try #require(await player.lastStream())
+        #expect(report.preroll > PreRoll.seconds, "held \(report.preroll) s")
+        #expect((report.inReplyRate ?? 1) < 1)
+        #expect(report.dry == 0, "ran dry \(report.dry) times, \(report.dryMilliseconds) ms")
+        #expect(played.contains { $0 != 0 }, "the offline render pulled the reply")
+    }
+
+    /// A fresh player and a stream that keeps up: 0.2 s, and audio with three pieces in hand.
+    @Test func aFastReplyKeepsTheUsualPreRollAndFirstAudio() async throws {
+        let output = try #require(AVAudioFormat(standardFormatWithSampleRate: Self.rate, channels: 2))
+        let player = try EnginePlayer(offline: output)
+        let (stream, feed) = AsyncThrowingStream<PCMChunk, any Error>.makeStream()
+        let playing = Task { try await player.playStream(stream, expectedSeconds: 4) }
+        for k in 0..<3 { feed.yield(Self.piece(k)) }
+        let heard = await QwenWarmUpTests.eventually {
+            let next = try? await player.renderOffline(frames: EnginePlayer.offlineFrames)
+            return next?.first?.contains { $0 != 0 } ?? false
+        }
+        #expect(heard, "the first audio played with only three pieces in hand")
+        feed.finish()
+        await player.stop()
+        try await playing.value
+        let report = try #require(await player.lastStream())
+        #expect(report.preroll == PreRoll.seconds)
+        #expect(report.inReplyRate == nil)
+    }
+
+    /// Stop during a hold the reply's own pace raised: nothing held plays.
+    @Test func stoppingDuringTheRaisedHoldPlaysNothing() async throws {
+        let output = try #require(AVAudioFormat(standardFormatWithSampleRate: Self.rate, channels: 2))
+        let player = try EnginePlayer(offline: output)
+        let (stream, feed) = AsyncThrowingStream<PCMChunk, any Error>.makeStream()
+        let playing = Task { try await player.playStream(stream, expectedSeconds: 10) }
+        for k in 0..<3 {
+            feed.yield(Self.piece(k))
+            try await Task.sleep(for: .milliseconds(200))
+        }
+        playing.cancel()
+        await player.stop()
+        try? await playing.value
+        feed.finish()
+        var played: [Float] = []
+        for _ in 0..<50 { played += (try await player.renderOffline(frames: EnginePlayer.offlineFrames)).first ?? [] }
+        #expect(!played.contains { $0 != 0 }, "nothing held played after the stop")
     }
 }

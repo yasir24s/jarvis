@@ -35,13 +35,17 @@ public struct StreamReport: Sendable, Equatable {
     /// Seconds of audio the voice delivered per second, from its second piece to its last; nil
     /// when the stream was too short to tell (`DeliveryMeter`).
     public var deliveryRate: Double?
+    /// V9: the rate of the reply's own first pieces, when it raised the pre-roll.
+    public var inReplyRate: Double?
 
-    public init(dry: Int, dryMilliseconds: Int, preroll: Double, holdRate: Double? = nil, deliveryRate: Double?) {
+    public init(dry: Int, dryMilliseconds: Int, preroll: Double, holdRate: Double? = nil, deliveryRate: Double?,
+                inReplyRate: Double? = nil) {
         self.dry = dry
         self.dryMilliseconds = dryMilliseconds
         self.preroll = preroll
         self.holdRate = holdRate
         self.deliveryRate = deliveryRate
+        self.inReplyRate = inReplyRate
     }
 }
 
@@ -73,6 +77,15 @@ struct DeliveryMeter {
             afterFirst += samples
         }
         previous = instant
+    }
+
+    /// V9: seconds of audio after the first piece, and their rate, however little has come; nil
+    /// before the second piece.
+    var early: (audio: Double, rate: Double)? {
+        let span = busy / .seconds(1)
+        guard afterFirst > 0, span > 0 else { return nil }
+        let audio = Double(afterFirst) / sampleRate
+        return (audio, audio / span)
     }
 
     var rate: Double? {
@@ -164,8 +177,12 @@ public actor EnginePlayer: SpeechPlayer {
     public func playStream(_ pieces: AsyncThrowingStream<PCMChunk, any Error>, expectedSeconds: Double) async throws {
         let level = LoudnessStream(sampleRate: Self.sampleRate, lift: Self.outputLiftDB, prior: streamGain)
         defer { if let gain = level.gain { streamGain = gain } }
-        let hold = PreRoll.hold(expected: expectedSeconds, deliveryRate: deliveryRate)
+        let prior = PreRoll.hold(expected: expectedSeconds, deliveryRate: deliveryRate)
+        var hold = prior
         var preroll = PreRoll(sampleRate: Self.sampleRate, seconds: hold)
+        // V9: the rate of this reply's first pieces, while it is still being measured.
+        var inReplyRate: Double?
+        var measuring = true
         var queued: [(wait: PlaybackWait, seconds: Double)] = []
         var failure: (any Error)?
         // Where the play head will be once what is queued has played, and the pauses so far.
@@ -173,12 +190,13 @@ public actor EnginePlayer: SpeechPlayer {
         var dry = 0
         var dryTime = Duration.zero
         var meter = DeliveryMeter(sampleRate: Self.sampleRate)
-        let holdRate = hold > PreRoll.seconds ? deliveryRate : nil
+        let holdRate = prior > PreRoll.seconds ? deliveryRate : nil
         defer {
             let rate = meter.rate
             if !Task.isCancelled, let rate { deliveryRate = rate }
             report = StreamReport(dry: dry, dryMilliseconds: Int((dryTime / .milliseconds(1)).rounded()),
-                                  preroll: hold, holdRate: holdRate, deliveryRate: rate)
+                                  preroll: hold, holdRate: holdRate, deliveryRate: rate,
+                                  inReplyRate: hold > prior ? inReplyRate : nil)
         }
         func enqueue(_ samples: [Float]) throws {
             guard !samples.isEmpty, !Task.isCancelled else { return }
@@ -199,6 +217,13 @@ public actor EnginePlayer: SpeechPlayer {
                     throw SpeechEngineError(.error, "the player takes 24 kHz audio, not \(piece.sampleRate) Hz")
                 }
                 meter.arrived(samples: piece.samples.count, at: .now, requestedAt: piece.requestedAt)
+                // V9: until it plays, the hold follows this reply's own pace over its first second.
+                if measuring, !preroll.started, let early = meter.early {
+                    inReplyRate = early.rate
+                    hold = PreRoll.hold(expected: expectedSeconds, prior: prior, inReplyRate: early.rate)
+                    preroll.setHold(hold)
+                    measuring = early.audio < PreRoll.measureSeconds
+                }
                 try enqueue(preroll.take(level.push(piece.samples)))
             }
         } catch {
