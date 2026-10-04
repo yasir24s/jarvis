@@ -93,11 +93,15 @@ struct StreamUnderrunTests {
         let player = try EnginePlayer(offline: output)
         let (stream, feed) = AsyncThrowingStream<PCMChunk, any Error>.makeStream()
         let playing = Task { try await player.playStream(stream, expectedSeconds: 2) }
-        // Eight pieces of 0.12 s, 0.2 s apart: 0.6 s of audio a second.
+        // Eight pieces of 0.12 s, at least 0.2 s apart: 0.6 s of audio a second or less (a loaded
+        // machine oversleeps). The rate the player should measure is taken from the yields as made.
+        var yields: [ContinuousClock.Instant] = []
         for k in 0..<8 {
+            yields.append(ContinuousClock.now)
             feed.yield(PCMChunk(samples: Self.piece(k, count: 2_880), sampleRate: Self.rate))
             try await Task.sleep(for: .milliseconds(200))
         }
+        let fed = 7 * 2_880 / Self.rate / ((yields[7] - yields[0]) / .seconds(1))
         feed.finish()
         try await Task.sleep(for: .milliseconds(20))
         await player.stop()
@@ -105,7 +109,8 @@ struct StreamUnderrunTests {
         let first = try #require(await player.lastStream())
         let measured = try #require(first.deliveryRate)
         #expect(first.preroll == PreRoll.seconds, "nothing measured before the first reply")
-        #expect(measured > 0.45 && measured < 0.65, "measured \(measured)")
+        #expect(fed < 0.65)
+        #expect(abs(measured / fed - 1) < 0.15, "measured \(measured), fed at \(fed)")
         // Played from when each piece was queued: 0.12 s of audio every 0.2 s runs dry each time
         // after the pre-roll.
         #expect(first.dry >= 4, "ran dry \(first.dry) times")
@@ -117,7 +122,7 @@ struct StreamUnderrunTests {
         try await again.value
         let second = try #require(await player.lastStream())
         #expect(abs(second.preroll - PreRoll.hold(expected: 10, deliveryRate: measured)) < 1e-9)
-        #expect(second.preroll > 3)
+        #expect(second.preroll > PreRoll.seconds + 2)
     }
 
     @Test func theQueueLogsHowOftenTheStreamRanDry() {
