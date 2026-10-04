@@ -45,7 +45,7 @@ struct EvalScoringTests {
         #expect(kinds.isSuperset(of: ["plain", "british", "typo", "indirect", "multi", "none", "confirm", "taint",
                                       "destructive"]))
         let text = try String(contentsOf: Self.fixtureURL, encoding: .utf8)
-        #expect(!text.contains("/Users/"))
+        #expect(!text.contains(NSHomeDirectory()))
         // The only phone numbers are Ofcom's drama range.
         let phones = text.matches(of: /0\d{4} ?\d{6}/).map { String($0.output) }
         #expect(phones.allSatisfy { $0.hasPrefix("07700 900") || $0.hasPrefix("07700900") })
