@@ -11,6 +11,9 @@ struct ChatView: View {
     @Bindable var model: ChatViewModel
     /// M9a: push-to-talk (the mic button, and the live text while it listens); nil hides it.
     var talk: PushToTalkModel? = nil
+    var brain: BrainSetting? = nil
+    var mute: SpeechMute? = nil
+    var speak: SpeakRepliesToggle? = nil
     /// Hands the app this window's opener each time the window appears, so the Dock icon can
     /// reopen it (D-43).
     var onAppear: (OpenWindowAction) -> Void = { _ in }
@@ -20,12 +23,32 @@ struct ChatView: View {
     @Environment(\.appearsActive) private var appearsActive
     /// UI1: whether the composer has the keyboard, for its focus ring.
     @State private var composerFocused = false
+    @State private var composerHeight: CGFloat = 48
     /// UI1 part 5: the user message being edited, and its text.
     @State private var editing: UUID?
     @State private var editText = ""
 
     var body: some View {
         VStack(spacing: 0) {
+            HStack(spacing: 16) {
+                Label(brain.map { BrainSetting.title($0.shown) } ?? "Brain",
+                      systemImage: "brain")
+                    .help(model.backendLine)
+                    .accessibilityLabel("Selected brain")
+                    .accessibilityValue(brain.map { BrainSetting.title($0.shown) } ?? "Unknown")
+                Spacer()
+                let muted = mute?.muted ?? false
+                let repliesOff = !(speak?.isOn ?? true)
+                Label(muted ? "Muted" : (repliesOff ? "Typed replies silent" : "Voice on"),
+                      systemImage: muted || repliesOff ? "speaker.slash" : "speaker.wave.2")
+                    .accessibilityLabel("Speech status")
+                    .accessibilityValue(muted ? "Muted" : (repliesOff ? "Typed replies silent" : "Voice on"))
+            }
+            .font(JarvisTheme.small)
+            .foregroundStyle(JarvisTheme.cyan.color)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            Hairline()
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 12) {
@@ -94,8 +117,8 @@ struct ChatView: View {
                              guard model.canStop else { return false }
                              model.stop()
                              return true
-                         })
-                    .frame(minHeight: 36, idealHeight: 56, maxHeight: 120)
+                         }, onHeight: { composerHeight = $0 })
+                    .frame(height: composerHeight)
                     // M9a: while the microphone is open the live text shows in the composer's
                     // place; the draft underneath is kept as it was.
                     .opacity(listening ? 0 : 1)

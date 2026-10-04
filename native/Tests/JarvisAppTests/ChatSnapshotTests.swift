@@ -91,6 +91,39 @@ struct ChatSnapshotTests {
         print("UI1 snapshot \(url.path)")
     }
 
+    @Test func visibleBrainSpeechAndGrowingDraft() async throws {
+        let suite = "chat-controls-snapshot-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let brain = BrainSetting(defaults: defaults, claudeEnabled: true)
+        brain.choice = .chatgpt
+        let mute = SpeechMute(defaults: defaults, cancel: {})
+        let speak = SpeakRepliesToggle(defaults: defaults)
+        speak.isOn = true
+        let model = await Self.model()
+        let view = ChatView(model: model, brain: brain, mute: mute, speak: speak)
+        for (name, draft) in [
+            ("compact", ""),
+            ("expanded", Array(repeating: "A longer draft wraps without sending it.", count: 12)
+                .joined(separator: " ")),
+            ("shrunk", "Short again."),
+        ] {
+            model.draft.text = draft
+            let url = try await UISnapshot.write(view, size: CGSize(width: 560, height: 620),
+                                                 name: "ui1-controls-\(name)")
+            print("UI1 snapshot \(url.path)")
+        }
+        mute.stop()
+        let muted = try await UISnapshot.write(view, size: CGSize(width: 560, height: 620),
+                                               name: "ui1-controls-muted")
+        print("UI1 snapshot \(muted.path)")
+        mute.resume()
+        speak.isOn = false
+        let silent = try await UISnapshot.write(view, size: CGSize(width: 560, height: 620),
+                                                name: "ui1-controls-typed-silent")
+        print("UI1 snapshot \(silent.path)")
+    }
+
     /// UI1 part 4: while he writes, the button is Stop; a message sent then stops him, keeps his
     /// partial reply marked stopped, and goes after it as added context.
     @Test func stopAndAddContext() async throws {

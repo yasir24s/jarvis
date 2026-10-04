@@ -15,6 +15,7 @@ struct Composer: NSViewRepresentable {
     var onFocus: (Bool) -> Void = { _ in }
     /// UI1 part 4: Esc. True when it stopped something; otherwise the text view handles it.
     var onEscape: () -> Bool = { false }
+    var onHeight: (CGFloat) -> Void = { _ in }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -58,6 +59,9 @@ struct Composer: NSViewRepresentable {
             let coordinator = coordinator
             Task { @MainActor in coordinator?.parent.onFocus(focused) }
         }
+        textView.onHeight = { [weak coordinator] height in
+            Task { @MainActor in coordinator?.parent.onHeight(height) }
+        }
 
         scrollView.documentView = textView
         return scrollView
@@ -71,6 +75,7 @@ struct Composer: NSViewRepresentable {
         if textView.string != text {
             textView.string = text
         }
+        (textView as? ComposerTextView)?.reportHeight()
     }
 
     @MainActor
@@ -84,6 +89,7 @@ struct Composer: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
+            (textView as? ComposerTextView)?.reportHeight()
         }
 
         func textView(_ textView: NSTextView, doCommandBy selector: Selector) -> Bool {
@@ -109,6 +115,23 @@ final class ComposerTextView: NSTextView {
     var onPaste: (() -> Void)?
     /// UI1: true when it takes the keyboard, false when it gives it up.
     var onFocus: ((Bool) -> Void)?
+    var onHeight: ((CGFloat) -> Void)?
+    private var reportedHeight: CGFloat = 0
+
+    func reportHeight() {
+        guard let onHeight, let layoutManager, let textContainer, bounds.width > 0 else { return }
+        layoutManager.ensureLayout(for: textContainer)
+        let height = min(120, max(48, ceil(layoutManager.usedRect(for: textContainer).height
+                                         + textContainerInset.height * 2)))
+        guard height != reportedHeight else { return }
+        reportedHeight = height
+        onHeight(height)
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        reportHeight()
+    }
 
     override func becomeFirstResponder() -> Bool {
         let became = super.becomeFirstResponder()
