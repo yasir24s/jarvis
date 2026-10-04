@@ -261,7 +261,7 @@ public actor QwenEngine: SpeechEngine {
         let (lines, linesIn) = AsyncStream.makeStream(of: HelperStreamLine.self)
         waiting[id] = linesIn
         do {
-            try helper.send(Self.requestLine(id: id, text: TextClean.spokenNumbers(text)))
+            try helper.send(Self.requestLine(id: id, text: SpeechNormaliser.spoken(text)))
         } catch {
             waiting[id] = nil
             return fail(SpeechEngineError(.error, "cannot write to the Qwen helper: \(error)"))

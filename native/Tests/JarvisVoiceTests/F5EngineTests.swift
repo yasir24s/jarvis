@@ -62,7 +62,7 @@ struct F5EngineTests {
         let launcher = FakeLauncher(outDirectory: folder.url) { _, _, _ in .speak([0.1]) }
         let f5 = engine(launcher)
         _ = try await samples(f5, "It's 3:45 PM.")
-        #expect(launcher.requests.first?["text"] == "It's three forty-five PM.")
+        #expect(launcher.requests.first?["text"] == "It's three forty-five p m.")
     }
 
     @Test func oneHelperServesEveryRequest() async throws {

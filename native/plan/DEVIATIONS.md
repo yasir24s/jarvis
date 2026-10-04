@@ -157,6 +157,7 @@ Line numbers refer to jarvis.py @ 68cd112.
 | DEV-PR2-02 | PR2 | `_create_reminder` made an Apple Reminder through AppleScript (Reminders.app, an Automation grant), and only that | EventKit makes the reminder (a Reminders full-access grant; due date and an alert at the time); a dated reminder is also kept in alarms.json and spoken when due; without Reminders access a dated reminder is still spoken and the reply adds "but I couldn't add it to Reminders, so it won't reach your iPhone"; an undated one fails as Python's did | iPhone sync as Python, plus the spoken reminder F1 added | `SpokenRemindersTests` | `proposed` | PR2 report item 4 |
 | DEV-PR2-03 | PR2 | The fast path called its helpers directly: "text mum saying …" sent at once, "type …" typed even after a paste | Every carried helper runs through the gateway with origin `fastPath`: `send_message` waits for the confirmation gate, a pasted turn's executors are refused by the taint guard, and the tools' own guards apply | Plan security rules win over Python quirks (D-41) | `QuickDispatchTests.aPastedTypeCommandIsRefusedByTheTaintGuard` | `proposed` | PR2 report item 1 |
 | DEV-PR2-04 | PR2 | Fast-path helper details: `_app_exists` asks LaunchServices by name; `_open_path` raises when mdfind cannot run; `_nudge_brightness` sends key codes through System Events; tuple actions run in a thread of the turn; `APP_INDEX` is built at startup | `_app_exists` looks for `<name>.app` in the standard Applications folders; `_open_path` says it found nothing; the brightness keys are posted with CGEvent, as `set_brightness` does; a tuple's action runs on its own turn begun as the spoken one was; the app index is built on the first open or find, so the first "open X" can wait for mdfind | No AppKit in JarvisTools; a turn closes as its line is said | `QuickDispatchTests.helpersMatchPython` | `proposed` | PR2 report items 1-2 |
+| DEV-V7-01 | V7 | `speak()` strips markdown only (jarvis.py 723-729); Piper read digits as written | Every voice (Qwen, F5 and `say`) is given the reply in spoken form by `SpeechNormaliser`: phone numbers digit by digit with "oh" and a pause between groups, email and web addresses with "at" and "dot" (web: the domain only), 12-hour times with "a m"/"p m", £ $ € amounts, percentages, degrees, ordinals, dates, four-digit years after a date word, and other numbers in British words ("three hundred and twenty"); the HUD and chat keep the text as written. Replaces DEV-M8-02's F5-only `spokenNumbers` and its "`say` gets the cleaned text unchanged" | Live: Qwen read "07xxx xxxxxx" as two large numbers and said email addresses wrongly | `SpeechNormaliserTests`, `SpeechQueueTests.everyVoiceHearsTheSpokenForm`, `F5EngineTests.f5IsGivenDigitsSpelledOut` | `proposed` | V7 report |
 
 The M7 table gives one fixture for all 15 `DEV-M7-*` / `DEV-M14-*` rows (§8.1 heading:
 "fixture §4.2"). For the `DEV-M14-*` rows that marker was carried over as written; the
@@ -164,15 +165,16 @@ loop behaviours may need their own tests at M14.
 
 ## Counts
 
-134 entries: 60 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
+135 entries: 60 `approved` (R3, D1, D2, D3, D4, D5, X-1, X-2, X-4, X-8, R3 → D-15, R4 → D-14,
 DEV-M7-01, DEV-M7-02, DEV-M7-05, R9 → D-18, DEV-M0-01 to DEV-M0-03, DEV-M1-01 to DEV-M1-04, D1a,
 D1b, D1c, D5a, R8-str-float, R8-load-not-dict, R8-nan-sort, R8-kb-summary-not-str,
 R8-list-content, DEV-M3-01 to DEV-M3-14, DEV-M4-01, DEV-M4-02, DEV-P1-01, DEV-P1-02, DEV-P2-01,
 DEV-P3-01, DEV-M5-01 to DEV-M5-05, R11, R12, R13), 1 `approved (overage kill-switch only)`
-(X-10), 1 `rejected` (X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 71 proposed: 20 `proposed —
+(X-10), 1 `rejected` (X-5), 1 `resolved — parity since fef66c1` (R2 → D-12) and 72 proposed: 20 `proposed —
 decide at milestone start`, plus DEV-M8-01 to DEV-M8-04, DEV-P4-01 to DEV-P4-06, DEV-P5-01,
 DEV-P6-01 to DEV-P6-06, DEV-P6b-01 to DEV-P6b-06, DEV-U1-01 to DEV-U1-02, DEV-W1-01 to
-DEV-W1-09, DEV-V1-01 to DEV-V1-07, DEV-UI1-01 to DEV-UI1-06 and DEV-PR2-01 to DEV-PR2-04.
+DEV-W1-09, DEV-V1-01 to DEV-V1-07, DEV-UI1-01 to DEV-UI1-06, DEV-PR2-01 to DEV-PR2-04 and
+DEV-V7-01.
 
 ## Not registered: differences mentioned only in the M05 §3.5 tool table
 

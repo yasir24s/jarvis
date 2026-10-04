@@ -93,7 +93,7 @@ public actor F5Engine: SpeechEngine {
     /// reference and speed the helper would use. nil also when that cannot be told: the helper
     /// then refuses it itself, and the queue falls back as for any failure.
     public nonisolated func tooLong(_ text: String) -> String? {
-        guard let frames = launcher.frames(forSpokenText: TextClean.spokenNumbers(text)),
+        guard let frames = launcher.frames(forSpokenText: SpeechNormaliser.spoken(text)),
               frames > Self.maxFrames else { return nil }
         return "needs \(frames) frames, F5 stops at \(Self.maxFrames)"
     }
@@ -155,7 +155,7 @@ public actor F5Engine: SpeechEngine {
             throw SpeechEngineError(.error, "cannot start the voice helper: \(error)")
         }
         let id = UUID().uuidString
-        let line = try Self.requestLine(id: id, text: TextClean.spokenNumbers(text))
+        let line = try Self.requestLine(id: id, text: SpeechNormaliser.spoken(text))
         let number = connectionNumber
         let reply = try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<HelperReply, any Error>) in

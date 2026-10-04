@@ -57,7 +57,7 @@ struct FrameBudgetTests {
         #expect(f5.tooLong(over) == "needs 4344 frames, F5 stops at 4096")
         // Digits are counted as the helper hears them, in words.
         let digits = "It is 3:45."
-        #expect(setup.frames(forSpokenText: TextClean.spokenNumbers(digits))
+        #expect(setup.frames(forSpokenText: SpeechNormaliser.spoken(digits))
             == setup.frames(forSpokenText: "It is three forty-five."))
     }
 }

@@ -179,7 +179,7 @@ struct SpeechQueueTests {
 /// The queue over the real engines, with a fake helper, a fake `say` and a fake player.
 @Suite("M8 SpeechQueue over F5Engine and SayEngine")
 struct SpeechQueueEnginesTests {
-    @Test func f5HearsDigitsInWordsAndSayHearsTheCleanText() async throws {
+    @Test func everyVoiceHearsTheSpokenForm() async throws {
         let folder = try TempFolder()
         defer { folder.remove() }
         let launcher = FakeLauncher(outDirectory: folder.url) { _, _, _ in .speak([0.2, 0.2, 0.2]) }
@@ -195,14 +195,14 @@ struct SpeechQueueEnginesTests {
                                  helperFootprintMB: { f5.lastFootprintMB }, log: { log.append($0) })
         await speech.say("It's **3:45** PM.", turn: UUID())
         await speech.idle()
-        #expect(launcher.requests.map { $0["text"] } == ["It's three forty-five PM."])
+        #expect(launcher.requests.map { $0["text"] } == ["It's three forty-five p m."])
         #expect(await player.played == [3])
         #expect(log.all.last?.hasSuffix("; helper 1050 MB") == true)
 
         launcher.setInstalled(false)
         await speech.say("It's **3:45** PM.", turn: UUID())
         await speech.idle()
-        #expect(sayArguments.all == ["It's 3:45 PM."])
+        #expect(sayArguments.all == ["It's three forty-five p m."])
         #expect(log.all.contains { $0.hasPrefix("voice: F5 failed (disabled: ") })
         #expect(folder.files.isEmpty)
     }

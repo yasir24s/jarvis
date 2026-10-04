@@ -34,7 +34,7 @@ public actor SayEngine: SpeechEngine {
 
     public func synthesize(_ sentence: String, context: SynthesisContext) -> AsyncThrowingStream<PCMChunk, any Error> {
         let output = directory.appending(path: "jarvis-say-\(UUID().uuidString).aiff", directoryHint: .notDirectory)
-        let arguments = Self.arguments(text: sentence, output: output)
+        let arguments = Self.arguments(text: SpeechNormaliser.spoken(sentence), output: output)
         let runner = self.runner
         let reader = self.reader
         return AsyncThrowingStream { continuation in
