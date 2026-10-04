@@ -54,6 +54,10 @@ public actor SpeechQueue {
     /// with an earlier stop count was asked for before that stop and is dropped, however late
     /// it arrives (Stop Speaking sticks).
     private var cancelledThrough = 0
+    /// V8: the reply whose sentences are still coming (`begin`), and where they go.
+    private var incoming: (turn: UUID, sentences: AsyncStream<String>.Continuation)?
+    /// V8: when the latest such reply's first sentence was handed over, for the log.
+    private var firstHanded: (turn: UUID, at: ContinuousClock.Instant)?
 
     /// - engine: the voice (F5Engine); `fallback` speaks a reply it fails (SayEngine).
     /// - speed: `voiceSpeed`, read for each reply: when it changed since the last reply the
@@ -92,6 +96,7 @@ public actor SpeechQueue {
     ///   never drops.
     public func acknowledge(_ clip: PCMChunk, line: String, sentAt: ContinuousClock.Instant, stops: Int? = nil) {
         if let stops, stops < cancelledThrough { return }
+        endIncoming()
         let previous = current
         let previousAcknowledgement = acknowledging
         previous?.cancel()
@@ -118,6 +123,7 @@ public actor SpeechQueue {
     /// stop is dropped, and what is in hand goes on.
     public func say(_ text: String, turn: UUID, stops: Int? = nil) {
         if let stops, stops < cancelledThrough { return }
+        endIncoming()
         let started = ContinuousClock.now
         let previous = current
         previous?.cancel()
@@ -190,6 +196,7 @@ public actor SpeechQueue {
     ///   lower count (asked for before this stop) is dropped. nil drops nothing later.
     public func cancelAll(through stops: Int? = nil) async {
         if let stops { cancelledThrough = max(cancelledThrough, stops) }
+        endIncoming()
         let running = current
         let acknowledgement = acknowledging
         current = nil
@@ -372,6 +379,203 @@ public actor SpeechQueue {
         log(Self.summary(characters: characters, parts: 1, firstAudio: firstAudio, generating: generating,
                          helperMB: sayParts > 0 && !byVoice ? nil : helperFootprintMB(), sayParts: sayParts,
                          stopped: stopped))
+    }
+
+    // MARK: - A reply spoken as it is written (V8)
+
+    /// V8, Speak First Sentence Early with Qwen: starts a reply whose sentences come while the
+    /// brain is still writing it (`sentence(_:turn:)`, then `end(turn:)`). They are spoken as one
+    /// reply: one `replyStarting`/`replyEnded`, one stream to the player (one `LoudnessStream`),
+    /// each sentence generated as soon as the one before has been, so it is ready while that one
+    /// plays. The reply before is cancelled and an acknowledgement still playing finishes first,
+    /// as for `say`. A first sentence that is a short acknowledgement ("Certainly, sir.") after
+    /// one has played is not said, unless it is the whole reply. A voice that does not stream
+    /// (F5) gets the sentences whole once they have all come, as `say` would. `stops` as for `say`.
+    /// - sentAt: when the message was sent, for the log's first-sentence and first-audio times.
+    /// - Returns: false when the reply was dropped (a later stop).
+    @discardableResult
+    public func begin(turn: UUID, sentAt: ContinuousClock.Instant? = nil, stops: Int? = nil) -> Bool {
+        if let stops, stops < cancelledThrough { return false }
+        endIncoming()
+        let started = ContinuousClock.now
+        let previous = current
+        previous?.cancel()
+        let afterAcknowledgement = acknowledged
+        acknowledged = false
+        let acknowledgement = acknowledging
+        let speed = self.speed?()
+        let reference = self.reference?()
+        let restart = (speed != nil && lastSpeed != nil && speed != lastSpeed)
+            || (reference != nil && lastReference != nil && reference != lastReference)
+        if let speed { lastSpeed = speed }
+        if let reference { lastReference = reference }
+        let (sentences, continuation) = AsyncStream.makeStream(of: String.self)
+        incoming = (turn, continuation)
+        firstHanded = nil
+        current = Task {
+            await previous?.value
+            guard !Task.isCancelled else { return }
+            if restart { await self.engine.release() }
+            if await self.engine.streaming() {
+                await self.speakAsWritten(sentences, turn: turn, started: sentAt ?? started,
+                                          afterAcknowledgement: afterAcknowledgement, after: acknowledgement)
+            } else {
+                var all: [String] = []
+                for await sentence in sentences { all.append(sentence) }
+                guard !Task.isCancelled, let cleaned = TextClean.clean(all.joined(separator: " ")) else { return }
+                let clean = afterAcknowledgement ? Acknowledgement.spokenText(cleaned) : cleaned
+                await self.speak(clean, parts: [clean], turn: turn, started: started, overflows: [self.tooLong(clean)],
+                                 after: acknowledgement)
+            }
+        }
+        return true
+    }
+
+    /// V8: the next complete sentence of the reply `begin` started for `turn`. Ignored when that
+    /// reply has been stopped or replaced.
+    public func sentence(_ text: String, turn: UUID) {
+        guard let reply = incoming, reply.turn == turn else { return }
+        if firstHanded?.turn != turn { firstHanded = (turn, .now) }
+        reply.sentences.yield(text)
+    }
+
+    /// V8: the reply `begin` started for `turn` has no more sentences.
+    public func end(turn: UUID) {
+        guard let reply = incoming, reply.turn == turn else { return }
+        endIncoming()
+    }
+
+    /// V8: whether `turn`'s reply is still taking sentences.
+    public func isTaking(turn: UUID) -> Bool {
+        incoming?.turn == turn
+    }
+
+    private func endIncoming() {
+        incoming?.sentences.finish()
+        incoming = nil
+    }
+
+    /// When the first sentence was handed over, for the log line.
+    private func firstSentenceAt(_ turn: UUID) -> ContinuousClock.Instant? {
+        firstHanded?.turn == turn ? firstHanded?.at : nil
+    }
+
+    /// V8: the sentences' audio, one after another, as one stream (see `begin`).
+    private func speakAsWritten(_ sentences: AsyncStream<String>, turn: UUID, started: ContinuousClock.Instant,
+                                afterAcknowledgement: Bool, after acknowledgement: Task<Void, Never>?) async {
+        let context = SynthesisContext(turnID: turn)
+        await player.replyStarting()
+        let engine = self.engine
+        let fallback = self.fallback
+        let log = self.log
+        let tally = Mutex(WrittenTally())
+        let (pieces, out) = AsyncThrowingStream.makeStream(of: PCMChunk.self)
+        let producer = Task {
+            var index = 0
+            var held: String?   // a short acknowledgement opening the reply, said only if it is all
+            func voice(_ text: String) async {
+                tally.withLock {
+                    if $0.begun == nil { $0.begun = .now }
+                    $0.characters += text.unicodeScalars.count
+                    $0.sentences += 1
+                    if $0.first == nil { $0.first = text }
+                }
+                var any = false
+                do {
+                    for try await piece in await engine.synthesize(text, context: context) {
+                        if !any { tally.withLock { $0.byVoice = true } }
+                        any = true
+                        out.yield(piece)
+                    }
+                    return
+                } catch {
+                    if Task.isCancelled || error is CancellationError { return }
+                    if any {
+                        log("voice: the voice stopped mid-sentence (\(error)); the reply goes on with the next")
+                        return
+                    }
+                    log("voice: \(Self.name(await engine.id)) failed (\(error)); say speaks that sentence")
+                }
+                do {
+                    let chunk = try await Self.collect(fallback.synthesize(text, context: context))
+                    tally.withLock { $0.sayParts += 1 }
+                    if !chunk.samples.isEmpty, !Task.isCancelled { out.yield(chunk) }
+                } catch {
+                    if !(Task.isCancelled || error is CancellationError) { log("voice: say failed (\(error))") }
+                }
+            }
+            for await sentence in sentences {
+                if Task.isCancelled { break }
+                guard let clean = TextClean.clean(sentence) else { continue }
+                defer { index += 1 }
+                if index == 0, afterAcknowledgement, Acknowledgement.isShortAcknowledgement(clean) {
+                    held = clean
+                    continue
+                }
+                held = nil   // the acknowledgement already said it
+                await voice(clean)
+            }
+            if let held, !Task.isCancelled { await voice(held) }
+            tally.withLock { $0.generated = .now }
+            out.finish()
+        }
+        out.onTermination = { _ in producer.cancel() }
+        let relay = StreamRelay(pieces)
+        let first = await withTaskCancellationHandler {
+            await relay.first()
+        } onCancel: {
+            relay.cancel()
+        }
+        var firstAudio: Duration?
+        var stopped = false
+        if Task.isCancelled {
+            stopped = true
+        } else if case .success(true) = first {
+            await acknowledgement?.value   // generated while it played; heard after it
+            if !Task.isCancelled { await player.replyReady() }
+            if Task.isCancelled {
+                stopped = true
+            } else {
+                firstAudio = ContinuousClock.now - started
+                if let firstAt = firstSentenceAt(turn), let firstAudio {
+                    log("voice: speak-early first sentence after \(Self.seconds(firstAt - started)) s (brain), "
+                        + "\(Self.seconds(firstAudio)) s (audio)")
+                }
+                let text = tally.withLock { $0.first } ?? ""
+                let expected = await engine.expectedSeconds(for: text) ?? 0
+                do {
+                    try await player.playStream(relay.pieces, expectedSeconds: expected)
+                } catch {
+                    if !(Task.isCancelled || error is CancellationError) {
+                        log("voice: the voice stopped mid-reply (\(error)); the rest is not spoken")
+                    }
+                }
+                if let report = await player.lastStream() {
+                    log(Self.prerollLine(report))
+                    if report.dry > 0 { log(Self.dryLine(report)) }
+                }
+                if Task.isCancelled { stopped = true }
+            }
+        }
+        relay.cancel()   // a stopped reply's generation stops with it, sentences not yet generated too
+        producer.cancel()
+        await producer.value
+        await player.replyEnded()
+        let done = tally.withLock { $0 }
+        log(Self.summary(characters: done.characters, parts: done.sentences, firstAudio: firstAudio,
+                         generating: done.begun.map { (done.generated ?? .now) - $0 } ?? .zero,
+                         helperMB: done.sayParts > 0 && !done.byVoice ? nil : helperFootprintMB(),
+                         sayParts: done.sayParts, stopped: stopped))
+    }
+
+    private struct WrittenTally: Sendable {
+        var characters = 0
+        var sentences = 0
+        var first: String?
+        var byVoice = false
+        var sayParts = 0
+        var begun: ContinuousClock.Instant?
+        var generated: ContinuousClock.Instant?
     }
 
     private static func name(_ engine: EngineID) -> String {
