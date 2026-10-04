@@ -29,9 +29,14 @@ public struct FileIndexEntry: Sendable, Equatable {
     public var status: Status
     public var facts: Int          // facts kept from it (new or refreshed)
     public var lastRead: Double    // epoch seconds of the last attempt
+    /// V10: reads of these bytes that timed out; written only when not 0.
+    public var timeouts: Int
+    /// V10: epoch seconds until which the file is not read again (after `FileScanner.timeoutLimit`
+    /// timeouts); written only when set.
+    public var skipUntil: Double?
 
     public init(path: String, size: Int, mtime: Double, digest: String, status: Status, facts: Int = 0,
-                lastRead: Double) {
+                lastRead: Double, timeouts: Int = 0, skipUntil: Double? = nil) {
         self.path = path
         self.size = size
         self.mtime = mtime
@@ -39,10 +44,12 @@ public struct FileIndexEntry: Sendable, Equatable {
         self.status = status
         self.facts = facts
         self.lastRead = lastRead
+        self.timeouts = timeouts
+        self.skipUntil = skipUntil
     }
 
     var json: JSONValue {
-        .object(JSONObject([
+        var fields: [JSONObject.Member] = [
             .init(key: "path", value: .string(path)),
             .init(key: "size", value: .int(Int64(size))),
             .init(key: "mtime", value: .double(mtime)),
@@ -50,7 +57,10 @@ public struct FileIndexEntry: Sendable, Equatable {
             .init(key: "status", value: .string(status.rawValue)),
             .init(key: "facts", value: .int(Int64(facts))),
             .init(key: "last_read", value: .double(lastRead)),
-        ]))
+        ]
+        if timeouts != 0 { fields.append(.init(key: "timeouts", value: .int(Int64(timeouts)))) }
+        if let skipUntil { fields.append(.init(key: "skip_until", value: .double(skipUntil))) }
+        return .object(JSONObject(fields))
     }
 
     init?(json: JSONValue) {
@@ -63,8 +73,10 @@ public struct FileIndexEntry: Sendable, Equatable {
               case .int(let facts)? = o["facts"],
               let lastRead = o["last_read"]?.pyFloat
         else { return nil }
+        var timeouts = 0
+        if case .int(let n)? = o["timeouts"] { timeouts = Int(n) }
         self.init(path: path, size: Int(size), mtime: mtime, digest: digest, status: status,
-                  facts: Int(facts), lastRead: lastRead)
+                  facts: Int(facts), lastRead: lastRead, timeouts: timeouts, skipUntil: o["skip_until"]?.pyFloat)
     }
 }
 

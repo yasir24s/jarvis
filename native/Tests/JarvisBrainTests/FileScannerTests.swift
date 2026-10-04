@@ -51,6 +51,8 @@ private final class ScanRig: Sendable {
     let sleeps = Mutex<[Duration]>([])
     let conditions: Mutex<[PowerConditions]>
     let hand = HandInstant()
+    /// The scanner's wall clock (index times, V10's skip window).
+    let clock = ManualClock(epoch)
 
     init(local: ScriptedWriter = ScriptedWriter(), claude: ScriptedWriter = ScriptedWriter(),
          quotaLimit: Int = FileReading.claudeFilesPerHour, lease: (any StateLease)? = nil,
@@ -87,7 +89,7 @@ private final class ScanRig: Sendable {
                            conditions: { [self] in
                                conditions.withLock { $0.isEmpty ? PowerConditions() : $0.removeFirst() }
                            },
-                           clock: ManualClock(epoch), now: { hand.now }, sleep: sleep, log: logs.function)
+                           clock: clock, now: { hand.now }, sleep: sleep, log: logs.function)
     }
 
     var facts: [MemoryFact] { memory.loadFacts()?.facts ?? [] }
@@ -251,6 +253,57 @@ struct FileScannerTests {
         #expect(rig.entry("Documents/a.md")?.status == .failed)
         #expect(await scanner.pass().readOnDevice == 1)
         #expect(rig.entry("Documents/a.md")?.status == .read)
+    }
+
+    @Test func aFileThatTimesOutTwiceRestsSevenDaysThenIsTriedAgain() async throws {
+        let timeout = PersonaWriterError.localFailed("timed out after 120.0 seconds")
+        let rig = try ScanRig(local: ScriptedWriter(.fail(timeout), .fail(timeout), .reply("NONE")))
+        defer { rig.remove() }
+        try rig.home.write("Documents/a.md", "Alpha.")
+        let scanner = rig.scanner()
+        #expect(await scanner.pass().failed == 1)
+        #expect(rig.entry("Documents/a.md")?.timeouts == 1)
+        #expect(rig.entry("Documents/a.md")?.skipUntil == nil)
+        #expect(await scanner.pass().failed == 1)
+        let entry = try #require(rig.entry("Documents/a.md"))
+        #expect(entry.timeouts == 2)
+        #expect(entry.skipUntil == epoch + 7 * 86_400)
+        let tag = String(entry.digest.prefix(12))
+        #expect(rig.logs.all.contains("files: \(tag) skipped after 2 timeouts (until 2026-10-05)"))
+        // Resting: not read, however many passes.
+        rig.clock.advance(7 * 86_400 - 1)
+        #expect(await scanner.pass().failed == 1)
+        #expect(rig.local.calls.count == 2)
+        // The week is up: read again, and a read clears the count.
+        rig.clock.advance(1)
+        #expect(await scanner.pass().readOnDevice == 1)
+        #expect(rig.entry("Documents/a.md")?.timeouts == 0)
+        #expect(rig.entry("Documents/a.md")?.skipUntil == nil)
+    }
+
+    @Test func otherFailuresDoNotCountTowardsTheRest() async throws {
+        let rig = try ScanRig(local: ScriptedWriter(.fail(.localFailed("busy")), .fail(.localFailed("busy")),
+                                                    .fail(.localFailed("busy"))))
+        defer { rig.remove() }
+        try rig.home.write("Documents/a.md", "Alpha.")
+        let scanner = rig.scanner()
+        for _ in 0..<3 { #expect(await scanner.pass().failed == 1) }
+        #expect(rig.local.calls.count == 3)
+        #expect(rig.entry("Documents/a.md")?.timeouts == 0)
+        #expect(rig.entry("Documents/a.md")?.skipUntil == nil)
+    }
+
+    @Test func theTimeoutFieldsRoundTripAndAreLeftOutWhenUnset() throws {
+        let plain = FileIndexEntry(path: "/a", size: 1, mtime: 2, digest: "d", status: .read, lastRead: 3)
+        let resting = FileIndexEntry(path: "/b", size: 1, mtime: 2, digest: "e", status: .failed, lastRead: 3,
+                                     timeouts: 2, skipUntil: 4.5)
+        let data = FileIndex(entries: [plain, resting]).data
+        let text = String(decoding: data, as: UTF8.self)
+        #expect(text.components(separatedBy: "\"timeouts\"").count == 2)
+        #expect(text.components(separatedBy: "\"skip_until\"").count == 2)
+        let back = try #require(FileIndex(data: data))
+        #expect(back.entries["/a"] == plain)
+        #expect(back.entries["/b"] == resting)
     }
 
     @Test func filesNoLongerFoundLeaveTheIndex() async throws {

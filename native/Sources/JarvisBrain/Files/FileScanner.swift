@@ -37,6 +37,10 @@ public actor FileScanner {
     public static let pause: Duration = .milliseconds(250)
     /// Index changes that did not involve a model are saved in batches of this many.
     public static let saveEvery = 50
+    /// V10: after this many timed-out reads of the same bytes, the file rests `timeoutRest`. Live,
+    /// one file timed the on-device model out for 120 s on every pass, for days.
+    public static let timeoutLimit = 2
+    public static let timeoutRest: Double = 7 * 86_400
 
     /// One pass, in counts.
     public struct PassSummary: Sendable, Equatable {
@@ -271,6 +275,11 @@ public actor FileScanner {
             summary.unchanged += 1
             return .next
         }
+        if let entry = index.entries[path], let until = entry.skipUntil, clock.now() < until,
+           entry.size == candidate.size, entry.mtime == candidate.modified {
+            summary.failed += 1
+            return .next
+        }
         do {
             try await paced()
             try await turns.waitUntilQuiet(sleep: sleep)
@@ -315,9 +324,20 @@ public actor FileScanner {
             summary.waiting += 1
             waitingForClaude.append(candidate)
             step = record(candidate, digest: digest, status: .waiting, modelUsed: true)
-        case .failed:
+        case .failed(let reason):
             summary.failed += 1
-            step = record(candidate, digest: digest, status: .failed, modelUsed: true)
+            let before = index.entries[path].flatMap { $0.digest == digest ? $0.timeouts : nil } ?? 0
+            let timedOut = reason.contains("timed out")
+            let timeouts = before + (timedOut ? 1 : 0)
+            var until: Double?
+            if timedOut, timeouts >= Self.timeoutLimit {
+                let rest = clock.now() + Self.timeoutRest
+                until = rest
+                let date = Date(timeIntervalSince1970: rest).formatted(.iso8601.year().month().day())
+                log("files: \(tag) skipped after \(timeouts) timeouts (until \(date))")
+            }
+            step = record(candidate, digest: digest, status: .failed, modelUsed: true, timeouts: timeouts,
+                          skipUntil: until)
         case .notSaved:
             log("files: facts not saved; pass stopped")
             return .stop
@@ -348,10 +368,11 @@ public actor FileScanner {
     // MARK: - The index
 
     private func record(_ candidate: FileCandidate, digest: String, status: FileIndexEntry.Status,
-                        facts: Int = 0, modelUsed: Bool = false) -> Step {
+                        facts: Int = 0, modelUsed: Bool = false, timeouts: Int = 0, skipUntil: Double? = nil) -> Step {
         let path = Self.key(candidate.url)
         index.entries[path] = FileIndexEntry(path: path, size: candidate.size, mtime: candidate.modified,
-                                             digest: digest, status: status, facts: facts, lastRead: clock.now())
+                                             digest: digest, status: status, facts: facts, lastRead: clock.now(),
+                                             timeouts: timeouts, skipUntil: skipUntil)
         if status == .read { readByDigest[digest] = path }
         return markChanged(modelUsed: modelUsed)
     }
