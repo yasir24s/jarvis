@@ -147,6 +147,9 @@ public struct BrainRouter: Sendable {
 
         if online, let cloud = cloudBrain(chosen) {                                       // step 11
             let brain: ArchiveBrain = chosen == .chatgpt ? .chatgpt : .claude
+            // Live fix B: a cloud reply only ever follows the stored Brain choice; say so, so a
+            // "Backend: claude" line under an on-device pick can be traced to the setting.
+            log("brain: \(chosen.rawValue) answers (the Brain setting read as this turn began)")
             // Python's `if reply:`: nil and "" both fall through to the local model.
             let reply = await cloud.generate(system: system, user: user, turn: turn, sink: shown)
             if Task.isCancelled { return Answer(text: await stopped(shown), brain: brain) }

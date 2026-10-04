@@ -19,7 +19,9 @@ struct IdentifySong: ToolImpl {
 
     static let unavailable = "Song recognition isn't set up yet, sir. It needs my build signed with the "
         + "Apple Developer profile that has ShazamKit switched on; the steps are in the batch C report."
-    static let noMatch = "I listened, but couldn't identify that song, sir."
+    /// Live fix D (DEV-LIVE-09): Python's AudD line was "I listened, but couldn't identify that
+    /// song, sir."; a no-match now reads apart from a failure.
+    static let noMatch = "I couldn't make out a song, sir."
     static let failed = "I had trouble identifying that, sir."
 
     let feature: ShazamFeature
@@ -32,7 +34,9 @@ struct IdentifySong: ToolImpl {
 
     func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome {
         guard feature.isAvailable else { return .text(Self.unavailable) }
-        switch await matcher.identify(seconds: 8) {
+        var answer = await matcher.identify(seconds: 8)
+        if answer == .failed { answer = await matcher.identify(seconds: 8) }   // live fix D: once more, not after a no-match
+        switch answer {
         case .match(let title, let artist):
             return .text("That's \(title) by \(artist.isEmpty ? "an unknown artist" : artist), sir.")
         case .noMatch: return .text(Self.noMatch)

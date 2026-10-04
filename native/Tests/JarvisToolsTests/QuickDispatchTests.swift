@@ -43,7 +43,7 @@ struct QuickDispatchTests {
 
         init(index: String = "/Applications/Safari.app\n", running: [RunningApp] = [],
              browser: String = "Safari", backend: (@Sendable () async -> String)? = nil,
-             contacts: any ContactsReading = NoContacts()) async throws {
+             contacts: any ContactsReading = NoContacts(), scriptOutput: String? = nil) async throws {
             sandbox = try ToolCoreSandbox()
             gateway = ToolGateway(confirmationGate: gate, log: { _ in })
             apps = Apps(running)
@@ -53,6 +53,10 @@ struct QuickDispatchTests {
             platform.volume = volume
             platform.settingsOpener = settings
             platform.contacts = contacts
+            if let scriptOutput {
+                platform.scriptRunner = FakeStdinRunner(output: ProcessOutput(stdout: Data(scriptOutput.utf8), stderr: Data(),
+                                                                              status: 0, timedOut: false, truncated: false))
+            }
             platform.quick = QuickPlatform(runningApps: apps, browserSetter: setter, lastReply: lastReply)
             await BuiltInTools.register(on: gateway, core: sandbox.core, clock: ManualClock(1790582400),
                                         timeZone: QuickDispatchTests.zone, platform: platform,

@@ -268,6 +268,7 @@ public struct FastPathRouter: Sendable {
             return hit("media.previous", .media(announcement: "Going back, sir.", command: "previous track"))
         }
         if isIn(p.nowPlaying) { return hit("media.now_playing", .nowPlaying) }
+        if Self.isSongQuestion(t) { return hit("media.now_playing", .nowPlaying) }   // live fix A (DEV-LIVE-07)
         if let m = p.playQuery.match(t) {
             let q = Py.strip(m.groups[1] ?? "")
             if p.playGeneric.contains(where: { Py.eq($0, q) }) {
@@ -407,6 +408,46 @@ public struct FastPathRouter: Sendable {
         return name
     }
 
+    /// Live fix A (native only, DEV-LIVE-07): "what song iss this" missed Python's exact list and
+    /// went to the model. A question about the song playing: one of the now-playing phrases or a
+    /// few more ("what's this song", "what's playing here"), as said or with a small typo: the
+    /// same words, the first exactly, each other word within one edit, and one edit in all for a
+    /// phrase under 15 characters, two from 15. A curly apostrophe is left to the model, as in
+    /// Python (quick_router case 270).
+    static func isSongQuestion(_ t: String) -> Bool {
+        let phrases = Patterns.nowPlaying + Patterns.songQuestions
+        if phrases.contains(where: { Py.eq($0, t) }) { return true }
+        guard !t.unicodeScalars.contains("\u{2019}") else { return false }
+        let said = t.split(separator: " ").map { Array($0.unicodeScalars) }
+        return phrases.contains { phrase in
+            let words = phrase.split(separator: " ").map { Array($0.unicodeScalars) }
+            guard words.count == said.count, words.first == said.first else { return false }
+            let allowed = phrase.unicodeScalars.count >= 15 ? 2 : 1
+            var total = 0
+            for (a, b) in zip(said, words) {
+                let d = editDistance(a, b, atMost: 1)
+                if d > 1 { return false }
+                total += d
+            }
+            return total <= allowed
+        }
+    }
+
+    /// Levenshtein distance, or `atMost + 1` once it is certainly larger.
+    static func editDistance(_ a: [Unicode.Scalar], _ b: [Unicode.Scalar], atMost limit: Int) -> Int {
+        guard !a.isEmpty, !b.isEmpty else { return max(a.count, b.count) }
+        var previous = Array(0...b.count)
+        for i in 1...a.count {
+            var current = [i] + Array(repeating: 0, count: b.count)
+            for j in 1...b.count {
+                current[j] = min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1))
+            }
+            if current.min() ?? 0 > limit { return limit + 1 }
+            previous = current
+        }
+        return previous[b.count]
+    }
+
     /// `m.group(2) or m.group(3) or ""`.
     static func orNonEmpty(_ a: String?, _ b: String?) -> String {
         if let a, !a.isEmpty { return a }
@@ -475,6 +516,9 @@ public struct FastPathRouter: Sendable {
         static let mediaNext = ["next", "next song", "next track", "skip", "skip song", "skip this", "skip it"]
         static let mediaPrevious = ["previous", "previous song", "previous track", "last song",
                                     "go back a song", "replay"]
+        /// Live fix A (native only): more ways to ask what song is playing.
+        static let songQuestions = ["what's this song", "whats this song", "what is this song", "what song is playing",
+                                    "what's playing here", "what is playing here"]
         static let nowPlaying = ["what's playing", "what is playing", "what song is this", "current song",
                                  "name this song"]
         static let playQuery = re(#"(?:play|put on|throw on|listen to|i want to listen to|i wanna listen to|"#

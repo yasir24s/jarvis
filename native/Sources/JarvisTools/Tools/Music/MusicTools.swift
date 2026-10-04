@@ -44,12 +44,13 @@ struct MusicNowPlaying: ToolImpl {
         + "      return (name of current track) & \" | \" & (artist of current track) & \" | \" & (album of current track)\n"
         + "    end if\n"
         + "  end tell\nend if\nreturn \"nothing\""
+    static let nothing = "Nothing is playing, sir."
     let runner: any StdinCommandRunning
 
     func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome {
         let out = await AppleScriptRunner(runner: runner).run(Self.script)
         if out.isEmpty || Py.eq(out, "nothing") || AppleScriptText.errored(out) {
-            return .text("Nothing is playing, sir.")
+            return .text(Self.nothing)
         }
         let parts = AppleScriptText.fields(out)
         let name = parts.first ?? out

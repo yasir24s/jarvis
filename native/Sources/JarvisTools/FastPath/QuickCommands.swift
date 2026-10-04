@@ -161,7 +161,16 @@ public struct QuickCommands: Sendable {
         case .reveal(let path):
             return await tool(QuickOpenPath.name, ["path": .string(path), "reveal": .bool(true)], turn: turn)
         case .resolveOpen(let name): return await tool(QuickOpenApp.name, ["name": .string(name)], turn: turn)
-        case .nowPlaying: return await tool("music_now_playing", turn: turn)
+        case .nowPlaying:
+            // Live fix C (DEV-LIVE-08): nothing playing in Music, so the song is around the user:
+            // identify_song listens, when this build has it.
+            let reply = await tool(MusicNowPlaying.name, turn: turn)
+            guard let reply, Py.eq(reply, MusicNowPlaying.nothing) else { return reply }
+            guard let heard = await tool(IdentifySong.name, turn: turn), !Py.eq(heard, IdentifySong.unavailable) else {
+                return reply
+            }
+            log("fast path: nothing playing in Music; identify_song")
+            return heard
         case .playQuery(let q):
             // TV tools: an episode request goes to tv_play (music_play when it is not registered);
             // "the latest X" could be either, so the brain picks.
