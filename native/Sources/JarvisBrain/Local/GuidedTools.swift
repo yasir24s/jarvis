@@ -35,7 +35,8 @@ public enum GuidedTools {
     public static let instructions = """
         You choose the tool a voice assistant should use for the user's request. Pick a tool \
         whenever the request asks for an action or for information a tool provides. Pick none \
-        only for chat, opinions or general knowledge.
+        for chat, compliments, opinions or general knowledge, and for a request to delete, wipe \
+        or format things wholesale.
         """
 
     /// Greedy and short: a choice is one enum value.
@@ -129,8 +130,9 @@ public enum GuidedTools {
                            budget: LocalCallBudget, log: @Sendable (String) -> Void) async -> Result {
         var result = Result()
         guard !tools.isEmpty else { return result }
-        // The ranked tools first, the pinned ones last: listed first, get_time was chosen first
-        // for most requests in the eval (none-01..05, send_message-03, personality_rewrite-01).
+        // get_time last: listed first, it was chosen first for most requests in the eval
+        // (none-01..05, send_message-03, personality_rewrite-01). Moving all three pinned tools
+        // last sent memory questions to see_screen (search_memory-01..03).
         let tools = ordered(tools)
         let schema: GenerationSchema
         do {
@@ -175,10 +177,12 @@ public enum GuidedTools {
         return result
     }
 
-    /// `tools` with `LocalToolset.pinned` moved to the end, each group in its own order.
+    /// The tool listed last in the choice.
+    static let listedLast = "get_time"
+
+    /// `tools` with `listedLast` moved to the end, the rest in their own order.
     static func ordered(_ tools: [DynamicTool]) -> [DynamicTool] {
-        let pinned = Set(LocalToolset.pinned)
-        return tools.filter { !pinned.contains($0.name) } + tools.filter { pinned.contains($0.name) }
+        tools.filter { $0.name != listedLast } + tools.filter { $0.name == listedLast }
     }
 
     static func short(_ text: String, _ limit: Int) -> String {
