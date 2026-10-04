@@ -654,11 +654,16 @@ while true {
         pending.removeAll()
         send(Reply(ok: false, error: "request line longer than \(maxLineBytes) bytes"))
     }
+    // V10b (the user's choice): while the model is kept resident the helper stays up, so a reply
+    // after a long break needs no reload. The app turns resident off (muted 10 min, F5, low memory),
+    // and from then the idle limit counts again. The clock restarts when resident goes off.
+    if wantResident { lastRequest = ContinuousClock.now }
     let idle = ContinuousClock.now - lastRequest
     if idle >= idleLimit {
         log("idle for \(Int(options.idleExitSeconds)) s, exiting")
         exit(0)
     }
-    let waitMs = max(1, min(Int(Int32.max), Int(seconds(idleLimit - idle) * 1000)))
+    let waitMs = wantResident ? 60_000
+        : max(1, min(Int(Int32.max), Int(seconds(idleLimit - idle) * 1000)))
     if !readInput(waitMs: Int32(waitMs)), !inputEnded { exit(1) }
 }
