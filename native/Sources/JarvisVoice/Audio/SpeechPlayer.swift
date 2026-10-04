@@ -21,6 +21,9 @@ public protocol SpeechPlayer: Sendable {
     /// How the last `playStream` went: how often the voice fell behind the play head. nil from a
     /// player that does not keep track.
     func lastStream() async -> StreamReport?
+    /// V9: whether the voice is expected to start cold (idle a while, not warmed up): the next
+    /// streamed reply's pre-roll starts from a pessimistic rate.
+    func expectColdVoice(_ cold: Bool) async
 }
 
 /// How a streamed reply kept up with its playing (`EnginePlayer.playStream`).
@@ -102,6 +105,7 @@ extension SpeechPlayer {
     public func replyReady() async {}
     public func replyEnded() async {}
     public func lastStream() async -> StreamReport? { nil }
+    public func expectColdVoice(_ cold: Bool) async {}
 
     /// Each piece played whole, one after the other (a player without a stream of its own).
     public func playStream(_ pieces: AsyncThrowingStream<PCMChunk, any Error>, expectedSeconds: Double) async throws {
@@ -140,6 +144,11 @@ public actor EnginePlayer: SpeechPlayer {
     /// How fast the last streamed reply was delivered, the next one's pre-roll (`PreRoll.hold`).
     private var deliveryRate: Double?
     private var report: StreamReport?
+    /// V9: the next streamed reply starts after the voice sat idle and was not warmed up.
+    private var coldVoice = false
+    /// V9: the rate a cold voice's reply is held for, before its own pieces say otherwise. Live,
+    /// the first reply after an idle spell was delivered at 0.88x.
+    public static let coldStartRate = 0.85
     /// A gap shorter than this, worked out from when each piece was queued, is not counted: the
     /// estimate leaves out the output's own latency.
     static let dryThreshold = Duration.milliseconds(10)
@@ -177,7 +186,10 @@ public actor EnginePlayer: SpeechPlayer {
     public func playStream(_ pieces: AsyncThrowingStream<PCMChunk, any Error>, expectedSeconds: Double) async throws {
         let level = LoudnessStream(sampleRate: Self.sampleRate, lift: Self.outputLiftDB, prior: streamGain)
         defer { if let gain = level.gain { streamGain = gain } }
-        let prior = PreRoll.hold(expected: expectedSeconds, deliveryRate: deliveryRate)
+        // V9: after an idle spell with no warm-up, a pessimistic start rather than the last rate.
+        let startRate = coldVoice ? min(deliveryRate ?? 1, Self.coldStartRate) : deliveryRate
+        coldVoice = false
+        let prior = PreRoll.hold(expected: expectedSeconds, deliveryRate: startRate)
         var hold = prior
         var preroll = PreRoll(sampleRate: Self.sampleRate, seconds: hold)
         // V9: the rate of this reply's first pieces, while it is still being measured.
@@ -190,7 +202,7 @@ public actor EnginePlayer: SpeechPlayer {
         var dry = 0
         var dryTime = Duration.zero
         var meter = DeliveryMeter(sampleRate: Self.sampleRate)
-        let holdRate = prior > PreRoll.seconds ? deliveryRate : nil
+        let holdRate = prior > PreRoll.seconds ? startRate : nil
         defer {
             let rate = meter.rate
             if !Task.isCancelled, let rate { deliveryRate = rate }
@@ -255,6 +267,10 @@ public actor EnginePlayer: SpeechPlayer {
 
     public func lastStream() async -> StreamReport? {
         report
+    }
+
+    public func expectColdVoice(_ cold: Bool) async {
+        coldVoice = cold
     }
 
     /// Voice processing comes on while the reply generates (`AudioHub.speechWillStart`).

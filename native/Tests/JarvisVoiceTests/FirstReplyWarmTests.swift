@@ -185,3 +185,28 @@ struct InReplyPreRollTests {
         #expect(!played.contains { $0 != 0 }, "nothing held played after the stop")
     }
 }
+
+/// V9 part 3: a cold voice with no warm-up starts its reply's estimate at x0.85.
+@Suite("V9 first reply warm: a cold start without the warm-up")
+struct ColdVoiceTests {
+    static func emptyStream(_ player: EnginePlayer, expected: Double) async throws -> StreamReport {
+        let (stream, feed) = AsyncThrowingStream<PCMChunk, any Error>.makeStream()
+        feed.finish()
+        try await player.playStream(stream, expectedSeconds: expected)
+        return try #require(await player.lastStream())
+    }
+
+    @Test func theNextReplyIsHeldForAColdVoiceOnce() async throws {
+        let output = try #require(AVAudioFormat(standardFormatWithSampleRate: EnginePlayer.sampleRate, channels: 2))
+        let player = try EnginePlayer(offline: output)
+        await player.expectColdVoice(true)
+        let cold = try await Self.emptyStream(player, expected: 10)
+        #expect(abs(cold.preroll - PreRoll.hold(expected: 10, deliveryRate: EnginePlayer.coldStartRate)) < 1e-9)
+        #expect(cold.holdRate == EnginePlayer.coldStartRate)
+        let next = try await Self.emptyStream(player, expected: 10)
+        #expect(next.preroll == PreRoll.seconds, "used once")
+        await player.expectColdVoice(true)
+        await player.expectColdVoice(false)
+        #expect(try await Self.emptyStream(player, expected: 10).preroll == PreRoll.seconds)
+    }
+}

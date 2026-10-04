@@ -530,14 +530,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // are local, so the policy's cloud rule does not hold back personal sources.
         let voice = AppVoice()
         self.voice = voice
-        let qwen = voice.qwen
+        let qwen = voice.qwen, speech = voice.queue
         turnWarmup = TurnStartWarmup(.init(
             usesQwen: { voice.backend == "qwen" },
             cloudBrain: { BrainSetting.stored(in: .standard) != .onDevice },
             muted: { [weak self] in self?.speechMute.isMuted ?? true },
             memoryFreePercent: { QwenPrewarm.systemFreePercent() },
             idleSeconds: { await qwen.idleSeconds() },
-            warmUp: { await qwen.warmUp() }))
+            warmUp: { await qwen.warmUp() },
+            coldVoice: { await speech.expectColdVoice($0) }))
         speakEarly.applies = voice.speakEarlyApplies   // V6: hidden while Qwen speaks
         // UI1 part 3: the HUD speaks while the reply's audio plays, a sentence at a time.
         voice.onReplyAudioStarted = { [weak self] heard, seconds in

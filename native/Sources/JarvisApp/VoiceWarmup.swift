@@ -1,6 +1,7 @@
 import Darwin
 import Foundation
 import JarvisCore
+import JarvisVoice
 
 /// Live fix 5: the first Qwen reply of the first live session waited 10.1 s for its first audio,
 /// later ones 0.8 to 1.8 s, because the helper loads its model (and runs its warm-up line) on
@@ -147,6 +148,8 @@ final class TurnStartWarmup {
         var idleSeconds: @Sendable () async -> Double?
         /// Runs the warm-up; true when it finished (`QwenEngine.warmUp`).
         var warmUp: @Sendable () async -> Bool
+        /// V9 part 3: the next reply's voice starts cold (`SpeechPlayer.expectColdVoice`).
+        var coldVoice: @Sendable (Bool) async -> Void = { _ in }
         var log: @Sendable (String) -> Void = { JarvisLog.log($0, category: .voice) }
     }
 
@@ -170,10 +173,20 @@ final class TurnStartWarmup {
         let hooks = self.hooks
         let task = Task { @MainActor [weak self] in
             defer { self?.running = nil }
-            guard let idle = await hooks.idleSeconds(), idle > Self.idleLimit else { return }
-            guard cloud, !memoryShort else { return }
+            guard let idle = await hooks.idleSeconds(), idle > Self.idleLimit else {
+                await hooks.coldVoice(false)
+                return
+            }
+            // Cold until a warm-up finishes: one cut short by the reply leaves it cold.
+            await hooks.coldVoice(true)
+            guard cloud, !memoryShort else {
+                hooks.log("voice: helper idle \(Int(idle)) s, no warm-up (" + (cloud ? "memory short" : "on-device brain")
+                          + "): the reply's pre-roll starts at x\(EnginePlayer.coldStartRate)")
+                return
+            }
             let started = ContinuousClock.now
             let finished = await hooks.warmUp()
+            if finished { await hooks.coldVoice(false) }
             let took = String(format: "%.1f", (ContinuousClock.now - started) / .seconds(1))
             hooks.log("voice: warm-up at turn start (idle \(Int(idle)) s), took \(took) s"
                       + (finished ? "" : " (cut short)"))

@@ -447,4 +447,8 @@ final class ReportingPlayer: SpeechPlayer {
     func lastStream() async -> StreamReport? {
         await inner.lastStream()
     }
+
+    func expectColdVoice(_ cold: Bool) async {
+        await inner.expectColdVoice(cold)
+    }
 }

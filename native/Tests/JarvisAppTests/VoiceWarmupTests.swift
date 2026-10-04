@@ -124,6 +124,8 @@ struct TurnStartWarmupTests {
             var free: Int? = 50
             var idle: Double? = 300
             var warmUps = 0
+            var finishes = true
+            var cold: [Bool] = []
             var logs: [String] = []
         }
         let values = Mutex(Values())
@@ -136,7 +138,8 @@ struct TurnStartWarmupTests {
             muted: { state.values.withLock { $0.muted } },
             memoryFreePercent: { state.values.withLock { $0.free } },
             idleSeconds: { state.values.withLock { $0.idle } },
-            warmUp: { state.values.withLock { $0.warmUps += 1 }; return true },
+            warmUp: { state.values.withLock { $0.warmUps += 1; return $0.finishes } },
+            coldVoice: { cold in state.values.withLock { $0.cold.append(cold) } },
             log: { line in state.values.withLock { $0.logs.append(line) } }))
     }
 
@@ -165,6 +168,18 @@ struct TurnStartWarmupTests {
         #expect(await Self.run { $0.idle = nil }.warmUps == 0)   // never used
         #expect(await Self.run { $0.free = 20 }.warmUps == 1)
         #expect(await Self.run { $0.free = nil }.warmUps == 1)   // unknown is not short
+    }
+
+    /// Part 3: idle with no warm-up finished, the reply's pre-roll starts at x0.85.
+    @Test func aColdVoiceIsFlaggedUnlessTheWarmUpFinished() async {
+        #expect(await Self.run { _ in }.cold == [true, false])
+        #expect(await Self.run { $0.finishes = false }.cold == [true])   // cut short by the reply
+        let onDevice = await Self.run { $0.cloud = false }
+        #expect(onDevice.cold == [true])
+        #expect(onDevice.logs == ["voice: helper idle 300 s, no warm-up (on-device brain): the reply's pre-roll starts at x0.85"])
+        #expect(await Self.run { $0.free = 10 }.cold == [true])
+        #expect(await Self.run { $0.idle = 30 }.cold == [false])
+        #expect(await Self.run { $0.muted = true }.cold == [])
     }
 
     @Test func oneAtATime() async {
