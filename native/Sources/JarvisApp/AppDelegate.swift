@@ -123,6 +123,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Live fix 5: the Qwen helper's load after launch, and voice processing switched on as a
     /// spoken turn starts.
     private var qwenPrewarm: Task<Void, Never>?
+    /// V9: a short throwaway generation as a turn starts after the Qwen helper sat idle.
+    private var turnWarmup: TurnStartWarmup?
     private let processingAhead = VoiceProcessingAhead(willStart: { AudioHub.shared.speechWillStart() },
                                                        ended: { AudioHub.shared.speechEnded() })
     private var sigterm: DispatchSourceSignal?
@@ -528,6 +530,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // are local, so the policy's cloud rule does not hold back personal sources.
         let voice = AppVoice()
         self.voice = voice
+        let qwen = voice.qwen
+        turnWarmup = TurnStartWarmup(.init(
+            usesQwen: { voice.backend == "qwen" },
+            cloudBrain: { BrainSetting.stored(in: .standard) != .onDevice },
+            muted: { [weak self] in self?.speechMute.isMuted ?? true },
+            memoryFreePercent: { QwenPrewarm.systemFreePercent() },
+            idleSeconds: { await qwen.idleSeconds() },
+            warmUp: { await qwen.warmUp() }))
         speakEarly.applies = voice.speakEarlyApplies   // V6: hidden while Qwen speaks
         // UI1 part 3: the HUD speaks while the reply's audio plays, a sentence at a time.
         voice.onReplyAudioStarted = { [weak self] heard, seconds in
@@ -570,6 +580,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard self.speakReplies.isOn else { return }
             voice.acknowledge(text, sentAt: sentAt)
             if !self.speechMute.isMuted { self.processingAhead.turnStarting() }   // live fix 5
+            self.turnWarmup?.turnStarting()   // V9
         }
         // V1 part 5: typing with Speak replies on starts the voice, so the reply does not wait for it.
         chat.onTyping = { [weak self] in
@@ -784,7 +795,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                               conversationOver: { assembly.personality.conversationEnded() },
                                               prompt: { [weak self] in self?.confirmationPrompt() },
                                               pushToTalkOn: { [weak self] in self?.talk.isOn ?? false },
-                                              userStarting: { assembly.turnActivity.preemptBackground() },
+                                              userStarting: { [weak self] in
+                                                  assembly.turnActivity.preemptBackground()
+                                                  self?.turnWarmup?.turnStarting()   // V9: the wake word
+                                              },
                                               // PR2: after "Going offline, sir.", the same clean exit as SIGTERM.
                                               goOffline: { [weak self] in _ = self?.exitCleanly("received SIGINT — exiting.") })
                 self.applyHandsFree()
@@ -890,6 +904,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return }
             let text = self.voice?.withoutEcho(heard) ?? heard   // live fix 4
             if !self.speechMute.isMuted { self.processingAhead.turnStarting() }   // live fix 5: always spoken
+            self.turnWarmup?.turnStarting()   // V9
             // The turn's start makes the HUD think. A turn never taken (refused, or nothing sent)
             // must not leave it listening.
             guard let turn = self.chat.sendVoice(text) else {

@@ -110,3 +110,69 @@ struct VoiceWarmupTests {
         #expect(events == ["on", "off"])
     }
 }
+
+/// V9, with fakes: the turn-start warm-up runs only for a cloud brain, Qwen, speech on, enough
+/// memory and a helper idle past the limit; it never plays anything (it has no player to reach).
+@Suite("V9 turn-start warm-up", .serialized)
+@MainActor
+struct TurnStartWarmupTests {
+    final class State: Sendable {
+        struct Values {
+            var qwen = true
+            var cloud = true
+            var muted = false
+            var free: Int? = 50
+            var idle: Double? = 300
+            var warmUps = 0
+            var logs: [String] = []
+        }
+        let values = Mutex(Values())
+    }
+
+    static func warmup(_ state: State) -> TurnStartWarmup {
+        TurnStartWarmup(.init(
+            usesQwen: { state.values.withLock { $0.qwen } },
+            cloudBrain: { state.values.withLock { $0.cloud } },
+            muted: { state.values.withLock { $0.muted } },
+            memoryFreePercent: { state.values.withLock { $0.free } },
+            idleSeconds: { state.values.withLock { $0.idle } },
+            warmUp: { state.values.withLock { $0.warmUps += 1 }; return true },
+            log: { line in state.values.withLock { $0.logs.append(line) } }))
+    }
+
+    static func run(_ change: (inout State.Values) -> Void) async -> State.Values {
+        let state = State()
+        var values = State.Values()
+        change(&values)
+        state.values.withLock { [values] in $0 = values }
+        await warmup(state).turnStarting()?.value
+        return state.values.withLock { $0 }
+    }
+
+    @Test func aCloudTurnAfterIdleWarmsTheHelperAndLogsIt() async {
+        let values = await Self.run { _ in }
+        #expect(values.warmUps == 1)
+        #expect(values.logs.count == 1)
+        #expect(values.logs.first?.hasPrefix("voice: warm-up at turn start (idle 300 s), took ") == true)
+    }
+
+    @Test func itIsSkippedOutsideItsConditions() async {
+        #expect(await Self.run { $0.cloud = false }.warmUps == 0)   // on-device brain
+        #expect(await Self.run { $0.qwen = false }.warmUps == 0)
+        #expect(await Self.run { $0.muted = true }.warmUps == 0)
+        #expect(await Self.run { $0.free = 19 }.warmUps == 0)
+        #expect(await Self.run { $0.idle = 120 }.warmUps == 0)   // not past the limit
+        #expect(await Self.run { $0.idle = nil }.warmUps == 0)   // never used
+        #expect(await Self.run { $0.free = 20 }.warmUps == 1)
+        #expect(await Self.run { $0.free = nil }.warmUps == 1)   // unknown is not short
+    }
+
+    @Test func oneAtATime() async {
+        let state = State()
+        let warmup = Self.warmup(state)
+        let first = warmup.turnStarting()
+        #expect(warmup.turnStarting() == nil)
+        await first?.value
+        #expect(state.values.withLock { $0.warmUps } == 1)
+    }
+}

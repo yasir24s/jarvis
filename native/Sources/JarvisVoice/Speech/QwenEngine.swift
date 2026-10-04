@@ -176,6 +176,10 @@ public actor QwenEngine: SpeechEngine {
     /// The requests in flight, by id: where their lines go.
     private var waiting: [String: AsyncStream<HelperStreamLine>.Continuation] = [:]
     private var failuresInARow = 0
+    /// V9: when the helper last loaded or generated, for `idleSeconds`.
+    private var lastBusy: ContinuousClock.Instant?
+    /// V9: the warm-up request in flight (`warmUp`), cut short by the next real one.
+    private var warmUpID: String?
 
     public init(launcher: any QwenHelperLauncher, firstTimeout: Duration = QwenEngine.defaultFirstTimeout,
                 gapTimeout: Duration = QwenEngine.defaultGapTimeout,
@@ -206,6 +210,7 @@ public actor QwenEngine: SpeechEngine {
     }
 
     public func synthesize(_ sentence: String, context: SynthesisContext) -> AsyncThrowingStream<PCMChunk, any Error> {
+        cancelWarmUp()   // V9: the helper works in order; the real sentence must not wait behind it
         let (stream, continuation) = AsyncThrowingStream.makeStream(of: PCMChunk.self)
         let id = UUID().uuidString
         let task = Task {
@@ -223,7 +228,48 @@ public actor QwenEngine: SpeechEngine {
         if connection != nil, loadedConnection == connectionNumber, connectionArguments == launcher.arguments { return }
         guard let helper = try? connect() else { return }
         loadedConnection = connectionNumber
+        lastBusy = now()
         try? helper.send(#"{"cmd":"load"}"#)
+    }
+
+    // MARK: - V9: warm-up at turn start
+
+    /// V9: what the warm-up generates, about 0.3 s of audio, never played. Live, the helper's first
+    /// generation after an idle spell ran slower than real time (0.88x, 11 underruns) where the
+    /// next ran ahead of it; one short line first makes the reply's own generation the second.
+    public static let warmUpLine = "Right."
+
+    /// Seconds since the helper last loaded or generated; 0 while a request runs; nil when it has
+    /// done neither.
+    public func idleSeconds() -> Double? {
+        guard waiting.isEmpty else { return 0 }
+        return lastBusy.map { (now() - $0) / .seconds(1) }
+    }
+
+    /// V9: generates `warmUpLine` and throws its audio away. True when it finished; false when it
+    /// did not run, failed, or was cut short (a real request, or `cancelWarmUp`).
+    public func warmUp() async -> Bool {
+        guard isAvailable, warmUpID == nil else { return false }
+        let id = UUID().uuidString
+        warmUpID = id
+        let (pieces, out) = AsyncThrowingStream.makeStream(of: PCMChunk.self)
+        // `run` registers the request before its first suspension, so a cancel always finds it.
+        await run(id: id, text: Self.warmUpLine, into: out)
+        let finished = warmUpID == id
+        if finished { warmUpID = nil }
+        do {
+            for try await _ in pieces {}   // dropped
+        } catch {
+            return false
+        }
+        return finished
+    }
+
+    /// V9: a warm-up in flight is stopped in the helper (Stop, mute, or the reply's first request).
+    public func cancelWarmUp() {
+        guard let id = warmUpID else { return }
+        warmUpID = nil
+        abandon(id)
     }
 
     public func release() async {
@@ -238,6 +284,8 @@ public actor QwenEngine: SpeechEngine {
 
     private func run(id: String, text: String, into out: AsyncThrowingStream<PCMChunk, any Error>.Continuation) async {
         var pieces = 0
+        lastBusy = now()
+        defer { lastBusy = now() }
         func fail(_ error: SpeechEngineError) {
             failed()
             out.finish(throwing: error)
@@ -289,6 +337,7 @@ public actor QwenEngine: SpeechEngine {
                 do {
                     let samples = try readPCM(reply.path, expected: reply.samples)
                     pieces += 1
+                    lastBusy = now()
                     if pieces == 1, number == connectionNumber { loadedConnection = number }
                     out.yield(PCMChunk(samples: samples, sampleRate: Double(reply.rate ?? Int(Self.sampleRate))))
                 } catch {

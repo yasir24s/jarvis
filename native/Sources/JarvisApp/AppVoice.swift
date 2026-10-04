@@ -309,12 +309,15 @@ final class AppVoice {
     }
 
     private func stopNow() -> @Sendable () async -> Void {
-        let queue = self.queue
+        let queue = self.queue, qwen = self.qwen
         acknowledgedSinceReply = false   // as the queue's cancelAll forgets it
         early.stop()   // V8: a reply spoken as it is written takes nothing more
         stops += 1
         let stops = self.stops
-        return { await queue.cancelAll(through: stops) }
+        return {
+            await qwen.cancelWarmUp()   // V9: a turn-start warm-up stops too
+            await queue.cancelAll(through: stops)
+        }
     }
 
     /// Live fix 4: a voice transcript without a trailing ", sir" that echoed his last line

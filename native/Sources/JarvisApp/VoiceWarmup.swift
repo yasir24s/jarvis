@@ -123,3 +123,62 @@ final class VoiceProcessingAhead {
         ended()
     }
 }
+
+/// V9: the first reply after an idle spell broke up. Live (Claude brain, Qwen voice, the same
+/// 213-character reply), the first pass after idle was delivered at 0.88x real time with 11
+/// underruns (1565 ms), the immediate repeat with none: the helper generates slower the first time
+/// after sitting idle. When a turn starts whose reply a cloud brain writes and Qwen speaks, and the
+/// helper has been idle more than `idleLimit`, it generates a short throwaway line
+/// (`QwenEngine.warmUp`) while the brain thinks. The reply's first request cuts it short, so it
+/// never delays the reply; nothing it generates is played.
+@MainActor
+final class TurnStartWarmup {
+    struct Hooks {
+        /// Qwen is the voice in use.
+        var usesQwen: @MainActor () -> Bool
+        /// Claude or ChatGPT writes the reply (on-device, the warm-up would compete with
+        /// Foundation Models).
+        var cloudBrain: @MainActor () -> Bool
+        /// Stop Speaking is on.
+        var muted: @MainActor () -> Bool
+        /// The share of memory free, in percent; nil when it cannot be read.
+        var memoryFreePercent: @MainActor () -> Int?
+        /// Seconds since the helper last worked (`QwenEngine.idleSeconds`).
+        var idleSeconds: @Sendable () async -> Double?
+        /// Runs the warm-up; true when it finished (`QwenEngine.warmUp`).
+        var warmUp: @Sendable () async -> Bool
+        var log: @Sendable (String) -> Void = { JarvisLog.log($0, category: .voice) }
+    }
+
+    /// Idle longer than this, the helper's next generation runs cold.
+    static let idleLimit = 120.0
+
+    private let hooks: Hooks
+    private var running: Task<Void, Never>?
+
+    init(_ hooks: Hooks) {
+        self.hooks = hooks
+    }
+
+    /// A user turn started (a typed send, push-to-talk, the wake word).
+    @discardableResult
+    func turnStarting() -> Task<Void, Never>? {
+        guard running == nil, hooks.usesQwen(), !hooks.muted() else { return nil }
+        let cloud = hooks.cloudBrain()
+        let free = hooks.memoryFreePercent()
+        let memoryShort = free.map { $0 < QwenPrewarm.minimumFreePercent } ?? false
+        let hooks = self.hooks
+        let task = Task { @MainActor [weak self] in
+            defer { self?.running = nil }
+            guard let idle = await hooks.idleSeconds(), idle > Self.idleLimit else { return }
+            guard cloud, !memoryShort else { return }
+            let started = ContinuousClock.now
+            let finished = await hooks.warmUp()
+            let took = String(format: "%.1f", (ContinuousClock.now - started) / .seconds(1))
+            hooks.log("voice: warm-up at turn start (idle \(Int(idle)) s), took \(took) s"
+                      + (finished ? "" : " (cut short)"))
+        }
+        running = task
+        return task
+    }
+}
