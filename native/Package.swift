@@ -83,5 +83,13 @@ let package = Package(
         // UI1: the chat snapshots drive the real ChatViewModel, and the HUD's player wraps the
         // voice's, so these tests import JarvisChat and JarvisVoice too.
         .testTarget(name: "JarvisAppTests", dependencies: ["JarvisApp", "JarvisBrain", "JarvisChat", "JarvisCore", "JarvisTools", "JarvisVoice", "JarvisTestSupport"]),
+
+        // OD-EVAL: the on-device brain's scorecard. The library holds the fixture model, the
+        // recording fake tools, the scoring and the replay's aggregates, so its tests run with a
+        // fake brain and never need Apple Intelligence. The executable runs the real LocalBrain
+        // path (`JarvisODEval --od-eval <fixture>` / `--od-replay <archive>`).
+        .target(name: "JarvisEval", dependencies: ["JarvisCore", "JarvisTools", "JarvisBrain"]),
+        .executableTarget(name: "JarvisODEval", dependencies: ["JarvisEval", "JarvisBrain", "JarvisTools", "JarvisCore"]),
+        .testTarget(name: "JarvisEvalTests", dependencies: ["JarvisEval", "JarvisBrain", "JarvisTools", "JarvisCore"]),
     ]
 )
