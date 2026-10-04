@@ -22,6 +22,8 @@ struct TVToolsTests {
             /// e.g. "AXPress [0, 1]" -> "show".
             /// The actions an element lists (AXPress when not given).
             var supported: [[Int]: [String]] = [:]
+            /// The actions of an element not in `supported` (the real page's cells list none).
+            var defaultActions = ["AXPress", "AXConfirm"]
             var moves: [String: String] = [:]
             var actions: [String] = []
             var snapshots = 0
@@ -51,8 +53,24 @@ struct TVToolsTests {
             }
         }
         func setText(_ text: String, at path: [Int]) async -> Bool { act("type \(text) \(path)") }
-        func actions(_ path: [Int]) async -> [String] { state.withLock { $0.supported[path] ?? ["AXPress"] } }
-        func perform(_ action: String, at path: [Int]) async -> Bool { act("\(action) \(path)") }
+        func actions(_ path: [Int]) async -> [String] { state.withLock { $0.supported[path] ?? $0.defaultActions } }
+        func perform(_ action: String, at path: [Int]) async -> Bool {
+            guard state.withLock({ ($0.supported[path] ?? $0.defaultActions).contains(action) }) else {
+                state.withLock { $0.actions.append("refused \(action) \(path)") }
+                return false
+            }
+            return act("\(action) \(path)")
+        }
+        /// A click lands on the smallest element whose frame holds the point (a chevron sits on
+        /// top of the cell under it): "click <path>".
+        func click(x: Double, y: Double) async -> Bool {
+            let hit = state.withLock { s in
+                s.screens[s.screen]?.all.filter { $0.frame?.contains(x: x, y: y) == true }
+                    .min { ($0.frame!.width * $0.frame!.height) < ($1.frame!.width * $1.frame!.height) }?.path
+            }
+            return act(hit.map { "click \($0)" } ?? "click nothing (\(Int(x)),\(Int(y)))")
+        }
+        func scroll(horizontal: Int, x: Double, y: Double) async -> Bool { act("scroll \(horizontal)") }
     }
 
     struct FakeWeb: WebFetching {
@@ -124,8 +142,10 @@ struct TVToolsTests {
     // MARK: Screens
 
     static func node(_ role: String, _ path: [Int], subrole: String? = nil, id: String? = nil, title: String? = nil,
-                     label: String? = nil, value: String? = nil, _ children: [TVAXNode] = []) -> TVAXNode {
-        TVAXNode(role: role, subrole: subrole, identifier: id, title: title, label: label, value: value, path: path, children: children)
+                     label: String? = nil, value: String? = nil, frame: TVAXFrame? = nil, enabled: Bool? = nil,
+                     _ children: [TVAXNode] = []) -> TVAXNode {
+        TVAXNode(role: role, subrole: subrole, identifier: id, title: title, label: label, value: value, path: path, children: children,
+                 frame: frame, enabled: enabled)
     }
 
     /// Home with a search field; results with the show; the show page with three episodes of
@@ -378,64 +398,92 @@ struct TVToolsTests {
         #expect(rig.scripts == [TVProbe.nowPlayingScript])
     }
 
-    // MARK: The real show page (tv-ax-showpage.txt)
+    // MARK: The real show page (tv-ax-showpage.txt and the live checks)
 
     static let showID = "umc.cmc.harbour1"
-    static func cellID(_ s: Int, _ e: Int) -> String {
-        "UIA.TV.Cell.episodeLockup.play.parentId=\"\(showID)\".id=\"umc.cmc.s\(s)e\(e)\""
+    static func cellID(_ s: Int, _ e: Int, playable: Bool = true, parent: String = showID) -> String {
+        "UIA.TV.Cell.episodeLockup.\(playable ? "play" : "episode").parentId=\"\(parent)\".id=\"umc.cmc.s\(s)e\(e)\""
     }
     static let trailerID = "UIA.TV.Cell.lockup.play.parentId=\"uts.col.Trailers.\(showID)\".id=\"umc.cmc.t1\""
+    static let window = TVAXFrame(x: 0, y: 0, width: 1000, height: 800)
+    static func f(_ x: Double, _ y: Double, _ w: Double, _ h: Double) -> TVAXFrame { TVAXFrame(x: x, y: y, width: w, height: h) }
 
-    /// The shape of the TV app's real show page: a banner whose text area names the latest or
-    /// up-next episode, an Episodes list of cells with identifiers and no text (each holding a
-    /// download indicator), the season picker with its menu when open, the row's chevrons, and
-    /// a Trailers list. No Play button anywhere.
-    static func realPage(banner: String?, season: Int, exposed: ClosedRange<Int>, menu: [Int]? = nil) -> TVAXNode {
-        var top: [TVAXNode] = []
-        if let banner {
-            top.append(node("AXGroup", [0, 0], id: "UIA.TV.Cell.canonicalBanner.none.id=\"CanonicalBanner\"", [
+    /// One episode cell in the row: its episode, its x, and whether it is the `.play` kind.
+    struct Cell { let e: Int; let x: Double; var playable = true }
+
+    /// The shape of the TV app's real show page, as checked live:
+    /// - a banner whose text area names the latest or up-next episode;
+    /// - an Episodes list of cells with identifiers, frames and no text or AX actions (each
+    ///   holding a download indicator); `.play` cells and the `.episode` kind;
+    /// - the season picker (value missing, title "Season N") and its menu when open;
+    /// - the row's chevrons (rawValue 0 "right arrow" forward, rawValue 1 "left arrow" back),
+    ///   dimmed unless `chevrons`; a Trailers list with another row's chevron (".id=2").
+    /// Paths: banner [0, 0]; picker [0, 1, 0] and menu items [0, 1, 0, 0, j]; back chevron
+    /// [0, 1, 1]; forward chevron [0, 1, 2]; cells [0, 1, 3 + i]; trailer [0, 2, 0].
+    static func realPage(banner: String?, season: Int, cells: [Cell], menu: [Int]? = nil, chevrons: Bool = false) -> TVAXNode {
+        let bannerNode = banner.map { text in
+            node("AXGroup", [0, 0], id: "UIA.TV.Cell.canonicalBanner.none.id=\"CanonicalBanner\"", frame: f(0, 60, 1000, 300), [
                 node("AXStaticText", [0, 0, 0], value: "New Episode Every Wednesday"),
                 node("AXUnknown", [0, 0, 1], label: "Harbour Lights"),
-                node("AXTextArea", [0, 0, 2], value: banner),
+                node("AXTextArea", [0, 0, 2], value: text),
                 node("AXButton", [0, 0, 3], value: "MORE"),
                 node("AXButton", [0, 0, 4], id: "UIA.TV.Button.canonical.upNext.id=\"\(showID)\".state=\"added\"", label: "Remove from Watchlist"),
-            ]))
-        }
-        var row: [TVAXNode] = exposed.enumerated().map { i, e in
-            node("AXGroup", [0, 1, i], id: cellID(season, e),
-                 [node("AXMenuButton", [0, 1, i, 0], id: "UIA.TV.Indicator.DownloadState.id=\"umc.cmc.s\(season)e\(e)\"")])
-        }
-        let k = row.count
+            ])
+        } ?? node("AXGroup", [0, 0])
         let open = menu.map { seasons in
-            [node("AXMenu", [0, 1, k, 0], seasons.enumerated().map { j, n in node("AXMenuItem", [0, 1, k, 0, j], title: "Season \(n)") })]
+            [node("AXMenu", [0, 1, 0, 0], seasons.enumerated().map { j, k in
+                node("AXMenuItem", [0, 1, 0, 0, j], title: "Season \(k)", frame: f(40, 450 + Double(j) * 30, 150, 30))
+            })]
         } ?? []
-        row.append(node("AXPopUpButton", [0, 1, k], id: "UIA.TV.Button.seasonPicker", label: "Choose Season", value: "Season \(season)", open))
-        row.append(node("AXButton", [0, 1, k + 1], label: "CollectionChevronIndicatorView.ChevronDirection(rawValue: 0)"))
-        row.append(node("AXButton", [0, 1, k + 2], label: "CollectionChevronIndicatorView.ChevronDirection(rawValue: 1)"))
-        return node("AXWindow", [], [node("AXList", [0], label: "Harbour Lights", top + [
+        var row = [
+            node("AXPopUpButton", [0, 1, 0], id: "UIA.TV.Button.seasonPicker", title: "Season \(season)", label: "Choose Season",
+                 frame: f(40, 420, 150, 30), open),
+            node("AXButton", [0, 1, 1], id: "CollectionChevronIndicatorView.ChevronDirection(rawValue: 1)",
+                 label: "left arrow", frame: f(0, 520, 20, 40), enabled: chevrons),
+            node("AXButton", [0, 1, 2], id: "CollectionChevronIndicatorView.ChevronDirection(rawValue: 0)",
+                 label: "right arrow", frame: f(978, 520, 20, 40), enabled: chevrons),
+        ]
+        row += cells.enumerated().map { i, c in
+            node("AXGroup", [0, 1, 3 + i], id: cellID(season, c.e, playable: c.playable), frame: f(c.x, 470, 230, 140),
+                 [node("AXMenuButton", [0, 1, 3 + i, 0], id: "UIA.TV.Indicator.DownloadState.id=\"umc.cmc.s\(season)e\(c.e)\"")])
+        }
+        return node("AXWindow", [], frame: window, [node("AXList", [0], label: "Harbour Lights", [
+            bannerNode,
             node("AXList", [0, 1], label: "Episodes", row),
-            node("AXList", [0, 2], label: "Trailers", [node("AXGroup", [0, 2, 0], id: trailerID)]),
+            node("AXList", [0, 2], label: "Trailers", [
+                node("AXGroup", [0, 2, 0], id: trailerID, frame: f(25, 650, 230, 140)),
+                node("AXButton", [0, 2, 1], id: "CollectionChevronIndicatorView.ChevronDirection(rawValue: 0).id=2", label: "right arrow",
+                     frame: f(978, 700, 20, 40), enabled: true),
+            ]),
         ])])
     }
 
-    /// Season 1 has two episodes, season 2 three; the row exposes two cells at a time.
-    static func realScreens(banner: String? = "S2, E3 · Fog Bank:  Season finale.", start: String = "s2a") -> FakeAX.State {
+    /// Season 2 has three episodes (the third the `.episode` kind), season 1 two. "s2mid" has
+    /// the row scrolled so E1's centre is left of the window; a back scroll gives "s2start".
+    static func realScreens(banner: String? = "S2, E3 · Fog Bank:  Season finale.", start: String = "s2mid",
+                            chevrons: Bool = false) -> FakeAX.State {
+        let s2mid = [Cell(e: 1, x: -220), Cell(e: 2, x: 25), Cell(e: 3, x: 270, playable: false)]
+        let s2start = [Cell(e: 1, x: 25), Cell(e: 2, x: 270), Cell(e: 3, x: 515, playable: false)]
+        let s1start = [Cell(e: 1, x: 25), Cell(e: 2, x: 270)]
         var s = FakeAX.State()
+        s.defaultActions = []
         s.screens = [
-            "s2a": realPage(banner: banner, season: 2, exposed: 1...2),
-            "s2b": realPage(banner: banner, season: 2, exposed: 2...3),
-            "s2-menu": realPage(banner: banner, season: 2, exposed: 1...2, menu: [1, 2]),
-            "s1a": realPage(banner: banner, season: 1, exposed: 1...2),
-            "s1-menu": realPage(banner: banner, season: 1, exposed: 1...2, menu: [1, 2]),
+            "s2mid": realPage(banner: banner, season: 2, cells: s2mid, chevrons: chevrons),
+            "s2mid-menu": realPage(banner: banner, season: 2, cells: s2mid, menu: [1, 2], chevrons: chevrons),
+            "s2start": realPage(banner: banner, season: 2, cells: s2start, chevrons: chevrons),
+            "s1start": realPage(banner: banner, season: 1, cells: s1start, chevrons: chevrons),
+            "s1-menu": realPage(banner: banner, season: 1, cells: s1start, menu: [1, 2], chevrons: chevrons),
         ]
         s.screen = start
+        // The picker and its menu items have AX actions; cells and chevrons have none.
+        s.supported = [[0, 1, 0]: ["AXPress", "AXShowMenu"], [0, 1, 0, 0, 0]: ["AXPress"], [0, 1, 0, 0, 1]: ["AXPress"]]
         s.moves = [
-            "s2a|AXPress [0, 1, 4]": "s2b",          // the forward chevron
-            "s2a|AXPress [0, 1, 2]": "s2-menu",      // the season picker
-            "s2-menu|AXPress [0, 1, 2, 0, 0]": "s1a",
-            "s2-menu|AXPress [0, 1, 2, 0, 1]": "s2a",
-            "s1a|AXPress [0, 1, 2]": "s1-menu",
-            "s1-menu|AXPress [0, 1, 2, 0, 1]": "s2a",
+            "s2mid|scroll 400": "s2start",
+            "s2mid|click [0, 1, 1]": "s2start",              // the back chevron, when lit
+            "s2mid|AXPress [0, 1, 0]": "s2mid-menu",         // the season picker
+            "s2mid-menu|AXPress [0, 1, 0, 0, 0]": "s1start",
+            "s1start|AXPress [0, 1, 0]": "s1-menu",
+            "s1-menu|AXPress [0, 1, 0, 0, 1]": "s2mid",
         ]
         return s
     }
@@ -443,30 +491,80 @@ struct TVToolsTests {
     static let link = "https://tv.apple.com/gb/show/harbour-lights/umc.cmc.abc123"
     static let searchPage = ["https://tv.apple.com/gb/search": "<a href=\"\(link)\">"]
 
-    @Test func latestPressesTheBannersEpisodeCellAfterScrolling() async throws {
+    @Test func latestClicksTheBannersEpisodeCellAfterScrollingBack() async throws {
         let rig = try Rig(episodes: [], ax: Self.realScreens(), web: Self.searchPage)
         defer { rig.remove() }
         let turn = TurnContext(channel: .voice)
         let out = await rig.call(TVPlay(tv: rig.tv), [("show", .string("Harbour Lights"))], turn: turn)
         #expect(out == "Playing the latest Harbour Lights, sir.")
-        // E3 is not exposed at first: the chevron scrolls the row, then E3's cell is pressed.
-        // Never the banner [0, 0] and never the trailer [0, 2, 0].
-        #expect(rig.ax.actions == ["activate", "AXPress [0, 1, 4]", "AXPress [0, 1, 1]"])
-        #expect(rig.logs.contains("tv: episode cell S02E03 actions [AXPress]"))
-        #expect(rig.logs.contains("tv: episode cell S02E03 used AXPress"))
+        // The chevrons are dimmed, so the row is scrolled back with the wheel until it stops;
+        // cells are numbered by x (E3 is the `.episode` kind); E3 lists no AX actions, so the
+        // window is brought forward and E3's centre clicked. Never the banner or the trailer.
+        #expect(rig.ax.actions == ["activate", "scroll 400", "scroll 400", "activate", "click [0, 1, 5]"])
+        #expect(rig.logs.contains("tv: episode cell S02E03 (id=umc.cmc.s2e3) actions []"))
+        #expect(rig.logs.contains("tv: clicked cell at (630,540) (no AX actions)"))
         #expect(await turn.taintedBy == ["tv_play"])
     }
 
-    @Test func showDefaultUIWhenTheCellHasNoPress() async throws {
-        var screens = Self.realScreens()
-        screens.supported[[0, 1, 1]] = ["AXShowDefaultUI", "AXScrollToVisible"]
+    @Test func litChevronsAreClickedToScroll() async throws {
+        let rig = try Rig(episodes: [], ax: Self.realScreens(chevrons: true), web: Self.searchPage)
+        defer { rig.remove() }
+        _ = await rig.call(TVPlay(tv: rig.tv), [("show", .string("Harbour Lights"))])
+        // The back chevron is rawValue 1 at [0, 1, 1]; it has no AX actions, so it is clicked.
+        #expect(Array(rig.ax.actions.prefix(3)) == ["activate", "activate", "click [0, 1, 1]"])
+        #expect(rig.logs.contains("tv: clicked back chevron at (10,540) (no AX actions)"))
+        #expect(rig.ax.actions.last == "click [0, 1, 5]")
+    }
+
+    @Test func chevronsByRawValueAndOnlyThisRows() {
+        let page = Self.realPage(banner: nil, season: 2, cells: [Cell(e: 1, x: 25)])
+        #expect(TVUIReader.chevron(in: page, forward: true)?.path == [0, 1, 2])
+        #expect(TVUIReader.chevron(in: page, forward: false)?.path == [0, 1, 1])
+        // Another row's chevron first in the tree (".id=2") is never taken.
+        let other = Self.node("AXWindow", [], [
+            Self.node("AXButton", [0], id: "CollectionChevronIndicatorView.ChevronDirection(rawValue: 0).id=2", label: "right arrow"),
+            Self.node("AXButton", [1], label: "right arrow"),
+        ])
+        #expect(TVUIReader.chevron(in: other, forward: true)?.path == [1])
+    }
+
+    @Test func showDefaultUIWhenTheCellListsIt() async throws {
+        var screens = Self.realScreens(start: "s2start")
+        screens.supported[[0, 1, 5]] = ["AXShowDefaultUI", "AXScrollToVisible"]
         let rig = try Rig(episodes: [], ax: screens, web: Self.searchPage)
         defer { rig.remove() }
         let out = await rig.call(TVPlay(tv: rig.tv), [("show", .string("Harbour Lights"))])
         #expect(out == "Playing the latest Harbour Lights, sir.")
-        #expect(Array(rig.ax.actions.suffix(2)) == ["AXScrollToVisible [0, 1, 1]", "AXShowDefaultUI [0, 1, 1]"])
-        #expect(rig.logs.contains("tv: episode cell S02E03 actions [AXShowDefaultUI, AXScrollToVisible]"))
+        #expect(Array(rig.ax.actions.suffix(2)) == ["AXScrollToVisible [0, 1, 5]", "AXShowDefaultUI [0, 1, 5]"])
         #expect(rig.logs.contains("tv: episode cell S02E03 used AXShowDefaultUI"))
+        #expect(!rig.ax.actions.contains { $0.hasPrefix("click") })
+    }
+
+    @Test func aCellOutsideTheWindowIsScrolledInBeforeTheClick() async throws {
+        // The wheel does nothing here, but E1 lists AXScrollToVisible.
+        var screens = Self.realScreens()
+        screens.moves["s2mid|scroll 400"] = nil
+        screens.supported[[0, 1, 3]] = ["AXScrollToVisible"]
+        screens.moves["s2mid|AXScrollToVisible [0, 1, 3]"] = "s2start"
+        let rig = try Rig(episodes: [], ax: screens, web: Self.searchPage)
+        defer { rig.remove() }
+        let out = await rig.call(TVPlay(tv: rig.tv), [("show", .string("Harbour Lights")), ("episode", .string("S2E1"))])
+        #expect(out == "Playing Harbour Lights S02E01, sir.")
+        #expect(Array(rig.ax.actions.suffix(3)) == ["AXScrollToVisible [0, 1, 3]", "activate", "click [0, 1, 3]"])
+        #expect(rig.logs.contains("tv: clicked cell at (140,540) (no AX actions)"))
+    }
+
+    @Test func neverClicksOutsideTheWindow() async throws {
+        var screens = Self.realScreens()
+        screens.moves["s2mid|scroll 400"] = nil
+        let rig = try Rig(episodes: [], ax: screens, web: Self.searchPage)
+        defer { rig.remove() }
+        let out = await rig.call(TVPlay(tv: rig.tv), [("show", .string("Harbour Lights")), ("episode", .string("S2E1"))])
+        #expect(out == "I found Harbour Lights but couldn't start that episode, sir.")
+        #expect(!rig.ax.actions.contains { $0.hasPrefix("click") })
+        #expect(TVUIReader.clickPoint(Self.f(-220, 470, 230, 140), window: Self.window) == nil)
+        #expect(TVUIReader.clickPoint(Self.f(25, 470, 230, 140), window: Self.window)! == (140, 540))
+        #expect(TVUIReader.clickPoint(Self.f(25, 470, 230, 140), window: nil) == nil)
     }
 
     @Test func explicitEpisodeSwitchesSeasonWithThePicker() async throws {
@@ -474,18 +572,37 @@ struct TVToolsTests {
         defer { rig.remove() }
         let out = await rig.call(TVPlay(tv: rig.tv), [("show", .string("Harbour Lights")), ("episode", .string("S1E2"))])
         #expect(out == "Playing Harbour Lights S01E02, sir.")
-        #expect(rig.ax.actions == ["activate", "AXPress [0, 1, 2]", "AXPress [0, 1, 2, 0, 0]", "AXPress [0, 1, 1]"])
-        #expect(rig.logs.contains { $0.hasPrefix("tv: season picker (AXPopUpButton id=UIA.TV.Button.seasonPicker title=Choose Season) actions") })
+        #expect(rig.ax.actions == ["activate", "AXPress [0, 1, 0]", "AXPress [0, 1, 0, 0, 0]", "scroll 400", "activate", "click [0, 1, 4]"])
+        #expect(rig.logs.contains { $0.hasPrefix("tv: season picker (AXPopUpButton id=UIA.TV.Button.seasonPicker title=Season 2) actions [AXPress, AXShowMenu]") })
     }
 
     @Test func withoutABannerLatestIsTheLastEpisodeOfTheHighestSeason() async throws {
-        let rig = try Rig(episodes: [], ax: Self.realScreens(banner: nil, start: "s1a"), web: Self.searchPage)
+        let rig = try Rig(episodes: [], ax: Self.realScreens(banner: nil, start: "s1start"), web: Self.searchPage)
         defer { rig.remove() }
         let out = await rig.call(TVPlay(tv: rig.tv), [("show", .string("Harbour Lights"))])
         #expect(out == "Playing the latest Harbour Lights, sir.")
-        // Season picker, "Season 2", scroll to the end of the row, press the last cell.
-        #expect(rig.ax.actions == ["activate", "AXPress [0, 1, 2]", "AXPress [0, 1, 2, 0, 1]", "AXPress [0, 1, 4]",
-                                   "AXPress [0, 1, 4]", "AXPress [0, 1, 1]"])
+        #expect(rig.ax.actions == ["activate", "AXPress [0, 1, 0]", "AXPress [0, 1, 0, 0, 1]", "scroll 400", "scroll 400",
+                                   "scroll -400", "activate", "click [0, 1, 5]"])
+    }
+
+    @Test func cellsOfBothKindsAreNumberedByXForThisShowOnly() {
+        // Out of document order, with the `.episode` kind and a cell of another parent.
+        let page = Self.node("AXWindow", [], frame: Self.window, [
+            Self.node("AXGroup", [0], id: Self.cellID(4, 3, playable: false), frame: Self.f(760, 470, 230, 140)),
+            Self.node("AXGroup", [1], id: Self.cellID(4, 1), frame: Self.f(270, 470, 230, 140)),
+            Self.node("AXGroup", [2], id: Self.cellID(9, 9, parent: "umc.cmc.other"), frame: Self.f(25, 470, 230, 140)),
+            Self.node("AXGroup", [3], id: Self.cellID(4, 2), frame: Self.f(515, 470, 230, 140)),
+            Self.node("AXGroup", [4], id: Self.trailerID, frame: Self.f(0, 650, 230, 140)),
+        ])
+        let cells = TVUIReader.showPage(in: page).cells
+        #expect(cells.map(\.episodeID) == ["umc.cmc.s4e1", "umc.cmc.s4e2", "umc.cmc.s4e3"])
+        #expect(cells.map(\.playable) == [true, true, false])
+    }
+
+    @Test func thePickersSeasonComesFromItsTitle() {
+        let page = TVUIReader.showPage(in: Self.realPage(banner: nil, season: 4, cells: []))
+        #expect(page.picker?.value == nil)
+        #expect(page.season == 4)
     }
 
     static func watchedAll() -> [MediaItem] {
@@ -497,7 +614,7 @@ struct TVToolsTests {
         defer { rig.remove() }
         let out = await rig.call(TVPlay(tv: rig.tv), [("show", .string("Harbour Lights")), ("episode", .string("latest"))])
         #expect(out == "You've seen this one, sir; playing it again.")
-        #expect(rig.ax.actions.last == "AXPress [0, 1, 1]")
+        #expect(rig.ax.actions.last == "click [0, 1, 5]")
         // The library had no unwatched episode, so nothing played through the library.
         #expect(!rig.scripts.contains { $0.contains("to play") })
     }
@@ -511,7 +628,7 @@ struct TVToolsTests {
     }
 
     @Test func trailersAndTheBannerAreNeverEpisodes() {
-        let page = TVUIReader.showPage(in: Self.realPage(banner: "S2, E3 · Fog Bank", season: 2, exposed: 1...2))
+        let page = TVUIReader.showPage(in: Self.realPage(banner: "S2, E3 · Fog Bank", season: 2, cells: [Cell(e: 1, x: 25), Cell(e: 2, x: 270)]))
         #expect(page.banner?.season == 2 && page.banner?.episode == 3)
         #expect(page.season == 2)
         #expect(page.cells.map(\.episodeID) == ["umc.cmc.s2e1", "umc.cmc.s2e2"])
@@ -529,7 +646,7 @@ struct TVToolsTests {
     @Test func watchAgainTitlesAreOnlyAFallback() {
         #expect(TVUITitles.table.play.contains("Watch Again"))
         // A page with a "Watch Again" button and episode cells: the cell route never uses it.
-        let page = TVUIReader.showPage(in: Self.realPage(banner: "S2, E3", season: 2, exposed: 1...2))
+        let page = TVUIReader.showPage(in: Self.realPage(banner: "S2, E3", season: 2, cells: [Cell(e: 1, x: 25)]))
         #expect(!page.cells.isEmpty && page.rows.isEmpty)
     }
 
@@ -544,7 +661,8 @@ struct TVToolsTests {
         #expect(show.contains("tv-app episode list: 3 rows (S02E01, S02E02, S02E03), 2 with watch marks, 3 with their own Play button"))
         #expect(show.contains("tv-app play button: exposed at [1, 1, 2]"))
         #expect(TVProbe.accessibilityReport(nil) == ["tv-app window: none (no window to read)"])
-        let real = TVProbe.accessibilityReport(Self.realPage(banner: "S4, E10 · Being Alive", season: 4, exposed: 7...10))
+        let real = TVProbe.accessibilityReport(Self.realPage(banner: "S4, E10 · Being Alive", season: 4,
+                                                             cells: [Cell(e: 7, x: -220), Cell(e: 8, x: 25), Cell(e: 9, x: 270), Cell(e: 10, x: 515)]))
         #expect(real.contains("tv-app banner: names S4E10"))
         #expect(real.contains("tv-app season picker: exposed, showing season 4"))
         #expect(real.contains("tv-app episode cells: 4 exposed (by identifier)"))

@@ -15,9 +15,16 @@ public struct TVAXNode: Sendable, Equatable {
     /// Child indexes from the window down to this element.
     public var path: [Int]
     public var children: [TVAXNode]
+    /// AXPosition and AXSize, in screen points (top-left origin), when it has them.
+    public var frame: TVAXFrame?
+    /// AXEnabled; false for a dimmed control.
+    public var enabled: Bool?
 
     public init(role: String, subrole: String? = nil, identifier: String? = nil, title: String? = nil,
-                label: String? = nil, value: String? = nil, path: [Int] = [], children: [TVAXNode] = []) {
+                label: String? = nil, value: String? = nil, path: [Int] = [], children: [TVAXNode] = [],
+                frame: TVAXFrame? = nil, enabled: Bool? = nil) {
+        self.frame = frame
+        self.enabled = enabled
         self.role = role
         self.subrole = subrole
         self.identifier = identifier
@@ -47,6 +54,20 @@ public struct TVAXNode: Sendable, Equatable {
     var all: [TVAXNode] { [self] + children.flatMap(\.all) }
 }
 
+/// A rectangle in screen points, top-left origin (AXPosition and AXSize).
+public struct TVAXFrame: Sendable, Equatable {
+    public var x: Double, y: Double, width: Double, height: Double
+    public init(x: Double, y: Double, width: Double, height: Double) {
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+    }
+    public var midX: Double { x + width / 2 }
+    public var midY: Double { y + height / 2 }
+    public func contains(x px: Double, y py: Double) -> Bool { px >= x && px <= x + width && py >= y && py <= y + height }
+}
+
 /// The Accessibility seam. The live one touches only the TV app; tests use a fake.
 public protocol TVAccessibility: Sendable {
     /// Whether macOS lets JARVIS use Accessibility.
@@ -63,6 +84,11 @@ public protocol TVAccessibility: Sendable {
     func actions(_ path: [Int]) async -> [String]
     /// Performs one AX action on the element at `path`.
     func perform(_ action: String, at path: [Int]) async -> Bool
+    /// A left click at a screen point, for an element that lists no AX actions (the TV app's
+    /// episode cells and chevrons). The caller checks the point is inside the TV window.
+    func click(x: Double, y: Double) async -> Bool
+    /// A horizontal scroll-wheel event at a screen point (negative moves the row forward).
+    func scroll(horizontal: Int, x: Double, y: Double) async -> Bool
 }
 
 /// The TV app's own AXIdentifiers, from its real window (macOS 27.2, en-GB, a show page).
@@ -74,8 +100,14 @@ public enum TVAXIDs {
     public static let episodeCell = "UIA.TV.Cell.episodeLockup.play."
     public static let seasonPicker = "UIA.TV.Button.seasonPicker"
     public static let searchTab = "UIA.TV.Tabs.search"
-    /// The Episodes row's forward chevron (the list shows a few cells at a time).
-    public static let forwardChevron = "ChevronDirection(rawValue: 1)"
+    /// Any episode cell of a show, the playable kind and the `.episode` kind.
+    public static let anyEpisodeCell = "UIA.TV.Cell.episodeLockup."
+    /// The Episodes row's chevrons (live: rawValue 0 is "right arrow", forward; 1 is "left
+    /// arrow", back). Chevrons of other rows carry ".id=" and are skipped.
+    public static let forwardChevron = "ChevronDirection(rawValue: 0)"
+    public static let backChevron = "ChevronDirection(rawValue: 1)"
+    public static let forwardChevronLabel = "right arrow"
+    public static let backChevronLabel = "left arrow"
     /// Trailers and bonus content (`UIA.TV.Cell.lockup.play…uts.col.Trailers…`): never an episode.
     public static let excluded = ["uts.col.", "Trailers", "BonusContent"]
 
@@ -337,9 +369,16 @@ public struct TVEpisodeCell: Sendable, Equatable {
     public var episode: Int?
     public var watch: MediaItem.WatchState
     public var path: [Int]
+    public var frame: TVAXFrame?
+    /// The `.play` kind (false: the `.episode` kind, numbered but not yet loaded).
+    public var playable: Bool = true
 }
 
 public struct TVShowPage: Sendable, Equatable {
+    /// The TV window's frame.
+    public var window: TVAXFrame?
+    public var forward: TVAXNode?
+    public var back: TVAXNode?
     /// The banner's episode ("S4, E10").
     public var banner: (season: Int?, episode: Int)?
     public var picker: TVAXNode?
@@ -353,7 +392,7 @@ public struct TVShowPage: Sendable, Equatable {
 
     public static func == (a: TVShowPage, b: TVShowPage) -> Bool {
         a.banner?.season == b.banner?.season && a.banner?.episode == b.banner?.episode && a.picker == b.picker
-            && a.season == b.season && a.cells == b.cells && a.rows == b.rows
+            && a.season == b.season && a.cells == b.cells && a.rows == b.rows && a.window == b.window
     }
 }
 
@@ -369,17 +408,31 @@ extension TVUIReader {
             }
         }
         let picker = nodes.first { $0.identifier?.hasPrefix(TVAXIDs.seasonPicker) == true }
-        let season = picker.flatMap { seasonHeader([$0.value, $0.title].compactMap { $0 }.joined(separator: " "), titles: titles) }
-        let cells = nodes.filter { n in
+        // Live, the picker's value is missing and its title says "Season 4".
+        let season = picker.flatMap { seasonHeader([$0.title, $0.value].compactMap { $0 }.joined(separator: " "), titles: titles) }
+        // Every episode cell of the show (the parentId most cells share), both kinds, in x order.
+        let all = nodes.filter { n in
             guard let id = n.identifier else { return false }
-            return id.hasPrefix(TVAXIDs.episodeCell) && !TVAXIDs.isExcluded(id)
-        }.map { n in
-            let number = episodeNumber(n.fullText, titles: titles)
-            return TVEpisodeCell(episodeID: episodeID(n.identifier ?? ""), season: number?.season ?? season, episode: number?.episode,
-                                 watch: watchState(of: n, titles: titles), path: n.path)
+            return id.hasPrefix(TVAXIDs.anyEpisodeCell) && !TVAXIDs.isExcluded(id)
         }
-        return TVShowPage(banner: banner, picker: picker, season: season, cells: cells,
+        let parents = all.map { parentID($0.identifier ?? "") }
+        let show = Dictionary(parents.map { ($0, 1) }, uniquingKeysWith: +).max { ($0.value, $1.key) < ($1.value, $0.key) }?.key
+        let cells = all.filter { parentID($0.identifier ?? "") == show }.enumerated()
+            .sorted { ($0.element.frame?.x ?? Double($0.offset), $0.offset) < ($1.element.frame?.x ?? Double($1.offset), $1.offset) }
+            .map(\.element).map { n in
+                let number = episodeNumber(n.fullText, titles: titles)
+                return TVEpisodeCell(episodeID: episodeID(n.identifier ?? ""), season: number?.season ?? season, episode: number?.episode,
+                                     watch: watchState(of: n, titles: titles), path: n.path, frame: n.frame,
+                                     playable: n.identifier?.hasPrefix(TVAXIDs.episodeCell) == true)
+            }
+        return TVShowPage(window: root.frame, forward: chevron(in: root, forward: true), back: chevron(in: root, forward: false),
+                          banner: banner, picker: picker, season: season, cells: cells,
                           rows: cells.isEmpty ? episodes(in: root, titles: titles) : [])
+    }
+
+    /// The `parentId="…"` in a cell's identifier.
+    static func parentID(_ identifier: String) -> String {
+        firstMatch(#"parentId="([^"]+)""#, in: identifier)?[1] ?? ""
     }
 
     /// The `id="…"` at the end of a cell's identifier (the whole identifier when there is none).
@@ -398,9 +451,21 @@ extension TVUIReader {
         }
     }
 
-    /// The Episodes row's forward chevron.
-    public static func forwardChevron(in root: TVAXNode) -> TVAXNode? {
-        root.all.first { ($0.identifier ?? "").contains(TVAXIDs.forwardChevron) || ($0.label ?? "").contains(TVAXIDs.forwardChevron) }
+    /// The Episodes row's chevron: by rawValue in its identifier or description, else by the
+    /// "right arrow" / "left arrow" description; chevrons of other rows (".id=") are skipped.
+    public static func chevron(in root: TVAXNode, forward: Bool) -> TVAXNode? {
+        let raw = forward ? TVAXIDs.forwardChevron : TVAXIDs.backChevron
+        let label = forward ? TVAXIDs.forwardChevronLabel : TVAXIDs.backChevronLabel
+        let ours = root.all.filter { !($0.identifier ?? "").contains(".id=") && !($0.label ?? "").contains(".id=") }
+        return ours.first { ($0.identifier ?? "").contains(raw) || ($0.label ?? "").contains(raw) }
+            ?? ours.first { ($0.label ?? "").caseInsensitiveCompare(label) == .orderedSame }
+    }
+
+    /// Where to click an element: its centre, only when that is inside the TV window.
+    public static func clickPoint(_ frame: TVAXFrame?, window: TVAXFrame?) -> (x: Double, y: Double)? {
+        guard let frame, let window, frame.width > 0, frame.height > 0,
+              window.contains(x: frame.midX, y: frame.midY) else { return nil }
+        return (frame.midX, frame.midY)
     }
 }
 
@@ -413,6 +478,10 @@ public protocol TVAppProcess: Sendable {
     func pid() -> pid_t?
     /// Opens the TV app, or brings it forward.
     func activate() async -> Bool
+    /// Posts a left click at a screen point (CGEvent, in the app layer).
+    func click(x: Double, y: Double) async -> Bool
+    /// Posts a horizontal scroll-wheel event at a screen point.
+    func scroll(horizontal: Int, x: Double, y: Double) async -> Bool
 }
 
 /// AXUIElement on the TV app (bundle com.apple.TV) only. It walks the TV app's focused window,
@@ -438,6 +507,24 @@ public struct LiveTVAccessibility: TVAccessibility {
     }
 
     public func activateTV() async -> Bool { await app.activate() }
+    public func click(x: Double, y: Double) async -> Bool { await app.click(x: x, y: y) }
+    public func scroll(horizontal: Int, x: Double, y: Double) async -> Bool { await app.scroll(horizontal: horizontal, x: x, y: y) }
+
+    static func frame(_ e: AXUIElement) -> TVAXFrame? {
+        var pos: CFTypeRef?, size: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(e, kAXPositionAttribute as CFString, &pos) == .success,
+              AXUIElementCopyAttributeValue(e, kAXSizeAttribute as CFString, &size) == .success,
+              let pos, let size, CFGetTypeID(pos) == AXValueGetTypeID(), CFGetTypeID(size) == AXValueGetTypeID() else { return nil }
+        var p = CGPoint.zero, z = CGSize.zero
+        guard AXValueGetValue(pos as! AXValue, .cgPoint, &p), AXValueGetValue(size as! AXValue, .cgSize, &z) else { return nil }
+        return TVAXFrame(x: p.x, y: p.y, width: z.width, height: z.height)
+    }
+
+    static func enabled(_ e: AXUIElement) -> Bool? {
+        var v: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(e, kAXEnabledAttribute as CFString, &v) == .success else { return nil }
+        return (v as? Bool)
+    }
 
     func window() -> AXUIElement? {
         guard let pid = app.pid() else { return nil }
@@ -476,7 +563,8 @@ public struct LiveTVAccessibility: TVAccessibility {
             var node = TVAXNode(role: role, subrole: subrole, identifier: Self.string(e, kAXIdentifierAttribute),
                                 title: secure ? nil : Self.string(e, kAXTitleAttribute),
                                 label: secure ? nil : Self.string(e, kAXDescriptionAttribute),
-                                value: secure ? nil : Self.string(e, kAXValueAttribute), path: path)
+                                value: secure ? nil : Self.string(e, kAXValueAttribute), path: path,
+                                frame: Self.frame(e), enabled: Self.enabled(e))
             if path.count < Self.maxDepth, !secure {
                 for (i, child) in Self.children(e).enumerated() where budget > 0 {
                     node.children.append(walk(child, path + [i]))

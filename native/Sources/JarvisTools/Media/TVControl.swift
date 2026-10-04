@@ -222,10 +222,7 @@ public final class TVControl: Sendable {
         if want == .next, allWatched, watchedInLibrary(cell.season ?? season, number) {
             return Reply(text: Self.caughtUpLine(show, newest: played), readUI: true)
         }
-        if await ax.actions(cell.path).contains("AXScrollToVisible") {
-            _ = await ax.perform("AXScrollToVisible", at: cell.path)
-        }
-        guard await activate(cell.path, what: "episode cell \(played)", node: nil, prefer: ["AXPress", "AXShowDefaultUI"]) else {
+        guard await pressCell(cell.episodeID, what: "episode cell \(played)") else {
             return Reply(text: "I found \(show) but couldn't start that episode, sir.", readUI: true)
         }
         log("tv: played \(played) through its episode cell")
@@ -238,13 +235,15 @@ public final class TVControl: Sendable {
     /// Opens the season picker and chooses season `season` (nil: the highest offered). Returns
     /// the page once it shows episode cells.
     func chooseSeason(_ season: Int?, from page: TVShowPage) async -> TVShowPage? {
-        guard let picker = page.picker, await activate(picker.path, what: "season picker", node: picker) else { return nil }
+        guard let picker = page.picker,
+              await press(picker, what: "season picker", prefer: ["AXPress", "AXShowMenu", "AXShowDefaultUI"], window: page.window)
+        else { return nil }
         guard let choices = await look({ r -> [(season: Int, node: TVAXNode)]? in
             let c = TVUIReader.seasonChoices(in: r)
             return c.isEmpty ? nil : c
         }) else { return nil }
         let pick = season.map { s in choices.first { $0.season == s } } ?? choices.max { $0.season < $1.season }
-        guard let pick, await activate(pick.node.path, what: "season \(pick.season)", node: pick.node) else { return nil }
+        guard let pick, await press(pick.node, what: "season \(pick.season)", window: page.window) else { return nil }
         return await look { r in
             let p = TVUIReader.showPage(in: r)
             guard !p.cells.isEmpty, p.season == nil || p.season == pick.season else { return nil }
@@ -256,49 +255,137 @@ public final class TVControl: Sendable {
     }
 
     static let maxScrolls = 15
+    /// One scroll-wheel step over the Episodes row, in points.
+    static let scrollStep = 400
+
+    /// Whether the row moved between two looks: other cells, or the same cells elsewhere.
+    static func moved(_ a: TVShowPage, _ b: TVShowPage) -> Bool {
+        a.cells.map { "\($0.episodeID)@\($0.frame?.x ?? -1)" } != b.cells.map { "\($0.episodeID)@\($0.frame?.x ?? -1)" }
+    }
+
+    /// A point over the Episodes row inside the TV window: the window's middle, at the cells'
+    /// height.
+    static func rowPoint(_ page: TVShowPage) -> (x: Double, y: Double)? {
+        guard let w = page.window, let y = page.cells.compactMap(\.frame).first?.midY, w.contains(x: w.midX, y: y) else { return nil }
+        return (w.midX, y)
+    }
+
+    /// Scrolls the Episodes row one step: its chevron when it is not dimmed, else a
+    /// scroll-wheel event over the row. The page once the row moved; nil when it did not.
+    func scrollRow(forward: Bool, page: TVShowPage) async -> TVShowPage? {
+        var sent = false
+        if let chevron = forward ? page.forward : page.back, chevron.enabled != false {
+            sent = await press(chevron, what: forward ? "forward chevron" : "back chevron", window: page.window)
+        }
+        if !sent, let at = Self.rowPoint(page) {
+            sent = await ax.scroll(horizontal: forward ? -Self.scrollStep : Self.scrollStep, x: at.x, y: at.y)
+            log("tv: scrolled the episodes row \(forward ? "forward" : "back") at (\(Int(at.x)),\(Int(at.y)))")
+        }
+        guard sent else { return nil }
+        return await look(attempts: 3) { r in
+            let p = TVUIReader.showPage(in: r)
+            return Self.moved(page, p) ? p : nil
+        }
+    }
 
     /// The episode cell for `episode` (nil: the last), and its number. A cell whose text names
-    /// its episode is matched by that; otherwise cells are numbered by their order in the row,
-    /// collected across scrolls by episode id.
+    /// its episode is matched by that. Otherwise the row is scrolled back to its start and the
+    /// cells (both kinds, this show's) are numbered by x order, collected across scrolls.
     func findCell(episode: Int?, season: Int?, in page: TVShowPage) async -> (TVEpisodeCell, Int)? {
-        var order: [String] = []
         var current = page
-        for _ in 0...Self.maxScrolls {
-            let fresh = current.cells.filter { !order.contains($0.episodeID) }
-            order += fresh.map(\.episodeID)
+        if let e = episode, let hit = current.cells.first(where: { $0.episode == e }) { return (hit, e) }
+        for _ in 0..<Self.maxScrolls {
+            guard let back = await scrollRow(forward: false, page: current) else { break }
+            current = back
+        }
+        var order: [String] = []
+        for step in 0...Self.maxScrolls {
+            order += current.cells.map(\.episodeID).filter { !order.contains($0) }
             if let e = episode {
                 if let hit = current.cells.first(where: { $0.episode == e }) { return (hit, e) }
-                if current.cells.allSatisfy({ $0.episode == nil }), order.count >= e,
-                   let hit = current.cells.first(where: { $0.episodeID == order[e - 1] }) { return (hit, e) }
+                if order.count >= e, let hit = current.cells.first(where: { $0.episodeID == order[e - 1] }) { return (hit, e) }
             }
-            // Scroll on: the row's forward chevron.
-            guard let root = await ax.snapshot(), let chevron = TVUIReader.forwardChevron(in: root),
-                  await activate(chevron.path, what: "episodes chevron", node: chevron) else { break }
-            let known = order
-            guard let next = await look({ r -> TVShowPage? in
-                let p = TVUIReader.showPage(in: r)
-                return p.cells.contains { !known.contains($0.episodeID) } ? p : nil
-            }) else { break }
+            guard step < Self.maxScrolls, let next = await scrollRow(forward: true, page: current) else { break }
             current = next
-            current.season = current.season ?? season
         }
         guard episode == nil, let last = order.last, let cell = current.cells.first(where: { $0.episodeID == last }) else { return nil }
         return (cell, cell.episode ?? order.count)
     }
 
-    /// Presses an element with the first supported action of `prefer` (AXPress when it lists
-    /// none), logging its role, identifier, title and actions, and the action used.
-    func activate(_ path: [Int], what: String, node: TVAXNode?, prefer: [String] = ["AXPress", "AXShowDefaultUI"]) async -> Bool {
-        let actions = await ax.actions(path)
-        var label = ""
-        if let n = node {
-            label = n.role
-            if let id = n.identifier { label += " id=\(id)" }
-            if let t = n.title ?? n.label { label += " title=\(TVUIReader.clean(t).prefix(60))" }
+    /// Presses an episode cell: an AX action when it lists one (live, the cells list none);
+    /// otherwise, with the TV window in front, a click at the cell's centre, only once the row
+    /// shows that centre inside the window (it scrolls first).
+    func pressCell(_ id: String, what: String) async -> Bool {
+        for _ in 0...Self.maxScrolls {
+            guard let root = await ax.snapshot() else { return false }
+            let page = TVUIReader.showPage(in: root)
+            guard let cell = page.cells.first(where: { $0.episodeID == id }) else { return false }
+            let actions = await ax.actions(cell.path)
+            log("tv: \(what) (id=\(id)) actions [\(actions.joined(separator: ", "))]")
+            if let action = ["AXPress", "AXShowDefaultUI"].first(where: actions.contains) {
+                if actions.contains("AXScrollToVisible") { _ = await ax.perform("AXScrollToVisible", at: cell.path) }
+                if await ax.perform(action, at: cell.path) {
+                    log("tv: \(what) used \(action)")
+                    return true
+                }
+                log("tv: \(what) \(action) failed")
+            }
+            if TVUIReader.clickPoint(cell.frame, window: page.window) != nil {
+                _ = await ax.activateTV()
+                // Read it again with the window in front, in case it moved.
+                guard let fresh = await ax.snapshot().map({ TVUIReader.showPage(in: $0) }),
+                      let c = fresh.cells.first(where: { $0.episodeID == id }),
+                      let at = TVUIReader.clickPoint(c.frame, window: fresh.window) else { continue }
+                let ok = await ax.click(x: at.x, y: at.y)
+                let pressable = actions.contains("AXPress") || actions.contains("AXShowDefaultUI")
+                log("tv: clicked cell at (\(Int(at.x)),\(Int(at.y))) (\(pressable ? "its AX actions failed" : "no AX actions"))")
+                return ok
+            }
+            // Its centre is outside the window: bring it in first.
+            if actions.contains("AXScrollToVisible"), await ax.perform("AXScrollToVisible", at: cell.path) {
+                log("tv: \(what) is outside the window; AXScrollToVisible")
+                continue
+            }
+            let forward = (cell.frame?.midX ?? 0) > (page.window?.midX ?? 0)
+            log("tv: \(what) is outside the window; scrolling \(forward ? "forward" : "back")")
+            guard await scrollRow(forward: forward, page: page) != nil else { return false }
         }
-        log("tv: \(what)\(label.isEmpty ? "" : " (\(label))") actions [\(actions.joined(separator: ", "))]")
-        let order = actions.isEmpty ? ["AXPress"] : prefer.filter(actions.contains)
-        for action in order {
+        return false
+    }
+
+    /// Presses a control (the season picker and its menu, a chevron, the search tab, a search
+    /// result) with the first supported action of `prefer`, logging its role, identifier,
+    /// title and actions. With no AX action that works, it clicks the centre, only when that is
+    /// inside the TV window.
+    func press(_ node: TVAXNode, what: String, prefer: [String] = ["AXPress", "AXShowDefaultUI"], window: TVAXFrame? = nil) async -> Bool {
+        let actions = await ax.actions(node.path)
+        var label = node.role
+        if let id = node.identifier { label += " id=\(id)" }
+        if let t = node.title ?? node.label { label += " title=\(TVUIReader.clean(t).prefix(60))" }
+        log("tv: \(what) (\(label)) actions [\(actions.joined(separator: ", "))]")
+        for action in prefer where actions.contains(action) {
+            if await ax.perform(action, at: node.path) {
+                log("tv: \(what) used \(action)")
+                return true
+            }
+        }
+        var frame = window
+        if frame == nil { frame = await ax.snapshot()?.frame }
+        guard let at = TVUIReader.clickPoint(node.frame, window: frame) else {
+            log("tv: \(what) not pressed (no AX action, and not inside the window)")
+            return false
+        }
+        _ = await ax.activateTV()
+        let ok = await ax.click(x: at.x, y: at.y)
+        log("tv: clicked \(what) at (\(Int(at.x)),\(Int(at.y))) (\(prefer.contains(where: actions.contains) ? "its AX actions failed" : "no AX actions"))")
+        return ok
+    }
+
+    /// Presses by path with AX actions only (the titles route); AXPress when none are listed.
+    func activate(_ path: [Int], what: String, prefer: [String] = ["AXPress", "AXShowDefaultUI"]) async -> Bool {
+        let actions = await ax.actions(path)
+        log("tv: \(what) actions [\(actions.joined(separator: ", "))]")
+        for action in actions.isEmpty ? ["AXPress"] : prefer.filter(actions.contains) {
             if await ax.perform(action, at: path) {
                 log("tv: \(what) used \(action)")
                 return true
@@ -314,11 +401,11 @@ public final class TVControl: Sendable {
             return Reply(text: rows.isEmpty ? Self.notFoundLine : "I couldn't find that episode of \(show), sir.", readUI: true)
         }
         var pressed = false
-        if let p = row.playPath { pressed = await activate(p, what: "row play button", node: nil) }
+        if let p = row.playPath { pressed = await activate(p, what: "row play button") }
         if !pressed {
-            _ = await activate(row.path, what: "episode row", node: nil)
+            _ = await activate(row.path, what: "episode row")
             if let button = await look({ TVUIReader.playButton(in: $0) }) {
-                pressed = await activate(button.path, what: "play button", node: button)
+                pressed = await press(button, what: "play button")
             }
         }
         guard pressed else { return Reply(text: "I found \(show) but couldn't press Play, sir.", readUI: true) }
@@ -340,13 +427,13 @@ public final class TVControl: Sendable {
         guard let root = await look({ $0 }) else { return nil }
         var field = TVUIReader.searchField(in: root)
         if field == nil, let tab = TVUIReader.searchTab(in: root) {
-            _ = await activate(tab.path, what: "search tab", node: tab)
+            _ = await press(tab, what: "search tab")
             field = await look { TVUIReader.searchField(in: $0) }
         }
         guard let field, await ax.setText(show, at: field.path) else { return nil }
         _ = await ax.perform("AXConfirm", at: field.path)
         guard let hit = await look({ TVUIReader.showResult(show, in: $0, excluding: field.path) }) else { return nil }
-        _ = await activate(hit.path, what: "search result", node: hit)
+        _ = await press(hit, what: "search result")
         return await look(ready)
     }
 
@@ -360,10 +447,11 @@ public final class TVControl: Sendable {
     }
 
     /// Looks at the TV app's window until `check` finds something, `attempts` times at most.
-    func look<T>(_ check: (TVAXNode) -> T?) async -> T? {
-        for i in 0..<attempts {
+    func look<T>(attempts limit: Int? = nil, _ check: (TVAXNode) -> T?) async -> T? {
+        let n = max(1, min(limit ?? attempts, attempts))
+        for i in 0..<n {
             if let root = await ax.snapshot(), let found = check(root) { return found }
-            if i < attempts - 1 { await pause() }
+            if i < n - 1 { await pause() }
         }
         return nil
     }
