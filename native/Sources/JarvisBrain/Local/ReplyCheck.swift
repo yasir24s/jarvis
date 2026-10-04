@@ -85,17 +85,38 @@ public enum ReplyCheck {
     /// One popped sentence with its unsupported claims taken out; nil when nothing is left.
     /// `actionRan` is whether an action tool has run in the turn.
     public static func filter(_ sentence: String, actionRan: Bool) -> String? {
+        var dropped = false
+        return filter(sentence, actionRan: actionRan, afterDrop: &dropped)
+    }
+
+    /// `filter`, carrying whether the last piece was dropped: a piece that starts in lower case
+    /// ("m. sir." after "Alarm set for 7 a.") continues the one before and goes with it.
+    static func filter(_ sentence: String, actionRan: Bool, afterDrop dropped: inout Bool) -> String? {
         if actionRan { return sentence }
         var kept: [String] = []
+        var touched = false
         for piece in pieces(sentence) {
             let trimmed = Py.strip(piece)
             guard !trimmed.isEmpty else { continue }
-            if let rest = strippedOpener(trimmed) {
-                if !rest.isEmpty && !claims(rest) { kept.append(rest) }
+            if dropped, trimmed.first?.isLowercase == true {
+                touched = true
                 continue
             }
-            if !claims(trimmed) { kept.append(trimmed) }
+            dropped = false
+            if let rest = strippedOpener(trimmed) {
+                touched = true
+                if !rest.isEmpty && !claims(rest) { kept.append(rest) } else { dropped = true }
+                continue
+            }
+            if claims(trimmed) {
+                touched = true
+                dropped = true
+            } else {
+                kept.append(trimmed)
+            }
         }
+        // Nothing dropped: the sentence exactly as the model wrote it.
+        if !touched { return sentence }
         let out = kept.joined(separator: " ")
         return out.isEmpty ? nil : out
     }
@@ -104,6 +125,9 @@ public enum ReplyCheck {
     /// one sentence, or nil when none is; `changed` counts the sentences dropped or cut.
     public struct Stream: Sendable {
         public private(set) var changed = 0
+        private var lastDropped = false
+        /// The last character shown, so text written in place of the model's is spaced from it.
+        private var lastShown: Character?
 
         public init() {}
 
@@ -112,33 +136,68 @@ public enum ReplyCheck {
                 changed += 1
                 return nil
             }
-            guard let kept = filter(sentence, actionRan: actionRan(calls)) else {
+            guard let kept = filter(sentence, actionRan: actionRan(calls), afterDrop: &lastDropped) else {
                 changed += 1
                 return nil
             }
             if kept != sentence { changed += 1 }
             return kept
         }
+
+        /// One pop of SentenceSplitter: `raw` is the streamed text it consumed. Returns the text
+        /// to show, which is `raw` itself when every sentence passed unchanged (so addresses,
+        /// line breaks and spacing stay as streamed), and the sentences to speak.
+        public mutating func pass(raw: String, sentences: [String], calls: [Call])
+            -> (delta: String, sentences: [String]) {
+            let kept = sentences.compactMap { pass($0, calls: calls) }
+            return (shown(kept == sentences ? raw : kept.joined(separator: " ")), kept)
+        }
+
+        /// `text` as the next delta: a space first when the last one shown ended in a word.
+        public mutating func shown(_ text: String) -> String {
+            guard !text.isEmpty else { return "" }
+            var out = text
+            if let last = lastShown, !last.isWhitespace, let first = out.first, !first.isWhitespace {
+                out = " " + out
+            }
+            lastShown = out.last
+            return out
+        }
     }
 
     /// A whole reply through `filter`, for tests and callers without a sentence stream.
     public static func check(_ reply: String, calls: [Call]) -> String {
         if let swift = overrideReply(calls) { return swift }
-        let ran = actionRan(calls)
-        let kept = pieces(reply).compactMap { filter($0, actionRan: ran) }
-        if kept.isEmpty { return Py.strip(reply).isEmpty ? reply : notDone }
-        return kept.joined(separator: " ")
+        var dropped = false
+        guard let kept = filter(reply, actionRan: actionRan(calls), afterDrop: &dropped) else {
+            return Py.strip(reply).isEmpty ? reply : notDone
+        }
+        return kept
     }
 
-    /// The text split after each `.`, `!`, `?` or newline, terminators kept.
+    /// The text split where a run of `.`, `!` or `?` meets a space or the end, and at each
+    /// newline, as SentenceSplitter's boundary does: "example.com" and "J.A.R.V.I.S." stay whole.
     static func pieces(_ text: String) -> [String] {
+        let chars = Array(text)
         var out: [String] = []
         var cur = ""
-        for ch in text {
+        var i = 0
+        while i < chars.count {
+            let ch = chars[i]
             cur.append(ch)
-            if ".!?\n".contains(ch) {
+            i += 1
+            if ch == "\n" {
                 out.append(cur)
                 cur = ""
+            } else if ".!?".contains(ch) {
+                while i < chars.count, ".!?".contains(chars[i]) {
+                    cur.append(chars[i])
+                    i += 1
+                }
+                if i == chars.count || chars[i].isWhitespace {
+                    out.append(cur)
+                    cur = ""
+                }
             }
         }
         if !cur.isEmpty { out.append(cur) }
@@ -208,7 +267,7 @@ public enum ReplyCheck {
         let trimmed = Py.strip(normalise(sentence))
         guard !trimmed.isEmpty, !trimmed.hasSuffix("?") else { return false }
         let s = " " + trimmed.trimmingCharacters(in: CharacterSet(charactersIn: ".!")) + " "
-        for neg in [" not ", "n't ", " never ", " unable ", " cannot ", " no longer "] where s.contains(neg) {
+        for neg in [" not ", "n't ", " never ", " unable ", " cannot ", " no longer ", " nothing "] where s.contains(neg) {
             return false
         }
         if strippedOpener(trimmed) != nil { return true }
@@ -219,6 +278,11 @@ public enum ReplyCheck {
                 if subject == " i " && !pastAfterBareI.contains(verb) { continue }
                 return true
             }
+        }
+        // "… has been removed", whatever the subject (a file name split at its dot has none).
+        for link in [" has been ", " have been "] where states.contains(where: { s.contains(link + $0 + " ")
+            || s.contains(link + $0 + "—") || s.contains(link + $0 + ",") }) {
+            return true
         }
         for object in objects {
             for state in states {

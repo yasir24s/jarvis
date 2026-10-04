@@ -158,10 +158,11 @@ public actor LocalBrain: LocalGenerating {
             guard !delta.isEmpty else { continue }
             buf += delta
             let (sentences, rest) = SentenceSplitter.pop(buf)
+            let shown = check.pass(raw: Self.consumed(buf, leaving: rest), sentences: sentences,
+                                   calls: budget.results)
             buf = rest
-            for sentence in sentences {
-                guard let kept = check.pass(sentence, calls: budget.results) else { continue }
-                await sink.delta(full.isEmpty ? kept : " " + kept)
+            if !shown.delta.isEmpty { await sink.delta(shown.delta) }
+            for kept in shown.sentences {
                 full.append(kept)
                 await sink.sentence(kept)
             }
@@ -173,9 +174,10 @@ public actor LocalBrain: LocalGenerating {
             log("Local model: tool-call text removed from the reply (lines \(filter.lines), "
                 + "JSON objects \(filter.objects), characters \(filter.characters))")
         }
-        for sentence in SentenceSplitter.pop(buf, force: true).sentences {
-            guard let kept = check.pass(sentence, calls: budget.results) else { continue }
-            await sink.delta(full.isEmpty ? kept : " " + kept)
+        let last = check.pass(raw: buf, sentences: SentenceSplitter.pop(buf, force: true).sentences,
+                              calls: budget.results)
+        if !last.delta.isEmpty { await sink.delta(last.delta) }
+        for kept in last.sentences {
             full.append(kept)
             await sink.sentence(kept)
         }
@@ -186,11 +188,16 @@ public actor LocalBrain: LocalGenerating {
                 + (swift != nil ? ", reply written from the gateway outcome" : ""))
         }
         if let closing {
-            await sink.delta(full.isEmpty ? closing : " " + closing)
+            await sink.delta(check.shown(closing))
             full.append(closing)
             await sink.sentence(closing)
         }
         return Py.strip(full.joined(separator: " "))
+    }
+
+    /// The front of `buf` that SentenceSplitter consumed, given the `rest` it left.
+    static func consumed(_ buf: String, leaving rest: String) -> String {
+        String(String.UnicodeScalarView(buf.unicodeScalars.dropLast(rest.unicodeScalars.count)))
     }
 
     /// The error for the log. Context overflow is named, whichever SDK spelling it arrives in.

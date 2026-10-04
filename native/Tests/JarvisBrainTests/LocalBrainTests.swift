@@ -68,8 +68,8 @@ struct LocalBrainTests {
         ]]))
         let outcome = await run.generate()
         #expect(outcome == .reply("It is noon, sir. Anything else?"))
-        // od/phase2 item 1: a sentence is shown once the reply check has passed it.
-        #expect(await run.sink.deltas == ["It is noon, sir.", " Anything else?"])
+        // od/phase2 item 1: text is shown a sentence at a time, once the reply check has passed it.
+        #expect(await run.sink.deltas == ["It is noon, sir. ", "Anything else?"])
         #expect(await run.sink.sentences == ["It is noon, sir.", "Anything else?"])
         #expect(run.model.seen.sessions == 1)
         #expect(run.model.seen.prompts == [Self.user])
@@ -95,7 +95,7 @@ struct LocalBrainTests {
         ]]))
         let outcome = await run.generate()
         #expect(outcome == .reply("Checking. Noon, sir."))
-        #expect(await run.sink.deltas == ["Checking.", " Noon, sir."])
+        #expect(await run.sink.deltas == ["Checking.\n", "Noon, sir."])
         #expect(await run.sink.sentences == ["Checking.", "Noon, sir."])
         let characters = "run_command: read_file x\n".unicodeScalars.count
         #expect(run.logs.lines == ["Local model: tool-call text removed from the reply "

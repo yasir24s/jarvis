@@ -17,7 +17,8 @@ struct ReplyCheckTests {
                       "I have set an alarm for 7.", "I just turned the volume up.", "I paused the music.",
                       "Your reminder is set for 5 pm.", "The message has been sent.", "Alarm set.",
                       "Volume adjusted to 40%.", "I've opened Notes for you, sir.", "Sorted, sir!",
-                      "The file was deleted successfully.", "I\u{2019}ve muted it."] {
+                      "The file was deleted successfully.", "I\u{2019}ve muted it.",
+                      "dmg has been removed—a quiet victory, sir."] {
             #expect(ReplyCheck.claims(claim), "\(claim)")
         }
         for plain in ["It's 3:45 pm, sir.", "Shall I send it?", "I'll send it once you confirm.",
@@ -36,6 +37,14 @@ struct ReplyCheckTests {
                 == "It's noon. Quite the hour.")
         #expect(ReplyCheck.check("I've set your alarm. You'll thank me at dawn, sir.", calls: [])
                 == "You'll thank me at dawn, sir.")
+        // The rest of a split abbreviation goes with the claim it belongs to.
+        #expect(ReplyCheck.check("Alarm set for 7 a. m. sir.", calls: []) == ReplyCheck.notDone)
+        #expect(ReplyCheck.check("Alarm set for 7 a.m. sir.", calls: []) == ReplyCheck.notDone)
+        #expect(ReplyCheck.check("Alarm set for 7 a. m. sir. Sleep well.", calls: []) == "Sleep well.")
+        // Addresses, initials and decimals are not sentence ends, and an untouched reply keeps its spacing.
+        #expect(ReplyCheck.check("It's https://example.com/recipe, sir.", calls: []) == "It's https://example.com/recipe, sir.")
+        #expect(ReplyCheck.check("I am J.A.R.V.I.S., sir.", calls: []) == "I am J.A.R.V.I.S., sir.")
+        #expect(ReplyCheck.check("Done, sir. Pi is 3.14.", calls: []) == "Pi is 3.14.")
         // Untouched when nothing claims.
         #expect(ReplyCheck.check("It is noon, sir. Anything else?", calls: []) == "It is noon, sir. Anything else?")
     }
