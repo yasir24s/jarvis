@@ -21,11 +21,21 @@ public final class LocalCallBudget: Sendable {
     }
 
     private let count = Mutex(0)
+    private let noted = Mutex<[ReplyCheck.Call]>([])
 
     public init() {}
 
     /// Calls so far this turn, refused ones included.
     public var calls: Int { count.withLock { $0 } }
+
+    /// What the gateway returned for each call so far, in order (od/phase2 item 1).
+    public var results: [ReplyCheck.Call] { noted.withLock { $0 } }
+
+    /// Keeps one gateway result for the turn's reply check.
+    func note(_ name: String, _ result: ToolCallResult) {
+        let call = ReplyCheck.Call(name: name, outcome: result.record.outcome, text: result.text)
+        noted.withLock { $0.append(call) }
+    }
 
     /// True once a call has been refused.
     public var exceeded: Bool { calls > Self.limit }
@@ -70,7 +80,9 @@ public struct DynamicTool: Tool {
     public func call(arguments: GeneratedContent) async throws -> String {
         try budget.take()
         let args = (try? PyJSON.loads(Data(arguments.jsonString.utf8)))?.objectValue ?? JSONObject()
-        return await gateway.call(name, args, turn: turn, origin: .model(.local)).text
+        let result = await gateway.call(name, args, turn: turn, origin: .model(.local))
+        budget.note(name, result)
+        return result.text
     }
 
     /// Code points in the name, description and parameters JSON (Python `len`).

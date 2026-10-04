@@ -68,7 +68,8 @@ struct LocalBrainTests {
         ]]))
         let outcome = await run.generate()
         #expect(outcome == .reply("It is noon, sir. Anything else?"))
-        #expect(await run.sink.deltas == ["It is", " noon, sir. Anything", " else?"])
+        // od/phase2 item 1: a sentence is shown once the reply check has passed it.
+        #expect(await run.sink.deltas == ["It is noon, sir.", " Anything else?"])
         #expect(await run.sink.sentences == ["It is noon, sir.", "Anything else?"])
         #expect(run.model.seen.sessions == 1)
         #expect(run.model.seen.prompts == [Self.user])
@@ -90,12 +91,12 @@ struct LocalBrainTests {
     func toolCallText() async {
         let run = Run(FakeLocalModel(attempts: [[
             .snapshot("Checking.\nrun_"), .snapshot("Checking.\nrun_command: read_f"),
-            .snapshot("Checking.\nrun_command: read_file x\nDone, sir."),
+            .snapshot("Checking.\nrun_command: read_file x\nNoon, sir."),
         ]]))
         let outcome = await run.generate()
-        #expect(outcome == .reply("Checking. Done, sir."))
-        #expect(await run.sink.deltas == ["Checking.\n", "Done, sir."])
-        #expect(await run.sink.sentences == ["Checking.", "Done, sir."])
+        #expect(outcome == .reply("Checking. Noon, sir."))
+        #expect(await run.sink.deltas == ["Checking.", " Noon, sir."])
+        #expect(await run.sink.sentences == ["Checking.", "Noon, sir."])
         let characters = "run_command: read_file x\n".unicodeScalars.count
         #expect(run.logs.lines == ["Local model: tool-call text removed from the reply "
                                    + "(lines 1, JSON objects 0, characters \(characters))"])
@@ -157,13 +158,13 @@ struct LocalBrainTests {
 
     @Test("an empty reply is retried in the same session, then succeeds")
     func emptyThenReply() async {
-        let run = Run(FakeLocalModel(attempts: [[.snapshot("  ")], [.snapshot("Done, sir.")]]))
+        let run = Run(FakeLocalModel(attempts: [[.snapshot("  ")], [.snapshot("Noon, sir.")]]))
         let outcome = await run.generate()
-        #expect(outcome == .reply("Done, sir."))
+        #expect(outcome == .reply("Noon, sir."))
         #expect(run.model.seen.sessions == 1)
         #expect(run.model.seen.prompts == [Self.user, Self.user])
         #expect(run.logs.lines == ["Empty model response — retry 1."])
-        #expect(await run.sink.sentences == ["Done, sir."])
+        #expect(await run.sink.sentences == ["Noon, sir."])
     }
 
     @Test("two retries, then Python's fixed reply, as .emptyReply")

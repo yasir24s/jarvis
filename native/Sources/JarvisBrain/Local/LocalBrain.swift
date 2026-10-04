@@ -116,7 +116,8 @@ public actor LocalBrain: LocalGenerating {
         var retries = 0
         do {
             while true {
-                let content = try await reply(from: session, to: request.text, options: options, sink: sink)
+                let content = try await reply(from: session, to: request.text, options: options, budget: budget,
+                                              sink: sink)
                 if !Py.strip(content).isEmpty { return .reply(content) }
                 // A cancelled turn ends its stream early. That is an error, not an empty reply.
                 try Task.checkCancellation()
@@ -139,41 +140,55 @@ public actor LocalBrain: LocalGenerating {
     }
 
     /// One streamed response: snapshots diffed into deltas, a tool call written as text taken
-    /// out of them (`ToolCallTextFilter`), each delta to `sink.delta` and `SentenceSplitter`,
-    /// each popped sentence to `sink.sentence`, the rest force-popped at the end. Returns
-    /// Python's `" ".join(full).strip()`.
+    /// out of them (`ToolCallTextFilter`), the deltas into `SentenceSplitter`, the rest
+    /// force-popped at the end. Each popped sentence goes through `ReplyCheck` against the
+    /// turn's gateway results before it reaches `sink` (as a sentence, and as the delta that
+    /// shows it), so a claim that nothing backs is never spoken or shown. A gated or blocked
+    /// call replaces the model's text with Swift's reply. Returns Python's
+    /// `" ".join(full).strip()` of what was kept.
     private func reply(from session: any LocalModelSession, to prompt: String, options: GenerationOptions,
-                       sink: any ReplySink) async throws -> String {
+                       budget: LocalCallBudget, sink: any ReplySink) async throws -> String {
         var diff = SnapshotDiff()
         var filter = ToolCallTextFilter()
         var buf = ""
         var full: [String] = []
+        var check = ReplyCheck.Stream()
         for try await snapshot in session.streamResponse(to: prompt, options: options) {
             let delta = filter.push(diff.delta(to: snapshot))
             guard !delta.isEmpty else { continue }
-            await sink.delta(delta)
             buf += delta
             let (sentences, rest) = SentenceSplitter.pop(buf)
             buf = rest
             for sentence in sentences {
-                full.append(sentence)
-                await sink.sentence(sentence)
+                guard let kept = check.pass(sentence, calls: budget.results) else { continue }
+                await sink.delta(full.isEmpty ? kept : " " + kept)
+                full.append(kept)
+                await sink.sentence(kept)
             }
         }
         // What the filter still held at the end: a line start that never became a tool name, or
         // a JSON object that never closed and names no tool.
-        let held = filter.finish()
-        if !held.isEmpty {
-            await sink.delta(held)
-            buf += held
-        }
+        buf += filter.finish()
         if filter.removed {
             log("Local model: tool-call text removed from the reply (lines \(filter.lines), "
                 + "JSON objects \(filter.objects), characters \(filter.characters))")
         }
         for sentence in SentenceSplitter.pop(buf, force: true).sentences {
-            full.append(sentence)
-            await sink.sentence(sentence)
+            guard let kept = check.pass(sentence, calls: budget.results) else { continue }
+            await sink.delta(full.isEmpty ? kept : " " + kept)
+            full.append(kept)
+            await sink.sentence(kept)
+        }
+        let swift = ReplyCheck.overrideReply(budget.results)
+        let closing = swift ?? (full.isEmpty && check.changed > 0 ? ReplyCheck.notDone : nil)
+        if check.changed > 0 || swift != nil {
+            log("Local model: reply check changed \(check.changed) sentence(s)"
+                + (swift != nil ? ", reply written from the gateway outcome" : ""))
+        }
+        if let closing {
+            await sink.delta(full.isEmpty ? closing : " " + closing)
+            full.append(closing)
+            await sink.sentence(closing)
         }
         return Py.strip(full.joined(separator: " "))
     }
