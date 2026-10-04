@@ -550,11 +550,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                                userIdleSeconds: Self.userIdleSeconds(),
                                                ttsBackend: voice.backend,
                                                speakAnyway: self.handsFreeSettings.micOnly)   // M11 part 5
-            SpeakReplies.replyFinished(message, context: context, research: research,
-                                       speaker: { text, turn in voice.speak(text, turn: turn.turnID) },
-                                       log: { JarvisLog.log($0, category: .voice) })
+            let spoken = SpeakReplies.replyFinished(message, context: context, research: research,
+                                                    speaker: { text, turn in voice.speak(text, turn: turn.turnID) },
+                                                    log: { JarvisLog.log($0, category: .voice) })
+            if !spoken { voice.notSpoken(turn: turn.turnID) }   // V8: a reply begun early says no more
             self.chat.speaking = voice.repliesPending > 0
         }
+        // V8: with Speak First Sentence Early on and Qwen speaking, a typed reply is spoken as it
+        // streams in (`EarlySpeech`), under the same Speak replies switch as a finished one.
+        chat.onReplyDelta = { [weak self] turn, text in
+            guard let self, self.speakReplies.isOn || self.handsFreeSettings.micOnly else { return }
+            voice.replyDelta(text, turn: turn)
+        }
+        chat.onReplyRetracted = { turn in voice.replyRetracted(turn: turn) }
         // V1 part 1: with Speak replies on, a sent message is acknowledged in his voice at once.
         chat.onSend = { [weak self] text, sentAt in
             guard let self else { return }

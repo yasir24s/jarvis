@@ -83,9 +83,9 @@ struct SpeakEarlyMenuTests {
         #expect(SpeakEarlySetting(defaults: defaults).isOn, "kept across launches")
     }
 
-    /// V6: with Qwen, the voice by default, the item is in neither menu: Qwen streams, so speaking
-    /// the first sentence early is moot.
-    @Test func hiddenWhileQwenIsTheVoice() async throws {
+    /// V8: with Qwen, the voice by default, the item is in both menus again, off by default, and
+    /// kept under the same key. (V6 hid it while Qwen spoke.)
+    @Test func shownWhileQwenIsTheVoice() async throws {
         let folder = FileManager.default.temporaryDirectory.appending(path: "jarvis-tests-early-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -94,17 +94,16 @@ struct SpeakEarlyMenuTests {
         defer { defaults.removePersistentDomain(forName: name) }
 
         let setting = SpeakEarlySetting(defaults: defaults)
-        #expect(!setting.applies)
+        #expect(setting.applies)
+        #expect(!setting.isOn)
         let menus = Self.menus(defaults, setting: setting)
         menus.bar.update()
         menus.app.update()
-        #expect(VoiceMenuTests.item(menus.bar, SpeakEarlySetting.menuTitle) == nil)
-        #expect(VoiceMenuTests.item(menus.app, SpeakEarlySetting.menuTitle) == nil)
-        // F5 in use again (Qwen missing, or chosen): the item comes back.
-        setting.applies = true
         for menu in [menus.bar, menus.app] {
             #expect(try await Self.shows(menu, .off) != nil)
         }
+        setting.isOn = true
+        #expect(defaults.object(forKey: SpeechQueue.speakEarlyKey) as? Bool == true)
     }
 
     /// The parts as the app makes them, with the app's own `SentenceSplitter` (`AppVoice.sentences`).

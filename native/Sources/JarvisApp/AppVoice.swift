@@ -98,8 +98,57 @@ final class AppVoice {
         return f5.isAvailable ? EngineID.f5.rawValue : EngineID.say.rawValue
     }
 
-    /// V6: whether Speak First Sentence Early acts on the voice in use (F5) or is moot (Qwen).
-    var speakEarlyApplies: Bool { selector.current != .qwen }
+    /// Whether Speak First Sentence Early acts on the voice in use. V6 made it F5's alone; V8: with
+    /// Qwen it speaks a reply while the brain is still writing it (`EarlySpeech`).
+    var speakEarlyApplies: Bool { true }
+
+    /// V8: a typed reply spoken as it streams, while Qwen speaks and the setting is on.
+    lazy var early = EarlySpeech(queue: queue, hooks: EarlySpeech.Hooks(
+        applies: { [weak self] in
+            guard let self else { return false }
+            return !self.muted() && self.selector.current == .qwen && SpeechQueue.speakEarlyFromDefaults()
+        },
+        stops: { [weak self] in self?.stops ?? 0 },
+        began: { [weak self] first in self?.earlyBegan(first) },
+        over: { [weak self] in self?.replyOver() },
+        handed: { [weak self] sentence in
+            guard let self else { return }
+            self.lastLine = [self.lastLine, sentence].compactMap { $0 }.joined(separator: " ")
+        },
+        log: { JarvisLog.log($0, category: .voice) }))
+
+    /// V8: a reply's speech began with its first sentence while the brain still writes the rest.
+    private func earlyBegan(_ first: String) {
+        heardReply = TextClean.clean(first) ?? first
+        heardParts = []
+        acknowledgedSinceReply = false
+        lastLine = nil   // `handed` adds each sentence
+        inFlight += 1
+        repliesPending += 1
+        activity?.speechBegan()
+    }
+
+    private func replyOver() {
+        activity?.speechEnded()
+        inFlight -= 1
+        repliesPending -= 1
+        lastSpoke = SystemClock().now()
+        onReplyOver?()
+    }
+
+    /// V8: the streamed text of a typed reply, as the chat row shows it.
+    func replyDelta(_ text: String, turn: UUID) {
+        early.delta(text, turn: turn)
+    }
+
+    func replyRetracted(turn: UUID) {
+        early.retracted(turn: turn)
+    }
+
+    /// V8: the speak policy declined `turn`'s finished reply.
+    func notSpoken(turn: UUID) {
+        early.notSpoken(turn: turn)
+    }
 
     /// UserDefaults is thread-safe (Apple documents it so) but is not marked Sendable.
     private struct SharedDefaults: @unchecked Sendable {
@@ -129,20 +178,24 @@ final class AppVoice {
         let url = FileManager.default.fileExists(atPath: rendered.path(percentEncoded: false)) ? rendered : fallback
         guard let clip = clip(url) else { return }
         recentAcknowledgements = Array((recentAcknowledgements + [line.name]).suffix(Acknowledgement.recentLimit))
-        acknowledgementClip = clip
-        acknowledgedSinceReply = true
-        lastLine = line.text
-        let queue = self.queue
-        let activity = self.activity
         let stops = self.stops
-        inFlight += 1
-        activity?.speechBegan()
-        Task {
-            await queue.acknowledge(clip, line: line.text, sentAt: sentAt, stops: stops)
-            await queue.idle()
-            activity?.speechEnded()
-            self.inFlight -= 1
-            self.lastSpoke = SystemClock().now()
+        // V8: held for a moment while the reply is spoken as it is written (`EarlySpeech`).
+        early.acknowledge(sentAt: sentAt) { [weak self] in
+            guard let self else { return }
+            self.acknowledgementClip = clip
+            self.acknowledgedSinceReply = true
+            self.lastLine = line.text
+            let queue = self.queue
+            let activity = self.activity
+            self.inFlight += 1
+            activity?.speechBegan()
+            Task {
+                await queue.acknowledge(clip, line: line.text, sentAt: sentAt, stops: stops)
+                await queue.idle()
+                activity?.speechEnded()
+                self.inFlight -= 1
+                self.lastSpoke = SystemClock().now()
+            }
         }
     }
 
@@ -177,16 +230,19 @@ final class AppVoice {
     /// is off it is not spoken: `onSilenced` shows it instead.
     func speak(_ text: String, turn: UUID) {
         guard !muted() else {
+            early.notSpoken(turn: turn)
             silenced(text)
             return
         }
+        if early.finished(text, turn: turn) { return }   // V8: spoken as it was written
         let queue = self.queue
         let activity = self.activity
         let stops = self.stops
         heardReply = Self.heard(text, afterAcknowledgement: acknowledgedSinceReply)
         heardParts = heardReply.map {
             // V6: Qwen streams a reply whole, never in parts.
-            SpeechQueue.parts($0, early: speakEarlyApplies && SpeechQueue.speakEarlyFromDefaults(), sentences: Self.sentences)
+            SpeechQueue.parts($0, early: selector.current != .qwen && SpeechQueue.speakEarlyFromDefaults(),
+                              sentences: Self.sentences)
         } ?? []
         acknowledgedSinceReply = false
         lastLine = heardReply
@@ -255,6 +311,7 @@ final class AppVoice {
     private func stopNow() -> @Sendable () async -> Void {
         let queue = self.queue
         acknowledgedSinceReply = false   // as the queue's cancelAll forgets it
+        early.stop()   // V8: a reply spoken as it is written takes nothing more
         stops += 1
         let stops = self.stops
         return { await queue.cancelAll(through: stops) }

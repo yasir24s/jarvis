@@ -64,6 +64,12 @@ public final class ChatViewModel: ReplySink {
     /// V1 part 1: each typed message the composer sends, with the moment it was sent, before
     /// its turn starts (the voice's acknowledgement). A refused confirmation is not sent.
     @ObservationIgnored public var onSend: ((String, ContinuousClock.Instant) -> Void)?
+    /// V8: the reply's text as it streams into the live row, with its turn's id: the same text
+    /// the row shows, as it arrives (Speak First Sentence Early with Qwen). A stopped row sends
+    /// nothing more.
+    @ObservationIgnored public var onReplyDelta: ((UUID, String) -> Void)?
+    /// V8: the model retracted what the live row of this turn had shown (R6).
+    @ObservationIgnored public var onReplyRetracted: ((UUID) -> Void)?
     /// V1 part 5: each change to the composer's text (the voice warms up while the user types).
     @ObservationIgnored public var onTyping: (() -> Void)?
     /// UI1 part 3, the HUD: a turn from this window was taken, with the message as shown; and
@@ -463,6 +469,7 @@ public final class ChatViewModel: ReplySink {
     public func delta(_ text: String) async {
         let now = ContinuousClock.now
         guard !text.isEmpty, live?.stopped == false, let step = live?.coalescer.append(text, at: now) else { return }
+        if let id = live?.turnID { onReplyDelta?(id, text) }
         switch step {
         case .publish:
             live?.flush?.cancel()
@@ -489,7 +496,9 @@ public final class ChatViewModel: ReplySink {
         messages[index].retracted = true
         let next = ChatMessage(role: .assistant, text: "", phase: .streaming)
         messages.append(next)
-        live = LiveReply(id: next.id, userID: turn.userID, turn: turn.turn, coalescer: DeltaCoalescer(minimumGap: minimumGap))
+        live = LiveReply(id: next.id, userID: turn.userID, turn: turn.turn, coalescer: DeltaCoalescer(minimumGap: minimumGap),
+                         turnID: turn.turnID)
+        if let id = turn.turnID { onReplyRetracted?(id) }
     }
 
     public func sentence(_ text: String) async {
@@ -587,7 +596,8 @@ public final class ChatViewModel: ReplySink {
         messages.append(user)
         if let note { messages.append(ChatMessage(role: .system, text: note, phase: .finished)) }
         messages.append(reply)
-        live = LiveReply(id: reply.id, userID: user.id, turn: turn, coalescer: DeltaCoalescer(minimumGap: minimumGap))
+        live = LiveReply(id: reply.id, userID: user.id, turn: turn, coalescer: DeltaCoalescer(minimumGap: minimumGap),
+                         turnID: id)
         onTurnBegan?(shown)
         if stopBeforeAccept == mine {
             stopBeforeAccept = nil
@@ -633,6 +643,8 @@ public final class ChatViewModel: ReplySink {
         let userID: UUID
         let turn: TurnContext
         var coalescer: DeltaCoalescer
+        /// The turn's id (`TurnSummary.turnID`), for `onReplyDelta`.
+        var turnID: UUID?
         var sentences: [String] = []
         var flush: Task<Void, Never>?
         /// UI1 part 4: the user stopped it.
