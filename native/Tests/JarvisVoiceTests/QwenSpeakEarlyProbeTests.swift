@@ -34,6 +34,27 @@ struct QwenSpeakEarlyProbeTests {
         }
     }
 
+    /// Stretches of 10 ms windows whose peak is under -40 dBFS, 100 ms or longer, between the
+    /// first sound and the last: the pauses a listener hears.
+    static func quiet(_ samples: [Float], below level: Float = 0.01, windows minimum: Int = 10) -> [(ms: Int, at: Double)] {
+        let window = Int(EnginePlayer.sampleRate / 100)
+        let loud = stride(from: 0, to: samples.count, by: window).map { start in
+            samples[start ..< min(start + window, samples.count)].contains { abs($0) >= level }
+        }
+        guard let first = loud.firstIndex(of: true) else { return [] }
+        var out: [(Int, Double)] = []
+        var run = 0
+        for (n, isLoud) in loud.enumerated() where n > first {
+            if isLoud {
+                if run >= minimum { out.append((run * 10, Double(n - run) / 100)) }
+                run = 0
+            } else {
+                run += 1
+            }
+        }
+        return out
+    }
+
     @Test(.enabled(if: QwenSpeakEarlyProbeTests.enabled, "set JARVIS_QWEN_EARLY=1 to run the real helper"))
     func firstAudioWithAndWithoutSpeakEarly() async throws {
         let out = try TempFolder()
@@ -126,6 +147,13 @@ struct QwenSpeakEarlyProbeTests {
             print("early probe: \(name): first audio \(first.map { String(format: "%.2f s", $0) } ?? "none") after the send "
                   + String(format: "(brain %.1f s); %.2f s rendered to %@", brainSeconds,
                            Double(heard.count) / EnginePlayer.sampleRate, file.path(percentEncoded: false)))
+            print("early probe: \(name): quiet stretches of 100 ms or more after the first sound (ms, at s): "
+                  + Self.quiet(heard).map { String(format: "%d@%.2f", $0.ms, $0.at) }.joined(separator: " "))
+            let soft = Self.quiet(heard, below: 0.0018, windows: 6)
+            print("early probe: \(name): under -55 dBFS for 60 ms or more: "
+                  + soft.map { String(format: "%d@%.2f", $0.ms, $0.at) }.joined(separator: " ")
+                  + "; total \(soft.reduce(0) { $0 + $1.ms }) ms; delivered "
+                  + String(format: "%.2f s", Double(player.pieces.reduce(0) { $0 + $1.samples.count }) / EnginePlayer.sampleRate))
             results.append((name, first, Double(heard.count) / EnginePlayer.sampleRate))
         }
         await qwen.release()
