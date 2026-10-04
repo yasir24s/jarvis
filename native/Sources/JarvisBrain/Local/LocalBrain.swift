@@ -34,6 +34,11 @@ import JarvisTools
 /// - A tool call the model writes into its reply as text (`run_command: ...`, a JSON object)
 ///   is taken out of what is shown, spoken and kept (`ToolCallTextFilter`), and logged as
 ///   counts. Nothing runs it: there is no text tool protocol.
+/// - Before the reply, a guided step (`GuidedTools`)
+///   has the model choose up to three of the offered tools with constrained output and runs
+///   them through the gateway. The reply session then gets no tools; when calls ran, its prompt
+///   carries their results. Only a failure before any call leaves the turn free-form tools, and
+///   a stopped turn ends without either.
 public actor LocalBrain: LocalGenerating {
     /// `_set_backend` name for this brain. Its counter is `backend_local_apple_foundation_model_`:
     /// Python's `\W+` replaces the closing parenthesis too (golden m3_backend_key).
@@ -58,6 +63,8 @@ public actor LocalBrain: LocalGenerating {
     private let gateway: ToolGateway
     private let model: any LocalLanguageModel
     private let log: @Sendable (String) -> Void
+    /// Whether the guided tool choice runs this turn, read on each turn.
+    private let guided: @Sendable () -> Bool
     /// The previous turn's message and the tools it ran (each once, in order), for the next
     /// turn's choice of tools.
     private var previous: (text: String, tools: [String])?
@@ -68,12 +75,15 @@ public actor LocalBrain: LocalGenerating {
     ///   - embedding: the sentence vectors the default model chooses a turn's tools with (the
     ///     instance recall uses); nil means it offers the fixed list.
     ///   - log: where log lines go. Tests pass their own.
+    ///   - guided: whether the guided tool choice runs; nil means it does.
     public init(gateway: ToolGateway, model: (any LocalLanguageModel)? = nil,
                 embedding: (any SentenceEmbedding)? = nil,
-                log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .brain) }) {
+                log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .brain) },
+                guided: (@Sendable () -> Bool)? = nil) {
         self.gateway = gateway
         self.model = model ?? SystemLocalModel(embedding: embedding, log: log)
         self.log = log
+        self.guided = guided ?? { true }
     }
 
     /// MEM1 part 1: the model's context size, for the memory block's budget.
@@ -110,13 +120,35 @@ public actor LocalBrain: LocalGenerating {
         let budget = LocalCallBudget()
         let tools = await model.tools(for: request, instructions: instructions, gateway: gateway, turn: turn,
                                       budget: budget)
+        // The guided choice runs first. Its calls are in `budget.results`, so ReplyCheck sees them.
+        var prompt = request.text
+        var offered = tools
+        if guided(), let planner = await model.guidedSession(instructions: GuidedTools.instructions) {
+            let picked = await GuidedTools.run(session: planner, request: request, tools: tools, budget: budget,
+                                               log: log)
+            // A stopped turn ends here, as a cancelled stream does: no free-form retry.
+            if picked.cancelled {
+                log("Brain error: \(Self.describe(CancellationError()))")
+                await sink.sentence(Self.errorReply)
+                return .failed(Self.errorReply)
+            }
+            // The choice stands, "none" included: only a real failure before any call leaves the
+            // reply its tools.
+            if !picked.fellBack {
+                offered = []
+                if !picked.steps.isEmpty {
+                    prompt = GuidedTools.replyPrompt(user: request.text, steps: picked.steps)
+                    log("Local model: guided tool choice ran " + picked.steps.map(\.name).joined(separator: ", "))
+                }
+            }
+        }
         // The turn's one session. It is a local, so it is released when the turn returns.
-        let session = await model.session(instructions: instructions, tools: tools)
+        let session = await model.session(instructions: instructions, tools: offered)
         let options = Self.options(for: channel)
         var retries = 0
         do {
             while true {
-                let content = try await reply(from: session, to: request.text, options: options, budget: budget,
+                let content = try await reply(from: session, to: prompt, options: options, budget: budget,
                                               sink: sink)
                 if !Py.strip(content).isEmpty { return .reply(content) }
                 // A cancelled turn ends its stream early. That is an error, not an empty reply.

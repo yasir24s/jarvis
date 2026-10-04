@@ -19,14 +19,19 @@ public struct OnDeviceBrain: EvalBrain {
     public let timeout: Duration
     private let embedding: any SentenceEmbedding
     private let log: @Sendable (String) -> Void
+    private let guided: Bool
 
-    /// - Parameter log: where the brain's own log lines go. The replay passes one that drops
-    ///   them, since some quote the request.
+    /// - Parameters:
+    ///   - log: where the brain's own log lines go. The replay passes one that drops them, since
+    ///     some quote the request.
+    ///   - guided: whether LocalBrain runs the guided tool choice (`--no-guided` turns it off).
+    ///     Passed in, so the eval never reads the app's defaults.
     public init(timeout: Duration = .seconds(90), embedding: any SentenceEmbedding = SystemSentenceEmbedding(),
-                log: @escaping @Sendable (String) -> Void = { _ in }) {
+                log: @escaping @Sendable (String) -> Void = { _ in }, guided: Bool = true) {
         self.timeout = timeout
         self.embedding = embedding
         self.log = log
+        self.guided = guided
     }
 
     /// Nil when the on-device model can answer; otherwise why not.
@@ -60,7 +65,8 @@ public struct OnDeviceBrain: EvalBrain {
         let gateway = ToolGateway(confirmationGate: ConfirmationGate(), log: log)
         await RecordingTool.registerAll(LocalToolset.catalog, on: gateway, recorder: recorder)
         let model = SelectionRecordingModel(embedding: embedding, log: log)
-        let brain = LocalBrain(gateway: gateway, model: model, log: log)
+        let guided = self.guided
+        let brain = LocalBrain(gateway: gateway, model: model, log: log, guided: { guided })
         let router = BrainRouter(core: core, config: ClaudeConfig(environment: [:]), claude: NoCloud(),
                                  chatgptEnabled: false, local: brain, backend: NoBackend(), research: NoResearch(),
                                  log: log)
@@ -131,6 +137,10 @@ final class SelectionRecordingModel: LocalLanguageModel {
 
     func session(instructions: String, tools: [DynamicTool]) async -> any LocalModelSession {
         await inner.session(instructions: instructions, tools: tools)
+    }
+
+    func guidedSession(instructions: String) async -> (any LocalGuidedSession)? {
+        await inner.guidedSession(instructions: instructions)
     }
 
     var contextSize: Int { get async { await inner.contextSize } }

@@ -81,6 +81,8 @@ final class FakeModelLog: Sendable {
         var prompts: [String] = []
         var options: [GenerationOptions] = []
         var toolOutputs: [String] = []
+        /// The tools each reply session was given.
+        var sessionTools: [[String]] = []
         weak var lastSession: FakeSession?
     }
 
@@ -94,6 +96,7 @@ final class FakeModelLog: Sendable {
     var toolOutputs: [String] { state.withLock { $0.toolOutputs } }
     var lastSessionAlive: Bool { state.withLock { $0.lastSession != nil } }
     var offeredTools: [[String]] { state.withLock { $0.offered } }
+    var sessionTools: [[String]] { state.withLock { $0.sessionTools } }
 }
 
 /// FoundationModels' stand-in. `attempts[i]` scripts the i-th `streamResponse` of a session.
@@ -102,13 +105,19 @@ final class FakeLocalModel: LocalLanguageModel {
     let reason: String?
     let attempts: [[FakeStep]]
     let offer: [String]?
+    /// The guided session; nil means this model has none, as before od/guided-generation.
+    let guided: FakeGuidedSession?
     let seen = FakeModelLog()
 
-    init(reason: String? = nil, attempts: [[FakeStep]], offer: [String]? = nil) {
+    init(reason: String? = nil, attempts: [[FakeStep]], offer: [String]? = nil,
+         guided: FakeGuidedSession? = nil) {
         self.reason = reason
         self.attempts = attempts
         self.offer = offer
+        self.guided = guided
     }
+
+    func guidedSession(instructions: String) async -> (any LocalGuidedSession)? { guided }
 
     func unavailableReason() async -> String? { reason }
 
@@ -130,6 +139,7 @@ final class FakeLocalModel: LocalLanguageModel {
         seen.state.withLock {
             $0.sessions += 1
             $0.instructions.append(instructions)
+            $0.sessionTools.append(tools.map(\.name))
             $0.lastSession = session
         }
         return session
@@ -246,5 +256,76 @@ final class WordBagEmbedding: SentenceEmbedding {
         var hash: UInt64 = 14_695_981_039_346_656_037
         for byte in word.utf8 { hash = (hash ^ UInt64(byte)) &* 1_099_511_628_211 }
         return Int(hash % UInt64(dimension))
+    }
+}
+
+/// The guided session's stand-in. Each `respond` returns the next scripted reply in order
+/// (choice, arguments, choice, …) as JSON, or throws; past the end of the script it throws.
+final class FakeGuidedSession: LocalGuidedSession {
+    enum Reply: Sendable {
+        case json(String)
+        case fail(any Error)
+        /// Cancel the calling task, then return this JSON (a Stop while generating).
+        case jsonThenCancel(String)
+    }
+
+    let replies: [Reply]
+    private let state = Mutex<[String]>([])
+
+    init(_ replies: [Reply]) {
+        self.replies = replies
+    }
+
+    /// Shorthand: a choice of `name`.
+    static func choose(_ name: String) -> Reply { .json(#"{"tool": "\#(name)"}"#) }
+
+    /// The prompts it was asked, in order.
+    var prompts: [String] { state.withLock { $0 } }
+
+    func respond(to prompt: String, schema: GenerationSchema, options: GenerationOptions) async throws
+        -> GeneratedContent {
+        let index = state.withLock { prompts -> Int in
+            prompts.append(prompt)
+            return prompts.count - 1
+        }
+        guard index < replies.count else { throw FakeModelError(description: "guided script ended") }
+        switch replies[index] {
+        case .json(let json): return try GeneratedContent(json: json)
+        case .fail(let error): throw error
+        case .jsonThenCancel(let json):
+            withUnsafeCurrentTask { $0?.cancel() }
+            return try GeneratedContent(json: json)
+        }
+    }
+}
+
+/// find_contact with a fixed answer, recording what reached it.
+struct FindContactBody: JarvisTool {
+    static let name = "find_contact"
+    static let reply = "Priya Shah: +44 7700 900123"
+    let calls: RecordingBody.Calls
+
+    func run(_ args: ToolArgs, _ ctx: ToolContext) async throws -> String {
+        calls.state.withLock { $0.append((args, ctx.origin)) }
+        return Self.reply
+    }
+}
+
+/// send_message as the real one behaves: it asks for confirmation, and `calls` records only a
+/// confirmed send. A body reached before confirmation is recorded in `reached`.
+struct SendMessageBody: ToolImpl {
+    static let name = "send_message"
+    static var schema: ToolSchema { ToolCatalog.tools.first { $0.name == name }! }
+    let reached: RecordingBody.Calls
+    let sent: RecordingBody.Calls
+
+    func run(_ args: JSONObject, _ ctx: ToolRunContext) async throws -> ToolOutcome {
+        reached.state.withLock { $0.append((args, ctx.origin)) }
+        let sent = self.sent
+        let origin = ctx.origin
+        return .needsConfirmation(desc: "Send Priya a message") {
+            sent.state.withLock { $0.append((args, origin)) }
+            return "Sent, sir."
+        }
     }
 }
