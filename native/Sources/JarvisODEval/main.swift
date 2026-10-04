@@ -4,7 +4,7 @@ import JarvisEval
 // OD-EVAL runner. Two modes, both on the real on-device path with recording fake tools:
 //
 //   JarvisODEval --od-eval <fixture.json> [--out <cases.jsonl>] [--summary <summary.json>]
-//                [--only <id-prefix>] [--limit <n>] [--timeout <seconds>]
+//                [--only <id-prefix>[,…]] [--limit <n>] [--timeout <seconds>] [--verbose]
 //   JarvisODEval --od-replay <archive> --out <report.json> [--include-text] [--limit <n>]
 //                [--timeout <seconds>]
 //   JarvisODEval --od-rank <fixture.json> [--top <n>[,<n>…]] [--only <id-prefix>[,…]]
@@ -17,7 +17,7 @@ import JarvisEval
 
 let usage = """
     usage: JarvisODEval --od-eval <fixture.json> [--out <cases.jsonl>] [--summary <summary.json>]
-                        [--only <id-prefix>] [--limit <n>] [--timeout <seconds>]
+                        [--only <id-prefix>[,…]] [--limit <n>] [--timeout <seconds>] [--verbose]
            JarvisODEval --od-replay <archive> --out <report.json> [--include-text] [--limit <n>]
                         [--timeout <seconds>]
            JarvisODEval --od-rank <fixture.json> [--top <n>[,<n>…]] [--only <id-prefix>[,…]]
@@ -43,6 +43,7 @@ struct Options {
     var timeout = 90.0
     var includeText = false
     var top = [8, 10, 12]
+    var verbose = false
 }
 
 func parse(_ args: [String]) -> Options? {
@@ -64,6 +65,7 @@ func parse(_ args: [String]) -> Options? {
         case "--limit": guard let v = value().flatMap(Int.init), v > 0 else { return nil }; o.limit = v
         case "--timeout": guard let v = value().flatMap(Double.init), v > 0 else { return nil }; o.timeout = v
         case "--include-text": o.includeText = true
+        case "--verbose": o.verbose = true
         case "--top":
             guard let v = value() else { return nil }
             let ks = v.split(separator: ",").compactMap { Int($0) }.filter { $0 > 0 }
@@ -115,6 +117,7 @@ if options.mode == "--od-rank" {
     let fast = RankerRecall.fastPath(onlyFilter(fixture.cases))
     print("fast path: \(fast.python) by Python's branches, \(fast.native.count) by native ones")
     for n in fast.native { print("  native: \(n.id) \(n.branch)") }
+    for t in fast.tools { print("  fastpath-tool: \(t.id) \(t.tool)") }
     if let first = reports.first {
         for m in first.misses { print("  miss @\(first.top): \(m.id) \(m.expected) rank \(m.rank.map(String.init) ?? "-")") }
     }
@@ -126,7 +129,10 @@ if let reason = OnDeviceBrain.unavailableReason() {
          + "Turn on Apple Intelligence in System Settings and wait for the model to download, then run again.", 69)
 }
 
-let brain = OnDeviceBrain(timeout: .milliseconds(Int(options.timeout * 1000)))
+// --verbose: the brain's own log lines to stderr (fixture runs only; the replay never logs text).
+let brain = options.verbose && options.mode == "--od-eval"
+    ? OnDeviceBrain(timeout: .milliseconds(Int(options.timeout * 1000)), log: { note("  log: " + $0) })
+    : OnDeviceBrain(timeout: .milliseconds(Int(options.timeout * 1000)))
 
 switch options.mode {
 case "--od-eval":

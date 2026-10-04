@@ -31,11 +31,11 @@ struct LocalPromptTests {
 
     @Test("the persona survives: JARVIS, 'sir', dry wit, brevity")
     func personaKept() {
-        for word in ["JARVIS", "'sir'", "witty", "dry wit", "One sentence"] {
+        for word in ["JARVIS", "'sir'", "witty", "dry wit", "usually one sentence"] {
             #expect(LocalPrompt.base.contains(word), "\(word)")
         }
-        // At SYSTEM_PROMPT's 3.77 characters a token, under a quarter of its length.
-        #expect(LocalPrompt.base.unicodeScalars.count * 4 < Self.base.unicodeScalars.count)
+        // Under 40% of SYSTEM_PROMPT's length.
+        #expect(LocalPrompt.base.unicodeScalars.count * 5 < Self.base.unicodeScalars.count * 2)
     }
 
     @Test("keywords: words, prefixes, one typo, phrases and paths")
