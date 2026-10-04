@@ -9,14 +9,16 @@ struct LiveTVAppProcess: TVAppProcess {
         NSRunningApplication.runningApplications(withBundleIdentifier: LiveTVAccessibility.bundleID).first?.processIdentifier
     }
 
+    /// Brings TV forward, launching it if needed. Success means TV is running: macOS's cooperative
+    /// activation can refuse `NSRunningApplication.activate()` from an app that isn't frontmost, so
+    /// its Bool is not a failure signal. Opening through NSWorkspace brings a running app forward too.
     func activate() async -> Bool {
-        if let app = NSRunningApplication.runningApplications(withBundleIdentifier: LiveTVAccessibility.bundleID).first {
-            return app.activate()
-        }
+        NSRunningApplication.runningApplications(withBundleIdentifier: LiveTVAccessibility.bundleID).first?.activate()
         let config = NSWorkspace.OpenConfiguration()
         config.activates = true
-        return (try? await NSWorkspace.shared.openApplication(at: URL(filePath: LiveTVAccessibility.appPath),
-                                                              configuration: config)) != nil
+        _ = try? await NSWorkspace.shared.openApplication(at: URL(filePath: LiveTVAccessibility.appPath),
+                                                          configuration: config)
+        return pid() != nil
     }
 
     /// A left click (down, then up) at a screen point, through the HID event tap.
