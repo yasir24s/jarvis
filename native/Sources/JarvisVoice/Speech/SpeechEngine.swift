@@ -24,10 +24,15 @@ public enum FallbackReason: String, Sendable {
 public struct PCMChunk: Sendable {
     public let samples: [Float]
     public let sampleRate: Double
+    /// V8: on the first piece of a request to the voice, when the request was made. A stream that
+    /// joins several requests (a reply spoken as it is written) sets it, so `DeliveryMeter` does
+    /// not count the time the voice sat idle waiting for the brain's next sentence.
+    public var requestedAt: ContinuousClock.Instant?
 
-    public init(samples: [Float], sampleRate: Double) {
+    public init(samples: [Float], sampleRate: Double, requestedAt: ContinuousClock.Instant? = nil) {
         self.samples = samples
         self.sampleRate = sampleRate
+        self.requestedAt = requestedAt
     }
 }
 

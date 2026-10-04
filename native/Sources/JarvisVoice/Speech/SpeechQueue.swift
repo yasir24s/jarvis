@@ -481,9 +481,14 @@ public actor SpeechQueue {
                     if $0.first == nil { $0.first = text }
                 }
                 var any = false
+                let requested = ContinuousClock.now   // the voice's idle wait for this sentence ends here
                 do {
                     for try await piece in await engine.synthesize(text, context: context) {
-                        if !any { tally.withLock { $0.byVoice = true } }
+                        var piece = piece
+                        if !any {
+                            tally.withLock { $0.byVoice = true }
+                            piece.requestedAt = requested
+                        }
                         any = true
                         out.yield(piece)
                     }
@@ -497,7 +502,8 @@ public actor SpeechQueue {
                     log("voice: \(Self.name(await engine.id)) failed (\(error)); say speaks that sentence")
                 }
                 do {
-                    let chunk = try await Self.collect(fallback.synthesize(text, context: context))
+                    var chunk = try await Self.collect(fallback.synthesize(text, context: context))
+                    chunk.requestedAt = requested
                     tally.withLock { $0.sayParts += 1 }
                     if !chunk.samples.isEmpty, !Task.isCancelled { out.yield(chunk) }
                 } catch {

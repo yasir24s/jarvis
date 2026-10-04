@@ -49,10 +49,15 @@ public struct StreamReport: Sendable, Equatable {
 /// piece's arrival to the last (the first comes after the voice's start-up). A stream that spans
 /// a second or more is measured; a shorter one only when it came faster than real time, so a
 /// short fast reply still clears the last slow rate and a short slow one says nothing.
+///
+/// V8: a piece that starts a new request to the voice (`requestedAt`, a reply spoken as it is
+/// written) is timed from that request, not from the piece before: the voice was idle in between,
+/// waiting for the brain's next sentence, and that wait is not its generation speed.
 struct DeliveryMeter {
     let sampleRate: Double
-    private var first: ContinuousClock.Instant?
-    private var last: ContinuousClock.Instant?
+    private var previous: ContinuousClock.Instant?
+    /// The time the voice spent generating, from the second piece on.
+    private var busy = Duration.zero
     private var afterFirst = 0
     private var arrivals = 0
 
@@ -60,19 +65,19 @@ struct DeliveryMeter {
         self.sampleRate = sampleRate
     }
 
-    mutating func arrived(samples: Int, at instant: ContinuousClock.Instant) {
+    mutating func arrived(samples: Int, at instant: ContinuousClock.Instant, requestedAt: ContinuousClock.Instant? = nil) {
         arrivals += 1
-        if first == nil {
-            first = instant
-        } else {
+        if let previous {
+            let from = requestedAt.map { max($0, previous) } ?? previous
+            busy += max(.zero, instant - from)
             afterFirst += samples
-            last = instant
         }
+        previous = instant
     }
 
     var rate: Double? {
-        guard let first, let last, arrivals >= 3 else { return nil }
-        let span = (last - first) / .seconds(1)
+        guard arrivals >= 3 else { return nil }
+        let span = busy / .seconds(1)
         guard span > 0 else { return nil }
         let rate = Double(afterFirst) / sampleRate / span
         return span >= 1 || rate >= 1 ? rate : nil
@@ -193,7 +198,7 @@ public actor EnginePlayer: SpeechPlayer {
                 guard piece.sampleRate == Self.sampleRate else {
                     throw SpeechEngineError(.error, "the player takes 24 kHz audio, not \(piece.sampleRate) Hz")
                 }
-                meter.arrived(samples: piece.samples.count, at: .now)
+                meter.arrived(samples: piece.samples.count, at: .now, requestedAt: piece.requestedAt)
                 try enqueue(preroll.take(level.push(piece.samples)))
             }
         } catch {
