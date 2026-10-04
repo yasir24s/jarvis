@@ -154,9 +154,10 @@ struct StreamUnderrunTests {
         func fastStream(pieces: Int) async throws -> StreamReport {
             let (stream, feed) = AsyncThrowingStream<PCMChunk, any Error>.makeStream()
             let playing = Task { try await player.playStream(stream, expectedSeconds: 4) }
+            // V9: all at once. Spaced by sleeps, a loaded test run stretched them past real time,
+            // and the reply's own measure then rightly raised its hold.
             for k in 0..<pieces {
                 feed.yield(PCMChunk(samples: Self.piece(k, count: 2_880), sampleRate: Self.rate))
-                try await Task.sleep(for: .milliseconds(20))
             }
             feed.finish()
             try await Task.sleep(for: .milliseconds(20))
