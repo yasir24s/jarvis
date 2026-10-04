@@ -67,12 +67,13 @@ struct VoiceMenuTests {
                 try BrainMenuTests.write(BrainMenuTests.tree(menu), name: "m10-part5-\(name)-not-enrolled")
             }
             // In the menu-bar menu the three sit after Open Chat, and Brain still follows Speak replies
-            // (V5's Speak First Sentence Early, between them, is hidden while Qwen is the voice: V6).
+            // and V5's Speak First Sentence Early (V8: shown while Qwen is the voice too).
             let titles = menus.bar.items.map(\.title)
             let open = try #require(titles.firstIndex(of: "Open Chat"))
             #expect(Array(titles[open + 1 ... open + 3]) == [SetUpItem.title, "Voice: not enrolled", ForgetMyVoice.menuTitle])
             let speak = try #require(titles.firstIndex(of: "Speak replies"))
-            #expect(titles[speak + 1] == BrainSetting.menuTitle)
+            #expect(titles[speak + 1] == SpeakEarlySetting.menuTitle)
+            #expect(titles[speak + 2] == BrainSetting.menuTitle)
         }
     }
 
