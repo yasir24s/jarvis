@@ -141,7 +141,9 @@ public struct BrainRouter: Sendable {
         }
         let system = Self.prompt(head, channel: channel, memory: memory.claude,      // step 10
                                  memoryTools: recall != nil)
-        let localSystem = Self.prompt(head, channel: channel, memory: memory.local, memoryTools: false)
+        // od/phase2 item 3: the on-device model gets the short persona and rules (LocalPrompt).
+        let localSystem = LocalPrompt.compact(Self.prompt(head, channel: channel, memory: memory.local,
+                                                          memoryTools: false))
         let user = briefing ?? (addsContext ? Self.addedContext(text) : text)
         let shown = ShownReply(sink)
 

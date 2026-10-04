@@ -63,6 +63,10 @@ public enum LocalToolset {
         "run_shortcut", "notify", "find_files", "run_command",
     ]
 
+    /// The most tools a ranked turn is offered, pinned ones included (od/phase2 item 3: about
+    /// 29 before; the scorecard's ranker recall at ten is measured by `JarvisODEval --od-rank`).
+    public static let maxRankedTools = 10
+
     /// Offered first on every turn that does not offer the whole catalog, in this order.
     public static let pinned = ["get_time", "web_search", "search_memory"]
 
@@ -140,14 +144,21 @@ public enum LocalToolset {
         var chosen = all
         var chosenTokens = allTokens
         var dropped: [String] = []
-        if !fits(allTokens), let ordered = ranker?.order(all, for: request) {
+        if !fits(allTokens), let ranked = ranker?.order(all, for: request) {
             tier = .ranked
+            // od/phase2 item 3: at most `maxRankedTools`; the model picks better from fewer.
+            let ordered = Array(ranked.prefix(maxRankedTools))
+            let whole = ordered.count < ranked.count ? await toolTokens(ordered) : allTokens
             // The longest prefix of `ordered` that fits. A tool only adds tokens, so bisect:
-            // about six counts for 47 tools, where one at a time would be a dozen. `all` does
-            // not fit, so the answer is at most one short of it.
+            // about four counts for ten tools, where one at a time would be up to ten.
             var low = 0
             var high = ordered.count - 1
             chosenTokens = 0
+            if fits(whole) {
+                low = ordered.count
+                high = low
+                chosenTokens = whole
+            }
             while low < high {
                 let mid = (low + high + 1) / 2
                 let tokens = await toolTokens(Array(ordered[..<mid]))

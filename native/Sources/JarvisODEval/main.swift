@@ -7,7 +7,10 @@ import JarvisEval
 //                [--only <id-prefix>] [--limit <n>] [--timeout <seconds>]
 //   JarvisODEval --od-replay <archive> --out <report.json> [--include-text] [--limit <n>]
 //                [--timeout <seconds>]
+//   JarvisODEval --od-rank <fixture.json> [--top <n>[,<n>…]] [--only <id-prefix>[,…]]
 //
+// --od-rank runs the tool ranker alone, no model: recall at each --top (default 8,10,12) and
+// the cases it misses at the first.
 // --od-eval prints the scorecard table and writes one JSON line per case to --out.
 // --od-replay writes aggregate counts only to --out (0600); request and reply text are written
 // only with --include-text. It prints counts only, never text.
@@ -17,6 +20,7 @@ let usage = """
                         [--only <id-prefix>] [--limit <n>] [--timeout <seconds>]
            JarvisODEval --od-replay <archive> --out <report.json> [--include-text] [--limit <n>]
                         [--timeout <seconds>]
+           JarvisODEval --od-rank <fixture.json> [--top <n>[,<n>…]] [--only <id-prefix>[,…]]
 
     """
 
@@ -38,6 +42,7 @@ struct Options {
     var limit: Int?
     var timeout = 90.0
     var includeText = false
+    var top = [8, 10, 12]
 }
 
 func parse(_ args: [String]) -> Options? {
@@ -49,7 +54,7 @@ func parse(_ args: [String]) -> Options? {
     }
     while i < args.count {
         switch args[i] {
-        case "--od-eval", "--od-replay":
+        case "--od-eval", "--od-replay", "--od-rank":
             guard o.mode.isEmpty, let v = value() else { return nil }
             o.mode = args[i - 1]
             o.input = v
@@ -59,6 +64,11 @@ func parse(_ args: [String]) -> Options? {
         case "--limit": guard let v = value().flatMap(Int.init), v > 0 else { return nil }; o.limit = v
         case "--timeout": guard let v = value().flatMap(Double.init), v > 0 else { return nil }; o.timeout = v
         case "--include-text": o.includeText = true
+        case "--top":
+            guard let v = value() else { return nil }
+            let ks = v.split(separator: ",").compactMap { Int($0) }.filter { $0 > 0 }
+            guard !ks.isEmpty else { return nil }
+            o.top = ks
         default: return nil
         }
         i += 1
@@ -84,6 +94,33 @@ guard let options = parse(Array(CommandLine.arguments.dropFirst())) else {
     exit(64)
 }
 
+/// `--only a,b`: cases whose id starts with any of the comma-separated prefixes.
+func onlyFilter(_ cases: [EvalCase]) -> [EvalCase] {
+    guard let only = options.only else { return cases }
+    let prefixes = only.split(separator: ",").map(String.init)
+    return cases.filter { c in prefixes.contains { c.id.hasPrefix($0) } }
+}
+
+if options.mode == "--od-rank" {
+    let fixture: EvalFixture
+    do {
+        fixture = try EvalFixture.load(URL(fileURLWithPath: options.input))
+    } catch {
+        fail("cannot read the fixture \(options.input): \(error)", 66)
+    }
+    let reports = RankerRecall.run(onlyFilter(fixture.cases), top: options.top)
+    for r in reports {
+        print(String(format: "ranker recall @%-3d %5.1f%%  (%d/%d)", r.top, r.recall * 100, r.found, r.cases))
+    }
+    let fast = RankerRecall.fastPath(onlyFilter(fixture.cases))
+    print("fast path: \(fast.python) by Python's branches, \(fast.native.count) by native ones")
+    for n in fast.native { print("  native: \(n.id) \(n.branch)") }
+    if let first = reports.first {
+        for m in first.misses { print("  miss @\(first.top): \(m.id) \(m.expected) rank \(m.rank.map(String.init) ?? "-")") }
+    }
+    exit(0)
+}
+
 if let reason = OnDeviceBrain.unavailableReason() {
     fail("Apple Intelligence's on-device model is unavailable (\(reason)). "
          + "Turn on Apple Intelligence in System Settings and wait for the model to download, then run again.", 69)
@@ -100,7 +137,7 @@ case "--od-eval":
         fail("cannot read the fixture \(options.input): \(error)", 66)
     }
     var cases = fixture.cases
-    if let only = options.only { cases = cases.filter { $0.id.hasPrefix(only) } }
+    cases = onlyFilter(cases)
     if let limit = options.limit { cases = Array(cases.prefix(limit)) }
     let out = options.out.map(privateFile)
     let encoder = JSONEncoder()

@@ -210,7 +210,7 @@ struct MemoryRecallTests {
         let before = BrainRouter.prompt(got.head, channel: channel)
         let localBefore = BrainRouter.prompt(got.head, channel: channel, memoryTools: false)   // P4
         #expect(Array(got.claude.utf8) == Array(before.utf8))
-        #expect(Array(got.local.utf8) == Array(localBefore.utf8))
+        #expect(Array(got.local.utf8) == Array(LocalPrompt.compact(localBefore).utf8))   // od/phase2
         if channel == .voice { #expect(Array(got.claude.utf8) == Array(got.head.claudeSystem.utf8)) }
     }
 
@@ -239,7 +239,8 @@ struct MemoryRecallTests {
         let about = SelfKnowledge.text(channel, memoryTools: true)              // P4, before the addendum
         let localAbout = SelfKnowledge.text(channel, memoryTools: false)
         #expect(Array(got.claude.utf8) == Array((head.system + about + addendum + claudeBlock + preamble).utf8))
-        #expect(Array(got.local.utf8) == Array((head.system + localAbout + addendum + localBlock + preamble).utf8))
+        #expect(Array(got.local.utf8)
+                == Array(LocalPrompt.compact(head.system + localAbout + addendum + localBlock + preamble).utf8))
         #expect(BrainRouter.prompt(head, channel: channel, memory: claudeBlock) == got.claude)
     }
 }

@@ -90,7 +90,8 @@ struct BrainRouterTests {
         #expect(rig.events.events == [Self.interactions, "claude", Self.localBackend, "local"])
         let claudeCall = try #require(await rig.claude.calls.first)
         let localCall = try #require(await rig.local.calls.first)
-        #expect(Array(localCall.system.utf8) == Array(claudeCall.system.utf8))
+        // od/phase2 item 3: the on-device model gets the short persona and rules (LocalPrompt).
+        #expect(Array(localCall.system.utf8) == Array(LocalPrompt.compact(claudeCall.system).utf8))
         #expect(localCall.user == Self.text && claudeCall.user == Self.text)
         #expect(try rig.savedTurns().last?.objectValue?.string("content") == "Local reply, sir.")
     }
@@ -147,7 +148,7 @@ struct BrainRouterTests {
         let claudeCall = try #require(await rig.claude.calls.first)
         let localCall = try #require(await rig.local.calls.first)
         #expect(Array(claudeCall.system.utf8) == Array(expected.utf8))
-        #expect(Array(localCall.system.utf8) == Array(expected.utf8))
+        #expect(Array(localCall.system.utf8) == Array(LocalPrompt.compact(expected).utf8))
         #expect(localCall.channel == .text)
     }
 

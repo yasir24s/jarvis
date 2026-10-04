@@ -112,7 +112,9 @@ struct LocalToolRankerTests {
                 ranked += 1
                 let ordered = try #require(ranker.order(all, for: request))
                 #expect(s.names == ordered.prefix(s.tools.count).map(\.name))
-                if s.tools.count < ordered.count {
+                // od/phase2 item 3: at most LocalToolset.maxRankedTools.
+                #expect(s.tools.count <= LocalToolset.maxRankedTools)
+                if s.tools.count < min(ordered.count, LocalToolset.maxRankedTools) {
                     let next = try await counter.tokenCount(tools: Array(ordered.prefix(s.tools.count + 1)))
                     #expect(Double(next + s.instructionTokens) > s.limit)
                 }

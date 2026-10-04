@@ -31,6 +31,9 @@ public final class LocalToolRanker: Sendable {
     /// turn's message sits, and usually where a pasted text's question is.
     public static let maxTextCharacters = 300
 
+    /// The most keyword matches that count toward a tool's place (`LocalToolKeywords`).
+    public static let maxKeywordHits = 2
+
     /// This ranker's own cache. Recall's `FactVectors` must not be shared: it forgets every
     /// vector that is not a fact (`retain`), which would drop the tools'.
     private let vectors: FactVectors
@@ -77,14 +80,21 @@ public final class LocalToolRanker: Sendable {
             }
         }
         var scored = 0
-        var rest: [(tool: DynamicTool, score: Double, index: Int)] = []
+        var rest: [(tool: DynamicTool, hits: Int, score: Double, index: Int)] = []
+        let words = LocalToolKeywords.Request(request.text)
         for (index, tool) in all.enumerated() where !offered.contains(tool.name) {
             let score = vectors.vector(forFact: Self.text(for: tool)).flatMap { FactVectors.cosine($0, query) }
             if score != nil { scored += 1 }
-            rest.append((tool, score ?? -2, index))   // a tool with no vector goes below any cosine
+            // od/phase2 item 3: tools the message names by keyword come first (up to two
+            // keys count), then the cosine. A tool with no vector goes below any cosine.
+            let hits = min(LocalToolKeywords.hits(tool.name, in: words), Self.maxKeywordHits)
+            rest.append((tool, hits, score ?? -2, index))
         }
         guard scored > 0 || rest.isEmpty else { return nil }
-        rest.sort { $0.score != $1.score ? $0.score > $1.score : $0.index < $1.index }
+        rest.sort {
+            if $0.hits != $1.hits { return $0.hits > $1.hits }
+            return $0.score != $1.score ? $0.score > $1.score : $0.index < $1.index
+        }
         return pinned + carried + rest.map { $0.tool }
     }
 }
