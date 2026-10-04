@@ -8,7 +8,8 @@ import Foundation
 /// hundred thousand one hundred twenty-three".
 ///
 /// One pass, left to right, so nothing it writes is read again:
-/// - web addresses: the domain only, "dot" between its parts ("www." and the path dropped)
+/// - web addresses: in passing, the domain only, "dot" between its parts ("www." and the path
+///   dropped); a link being given (most of the text, or after "link is") in full (`fullAddress`)
 /// - email addresses: "name at example dot com"
 /// - phone numbers (a leading 0 or +, 9 to 15 digits in groups): digit by digit, 0 as "oh",
 ///   a comma (a pause) between the groups as written, or in the UK grouping when written as one
@@ -84,9 +85,13 @@ public enum SpeechNormaliser {
             return r.location == NSNotFound ? nil : ns.substring(with: r)
         }
         let whole = ns.substring(with: m.range)
-        if let url = group("url") { return domain(ofURL: url) }
+        if let url = group("url") {
+            return presented(m.range, in: ns) ? fullAddress(url) : domain(ofURL: url)
+        }
         if let email = group("email") { return spokenEmail(email) }
-        if let domain = group("domain") { return self.domain(ofURL: domain) }
+        if let domain = group("domain") {
+            return presented(m.range, in: ns) ? fullAddress(domain) : self.domain(ofURL: domain)
+        }
         if let phone = group("phone") { return spokenPhone(phone) ?? numbersOnly(phone) }
         if let hour = group("hour"), let minute = group("minute"), let h = Int(hour), let mm = Int(minute) {
             return time(hour: h, minute: mm, written: hour, ampm: group("ampm"))
@@ -141,6 +146,51 @@ public enum SpeechNormaliser {
     }()
 
     // MARK: - Addresses
+
+    /// Whether a web address is the thing being given, not a passing mention: it follows "link
+    /// is", "address is", "URL is" or "link:", or it ends the text (punctuation aside) with at most
+    /// four words before it ("Here you are, sir: https://…").
+    static func presented(_ range: NSRange, in ns: NSString) -> Bool {
+        let after = ns.substring(from: range.location + range.length)
+        let lead = ns.substring(to: range.location)
+        if after.allSatisfy({ $0.isWhitespace || $0.isPunctuation }),
+           lead.split(whereSeparator: { $0.isWhitespace }).count <= 4 {
+            return true
+        }
+        let start = max(0, range.location - 24)
+        let before = ns.substring(with: NSRange(location: start, length: range.location - start)).lowercased()
+        return presentedCue.firstMatch(in: before, range: NSRange(location: 0, length: (before as NSString).length)) != nil
+    }
+
+    private static let presentedCue: NSRegularExpression = {
+        do { return try NSRegularExpression(pattern: #"\b(?:link|address|url) is:?\s*$|\blink:\s*$"#) } catch {
+            preconditionFailure("\(error)")
+        }
+    }()
+
+    /// The whole address, for a link being given: "https://www.example.com/news/uk-politics?id=4"
+    /// is "example dot com slash news slash uk politics and some parameters". The scheme, "www."
+    /// and a #fragment are left out; dots in the path are "dot", hyphens and underscores spaces.
+    static func fullAddress(_ url: String) -> String {
+        var rest = url
+        if let scheme = rest.range(of: "://") { rest = String(rest[scheme.upperBound...]) }
+        if let hash = rest.firstIndex(of: "#") { rest = String(rest[..<hash]) }
+        var query = false
+        if let mark = rest.firstIndex(of: "?") {
+            query = rest.index(after: mark) < rest.endIndex
+            rest = String(rest[..<mark])
+        }
+        let parts = rest.split(separator: "/").map(String.init)
+        guard let host = parts.first else { return url }
+        var words = [domain(ofURL: host)]
+        for segment in parts.dropFirst() {
+            let spoken = segment.replacingOccurrences(of: "-", with: " ").replacingOccurrences(of: "_", with: " ")
+                .split(separator: ".").map { spokenLabel(String($0)) }.joined(separator: " dot ")
+            words.append("slash " + spoken)
+        }
+        if query { words.append("and some parameters") }
+        return words.joined(separator: " ")
+    }
 
     /// "https://www.example.co.uk/news?id=4" is "example dot co dot uk".
     static func domain(ofURL url: String) -> String {

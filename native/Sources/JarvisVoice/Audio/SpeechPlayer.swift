@@ -30,15 +30,52 @@ public struct StreamReport: Sendable, Equatable {
     public var dryMilliseconds: Int
     /// What was held back before anything played, in seconds of audio.
     public var preroll: Double
+    /// The last reply's delivery rate the pre-roll was worked out from; nil when there was none.
+    public var holdRate: Double?
     /// Seconds of audio the voice delivered per second, from its second piece to its last; nil
-    /// when the stream was too short to tell.
+    /// when the stream was too short to tell (`DeliveryMeter`).
     public var deliveryRate: Double?
 
-    public init(dry: Int, dryMilliseconds: Int, preroll: Double, deliveryRate: Double?) {
+    public init(dry: Int, dryMilliseconds: Int, preroll: Double, holdRate: Double? = nil, deliveryRate: Double?) {
         self.dry = dry
         self.dryMilliseconds = dryMilliseconds
         self.preroll = preroll
+        self.holdRate = holdRate
         self.deliveryRate = deliveryRate
+    }
+}
+
+/// How fast a stream's pieces came, in seconds of audio a second, measured from the second
+/// piece's arrival to the last (the first comes after the voice's start-up). A stream that spans
+/// a second or more is measured; a shorter one only when it came faster than real time, so a
+/// short fast reply still clears the last slow rate and a short slow one says nothing.
+struct DeliveryMeter {
+    let sampleRate: Double
+    private var first: ContinuousClock.Instant?
+    private var last: ContinuousClock.Instant?
+    private var afterFirst = 0
+    private var arrivals = 0
+
+    init(sampleRate: Double) {
+        self.sampleRate = sampleRate
+    }
+
+    mutating func arrived(samples: Int, at instant: ContinuousClock.Instant) {
+        arrivals += 1
+        if first == nil {
+            first = instant
+        } else {
+            afterFirst += samples
+            last = instant
+        }
+    }
+
+    var rate: Double? {
+        guard let first, let last, arrivals >= 3 else { return nil }
+        let span = (last - first) / .seconds(1)
+        guard span > 0 else { return nil }
+        let rate = Double(afterFirst) / sampleRate / span
+        return span >= 1 || rate >= 1 ? rate : nil
     }
 }
 
@@ -130,20 +167,13 @@ public actor EnginePlayer: SpeechPlayer {
         var playEnd: ContinuousClock.Instant?
         var dry = 0
         var dryTime = Duration.zero
-        // Arrivals after the first piece, for the delivery rate.
-        var firstArrival: ContinuousClock.Instant?
-        var lastArrival: ContinuousClock.Instant?
-        var deliveredAfterFirst = 0
-        var arrivals = 0
+        var meter = DeliveryMeter(sampleRate: Self.sampleRate)
+        let holdRate = hold > PreRoll.seconds ? deliveryRate : nil
         defer {
-            var rate: Double?
-            if let firstArrival, let lastArrival, arrivals >= 4 {
-                let span = (lastArrival - firstArrival) / .seconds(1)
-                if span >= 1 { rate = Double(deliveredAfterFirst) / Self.sampleRate / span }
-            }
+            let rate = meter.rate
             if !Task.isCancelled, let rate { deliveryRate = rate }
             report = StreamReport(dry: dry, dryMilliseconds: Int((dryTime / .milliseconds(1)).rounded()),
-                                  preroll: hold, deliveryRate: rate)
+                                  preroll: hold, holdRate: holdRate, deliveryRate: rate)
         }
         func enqueue(_ samples: [Float]) throws {
             guard !samples.isEmpty, !Task.isCancelled else { return }
@@ -163,14 +193,7 @@ public actor EnginePlayer: SpeechPlayer {
                 guard piece.sampleRate == Self.sampleRate else {
                     throw SpeechEngineError(.error, "the player takes 24 kHz audio, not \(piece.sampleRate) Hz")
                 }
-                let now = ContinuousClock.now
-                if firstArrival == nil {
-                    firstArrival = now
-                } else {
-                    deliveredAfterFirst += piece.samples.count
-                    lastArrival = now
-                }
-                arrivals += 1
+                meter.arrived(samples: piece.samples.count, at: .now)
                 try enqueue(preroll.take(level.push(piece.samples)))
             }
         } catch {

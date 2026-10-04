@@ -27,6 +27,15 @@ struct SpeechNormaliserTests {
         ("See https://www.example.com/news?id=4 for more.", "See example dot com for more."),
         ("Go to www.example.co.uk.", "Go to example dot co dot uk."),
         ("It's on example.com/help, sir.", "It's on example dot com, sir."),
+        ("I found it on example.com/help yesterday.", "I found it on example dot com yesterday."),
+        // A link being given is read in full.
+        ("The link is https://www.example.com/news/uk-politics?id=4.",
+         "The link is example dot com slash news slash uk politics and some parameters."),
+        ("https://example.org/docs/v2/setup.html", "example dot org slash docs slash v two slash setup dot html"),
+        ("Here you are, sir: https://example.com/a#top", "Here you are, sir: example dot com slash a"),
+        ("Address is: www.example.co.uk/contact-us", "Address is: example dot co dot uk slash contact us"),
+        ("The URL is example.com/help_centre, sir, if you need it.",
+         "The URL is example dot com slash help centre, sir, if you need it."),
         // Times, British, 12-hour.
         ("It's 23:52.", "It's eleven fifty-two p m."),
         ("It's 3:45 PM.", "It's three forty-five p m."),

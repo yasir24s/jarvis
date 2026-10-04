@@ -335,8 +335,9 @@ public actor SpeechQueue {
                         log("voice: the voice stopped mid-reply (\(error)); the rest is not spoken")
                     }
                 }
-                if let report = await player.lastStream(), report.dry > 0 || report.preroll > PreRoll.seconds {
-                    log(Self.dryLine(report))
+                if let report = await player.lastStream() {
+                    log(Self.prerollLine(report))
+                    if report.dry > 0 { log(Self.dryLine(report)) }
                 }
                 if Task.isCancelled { stopped = true }
             }
@@ -439,11 +440,17 @@ public actor SpeechQueue {
         return line
     }
 
-    /// `voice: stream ran dry <n> times, <ms> ms; pre-roll <s> s; delivered at <r>x real time`,
-    /// the pre-roll only when it was raised, the rate only when it is known.
+    /// `voice: pre-roll 0.2 s (stream keeping up)`, or `voice: pre-roll 1.4 s (stream slow: x0.80)`
+    /// with the last reply's delivery rate it was worked out from.
+    static func prerollLine(_ report: StreamReport) -> String {
+        let seconds = String(format: "%.1f", report.preroll)
+        guard let rate = report.holdRate else { return "voice: pre-roll \(seconds) s (stream keeping up)" }
+        return "voice: pre-roll \(seconds) s (stream slow: x\(String(format: "%.2f", rate)))"
+    }
+
+    /// `voice: stream ran dry <n> times, <ms> ms`, and this reply's delivery rate when known.
     static func dryLine(_ report: StreamReport) -> String {
         var line = "voice: stream ran dry \(report.dry) times, \(report.dryMilliseconds) ms"
-        if report.preroll > PreRoll.seconds { line += String(format: "; pre-roll %.1f s", report.preroll) }
         if let rate = report.deliveryRate { line += String(format: "; delivered at %.2fx real time", rate) }
         return line
     }
