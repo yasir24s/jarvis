@@ -68,6 +68,7 @@ let package = Package(
                 "MLXAudioCore",
                 "MLXAudioTTS",
                 .product(name: "MLX", package: "mlx-swift"),
+                .product(name: "MLXNN", package: "mlx-swift"),   // V10: the weights to keep resident
                 .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
             ],
             // MLXArray and the model are not Sendable; the helper is single-threaded.

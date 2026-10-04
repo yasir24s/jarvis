@@ -180,6 +180,8 @@ public actor QwenEngine: SpeechEngine {
     private var lastBusy: ContinuousClock.Instant?
     /// V9: the warm-up request in flight (`warmUp`), cut short by the next real one.
     private var warmUpID: String?
+    /// V10: the helper keeps the model wired in memory (`setResident`); on by default.
+    private var residentWanted = true
 
     public init(launcher: any QwenHelperLauncher, firstTimeout: Duration = QwenEngine.defaultFirstTimeout,
                 gapTimeout: Duration = QwenEngine.defaultGapTimeout,
@@ -270,6 +272,23 @@ public actor QwenEngine: SpeechEngine {
         guard let id = warmUpID else { return }
         warmUpID = nil
         abandon(id)
+    }
+
+    // MARK: - V10: the model kept resident
+
+    /// V10: whether the helper keeps the model's weights wired in memory. Live, after about 10 min
+    /// idle the whole model had been swapped out and the next reply paged it back in (0.63x real
+    /// time). A running helper is told at once; a helper started later is launched with it.
+    public func setResident(_ on: Bool) {
+        guard on != residentWanted else { return }
+        residentWanted = on
+        try? connection?.send(Self.residentLine(on))
+    }
+
+    public var isResident: Bool { residentWanted }
+
+    static func residentLine(_ on: Bool) -> String {
+        #"{"cmd":"resident","on":\#(on)}"#
     }
 
     public func release() async {
@@ -396,7 +415,8 @@ public actor QwenEngine: SpeechEngine {
             finishAll()
             Task { await connection.close(grace: .seconds(2)) }
         }
-        let helper = try launcher.launch(arguments: arguments)
+        // V10: not part of `connectionArguments`, so switching it never restarts the helper.
+        let helper = try launcher.launch(arguments: arguments + ["--resident", residentWanted ? "on" : "off"])
         connectionNumber += 1
         let number = connectionNumber
         connection = helper

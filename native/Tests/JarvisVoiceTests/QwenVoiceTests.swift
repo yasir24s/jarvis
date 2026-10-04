@@ -28,6 +28,8 @@ final class FakeQwenConnection: VoiceHelperConnection {
         var requests: [String] = []
         var commands: [String] = []
         var cancelled: [String] = []
+        /// V10: the `on` of each resident command.
+        var resident: [Bool] = []
         var gates: [CheckedContinuation<Void, Never>] = []
         var open = 0
         var exited = false
@@ -44,17 +46,20 @@ final class FakeQwenConnection: VoiceHelperConnection {
     var requests: [String] { state.withLock { $0.requests } }
     var commands: [String] { state.withLock { $0.commands } }
     var cancelled: [String] { state.withLock { $0.cancelled } }
+    var resident: [Bool] { state.withLock { $0.resident } }
     var closed: Bool { state.withLock { $0.closed } }
 
     func send(_ line: String) throws {
-        guard let object = try JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: String] else {
+        guard let raw = try JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any] else {
             throw CocoaError(.coderInvalidValue)
         }
+        let object = raw.compactMapValues { $0 as? String }
         guard !state.withLock({ $0.exited }) else { throw CocoaError(.fileWriteUnknown) }
         if let cmd = object["cmd"] {
             state.withLock {
                 $0.commands.append(cmd)
                 if cmd == "cancel", let id = object["id"] { $0.cancelled.append(id) }
+                if cmd == "resident", let on = raw["on"] as? Bool { $0.resident.append(on) }
             }
             if cmd != "cancel" { yield(["cmd": cmd, "ok": true, "loaded": true, "footprint_mb": 3000]) }
             return
@@ -387,8 +392,39 @@ struct QwenVoiceTests {
         launcher.setRate(1.25)
         for try await _ in await engine.synthesize("Three.", context: SynthesisContext(turnID: UUID())) {}
         #expect(launcher.launched.count == 2)
-        #expect(launcher.launchArguments.last == ["--rate", "1.25"])
+        #expect(launcher.launchArguments.last == ["--rate", "1.25", "--resident", "on"])
         #expect(launcher.launched[0].closed)
+    }
+
+    // MARK: - V10: resident
+
+    @Test func residentIsOnAtLaunchAndSwitchingItTellsTheRunningHelperWithoutARestart() async throws {
+        let folder = try TempFolder()
+        defer { folder.remove() }
+        let launcher = FakeQwenLauncher(outDirectory: folder.url, script: .pieces(Self.pieces([10])))
+        let engine = QwenEngine(launcher: launcher)
+        #expect(await engine.isResident)
+        for try await _ in await engine.synthesize("One.", context: SynthesisContext(turnID: UUID())) {}
+        #expect(launcher.launchArguments.last?.suffix(2) == ["--resident", "on"])
+        await engine.setResident(false)
+        await engine.setResident(false)   // no change, nothing sent
+        let helper = try #require(launcher.launched.first)
+        #expect(helper.resident == [false])
+        await engine.setResident(true)
+        #expect(helper.resident == [false, true])
+        for try await _ in await engine.synthesize("Two.", context: SynthesisContext(turnID: UUID())) {}
+        #expect(launcher.launched.count == 1)
+    }
+
+    @Test func aHelperStartedWhileResidentIsOffIsLaunchedWithItOff() async throws {
+        let folder = try TempFolder()
+        defer { folder.remove() }
+        let launcher = FakeQwenLauncher(outDirectory: folder.url, script: .pieces(Self.pieces([10])))
+        let engine = QwenEngine(launcher: launcher)
+        await engine.setResident(false)
+        for try await _ in await engine.synthesize("One.", context: SynthesisContext(turnID: UUID())) {}
+        #expect(launcher.launchArguments.last == ["--rate", "1.5", "--resident", "off"])
+        #expect(launcher.launched.first?.resident == [])
     }
 
     // MARK: - VoiceSelector

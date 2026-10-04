@@ -1,5 +1,6 @@
 import Foundation
 @testable import JarvisApp
+import JarvisVoice
 import Synchronization
 import Testing
 
@@ -189,5 +190,84 @@ struct TurnStartWarmupTests {
         #expect(warmup.turnStarting() == nil)
         await first?.value
         #expect(state.values.withLock { $0.warmUps } == 1)
+    }
+}
+
+/// V10, with fakes: the Qwen model stays resident unless the voice is F5, speech has been muted
+/// longer than ten minutes, or memory is under 10% free; it comes back when those clear.
+@Suite("V10 Qwen model resident")
+@MainActor
+struct QwenResidencyTests {
+    /// The plain fields are only touched on the main actor; the Mutexes from the engine's side.
+    final class State: @unchecked Sendable {
+        var qwen = true
+        var muted = false
+        var free: Int? = 40
+        var now = ContinuousClock.now
+        let told = Mutex<[Bool]>([])
+        let logs = Mutex<[String]>([])
+    }
+
+    static func residency(_ state: State) -> QwenResidency {
+        QwenResidency(.init(
+            usesQwen: { state.qwen },
+            muted: { state.muted },
+            memoryFreePercent: { state.free },
+            setResident: { on in state.told.withLock { $0.append(on) } },
+            now: { state.now },
+            sleep: { _ in },
+            log: { line in state.logs.withLock { $0.append(line) } }))
+    }
+
+    @Test func onWithQwenSoNothingIsSent() async {
+        let state = State()
+        let residency = Self.residency(state)
+        await residency.check()
+        #expect(residency.resident)
+        #expect(state.told.withLock { $0 }.isEmpty)
+    }
+
+    @Test func offForF5AndOnAgainForQwen() async {
+        let state = State()
+        let residency = Self.residency(state)
+        state.qwen = false
+        await residency.check()
+        await residency.check()
+        state.qwen = true
+        await residency.check()
+        #expect(state.told.withLock { $0 } == [false, true])
+        #expect(state.logs.withLock { $0 } == ["voice: Qwen model resident off (the voice is F5)",
+                                               "voice: Qwen model resident on"])
+    }
+
+    @Test func offOnlyAfterTenMinutesMutedAndOnWhenUnmuted() async {
+        let state = State()
+        let residency = Self.residency(state)
+        state.muted = true
+        await residency.check()
+        state.now += .seconds(600)
+        await residency.check()
+        #expect(state.told.withLock { $0 }.isEmpty)
+        state.now += .seconds(1)
+        await residency.check()
+        #expect(state.told.withLock { $0 } == [false])
+        #expect(state.logs.withLock { $0 }.last == "voice: Qwen model resident off (speech muted over 10 min)")
+        state.muted = false
+        await residency.check()
+        #expect(state.told.withLock { $0 } == [false, true])
+    }
+
+    @Test func offUnderTenPercentFreeAndOnWhenItClears() async {
+        let state = State()
+        let residency = Self.residency(state)
+        state.free = 10
+        await residency.check()
+        #expect(state.told.withLock { $0 }.isEmpty)
+        state.free = 9
+        await residency.check()
+        #expect(state.logs.withLock { $0 }.last == "voice: Qwen model resident off (9% of memory free)")
+        state.free = nil   // unreadable is not short
+        await residency.check()
+        #expect(state.told.withLock { $0 } == [false, true])
     }
 }

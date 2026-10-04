@@ -11,7 +11,7 @@ import MLXAudioTTS
 //
 //   jarvis-voice-qwen --model <dir> --reference <dir> --out-dir <dir> [--rate 1.5]
 //                     [--interval 0.32] [--cache-limit-mb 512] [--idle-exit 600]
-//                     [--selftest] [--render <list>]
+//                     [--resident on|off] [--selftest] [--render <list>]
 //
 // Protocol: one JSON object per line on stdin, one per line on stdout. jarvis-voice's, with the
 // audio streamed:
@@ -46,6 +46,10 @@ import MLXAudioTTS
 // then the helper exits, 0 when every line was rendered. Each line's report gives the time to
 // its first audio and the whole time. install-voice-assets.sh renders the acknowledgements so.
 //
+// --resident on (the default) keeps the model's weights wired in memory once loaded, so an idle
+// spell cannot swap them out (Resident.swift); {"cmd": "resident", "on": true|false} switches it
+// while the helper runs, and {"cmd": "ping"} reports it with the resident and swapped MB.
+//
 // <model> is the Qwen3-TTS folder (config.json, model.safetensors, tokenizer files and
 // speech_tokenizer/); <reference> holds reference.wav and reference.txt.
 
@@ -59,6 +63,7 @@ struct Options {
     var interval = 0.32
     var cacheLimitMB = 512
     var idleExitSeconds = 600.0
+    var resident = true
     var selftest = false
     var render: URL?
 }
@@ -67,7 +72,8 @@ func usage(_ message: String) -> Never {
     FileHandle.standardError.write(Data((
         "jarvis-voice-qwen: \(message)\n"
             + "usage: jarvis-voice-qwen --model <dir> --reference <dir> --out-dir <dir> [--rate X]"
-            + " [--interval S] [--cache-limit-mb N] [--idle-exit S] [--selftest] [--render <list>]\n").utf8))
+            + " [--interval S] [--cache-limit-mb N] [--idle-exit S] [--resident on|off] [--selftest]"
+            + " [--render <list>]\n").utf8))
     exit(2)
 }
 
@@ -97,6 +103,12 @@ func parseOptions(_ args: [String]) -> Options {
         case "--idle-exit":
             guard let s = Double(next(flag)), s > 0 else { usage("\(flag) takes seconds") }
             options.idleExitSeconds = s
+        case "--resident":
+            switch next(flag) {
+            case "on": options.resident = true
+            case "off": options.resident = false
+            default: usage("\(flag) takes on or off")
+            }
         case "--selftest": options.selftest = true
         case "--render": options.render = URL(fileURLWithPath: next(flag), isDirectory: false)
         default: usage("unknown argument \(flag)")
@@ -124,6 +136,26 @@ func footprintMB() -> (now: Double, peak: Double) {
     guard kr == KERN_SUCCESS else { return (-1, -1) }
     let mb = 1.0 / 1_048_576.0
     return (Double(info.phys_footprint) * mb, Double(info.ledger_phys_footprint_peak) * mb)
+}
+
+/// V10: the resident size and the compressed or swapped size, in MB; the Metal (graphics) memory
+/// MLX holds the model in, and how much of it the kernel reports compressed or swapped, in MB; and
+/// the pages swapped back in so far (task_info TASK_VM_INFO). The graphics memory is not in the
+/// resident size at all, and is reported "swapped" even straight after a load, so the swap-ins are
+/// the figure that shows real paging.
+func residencyMB() -> (resident: Int, swapped: Int, graphics: Int, graphicsSwapped: Int, swapins: Int) {
+    var info = task_vm_info_data_t()
+    var count = mach_msg_type_number_t(
+        MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
+    let kr = withUnsafeMutablePointer(to: &info) {
+        $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+            task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
+        }
+    }
+    guard kr == KERN_SUCCESS else { return (-1, -1, -1, -1, -1) }
+    return (Int(info.resident_size / 1_048_576), Int(info.compressed / 1_048_576),
+            Int(info.ledger_tag_graphics_footprint / 1_048_576),
+            Int(info.ledger_tag_graphics_footprint_compressed / 1_048_576), Int(info.ledger_swapins))
 }
 
 // MARK: - Voice
@@ -256,6 +288,8 @@ struct Request: Decodable {
     let id: String?
     let text: String?
     let cmd: String?
+    /// V10: {"cmd": "resident", "on": true|false}.
+    let on: Bool?
 }
 
 struct Reply: Encodable {
@@ -271,6 +305,13 @@ struct Reply: Encodable {
     var firstMs: Int?
     var genMs: Int?
     var footprintMb: Int?
+    /// V10: resident is on; the helper's resident and swapped (or compressed) MB.
+    var resident: Bool?
+    var rssMb: Int?
+    var swappedMb: Int?
+    var graphicsMb: Int?
+    var graphicsSwappedMb: Int?
+    var swapins: Int?
     var loaded: Bool?
     var cancelled: Bool?
     var error: String?
@@ -327,6 +368,13 @@ Memory.cacheLimit = options.cacheLimitMB * 1_048_576
 
 // Top-level state is used from the generation task too; the helper never runs two things at once.
 nonisolated(unsafe) var voice: Voice?
+/// V10: what the app asked for; applied once the model is loaded.
+nonisolated(unsafe) var wantResident = options.resident
+
+func applyResident() async {
+    guard voice != nil, wantResident != Residency.isOn else { return }
+    if let line = Residency.set(wantResident, model: voice?.model) { log(line) }
+}
 
 func loadedVoice() async throws -> Voice {
     if let voice { return voice }
@@ -341,6 +389,7 @@ func loadedVoice() async throws -> Voice {
     voice = loaded
     log(String(format: "model loaded in %.2f s and warmed up in %.2f s, footprint %d MB",
                seconds(w0 - start), seconds(ContinuousClock.now - w0), Int(footprintMB().now)))
+    await applyResident()
     return loaded
 }
 
@@ -351,8 +400,11 @@ func clearCache() -> Double {
     let before = footprintMB()
     Memory.clearCache()
     let after = footprintMB()
+    let held = residencyMB()
     log(String(format: "reply done: footprint %.0f MB, %.0f MB after clearing the cache (peak %.0f MB)",
-               before.now, after.now, after.peak))
+               before.now, after.now, after.peak)
+        + "; graphics \(held.graphics) MB, \(held.graphicsSwapped) MB of it reported swapped; swap-ins \(held.swapins)"
+        + (Residency.isOn ? "; resident \(Residency.residentBytes / 1_048_576) MB (\(Residency.mechanism?.rawValue ?? ""))" : "; not resident"))
     return after.now
 }
 
@@ -421,8 +473,18 @@ func handle(line: Data) async {
     if let cmd = request.cmd {
         switch cmd {
         case "ping":
+            let held = residencyMB()
             send(Reply(id: request.id, cmd: "ping", ok: true, footprintMb: Int(footprintMB().now.rounded()),
-                       loaded: voice != nil))
+                       resident: Residency.isOn, rssMb: held.resident, swappedMb: held.swapped, graphicsMb: held.graphics,
+                       graphicsSwappedMb: held.graphicsSwapped, swapins: held.swapins, loaded: voice != nil))
+        case "resident":
+            guard let on = request.on else {
+                send(Reply(id: request.id, cmd: "resident", ok: false, error: "resident needs \"on\": true or false"))
+                return
+            }
+            wantResident = on
+            await applyResident()
+            send(Reply(id: request.id, cmd: "resident", ok: true, resident: Residency.isOn))
         case "load":
             do {
                 _ = try await loadedVoice()

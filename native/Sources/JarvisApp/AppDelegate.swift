@@ -125,6 +125,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var qwenPrewarm: Task<Void, Never>?
     /// V9: a short throwaway generation as a turn starts after the Qwen helper sat idle.
     private var turnWarmup: TurnStartWarmup?
+    /// V10: keeps the Qwen model wired in memory unless the voice is F5, speech is long muted or
+    /// memory is critically short.
+    private var qwenResidency: QwenResidency?
+    private var qwenResidencyTask: Task<Void, Never>?
     private let processingAhead = VoiceProcessingAhead(willStart: { AudioHub.shared.speechWillStart() },
                                                        ended: { AudioHub.shared.speechEnded() })
     private var sigterm: DispatchSourceSignal?
@@ -539,6 +543,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             idleSeconds: { await qwen.idleSeconds() },
             warmUp: { await qwen.warmUp() },
             coldVoice: { await speech.expectColdVoice($0) }))
+        let residency = QwenResidency(.init(
+            usesQwen: { voice.backend == "qwen" },
+            muted: { [weak self] in self?.speechMute.isMuted ?? false },
+            memoryFreePercent: { QwenPrewarm.systemFreePercent() },
+            setResident: { await qwen.setResident($0) }))
+        qwenResidency = residency
+        qwenResidencyTask = residency.start()
         speakEarly.applies = voice.speakEarlyApplies   // V6: hidden while Qwen speaks
         // UI1 part 3: the HUD speaks while the reply's audio plays, a sentence at a time.
         voice.onReplyAudioStarted = { [weak self] heard, seconds in
