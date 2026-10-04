@@ -26,6 +26,13 @@ public enum FileMutationPolicy {
         let absolute = PathPolicy.pyAbspath(expanded, cwd: cwd)
         if systemPath(absolute, home: home, cwd: cwd) { return .refuse("I won't delete that, sir — it's a protected system location.") }
         if !permanent && PathPolicy.inHome(absolute, home: home, cwd: cwd) && !isWindows {
+            // DEV-OD3-01 (D-41): a folder goes to the Trash only after confirmation. Python trashes
+            // it at once, so "wipe my documents" could empty ~/Documents with no question asked.
+            if probe.isDir(expanded) {
+                let name = URL(fileURLWithPath: absolute).lastPathComponent
+                return .gate(desc: "That will move the folder \(name) and everything in it to the Trash",
+                             op: .trash(absolute))
+            }
             return .instant(.trash(absolute))
         }
         let whereText = PathPolicy.inHome(absolute, home: home, cwd: cwd)

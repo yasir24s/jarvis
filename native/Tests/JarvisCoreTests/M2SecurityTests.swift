@@ -188,6 +188,14 @@ struct M2SecurityTests {
             throw TestError.malformed(c.name)
         }
         let expected = try #require(c.expected.string("decision"))
+        // DEV-OD3-01 (D-41): Python trashes a folder in home at once; native asks first. The
+        // fixture keeps Python's values, and these cases check native's gate instead.
+        if fn == "_delete_file", expected == "instant", arg(1) != .bool(true),
+           case .gate(let desc, .trash(let path)) = decision, dirs.contains(path) {
+            let name = URL(fileURLWithPath: path).lastPathComponent
+            #expect(desc == "That will move the folder \(name) and everything in it to the Trash", "\(c.name)")
+            return
+        }
         switch decision {
         case .notFound(let reply), .refuse(let reply):
             #expect(expected == "none", "\(c.name)")
@@ -198,6 +206,27 @@ struct M2SecurityTests {
             #expect(expected == "confirm", "\(c.name)")
             #expect(c.expected.string("gate") == desc, "\(c.name)")
         }
+    }
+
+    /// DEV-OD3-01: a folder in home is trashed only after confirmation; a file still goes at once,
+    /// and home itself and system locations are still refused.
+    @Test
+    func folderDeleteInHomeIsGated() {
+        let home = NSHomeDirectory()
+        let folder = home + "/Documents"
+        let file = folder + "/a.txt"
+        let probe = TestProbe(files: [file], dirs: [folder, home])
+        #expect(FileMutationPolicy.delete(path: "~/Documents", permanent: false, probe: probe, home: home, cwd: "/")
+            == .gate(desc: "That will move the folder Documents and everything in it to the Trash",
+                     op: .trash(folder)))
+        #expect(FileMutationPolicy.delete(path: "~/Documents/a.txt", permanent: false, probe: probe, home: home,
+                                          cwd: "/") == .instant(.trash(file)))
+        let refused = FileDecision.refuse("I won't delete that, sir — it's a protected system location.")
+        #expect(FileMutationPolicy.delete(path: "~", permanent: false, probe: probe, home: home, cwd: "/") == refused)
+        let system = TestProbe(files: [], dirs: ["/System", "/"])
+        #expect(FileMutationPolicy.delete(path: "/System", permanent: false, probe: system, home: home, cwd: "/")
+            == refused)
+        #expect(FileMutationPolicy.delete(path: "/", permanent: false, probe: system, home: home, cwd: "/") == refused)
     }
 
     @Test
