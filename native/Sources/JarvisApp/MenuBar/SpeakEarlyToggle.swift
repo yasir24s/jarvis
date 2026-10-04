@@ -23,7 +23,7 @@ final class SpeakEarlySetting {
 
     @ObservationIgnored private let defaults: UserDefaults?
 
-    init(defaults: UserDefaults? = UserDefaults(suiteName: SpeechQueue.defaultsSuite)) {
+    init(defaults: UserDefaults? = SpeechQueue.sharedDefaults) {
         self.defaults = defaults
         isOn = defaults?.object(forKey: SpeechQueue.speakEarlyKey) as? Bool ?? false
         applies = true

@@ -109,7 +109,7 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
 
     /// `voiceReference` from the app's defaults, read afresh at each call.
     public static let referenceFromDefaults: @Sendable () -> String = {
-        reference(in: UserDefaults(suiteName: SpeechQueue.defaultsSuite))
+        reference(in: SpeechQueue.sharedDefaults)
     }
 
     /// `voiceReference` from `defaults`, or `preferredReference` when it is unset or empty. The
@@ -151,7 +151,7 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
 
     /// `voiceSpeed` from the app's defaults (SpeechQueue's suite), read afresh at each call.
     public static let speedFromDefaults: @Sendable () -> Double = {
-        speed(in: UserDefaults(suiteName: SpeechQueue.defaultsSuite))
+        speed(in: SpeechQueue.sharedDefaults)
     }
 
     /// `voiceSpeed` from the app's defaults, clamped to `speedRange`, or `defaultSpeed` when it is
@@ -181,7 +181,7 @@ public struct VoiceHelperSetup: VoiceHelperLauncher {
     /// directory, and the `voiceSpeed`, `voiceReference` and `voiceSteps` settings in `defaults` as
     /// they are at each launch of the helper.
     public static func inApp(bundle: Bundle = .main, log: URL?,
-                             defaults: UserDefaults? = UserDefaults(suiteName: SpeechQueue.defaultsSuite),
+                             defaults: UserDefaults? = SpeechQueue.sharedDefaults,
                              assets: URL = VoiceHelperSetup.installedAssets) -> VoiceHelperSetup {
         let shared = SharedDefaults(defaults: defaults)
         return VoiceHelperSetup(

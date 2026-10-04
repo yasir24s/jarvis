@@ -87,7 +87,7 @@ public struct QwenHelperSetup: QwenHelperLauncher {
     /// The app's own helper, the installed assets, a folder of the user's temporary directory,
     /// and `voiceRate` in `defaults` as it is at each launch.
     public static func inApp(bundle: Bundle = .main, log: URL?,
-                             defaults: UserDefaults? = UserDefaults(suiteName: SpeechQueue.defaultsSuite),
+                             defaults: UserDefaults? = SpeechQueue.sharedDefaults,
                              assets: URL = VoiceHelperSetup.installedAssets) -> QwenHelperSetup {
         let shared = SharedDefaults(defaults: defaults)
         return QwenHelperSetup(

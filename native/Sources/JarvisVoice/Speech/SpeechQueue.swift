@@ -22,6 +22,12 @@ import Synchronization
 public actor SpeechQueue {
     /// The app's defaults suite, where the voice settings are read from.
     public static let defaultsSuite = "com.jarv1s.assistant"
+    /// The voice settings' store. A suite named after the app's own bundle ID is refused by
+    /// UserDefaults (`init(suiteName:)` returns nil), so inside the app this is `.standard`, the
+    /// same domain. Elsewhere (tests, helpers) it is the named suite.
+    public static var sharedDefaults: UserDefaults? {
+        Bundle.main.bundleIdentifier == defaultsSuite ? .standard : UserDefaults(suiteName: defaultsSuite)
+    }
     /// The UserDefaults key of Speak First Sentence Early (V5); off when unset.
     public static let speakEarlyKey = "speakEarly"
     /// The shortest first sentence spoken on its own (V5), in Unicode scalars.
@@ -172,7 +178,7 @@ public actor SpeechQueue {
 
     /// Speak First Sentence Early as stored in the app's defaults suite: off until switched on.
     public static func speakEarlyFromDefaults() -> Bool {
-        speakEarly(in: UserDefaults(suiteName: defaultsSuite))
+        speakEarly(in: sharedDefaults)
     }
 
     public static func speakEarly(in defaults: UserDefaults?) -> Bool {

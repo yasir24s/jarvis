@@ -72,7 +72,7 @@ final class AppVoice {
         let qwenFolder = FileManager.default.temporaryDirectory.appending(path: "jarvis-voice-qwen", directoryHint: .isDirectory)
         let qwen = QwenEngine(launcher: QwenHelperSetup.inApp(log: qwenFolder.appending(path: "helper.log")))
         self.qwen = qwen
-        let choice = Self.SharedDefaults(defaults: UserDefaults(suiteName: SpeechQueue.defaultsSuite))
+        let choice = Self.SharedDefaults(defaults: SpeechQueue.sharedDefaults)
         let log: @Sendable (String) -> Void = { JarvisLog.log($0, category: .voice) }
         let selector = VoiceSelector(qwen: qwen, f5: f5, choice: { VoiceEngineChoice.choice(in: choice.defaults) },
                                      log: log)
