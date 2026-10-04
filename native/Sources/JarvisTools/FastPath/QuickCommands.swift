@@ -194,7 +194,15 @@ public struct QuickCommands: Sendable {
         case .calendar: return await tool("get_calendar", turn: turn)
         case .briefing: return await briefing(turn: turn)
         case .makeNote(let text): return await tool("make_note", ["text": .string(text)], turn: turn)
-        case .systemInfo(let kind): return await tool(kind == "time" ? "get_time" : "get_battery", turn: turn)
+        case .systemInfo(let kind):
+            // DEV-OD2-01 adds "wifi" and "cpu"; Python's helper has only "time" and "battery".
+            let name = switch kind {
+            case "time": "get_time"
+            case "wifi": "get_wifi_status"
+            case "cpu": "get_cpu_usage"
+            default: "get_battery"
+            }
+            return await tool(name, turn: turn)
         case .backendReport: return await hooks.backendReport?()
         case .news: return await tool("get_news", turn: turn)
         case .screenshot: return await tool("take_screenshot", turn: turn)

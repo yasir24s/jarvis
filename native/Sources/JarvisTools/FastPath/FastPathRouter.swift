@@ -207,8 +207,8 @@ public struct FastPathRouter: Sendable {
     ]
 
     /// Branches Python's `fast_path` does not have, matched only where all of its branches
-    /// deferred. Live fix 3: "contact.find" (DEV-LIVE-03).
-    public static let native: Set<String> = ["contact.find"]
+    /// deferred. Live fix 3: "contact.find" (DEV-LIVE-03); od/phase2: `quickBranches` (DEV-OD2-01).
+    public static let native: Set<String> = Set(["contact.find"]).union(quickBranches)
 
     /// `text.lower().strip().rstrip("?.")`.
     public static func normalise(_ text: String) -> String {
@@ -378,6 +378,7 @@ public struct FastPathRouter: Sendable {
             return hit("web.youtube", .openURL(announcement: "Searching YouTube for \(q), sir.",
                                                url: "https://www.youtube.com/results?search_query=" + PyURL.quote(q)))
         }
+        if let (branch, command) = nativeQuick(t) { return hit(branch, command) }   // DEV-OD2-01
         if let name = Self.contactName(text, normalised: t) { return hit("contact.find", .findContact(name)) }
         return hit("defer")
     }
