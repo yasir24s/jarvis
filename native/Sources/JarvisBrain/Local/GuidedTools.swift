@@ -19,6 +19,9 @@ public protocol LocalGuidedSession: Sendable {
 }
 
 public enum GuidedTools {
+    /// The defaults key (in the app's suite). Unset means on; `false` turns the step off with no
+    /// rebuild, and the turn goes back to free-form tool calling.
+    public static let defaultsKey = "onDeviceGuidedTools"
     /// Choices per turn, so "find Priya then text her" can take two.
     public static let maxSteps = 3
     /// The choice that answers without a tool.
@@ -39,6 +42,17 @@ public enum GuidedTools {
     static let choiceOptions = GenerationOptions(samplingMode: .greedy, maximumResponseTokens: 24)
     /// Greedy: arguments are copied from the request, not invented.
     static let argumentOptions = GenerationOptions(samplingMode: .greedy, maximumResponseTokens: 200)
+
+    /// The setting: on unless `defaultsKey` is stored as false.
+    public static func enabled(in defaults: UserDefaults?) -> Bool {
+        defaults?.object(forKey: defaultsKey) as? Bool ?? true
+    }
+
+    /// The app's setting, read on each turn. `.standard` is the app's own domain inside the app;
+    /// `UserDefaults(suiteName:)` with the app's bundle ID returns nil, so it is never used here.
+    public static func enabledSetting(in defaults: UserDefaults = .standard) -> Bool {
+        enabled(in: defaults)
+    }
 
     /// One tool the guided step ran.
     public struct Step: Sendable, Equatable {

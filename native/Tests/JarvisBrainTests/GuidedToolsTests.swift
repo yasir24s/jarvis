@@ -54,6 +54,21 @@ struct GuidedToolsTests {
         }
     }
 
+    @Test("setting: on when unset, off only when stored false")
+    func setting() throws {
+        let suite = "jarvis-test-guided-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        #expect(GuidedTools.defaultsKey == "onDeviceGuidedTools")
+        #expect(GuidedTools.enabled(in: nil))
+        #expect(GuidedTools.enabled(in: defaults))
+        defaults.set(false, forKey: GuidedTools.defaultsKey)
+        #expect(!GuidedTools.enabled(in: defaults))
+        #expect(!GuidedTools.enabledSetting(in: defaults))
+        defaults.set(true, forKey: GuidedTools.defaultsKey)
+        #expect(GuidedTools.enabled(in: defaults))
+    }
+
     @Test("choice schema: an enum of the offered names plus none")
     func choiceSchema() throws {
         let schema = try GuidedTools.choiceSchema(["get_time", "set_volume"])

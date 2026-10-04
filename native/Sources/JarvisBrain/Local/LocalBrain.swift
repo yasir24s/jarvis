@@ -34,7 +34,7 @@ import JarvisTools
 /// - A tool call the model writes into its reply as text (`run_command: ...`, a JSON object)
 ///   is taken out of what is shown, spoken and kept (`ToolCallTextFilter`), and logged as
 ///   counts. Nothing runs it: there is no text tool protocol.
-/// - Before the reply, a guided step (`GuidedTools`)
+/// - Before the reply, a guided step (`GuidedTools`, setting `onDeviceGuidedTools`, default on)
 ///   has the model choose up to three of the offered tools with constrained output and runs
 ///   them through the gateway. The reply session then gets no tools; when calls ran, its prompt
 ///   carries their results. Only a failure before any call leaves the turn free-form tools, and
@@ -75,7 +75,7 @@ public actor LocalBrain: LocalGenerating {
     ///   - embedding: the sentence vectors the default model chooses a turn's tools with (the
     ///     instance recall uses); nil means it offers the fixed list.
     ///   - log: where log lines go. Tests pass their own.
-    ///   - guided: whether the guided tool choice runs; nil means it does.
+    ///   - guided: whether the guided tool choice runs; nil reads `GuidedTools.enabledSetting()`.
     public init(gateway: ToolGateway, model: (any LocalLanguageModel)? = nil,
                 embedding: (any SentenceEmbedding)? = nil,
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .brain) },
@@ -83,7 +83,7 @@ public actor LocalBrain: LocalGenerating {
         self.gateway = gateway
         self.model = model ?? SystemLocalModel(embedding: embedding, log: log)
         self.log = log
-        self.guided = guided ?? { true }
+        self.guided = guided ?? { GuidedTools.enabledSetting() }
     }
 
     /// MEM1 part 1: the model's context size, for the memory block's budget.
