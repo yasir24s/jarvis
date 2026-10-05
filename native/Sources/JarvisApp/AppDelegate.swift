@@ -747,7 +747,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await MainActor.run { announcer.announce(line + " " + DisplaySelfTest.ask) }
         }
         // Batch C part 2: the catalogue refreshes at most daily; checked now and every six hours.
-        mediaRefresh = Task.detached(priority: .utility) {
+        // V11 part 4: at background priority, below the voice.
+        mediaRefresh = Task.detached(priority: .background) {
             while !Task.isCancelled {
                 await media.refresh()
                 try? await Task.sleep(for: .seconds(6 * 3600), clock: .suspending)
@@ -764,10 +765,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // P2: the facts' sentence vectors are computed in the background, not on the first turn.
         // W1 part 6: the storage rule is checked at launch, in the background.
         if let budget = assembly.memoryBudget {
-            Task.detached(priority: .utility) { budget.check() }
+            Task.detached(priority: .background) { budget.check() }    // V11 part 4: below the voice
         }
         if let recall = assembly.recall {
-            Task.detached(priority: .utility) {
+            Task.detached(priority: .background) {
                 let n = recall.warm()
                 JarvisLog.log("memory: \(n) fact vector(s) ready", category: .state)
                 // W1 part 7c: the conversations and the journal are indexed before the first search.
