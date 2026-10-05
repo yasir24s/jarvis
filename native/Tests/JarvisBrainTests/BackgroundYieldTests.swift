@@ -127,4 +127,92 @@ struct BackgroundYieldTests {
         try await activity.waitUntilQuiet(sleep: { _ in again.withLock { $0 += 1 } })
         #expect(again.withLock { $0 } == 1)
     }
+
+    /// V11: the live log showed preempted file reads finishing anyway. A wait that ignores
+    /// cancellation, opened by the test.
+    final class Gate: Sendable {
+        private let state = Mutex<(open: Bool, waiters: [CheckedContinuation<Void, Never>])>((false, []))
+        func wait() async {
+            await withCheckedContinuation { c in
+                let resumeNow = state.withLock { s in
+                    if s.open { return true }
+                    s.waiters.append(c)
+                    return false
+                }
+                if resumeNow { c.resume() }
+            }
+        }
+        func open() {
+            let waiters = state.withLock { s in
+                s.open = true
+                defer { s.waiters = [] }
+                return s.waiters
+            }
+            for c in waiters { c.resume() }
+        }
+    }
+
+    /// V11: an operation that ignores the cancel and returns is still `.preempted`, its result
+    /// dropped, and the log says how long it held the model past the preemption.
+    @Test func aCallThatIgnoresTheCancelAndFinishesIsStillPreempted() async throws {
+        let clock = ManualClock(1_790_582_400)
+        let logged = Mutex<[String]>([])
+        let activity = TurnActivity(clock: clock, log: { line in logged.withLock { $0.append(line) } })
+        let gate = Gate()
+        let started = Mutex(false)
+        let call = Task {
+            try await activity.yielding { () async throws -> String in
+                started.withLock { $0 = true }
+                await gate.wait()    // does not look at cancellation
+                return "stale"
+            }
+        }
+        #expect(await eventually(seconds: 60) { started.withLock { $0 } && activity.backgroundInFlight == 1 })
+        activity.preemptBackground()
+        clock.advance(2.5)
+        gate.open()
+        guard case .preempted = try await call.value else {
+            Issue.record("a preempted call that finished anyway counted as finished")
+            return
+        }
+        #expect(logged.withLock { $0 } == ["on-device model: background call kept the model 2.5 s after the user started"])
+        #expect(activity.backgroundInFlight == 0)
+    }
+
+    /// A call that finishes with no preemption is not logged.
+    @Test func aCallThatFinishesUndisturbedLogsNothing() async throws {
+        let logged = Mutex<[String]>([])
+        let activity = TurnActivity(clock: ManualClock(1_790_582_400), log: { line in logged.withLock { $0.append(line) } })
+        guard case .finished("done") = try await activity.yielding({ () async throws -> String in "done" }) else {
+            Issue.record("an undisturbed call did not finish")
+            return
+        }
+        #expect(logged.withLock { $0 }.isEmpty)
+    }
+
+    /// The writer restarts a call that ignored its preemption, so the stale reply is never used.
+    @Test func theWriterStartsAgainWhenAPreemptedCallFinishedAnyway() async throws {
+        final class StubbornWriter: PersonaLLM {
+            let calls = Mutex(0)
+            let gate = Gate()
+            func complete(system: String, user: String, timeout: Duration) async throws -> String {
+                let n = calls.withLock { $0 += 1; return $0 }
+                guard n == 1 else { return "fresh" }
+                await gate.wait()
+                return "stale"
+            }
+        }
+        let activity = TurnActivity(clock: ManualClock(1_790_582_400), log: { _ in })
+        let writer = StubbornWriter()
+        let logged = Mutex<[String]>([])
+        let background = YieldingPersonaLLM(writer, turns: activity, sleep: { _ in await Task.yield() },
+                                            log: { line in logged.withLock { $0.append(line) } })
+        let read = Task { try await background.complete(system: "s", user: "file one", timeout: .seconds(120)) }
+        #expect(await eventually(seconds: 60) { activity.backgroundInFlight == 1 })
+        activity.preemptBackground()
+        writer.gate.open()
+        #expect(try await read.value == "fresh")
+        #expect(writer.calls.withLock { $0 } == 2)
+        #expect(logged.withLock { $0 }.contains { $0.contains("gave way to the user") })
+    }
 }

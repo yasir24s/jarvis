@@ -35,6 +35,7 @@ public final class TurnActivity: Sendable {
     private let running = Mutex(0)
     private let speaking = Mutex(0)
     private let clock: any JarvisClock
+    private let log: @Sendable (String) -> Void
     private let last = Mutex<Double?>(nil)
     /// The cancel handlers of the yielding calls in flight, by id.
     private let inFlight = Mutex<(next: Int, cancels: [Int: @Sendable () -> Void])>((0, [:]))
@@ -42,8 +43,10 @@ public final class TurnActivity: Sendable {
     /// has happened: what a quiet wait measures its grace from.
     private let quietSince = Mutex<(at: Double, count: Int)?>(nil)
 
-    public init(clock: any JarvisClock = SystemClock()) {
+    public init(clock: any JarvisClock = SystemClock(),
+                log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .state) }) {
         self.clock = clock
+        self.log = log
     }
 
     public func begin() {
@@ -81,7 +84,9 @@ public final class TurnActivity: Sendable {
     /// Runs a background model call so that the user can take the model from it: a turn
     /// beginning, or `preemptBackground()`, cancels it and this returns `.preempted`. A call
     /// started while a turn runs is preempted at once. Cancelling the caller cancels the call
-    /// and throws as it does.
+    /// and throws as it does. V11: a preempted call is `.preempted` even when the operation
+    /// ignored the cancel and finished (its result is dropped; the caller starts it again), and
+    /// how long it ran past the preemption is logged.
     public func yielding<Value: Sendable>(_ operation: @escaping @Sendable () async throws -> Value)
         async throws -> Yield<Value> {
         let preempted = Flag()
@@ -89,8 +94,8 @@ public final class TurnActivity: Sendable {
         let id = inFlight.withLock { state in
             let id = state.next
             state.next += 1
-            state.cancels[id] = {
-                preempted.set()
+            state.cancels[id] = { [clock] in
+                preempted.set(at: clock.now())
                 task.cancel()
             }
             return id
@@ -103,17 +108,31 @@ public final class TurnActivity: Sendable {
             } onCancel: {
                 task.cancel()
             }
+            if let at = preempted.at, !Task.isCancelled {
+                reportOverrun(since: at)
+                return .preempted
+            }
             return .finished(value)
         } catch {
-            if preempted.isSet && !Task.isCancelled { return .preempted }
+            if let at = preempted.at, !Task.isCancelled {
+                reportOverrun(since: at)
+                return .preempted
+            }
             throw error
         }
     }
 
+    /// V11: how long a preempted call kept the model after the user started.
+    private func reportOverrun(since at: Double) {
+        let held = max(0, clock.now() - at)
+        log("on-device model: background call kept the model \(String(format: "%.1f", held)) s after the user started")
+    }
+
+    /// When the call was preempted; nil until it is.
     private final class Flag: Sendable {
-        private let value = Mutex(false)
-        func set() { value.withLock { $0 = true } }
-        var isSet: Bool { value.withLock { $0 } }
+        private let value = Mutex<Double?>(nil)
+        func set(at time: Double) { value.withLock { $0 = $0 ?? time } }
+        var at: Double? { value.withLock { $0 } }
     }
 
     public var isRunning: Bool { running.withLock { $0 > 0 } }
