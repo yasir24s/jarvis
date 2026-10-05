@@ -16,6 +16,10 @@ import Synchronization
 /// is hot (as the file scan does), looking again every `backoff`. Afterwards the pages are
 /// summarised in the background (`WebSummaryQueue`), and the pass is noted in the database, so
 /// the three hours hold across launches. Logs carry counts, hosts and times, never text.
+///
+/// V11 part 3: a page being read stops when a turn begins (`TurnActivity.yielding`) or speech
+/// starts (looked at every `TurnActivity.pollInterval`), and the same item is read again once
+/// reading is allowed; nothing is skipped and nothing counts as failed.
 public actor BackgroundReader {
     public typealias Sleep = @Sendable (Duration) async throws -> Void
     public typealias Now = @Sendable () -> SuspendingClock.Instant
@@ -72,6 +76,8 @@ public actor BackgroundReader {
     private let clock: any JarvisClock
     private let now: Now
     private let sleep: Sleep
+    /// V11: the wait between looks for speech while a page is read.
+    private let watchSleep: Sleep
     private let log: @Sendable (String) -> Void
     private let task = Mutex<Task<Void, Never>?>(nil)
     private var paused = false
@@ -81,6 +87,7 @@ public actor BackgroundReader {
                 summaries: WebSummaryQueue? = nil, clock: any JarvisClock = SystemClock(),
                 now: @escaping Now = { SuspendingClock().now },
                 sleep: @escaping Sleep = { try await Task.sleep(for: $0, clock: .suspending) },
+                watchSleep: @escaping Sleep = { try await Task.sleep(for: $0, clock: .suspending) },
                 log: @escaping @Sendable (String) -> Void = { JarvisLog.log($0, category: .state) }) {
         self.memory = memory
         self.facts = facts
@@ -93,6 +100,7 @@ public actor BackgroundReader {
         self.clock = clock
         self.now = now
         self.sleep = sleep
+        self.watchSleep = watchSleep
         self.log = log
     }
 
@@ -152,19 +160,42 @@ public actor BackgroundReader {
         }
         let items = await candidates(&summary)
         summary.candidates = items.count
-        for item in items {
+        items: for item in items {
             if Task.isCancelled { summary.stopped = "cancelled"; break }
             if summary.opened >= Self.pageLimit { summary.stopped = "page limit"; break }
             guard memory.isAvailable else { summary.stopped = "no store"; break }
             if memory.hasRead(item.url) { summary.alreadyKept += 1; continue }
-            do {
-                guard try await mayRead(until: deadline) else { summary.stopped = "time limit"; break }
-            } catch {
-                summary.stopped = "cancelled"
-                break
+            var page: ReadPage?
+            var attempts = 0
+            attempt: while true {
+                do {
+                    guard try await mayRead(until: deadline) else { summary.stopped = "time limit"; break items }
+                } catch {
+                    summary.stopped = "cancelled"
+                    break items
+                }
+                attempts += 1
+                if attempts == 1 { summary.opened += 1 }
+                switch await readGivingWay(item.url) {
+                case .read(let read):
+                    page = read
+                    break attempt
+                case .failed:
+                    break attempt
+                case .gaveWay:
+                    log("web reading: a page read gave way to the user; it will be read again")
+                    do {
+                        while turns.isSpeaking { try await sleep(TurnActivity.pollInterval) }    // mayRead looks for turns, not speech
+                    } catch {
+                        summary.stopped = "cancelled"
+                        break items
+                    }
+                case .cancelled:
+                    summary.stopped = "cancelled"
+                    break items
+                }
             }
-            summary.opened += 1
-            guard let page = try? await reader.read(item.url) else { summary.failed += 1; continue }
+            guard let page else { summary.failed += 1; continue }
             if memory.has(page.canonicalURL) {
                 memory.alias(item.url, to: page.canonicalURL)
                 summary.alreadyKept += 1
@@ -217,6 +248,46 @@ public actor BackgroundReader {
         } catch {
             log("web reading: \(feed.name) could not be read")
             return []
+        }
+    }
+
+    /// What one page read came to.
+    enum Attempt: Sendable {
+        case read(ReadPage)
+        case failed
+        /// A turn began or speech started while it ran: it was stopped, to be read again.
+        case gaveWay
+        case cancelled
+    }
+
+    /// V11 part 3: reads `url`, stopping when a turn begins or speech starts.
+    private func readGivingWay(_ url: String) async -> Attempt {
+        let reader = reader, turns = turns, watchSleep = watchSleep
+        return await withTaskGroup(of: Attempt?.self) { group in
+            group.addTask {
+                do {
+                    switch try await turns.yielding({ try await reader.read(url) }) {
+                    case .finished(let page): return .read(page)
+                    case .preempted: return .gaveWay
+                    }
+                } catch {
+                    return Task.isCancelled ? nil : .failed
+                }
+            }
+            group.addTask {
+                // Speech is not a turn, so it does not preempt `yielding`: look for it.
+                while !Task.isCancelled {
+                    if turns.isSpeaking || turns.isRunning { return .gaveWay }
+                    do { try await watchSleep(TurnActivity.pollInterval) } catch { return nil }
+                    await Task.yield()
+                }
+                return nil
+            }
+            defer { group.cancelAll() }
+            while let next = await group.next() {
+                if let next { return next }
+            }
+            return .cancelled
         }
     }
 

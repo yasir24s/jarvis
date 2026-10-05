@@ -79,6 +79,7 @@ final class WebReader: NSObject, PageReading {
         let deadline = start.advanced(by: settleLimit)
         try await tab.load(target, until: deadline)
         try await settle(tab.view, until: deadline)
+        try Task.checkCancellation()    // V11: a read the user preempted stops here
         let footprint = tab.webContentFootprint()
         let raw = try await tab.view.evaluateJavaScript(ReadabilityScript.source) as? String ?? ""
         guard case .object(let o)? = try? PyJSON.loads(Data(raw.utf8)) else { throw PageReadError.nothingReadable }
@@ -161,8 +162,16 @@ private final class Tab: NSObject, WKNavigationDelegate {
             self?.finish(.failure(PageReadError.timedOut))
         }
         defer { timer.cancel() }
-        try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
-            if let outcome { c.resume(with: outcome) } else { waiter = c }
+        // V11 part 3: cancelling the read stops the load at once, not when the page settles.
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+                if let outcome { c.resume(with: outcome) } else { waiter = c }
+            }
+        } onCancel: {
+            Task { @MainActor [weak self] in
+                self?.view.stopLoading()
+                self?.finish(.failure(CancellationError()))
+            }
         }
     }
 

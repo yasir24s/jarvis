@@ -97,11 +97,13 @@ struct BackgroundReaderTests {
         func background(online: Bool = true, conditions: BackgroundReader.Conditions = .init(power: { PowerConditions() },
                                                                                             onBattery: { false }),
                         now: @escaping BackgroundReader.Now = { SuspendingClock().now },
-                        sleep: BackgroundReader.Sleep? = nil) -> BackgroundReader {
+                        sleep: BackgroundReader.Sleep? = nil,
+                        watchSleep: @escaping BackgroundReader.Sleep = { _ in try await Task.sleep(for: .milliseconds(1)) })
+            -> BackgroundReader {
             let sleeps = sleeps
             return BackgroundReader(memory: web, facts: memory, reader: reader, web: fetcher, online: { online }, turns: turns,
                                     conditions: conditions, clock: clock, now: now,
-                                    sleep: sleep ?? { d in sleeps.add(d) }, log: logs.function)
+                                    sleep: sleep ?? { d in sleeps.add(d) }, watchSleep: watchSleep, log: logs.function)
         }
     }
 
@@ -272,5 +274,71 @@ struct BackgroundReaderTests {
         #expect(await firstWait() == BackgroundReader.startDelay)
         rig.web.recordPass(started: Self.epoch - 3_600, ended: Self.epoch - 3_500, opened: 1, stored: 1, stopped: "done")
         #expect(await firstWait() == .seconds(2 * 3_600))
+    }
+
+    // MARK: - V11 part 3: a page read gives way mid-item
+
+    /// Its first read starts the interruption (`interrupt`) and then waits until it is
+    /// cancelled; every later read answers at once.
+    final class InterruptedReader: PageReading {
+        let interrupt: @Sendable () -> Void
+        let cancelled = Mutex(0)
+        private let asked = Mutex<[String]>([])
+        init(interrupt: @escaping @Sendable () -> Void) { self.interrupt = interrupt }
+        var reads: [String] { asked.withLock { $0 } }
+        func read(_ url: String) async throws -> ReadPage {
+            let n = asked.withLock { $0.append(url); return $0.count }
+            if n == 1 {
+                interrupt()
+                do {
+                    try await Task.sleep(for: .seconds(600))
+                } catch {
+                    cancelled.withLock { $0 += 1 }
+                    throw error
+                }
+            }
+            return ReadPage(requested: url, finalURL: url, canonicalURL: url, title: "Page " + url,
+                            text: "The text of " + url, truncated: false)
+        }
+    }
+
+    static let oneItem = [ReadingSources.feeds[0].url: rss("news", 1)]
+
+    @Test func speechStartingStopsAPageReadAndTheSameItemIsReadAgain() async throws {
+        let turns = Mutex<TurnActivity?>(nil)
+        let reader = InterruptedReader(interrupt: { turns.withLock { $0 }?.speechBegan() })
+        let rig = try Rig(feeds: Self.oneItem, reader: FakeReader())
+        defer { rig.sandbox.remove() }
+        turns.withLock { $0 = rig.turns }
+        let reading = BackgroundReader(memory: rig.web, facts: rig.memory, reader: reader, web: rig.fetcher,
+                                       online: { true }, turns: rig.turns,
+                                       conditions: .init(power: { PowerConditions() }, onBattery: { false }),
+                                       clock: rig.clock, sleep: { _ in rig.turns.speechEnded() },    // speech ends at the first look
+                                       watchSleep: { _ in try await Task.sleep(for: .milliseconds(1)) },
+                                       log: rig.logs.function)
+        let summary = await reading.pass()
+        #expect(reader.cancelled.withLock { $0 } == 1)
+        #expect(reader.reads == ["https://news.invalid/1", "https://news.invalid/1"])
+        #expect(summary.opened == 1 && summary.stored == 1 && summary.failed == 0 && summary.stopped == "done")
+        #expect(rig.logs.lines.contains("web reading: a page read gave way to the user; it will be read again"))
+    }
+
+    @Test func aTurnBeginningStopsAPageReadAndTheSameItemIsReadAgain() async throws {
+        let turns = Mutex<TurnActivity?>(nil)
+        let reader = InterruptedReader(interrupt: { turns.withLock { $0 }?.begin() })
+        let rig = try Rig(feeds: Self.oneItem, reader: FakeReader())
+        defer { rig.sandbox.remove() }
+        turns.withLock { $0 = rig.turns }
+        let reading = BackgroundReader(memory: rig.web, facts: rig.memory, reader: reader, web: rig.fetcher,
+                                       online: { true }, turns: rig.turns,
+                                       conditions: .init(power: { PowerConditions() }, onBattery: { false }),
+                                       clock: rig.clock, sleep: { _ in rig.turns.end() },    // the turn ends at the first look
+                                       watchSleep: { _ in try await Task.sleep(for: .seconds(600)) },    // only the preemption can stop it
+                                       log: rig.logs.function)
+        let summary = await reading.pass()
+        #expect(reader.cancelled.withLock { $0 } == 1)
+        #expect(reader.reads == ["https://news.invalid/1", "https://news.invalid/1"])
+        #expect(summary.opened == 1 && summary.stored == 1 && summary.failed == 0 && summary.stopped == "done")
+        #expect(!rig.turns.isRunning)
     }
 }

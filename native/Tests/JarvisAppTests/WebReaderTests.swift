@@ -83,6 +83,22 @@ struct WebReaderTests {
         }
     }
 
+    /// V11 part 3: a read cancelled while the page is still loading stops at once and closes its
+    /// tab, rather than holding on until the page answers or the settle limit passes.
+    @Test func aCancelledReadStopsWhileThePageLoads() async throws {
+        try await withServer(["/slow": .init(Self.article, delay: 8)]) { server in
+            let reader = WebReader(settleLimit: .seconds(30), log: { _ in })
+            let clock = ContinuousClock()
+            let read = Task { try await reader.read(server.url("/slow")) }
+            try await Task.sleep(for: .milliseconds(500))
+            let cancelledAt = clock.now
+            read.cancel()
+            await #expect(throws: (any Error).self) { try await read.value }
+            #expect(clock.now - cancelledAt < .seconds(3))
+            #expect(reader.openTabs == 0)
+        }
+    }
+
     @Test func refusesDownloadsErrorPagesAndOtherSchemes() async throws {
         try await withServer([
             "/file.bin": .init("binary", type: "application/octet-stream",
