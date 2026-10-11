@@ -1,9 +1,11 @@
-# JARVIS — a fully local voice assistant (macOS + Windows)
+# JARVIS — a local-first voice assistant (macOS + Windows)
 
 A self-hosted, always-listening voice assistant, inspired by the Iron Man companion.
-Everything runs **on-device** — no cloud assistant, no third-party "brain." It hears
-you, thinks locally, speaks back, controls your computer, and shows a reactive
-arc-reactor HUD. Built first for Apple Silicon Macs; it also runs on Windows 10/11
+The wake word, speech recognition, voice and computer control run **on-device**. The
+brain is [Claude](https://claude.com) by default, through your Claude subscription,
+with a local Ollama model as the fallback; set `JARVIS_USE_CLAUDE=0` to keep every
+request on your machine. It hears you, answers, speaks back, controls your computer,
+and shows a reactive arc-reactor HUD. Built first for Apple Silicon Macs; it also runs on Windows 10/11
 (same `jarvis.py`, platform-specific glue is selected automatically).
 
 > Built and tuned for an Apple M2 / 8 GB machine, so it favours small, efficient models
@@ -275,8 +277,9 @@ verification), residual risks, and how to report a vulnerability.
 ## Notes
 - Apple reserves the lock screen and mic-while-locked for Siri; JARVIS can't override
   that, so it goes quiet once the Mac is truly password-locked (the screen saver still shows).
-- Voice models, the LLM, and tools all run locally; only optional web lookups and
-  ambient song ID use the network.
+- Voice models and tools run locally. Requests go to Claude unless
+  `JARVIS_USE_CLAUDE=0`, and optional web lookups, Google STT and ambient song ID use
+  the network.
 
 ## Windows differences
 - **AppleScript → PowerShell**: the LLM gets a `run_powershell` tool instead of
